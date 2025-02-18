@@ -1807,7 +1807,11 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
             }
         }
 
-        document.addEventListener('DOMContentLoaded', processURLHash);
+        document.addEventListener('DOMContentLoaded', function() {
+            processURLHash();
+            compareButton.click(); // Trigger comparison on page load
+        });
+
 
         // --- Feature 3: Update URL Hash on Compare (remains) ---
         function updateURLHash(hexValue) {

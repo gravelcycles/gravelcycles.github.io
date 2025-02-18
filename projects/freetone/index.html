@@ -496,7 +496,11 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', processURLHash);
+        document.addEventListener('DOMContentLoaded', function() {
+            processURLHash();
+            compareButton.click(); // Trigger comparison on page load
+        });
+
 
         // --- Feature 3: Update URL Hash on Compare (remains) ---
         function updateURLHash(hexValue) {
