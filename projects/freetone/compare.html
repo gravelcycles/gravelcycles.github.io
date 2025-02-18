@@ -1,7 +1,7 @@
 <html>
-    <head>
-        <title>Freetone Color Comparator</title>
-        <style>
+<head>
+    <title>Freetone Color Comparator</title>
+    <style>
         body {
             font-family: sans-serif;
             background-color: #f4f4f4;
@@ -14,7 +14,6 @@
         }
         .container {
             width: 90%;
-        <!DOCTYPE html>
             max-width: 960px;
             margin: 20px;
             padding: 30px;
@@ -190,6 +189,22 @@
                 width: calc(100% - 30px);
             }
         }
+
+        /* View Counter Styling */
+        #viewCounter {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px; /* Add some space above the counter */
+            margin-bottom: 10px; /* Add some space below the counter */
+        }
+        #viewCounter img {
+            max-width: 100%; /* Ensure image doesn't exceed container width */
+            height: auto; /* Maintain aspect ratio */
+            display: block; /* Prevent extra space below image */
+            margin: 0 auto; /* Center the image if necessary */
+        }
+
     </style>
 </head>
 <body>
@@ -214,6 +229,13 @@
             <div id="closestColorList">
             </div>
         </div>
+
+        <div id="viewCounter">
+             <a href="https://hits.seeyoufarm.com">
+                 <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgravelcycles.github.io%2Fprojects%2Ffreetone%2Fcompare.html&count_bg=%23000000&title_bg=%23555555&icon=&icon_color=%23BB0404&title=views&edge_flat=false"/>
+             </a>
+        </div>
+
     </div>
 
     <script>
@@ -247,8 +269,8 @@
                 let normalizedZ = z / whiteZ;
 
                 function f(t) {
-                    const epsilon = 216.0 / 24389.0;    // 6^3 / 29^3
-                    const kappa = 24389.0 / 27.0;     // 29^3 / 3^3
+                    const epsilon = 216.0 / 24389.0;     // 6^3 / 29^3
+                    const kappa = 24389.0 / 27.0;        // 29^3 / 3^3
                     if (t > epsilon) {
                         return Math.cbrt(t);
                     } else {
@@ -1808,10 +1830,9 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            processURLHash();
-            compareButton.click(); // Trigger comparison on page load
-        });
-
+            processURLHash();
+            compareButton.click(); // Trigger comparison on page load
+        });
 
         // --- Feature 3: Update URL Hash on Compare (remains) ---
         function updateURLHash(hexValue) {
