@@ -1,0 +1,508 @@
+<html>
+    <head>
+        <title>Freetone Color Comparator</title>
+        <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            scroll-behavior: smooth; /* Enable smooth scroll by default */
+        }
+        .container {
+            width: 90%;
+        <!DOCTYPE html>
+            max-width: 960px;
+            margin: 20px;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-area-wrapper {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 100;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ccc;
+        }
+        .input-area {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .input-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        #targetColorSwatch {
+            display: block;
+            width: calc(20% - 30px);
+            height: 0;
+            padding-bottom: calc(20% - 30px);
+            min-width: 80px;
+            min-height: 80px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        #targetHexInput {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            width: auto;
+            align-self: flex-start;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 30px;
+            padding-top: 20px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #closestColorList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .color-result {
+            width: calc(20% - 30px);
+            margin: 15px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .color-swatch {
+            display: block;
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
+            border: 1px solid #000;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .color-name {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .color-hex {
+            font-family: monospace;
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .color-deltae {
+            font-style: italic;
+            color: gray;
+            display: block;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+                margin: 10px;
+            }
+            .input-area {
+                text-align: center;
+                align-items: stretch;
+            }
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            #targetColorSwatch {
+                width: 60%;
+                padding-bottom: 60%;
+                max-width: 200px;
+                max-height: 200px;
+                margin-right: 0;
+                min-width: 60px;
+                min-height: 60px;
+            }
+            #targetHexInput {
+                width: 100%;
+            }
+            label {
+                text-align: center;
+            }
+            button {
+                margin-top: 0;
+                width: auto;
+                align-self: center;
+            }
+
+            #closestColorList {
+                justify-content: flex-start;
+            }
+            .color-result {
+                width: calc(50% - 30px);
+            }
+        }
+        @media (max-width: 576px) {
+            .color-result {
+                width: calc(100% - 30px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Freetone Color Comparator</h1>
+
+        <div class="input-area-wrapper">
+            <div class="input-area">
+                <label for="targetHexInput">Paste Hex Color to Compare:</label>
+                <div class="input-row">
+                    <div id="targetColorSwatch" style="background-color:#0000FF;"></div>
+                    <div class="input-group">
+                        <input type="text" id="targetHexInput" placeholder="#RRGGBB" value="#0000FF">
+                    </div>
+                </div>
+                <button id="compareButton">Compare</button>
+            </div>
+        </div>
+
+        <div id="results">
+            <h2>Closest Colors:</h2>
+            <div id="closestColorList">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Calculates Delta E Star ab (ΔE*ab) color difference between two colors in RGB format.
+         */
+        function deltaEStarab(rgb1, rgb2) {
+            function sRGBToLinearRGB(component) {
+                let normalized = component / 255.0;
+                if (normalized <= 0.04045) {
+                    return normalized / 12.92;
+                } else {
+                    return Math.pow((normalized + 0.055) / 1.055, 2.4);
+                }
+            }
+
+            function linearRGBtoXYZ(r, g, b) {
+                const x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
+                const y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
+                const z = r * 0.0193339 + g * 0.1191920 + b * 0.9503041;
+                return { x: x, y: y, z: z };
+            }
+
+            function XYZtoCIELAB(x, y, z) {
+                const whiteX = 0.95047; // D65 standard illuminant
+                const whiteY = 1.00000;
+                const whiteZ = 1.08883;
+
+                let normalizedX = x / whiteX;
+                let normalizedY = y / whiteY;
+                let normalizedZ = z / whiteZ;
+
+                function f(t) {
+                    const epsilon = 216.0 / 24389.0;    // 6^3 / 29^3
+                    const kappa = 24389.0 / 27.0;     // 29^3 / 3^3
+                    if (t > epsilon) {
+                        return Math.cbrt(t);
+                    } else {
+                        return (kappa * t + 16) / 116;
+                    }
+                }
+
+                const fx = f(normalizedX);
+                const fy = f(normalizedY);
+                const fz = f(normalizedZ);
+
+                const l = 116 * fy - 16;
+                const a = 500 * (fx - fy);
+                const b = 200 * (fy - fz);
+
+                return { l: l, a: a, b: b };
+            }
+
+            const linearRGB1 = {
+                r: sRGBToLinearRGB(rgb1.r),
+                g: sRGBToLinearRGB(rgb1.g),
+                b: sRGBToLinearRGB(rgb1.b)
+            };
+            const linearRGB2 = {
+                r: sRGBToLinearRGB(rgb2.r),
+                g: sRGBToLinearRGB(rgb2.g),
+                b: sRGBToLinearRGB(rgb2.b)
+            };
+
+            const xyz1 = linearRGBtoXYZ(linearRGB1.r, linearRGB1.g, linearRGB1.b);
+            const xyz2 = linearRGBtoXYZ(linearRGB2.r, linearRGB2.g, linearRGB2.b);
+
+            const lab1 = XYZtoCIELAB(xyz1.x, xyz1.y, xyz1.z);
+            const lab2 = XYZtoCIELAB(xyz2.x, xyz2.y, xyz2.z);
+
+            const deltaL = lab2.l - lab1.l;
+            const deltaA = lab2.a - lab1.a;
+            const deltaB = lab2.b - lab1.b;
+
+            const deltaE = Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
+
+            return deltaE;
+        }
+
+        /**
+         * Parses CSV data (string format) and finds the closest 25 colors to a given RGB color based on Delta E*ab.
+         */
+        function findClosestColorsFromCSV(csvData, targetRGB) {
+            const lines = csvData.trim().split('\n');
+            const headers = lines[0].split(',');
+            const colors = [];
+
+            // Parse CSV data into color objects
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length !== headers.length) { // Basic CSV validation - skip lines that don't match header length
+                    console.warn(`Skipping line ${i+1} due to incorrect number of values: ${lines[i]}`);
+                    continue;
+                }
+                const colorObject = {};
+                try {
+                    for (let j = 0; j < headers.length; j++) {
+                        const header = headers[j].trim();
+                        const value = values[j].trim();
+                        colorObject[header] = value; // Store all values as strings initially
+                    }
+                    // Convert R, G, B to numbers for deltaE calculation (after storing strings)
+                    colorObject.rgbForDeltaE = {
+                        r: parseInt(colorObject.R, 10),
+                        g: parseInt(colorObject.G, 10),
+                        b: parseInt(colorObject.B, 10)
+                    };
+                     if (isNaN(colorObject.rgbForDeltaE.r) || isNaN(colorObject.rgbForDeltaE.g) || isNaN(colorObject.rgbForDeltaE.b)) {
+                        console.warn(`Skipping color '${colorObject.Name}' due to invalid RGB values.`);
+                        continue; // Skip if RGB is not valid number
+                    }
+
+
+                    colors.push(colorObject);
+                } catch (error) {
+                    console.error(`Error parsing line ${i+1}: ${lines[i]} - ${error}`);
+                    continue; // Skip line on parsing error
+                }
+            }
+
+            const colorsWithDistance = [];
+
+            for (const color of colors) {
+                try {
+                    const deltaE = deltaEStarab(targetRGB, color.rgbForDeltaE); // Use parsed RGB for DeltaE calculation
+                    colorsWithDistance.push({
+                        name: color.Name,
+                        hex: color.Hex,
+                        deltaE: deltaE,
+                        rgb: color.rgbForDeltaE // Store the parsed RGB object
+                    });
+                } catch (error) {
+                    console.error(`Error calculating Delta E for color '${color.Name}': ${error}`);
+                    continue; // Skip color if Delta E calculation fails
+                }
+
+            }
+
+            // Sort colors by Delta E*ab value (closest first)
+            colorsWithDistance.sort((a, b) => a.deltaE - b.deltaE);
+
+            // Return the top 25 closest colors (or fewer if there are less than 25 colors)
+            return colorsWithDistance.slice(0, Math.min(25, colorsWithDistance.length));
+        }
+
+        // Injected CSV data for freetone styles
+        const colorCSVData = `$$$TODO_INPUT_CSV$$$`;
+
+
+        const hexInput = document.getElementById('targetHexInput');
+        const compareButton = document.getElementById('compareButton');
+        const targetSwatch = document.getElementById('targetColorSwatch');
+
+        // 1. Always keep # in input and handle pasting/typing without it
+        hexInput.addEventListener('input', function() {
+            let inputValue = hexInput.value;
+            if (!inputValue.startsWith('#')) {
+                inputValue = '#' + inputValue;
+                hexInput.value = inputValue;
+            }
+            // Update swatch color immediately on input
+            updateSwatchColor(inputValue);
+        });
+
+        function updateSwatchColor(hexValue) {
+            let hexToUse = hexValue;
+            if (!hexToUse.startsWith('#')) {
+                hexToUse = '#' + hexToUse; // Ensure hash is there for display update
+            }
+            if (isValidHexColor(hexToUse)) {
+                targetSwatch.style.backgroundColor = hexToUse;
+            }
+        }
+
+        function isValidHexColor(hex) {
+            return /^#([0-9A-F]{3}){1,2}$/i.test(hex);
+        }
+
+
+        // 2. Allow "Enter" key to trigger comparison, scroll to top, and UPDATE URL
+        hexInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission if inside a form
+                compareButton.click();
+                // Snappy scroll to top
+                if ('scrollSnap' in document.documentElement.style) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); // Modern browsers with smooth scroll
+                } else {
+                    window.scrollTo(0, 0); // Fallback for older browsers (instant scroll)
+                }
+                // UPDATE URL HASH
+                updateURLHash(hexInput.value); // Call function to update URL
+            }
+        });
+
+
+        compareButton.addEventListener('click', function() {
+            let hexColorInput = hexInput.value;
+            if (!hexColorInput.startsWith('#')) {
+                hexColorInput = '#' + hexColorInput;
+                hexInput.value = hexColorInput;
+            }
+
+            const targetRGB = hexToRgb(hexColorInput);
+
+            if (!targetRGB) {
+                alert("Invalid Hex Color Input");
+                return;
+            }
+
+            updateSwatchColor(hexColorInput);
+
+            const closestColors = findClosestColorsFromCSV(colorCSVData, targetRGB);
+            displayClosestColors(closestColors);
+            // UPDATE URL HASH
+            updateURLHash(hexInput.value); // Call function to update URL
+        });
+
+        function hexToRgb(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            }
+            const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function displayClosestColors(colors) {
+            const resultsDiv = document.getElementById('closestColorList');
+            resultsDiv.innerHTML = '';
+
+            if (colors.length === 0) {
+                resultsDiv.textContent = "No valid colors found in CSV data.";
+                return;
+            }
+
+            colors.forEach((color, index) => {
+                const colorResultDiv = document.createElement('div');
+                colorResultDiv.classList.add('color-result');
+
+                const swatchSpan = document.createElement('div');
+                swatchSpan.classList.add('color-swatch');
+                swatchSpan.style.backgroundColor = color.hex;
+                colorResultDiv.appendChild(swatchSpan);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.classList.add('color-name');
+                nameSpan.textContent = color.name;
+                colorResultDiv.appendChild(nameSpan);
+
+                const hexSpan = document.createElement('span');
+                hexSpan.classList.add('color-hex');
+                hexSpan.textContent = color.hex;
+                colorResultDiv.appendChild(hexSpan);
+
+                const deltaESpan = document.createElement('span');
+                deltaESpan.classList.add('color-deltae');
+                deltaESpan.textContent = `Delta E*ab: ${color.deltaE.toFixed(2)}`;
+                colorResultDiv.appendChild(deltaESpan);
+
+                resultsDiv.appendChild(colorResultDiv);
+            });
+        }
+
+        // --- Feature 2: URL Hash Color Input (remains) ---
+        function processURLHash() {
+            const hash = window.location.hash;
+            if (hash) {
+                const hexFromHash = hash.substring(1); // Remove the '#'
+                if (isValidHexColor('#' + hexFromHash)) {
+                    const hexValue = '#' + hexFromHash.toUpperCase(); // Ensure uppercase and include '#'
+                    hexInput.value = hexValue;
+                    updateSwatchColor(hexValue);
+                    compareButton.click(); //  decide whether to auto-compare on URL load
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', processURLHash);
+
+        // --- Feature 3: Update URL Hash on Compare (remains) ---
+        function updateURLHash(hexValue) {
+            window.location.hash = hexValue.toUpperCase(); // Set URL hash to the hex value (uppercase)
+        }
+
+    </script>
+</body>
+</html>
