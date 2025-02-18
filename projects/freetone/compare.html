@@ -356,7 +356,7 @@
             colorsWithDistance.sort((a, b) => a.deltaE - b.deltaE);
 
             // Return the top 25 closest colors (or fewer if there are less than 25 colors)
-            return colorsWithDistance.slice(0, Math.min(25, colorsWithDistance.length));
+            return colorsWithDistance.slice(0, Math.min(40, colorsWithDistance.length));
         }
 
         // Injected CSV data for freetone styles
