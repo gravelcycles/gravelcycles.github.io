@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <title>Freetone Color Comparator</title>
     <style>
@@ -10,8 +11,10 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            scroll-behavior: smooth; /* Enable smooth scroll by default */
+            scroll-behavior: smooth;
+            /* Enable smooth scroll by default */
         }
+
         .container {
             width: 90%;
             max-width: 960px;
@@ -21,11 +24,13 @@
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 20px;
         }
+
         .input-area-wrapper {
             position: sticky;
             top: 0;
@@ -35,18 +40,21 @@
             margin-bottom: 20px;
             border-bottom: 2px solid #ccc;
         }
+
         .input-area {
             text-align: left;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
         }
+
         label {
             display: block;
             margin-bottom: 10px;
             font-size: 1.2em;
             color: #555;
         }
+
         .input-row {
             display: flex;
             flex-direction: row;
@@ -55,6 +63,7 @@
             gap: 20px;
             margin-bottom: 20px;
         }
+
         #targetColorSwatch {
             display: block;
             width: calc(20% - 30px);
@@ -66,6 +75,7 @@
             border-radius: 10px;
             box-sizing: border-box;
         }
+
         #targetHexInput {
             flex-grow: 1;
             padding: 12px;
@@ -73,6 +83,7 @@
             border: 1px solid #ddd;
             border-radius: 8px;
         }
+
         button {
             padding: 12px 30px;
             font-size: 1em;
@@ -85,22 +96,27 @@
             width: auto;
             align-self: flex-start;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         #results {
             margin-top: 30px;
             padding-top: 20px;
         }
+
         h2 {
             color: #333;
             margin-bottom: 20px;
         }
+
         #closestColorList {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
         }
+
         .color-result {
             width: calc(20% - 30px);
             margin: 15px;
@@ -111,6 +127,7 @@
             background-color: #fff;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
+
         .color-swatch {
             display: block;
             width: 100%;
@@ -121,18 +138,21 @@
             margin-bottom: 10px;
             box-sizing: border-box;
         }
+
         .color-name {
             font-weight: bold;
             display: block;
             margin-bottom: 5px;
             color: #333;
         }
+
         .color-hex {
             font-family: monospace;
             display: block;
             margin-bottom: 5px;
             color: #666;
         }
+
         .color-deltae {
             font-style: italic;
             color: gray;
@@ -146,16 +166,19 @@
                 padding: 20px;
                 margin: 10px;
             }
+
             .input-area {
                 text-align: center;
                 align-items: stretch;
             }
+
             .input-row {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 10px;
                 margin-bottom: 10px;
             }
+
             #targetColorSwatch {
                 width: 60%;
                 padding-bottom: 60%;
@@ -165,12 +188,15 @@
                 min-width: 60px;
                 min-height: 60px;
             }
+
             #targetHexInput {
                 width: 100%;
             }
+
             label {
                 text-align: center;
             }
+
             button {
                 margin-top: 0;
                 width: auto;
@@ -180,10 +206,12 @@
             #closestColorList {
                 justify-content: flex-start;
             }
+
             .color-result {
                 width: calc(50% - 30px);
             }
         }
+
         @media (max-width: 576px) {
             .color-result {
                 width: calc(100% - 30px);
@@ -195,18 +223,25 @@
             display: flex;
             justify-content: center;
             width: 100%;
-            margin-top: 20px; /* Add some space above the counter */
-            margin-bottom: 10px; /* Add some space below the counter */
-        }
-        #viewCounter img {
-            max-width: 100%; /* Ensure image doesn't exceed container width */
-            height: auto; /* Maintain aspect ratio */
-            display: block; /* Prevent extra space below image */
-            margin: 0 auto; /* Center the image if necessary */
+            margin-top: 20px;
+            /* Add some space above the counter */
+            margin-bottom: 10px;
+            /* Add some space below the counter */
         }
 
+        #viewCounter img {
+            max-width: 100%;
+            /* Ensure image doesn't exceed container width */
+            height: auto;
+            /* Maintain aspect ratio */
+            display: block;
+            /* Prevent extra space below image */
+            margin: 0 auto;
+            /* Center the image if necessary */
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Freetone Color Comparator</h1>
@@ -231,9 +266,10 @@
         </div>
 
         <div id="viewCounter">
-             <a href="https://hits.seeyoufarm.com">
-                 <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgravelcycles.github.io%2Fprojects%2Ffreetone%2Fcompare.html&count_bg=%23000000&title_bg=%23555555&icon=&icon_color=%23BB0404&title=views&edge_flat=false"/>
-             </a>
+            <a href="https://hits.seeyoufarm.com">
+                <img
+                    src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgravelcycles.github.io%2Fprojects%2Ffreetone%2Fcompare.html&count_bg=%23000000&title_bg=%23555555&icon=&icon_color=%23BB0404&title=views&edge_flat=false" />
+            </a>
         </div>
 
     </div>
@@ -327,7 +363,7 @@
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
                 if (values.length !== headers.length) { // Basic CSV validation - skip lines that don't match header length
-                    console.warn(`Skipping line ${i+1} due to incorrect number of values: ${lines[i]}`);
+                    console.warn(`Skipping line ${i + 1} due to incorrect number of values: ${lines[i]}`);
                     continue;
                 }
                 const colorObject = {};
@@ -343,7 +379,7 @@
                         g: parseInt(colorObject.G, 10),
                         b: parseInt(colorObject.B, 10)
                     };
-                     if (isNaN(colorObject.rgbForDeltaE.r) || isNaN(colorObject.rgbForDeltaE.g) || isNaN(colorObject.rgbForDeltaE.b)) {
+                    if (isNaN(colorObject.rgbForDeltaE.r) || isNaN(colorObject.rgbForDeltaE.g) || isNaN(colorObject.rgbForDeltaE.b)) {
                         console.warn(`Skipping color '${colorObject.Name}' due to invalid RGB values.`);
                         continue; // Skip if RGB is not valid number
                     }
@@ -351,7 +387,7 @@
 
                     colors.push(colorObject);
                 } catch (error) {
-                    console.error(`Error parsing line ${i+1}: ${lines[i]} - ${error}`);
+                    console.error(`Error parsing line ${i + 1}: ${lines[i]} - ${error}`);
                     continue; // Skip line on parsing error
                 }
             }
@@ -1701,7 +1737,7 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
         const targetSwatch = document.getElementById('targetColorSwatch');
 
         // 1. Always keep # in input and handle pasting/typing without it
-        hexInput.addEventListener('input', function() {
+        hexInput.addEventListener('input', function () {
             let inputValue = hexInput.value;
             if (!inputValue.startsWith('#')) {
                 inputValue = '#' + inputValue;
@@ -1727,7 +1763,7 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
 
 
         // 2. Allow "Enter" key to trigger comparison, scroll to top, and UPDATE URL
-        hexInput.addEventListener('keydown', function(event) {
+        hexInput.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // Prevent form submission if inside a form
                 compareButton.click();
@@ -1743,7 +1779,7 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
         });
 
 
-        compareButton.addEventListener('click', function() {
+        compareButton.addEventListener('click', function () {
             let hexColorInput = hexInput.value;
             if (!hexColorInput.startsWith('#')) {
                 hexColorInput = '#' + hexColorInput;
@@ -1829,7 +1865,7 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             processURLHash();
             compareButton.click(); // Trigger comparison on page load
         });
@@ -1841,4 +1877,5 @@ SEMPLETONE+ 1905 C,#ff79ef,0.0,0.06210421770811081,0.5237354040145874,0.0,255.0,
 
     </script>
 </body>
+
 </html>
