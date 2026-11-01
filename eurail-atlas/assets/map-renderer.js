@@ -1,26 +1,38 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=c57723f34959554f';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=c57723f34959554f';
-import{RouteIndex}from'./rail-picking.js?v=c57723f34959554f';
-import{renderWorld}from'./rail-lod.js?v=c57723f34959554f';
-import{RasterClient}from'./raster-client.js?v=c57723f34959554f';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=80af8db1c2bf3cc1';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=80af8db1c2bf3cc1';
+import{RouteIndex}from'./rail-picking.js?v=80af8db1c2bf3cc1';
+import{renderWorld}from'./rail-lod.js?v=80af8db1c2bf3cc1';
+import{RasterClient}from'./raster-client.js?v=80af8db1c2bf3cc1';
+
+export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
 const intersects=(b,v,pad=12)=>b[2]>=v.centerX-(v.width/2+pad)/v.scale&&b[0]<=v.centerX+(v.width/2+pad)/v.scale&&b[3]>=v.centerY-(v.height/2+pad)/v.scale&&b[1]<=v.centerY+(v.height/2+pad)/v.scale;
 
 // Same policy predicates as qualifiesEdge, with each service count calculated
 // only once. The tests compare visibility for all modes/days/source switches.
-export function renderStyles(edges,{state,dates,stations},zoom){
-  const pixels=new Uint8Array(edges.length*16),minimum=threshold(state.min),days=Math.max(1,selectedDays(state.day,dates).length),pass=effectivePass(state),colors=new Map();
+export function prepareStyles(edges,{state,dates,stations},zoom){
+  const pixels=new Uint8Array(edges.length*16),frequencies=new Float64Array(edges.length*2),days=Math.max(1,selectedDays(state.day,dates).length),pass=effectivePass(state),colors=new Map();
   const put=(offset,color,width,dash,value)=>{let c=colors.get(color);if(!c){c=rgb(color);colors.set(color,c);}pixels[offset]=Math.round(c[0]*255);pixels[offset+1]=Math.round(c[1]*255);pixels[offset+2]=Math.round(c[2]*255);pixels[offset+3]=Math.round(width/16*255);pixels[offset+4]=255;pixels[offset+5]=dash?255:0;pixels[offset+6]=255;pixels[offset+7]=frequencyPriority(value);};
   for(let i=0;i<edges.length;i++){
     const edge=edges[i];
     if(state.sources&&!state.sources.has(edge.source)||edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source)||!state.schematic&&/schematic|unresolved/.test(edge.geometryStatus||''))continue;
     if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
     const value=edgeCount(edge,state,dates)/days,review=pass&&state.review?conditionalCount(edge,state,dates)/days:0;
-    if(value>0&&value>=minimum)put(i*16,colorFor(value),Math.min(4.4,.42+Math.log1p(value)*.47)*(zoom<5?.8:1),/schematic/.test(edge.geometryStatus||''),value);
-    if(review>0&&review>=minimum)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32),true,review);
+    frequencies[i*2]=value;frequencies[i*2+1]=review;
+    if(value>0)put(i*16,colorFor(value),Math.min(4.4,.42+Math.log1p(value)*.47)*(zoom<5?.8:1),/schematic|train_ferry/.test(edge.geometryStatus||''),value);
+    if(review>0)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32),true,review);
   }
+  return{pixels,frequencies};
+}
+
+// Slider changes reuse all source/date/pass calculations and exact averages.
+// A color/priority byte is intentionally not used for this numerical boundary.
+export function thresholdStyles(base,minimum){
+  const pixels=base.pixels.slice();
+  if(minimum>0)for(let i=0;i<base.frequencies.length;i++)if(base.frequencies[i]<minimum)pixels.fill(0,i*8,i*8+8);
   return pixels;
 }
+export function renderStyles(edges,data,zoom){return thresholdStyles(prepareStyles(edges,data,zoom),threshold(data.state.min));}
 
 function canvas(){const c=document.createElement('canvas');c.className='atlas-canvas leaflet-zoom-animated';c.style.transformOrigin='0 0';c.setAttribute('aria-hidden','true');return c;}
 
@@ -33,7 +45,7 @@ export class RailRenderer{
     catch{
       this.canvas=canvas();this.surface=this.canvas;
       if(requested!=='canvas'&&typeof Worker!=='undefined'&&typeof OffscreenCanvas!=='undefined'){
-        try{this.raster=new RasterClient(this.canvas,{onFrame:info=>this.workerPresented(info),onError:()=>this.workerFailed(),canPresent:job=>!this.zoomAnimating&&job.metadata.intent===this.intent});}
+        try{this.raster=new RasterClient(this.canvas,{onFrame:info=>this.workerPresented(info),onError:()=>this.workerFailed(),canPresent:job=>!this.zoomAnimating&&sameCamera(job.view,this.view())&&(job.metadata.intent===this.intent||this.thresholdPreview&&job.metadata.thresholdPreview&&job.metadata.baseKey===this.filterKey(this.getData(),this.map.getZoom())),allowIntermediate:job=>this.thresholdPreview&&job.metadata.thresholdPreview});}
         catch{this.canvas=canvas();this.surface=this.canvas;}
       }
       if(!this.raster)this.ctx=this.canvas.getContext('2d');
@@ -65,7 +77,8 @@ export class RailRenderer{
     this.surface.style.transition='transform 250ms cubic-bezier(0.25,0.1,0.25,1)';
     this.surface.style.transform=`translate3d(${x}px,${y}px,0) scale(${scale})`;
   }
-  schedule(){this.intent++;this.fullFrame=true;this.requestFrame();}
+  schedule(){this.thresholdPreview=false;this.intent++;this.fullFrame=true;this.requestFrame();}
+  previewThreshold(){this.thresholdPreview=true;this.intent++;this.fullFrame=true;this.requestFrame();}
   scheduleView(){this.intent++;this.requestFrame();}
   requestFrame(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;if(this.fullFrame){this.fullFrame=false;this.draw();}else this.drawView();});}
   resize(view){
@@ -90,14 +103,17 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})));
   }
-  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.min,state.alternatives,state.schematic,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,stations.size]);}
+  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.alternatives,state.schematic,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,stations.size]);}
   draw(){
     if(this.zoomAnimating)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';
     const geometryChanged=this.edgesReference!==data.edges||!this.meshContains(view)||this.lodBucket!==Math.ceil(view.zoom),meshStarted=performance.now();
     if(geometryChanged)this.prepareGeometry(data.edges,view);
-    const meshMs=performance.now()-meshStarted,key=this.filterKey(data,view.zoom);let pixels=this.styleCache.get(key),styleReused=!!pixels;
-    if(!pixels){pixels=renderStyles(this.meshEdges,data,view.zoom);this.styleCache.set(key,pixels);if(this.styleCache.size>4)this.styleCache.delete(this.styleCache.keys().next().value);}
+    const meshMs=performance.now()-meshStarted,baseKey=this.filterKey(data,view.zoom),minimum=threshold(data.state.min),key=baseKey+':min:'+minimum;
+    let base=this.styleCache.get(baseKey),styleReused=!!base;
+    if(!base){base=prepareStyles(this.meshEdges,data,view.zoom);this.styleCache.set(baseKey,base);if(this.styleCache.size>4)this.styleCache.delete(this.styleCache.keys().next().value);}
+    const pixels=this.currentStyleKey===key&&this.lastStyleBase===base?this.lastPixels:thresholdStyles(base,minimum);
+    this.lastStyleBase=base;this.lastPixels=pixels;this.minimum=minimum;this.currentBaseKey=baseKey;
     this.reviewOn=effectivePass(data.state)&&data.state.review;
     if(this.raster){
       this.currentStyleKey=key;this.lastPixels=pixels;this.rasterHighlights=this.rasterHighlightItems(data);
@@ -110,7 +126,7 @@ export class RailRenderer{
     this.currentStyleKey=key;this.paintView=view;let visible=0;
     for(let i=0;i<this.meshEdges.length;i++)if((pixels[i*16+4]||pixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
     this.visible=visible;this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
-    this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{visible,renderMs:performance.now()-started,meshMs,geometryReused:!geometryChanged,styleReused,engine:this.gpu&&!this.gpuLost?'webgl':'canvas',segments:this.gpu&&!this.gpuLost?this.gpu.main.count:undefined}}));
+    this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{visible,minimum,renderMs:performance.now()-started,meshMs,geometryReused:!geometryChanged,styleReused,engine:this.gpu&&!this.gpuLost?'webgl':'canvas',segments:this.gpu&&!this.gpuLost?this.gpu.main.count:undefined}}));
   }
   alignBitmap(view){
     if(!this.paintView)return;
@@ -129,7 +145,7 @@ export class RailRenderer{
   queueRaster(view,detail){
     let visible=0;for(let i=0;i<this.meshEdges.length;i++)if((this.lastPixels[i*16+4]||this.lastPixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
     this.canvas.setAttribute('aria-busy','true');this.map.getContainer().setAttribute('aria-busy','true');
-    this.raster.paint({...view,dpr:this.dpr},this.lastPixels,{styleKey:this.currentStyleKey+':lod:'+this.lodBucket,reviewOn:this.reviewOn,highlights:this.rasterHighlights||[],metadata:{intent:this.intent,detail:{...detail,visible}}});
+    this.raster.paint({...view,dpr:this.dpr},this.lastPixels,{styleKey:this.currentStyleKey+':lod:'+this.lodBucket,reviewOn:this.reviewOn,highlights:this.rasterHighlights||[],metadata:{intent:this.intent,thresholdPreview:!!this.thresholdPreview,baseKey:this.currentBaseKey,detail:{...detail,visible,minimum:this.minimum}}});
   }
   workerPresented(info){
     this.paintView=info.view;this.alignBitmap(this.view());this.visible=info.metadata.detail.visible;

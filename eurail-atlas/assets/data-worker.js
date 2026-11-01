@@ -1,9 +1,11 @@
-import{decodeJSONResponse}from'./data-codec.js?v=c57723f34959554f';
-import{prepareEdge,normalize}from'./atlas-core.js?v=c57723f34959554f';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=80af8db1c2bf3cc1';
+import{decodeDisplay}from'./display-codec.js?v=80af8db1c2bf3cc1';
+import{prepareEdge,normalize}from'./atlas-core.js?v=80af8db1c2bf3cc1';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
 export function prepareLoadedData(data){
+  data=decodeDisplay(data);
   const transfer=[];
   const prepare=rows=>rows.map(row=>{
     const edge=prepareEdge(row);if(!edge)return null;
@@ -92,8 +94,8 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
     if(!Number.isInteger(message?.id))return;
     const controller=new AbortController();controllers.set(message.id,controller);
     try{
-      if(message.op==='load'){
-        const result=prepareLoadedData(await readJSON(message.url,{fresh:message.fresh,signal:controller.signal}));
+      if(message.op==='load'||message.op==='decode'){
+        const result=prepareLoadedData(message.op==='decode'?await decodeJSONBytes(message.bytes):await readJSON(message.url,{fresh:message.fresh,signal:controller.signal}));
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result:result.data},result.transfer);
       }else if(message.op==='journeys'){
         const result=await queryJourneys(message.urls,message.from,message.to,{signal:controller.signal});

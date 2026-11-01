@@ -1,9 +1,9 @@
 // Software rasterization stays off the input/animation thread. The main thread
 // presents a completed bitmap; it retains the original geometry for picking.
 export class RasterClient{
-  constructor(canvas,{onFrame=()=>{},onError=()=>{},canPresent=()=>true,workerFactory}={}){
-    this.canvas=canvas;this.onFrame=onFrame;this.onError=onError;this.canPresent=canPresent;this.pending=null;this.active=null;this.sequence=0;this.ready=false;this.destroyed=false;this.sentEpoch=null;
-    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=c57723f34959554f',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
+  constructor(canvas,{onFrame=()=>{},onError=()=>{},canPresent=()=>true,allowIntermediate=()=>false,workerFactory}={}){
+    this.canvas=canvas;this.onFrame=onFrame;this.onError=onError;this.canPresent=canPresent;this.allowIntermediate=allowIntermediate;this.pending=null;this.active=null;this.sequence=0;this.ready=false;this.destroyed=false;this.sentEpoch=null;
+    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=80af8db1c2bf3cc1',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
     this.worker=create();
     try{this.context=canvas.getContext('bitmaprenderer');}catch{}
     if(!this.context){this.context=canvas.getContext('2d');this.drawImage=true;}
@@ -52,7 +52,7 @@ export class RasterClient{
     const job=this.active;
     if(!job||message.id!==job.id){message.bitmap?.close();return;}
     this.active=null;
-    if(job.id===this.sequence&&message.epoch===this.scene?.epoch&&this.canPresent(job)){
+    if((job.id===this.sequence||this.allowIntermediate(job))&&message.epoch===this.scene?.epoch&&this.canPresent(job)){
       try{
         const dpr=job.view.dpr||1,width=Math.round(job.view.width*dpr),height=Math.round(job.view.height*dpr);
         if(this.canvas.width!==width)this.canvas.width=width;if(this.canvas.height!==height)this.canvas.height=height;
