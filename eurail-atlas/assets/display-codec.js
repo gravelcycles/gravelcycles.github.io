@@ -1,4 +1,4 @@
-import{worldPoint}from'./atlas-core.js?v=80af8db1c2bf3cc1';
+import{worldPoint}from'./atlas-core.js?v=9d23a9023aa44a0a';
 
 export const DISPLAY_FORMAT='rail-atlas-display-v1';
 const metrics=['daily','eurailDaily','reviewedEurailDaily','conditionalDaily','reviewedConditionalDaily'];
@@ -17,7 +17,7 @@ export function decodeDisplay(data){
     !Array.isArray(offsets)||offsets.length!==rows.length+1||offsets[0]!==0||!Array.isArray(coordinates)||coordinates.length%2||
     offsets.at(-1)*2!==coordinates.length)invalid();
   for(const values of daily)if(!Array.isArray(values)||values.length!==7||values.some(v=>typeof v!=='number'||!Number.isFinite(v)||v<0))invalid();
-  const edges=[],identities=new Set();
+  const edges=[],identities=new Set(),projected=new Float64Array(coordinates.length);
   for(let index=0;index<rows.length;index++){
     const row=rows[index],pair=pairIds[index],start=offsets[index],end=offsets[index+1];
     if(!Array.isArray(row)||row.length!==9||(row[3]!==0&&row[3]!==1)||
@@ -26,14 +26,14 @@ export function decodeDisplay(data){
     const source=at(sources,row[0]),country=at(countries,row[1]),geometryStatus=at(geometry,row[2]),primary=Boolean(row[3]);
     const id='pair:'+JSON.stringify([source,pair,primary,geometryStatus]);
     if(identities.has(id))invalid();identities.add(id);
-    const world=new Float64Array((end-start)*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    const world=projected.subarray(start*2,end*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
     for(let i=start;i<end;i++){
       const lon=coordinates[i*2],lat=coordinates[i*2+1];
       if(typeof lon!=='number'||typeof lat!=='number'||!Number.isFinite(lon)||!Number.isFinite(lat)||lon< -180||lon>180||lat< -85||lat>85)invalid();
       const[x,y]=worldPoint(lon,lat),offset=(i-start)*2;world[offset]=x;world[offset+1]=y;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
     }
-    const edge={id,source,country,mapPairId:pair,primary,geometryStatus,_displayOnly:true,_startupIndex:index,
+    const edge={id,source,country,mapPairId:pair,primary,geometryStatus,_displayOnly:true,_startupIndex:index,_displayCatalog:data.catalog==='network'?'network':'overview',
       _world:world,_pointCount:end-start,_bbox:[minX,minY,maxX,maxY],
       coords:[[coordinates[start*2],coordinates[start*2+1]],[coordinates[(end-1)*2],coordinates[(end-1)*2+1]]]};
     for(let field=0;field<metrics.length;field++)edge[metrics[field]]=at(daily,row[field+4]);

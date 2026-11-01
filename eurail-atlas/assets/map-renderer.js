@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=80af8db1c2bf3cc1';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=80af8db1c2bf3cc1';
-import{RouteIndex}from'./rail-picking.js?v=80af8db1c2bf3cc1';
-import{renderWorld}from'./rail-lod.js?v=80af8db1c2bf3cc1';
-import{RasterClient}from'./raster-client.js?v=80af8db1c2bf3cc1';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=9d23a9023aa44a0a';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=9d23a9023aa44a0a';
+import{RouteIndex}from'./rail-picking.js?v=9d23a9023aa44a0a';
+import{renderWorld}from'./rail-lod.js?v=9d23a9023aa44a0a';
+import{RasterClient}from'./raster-client.js?v=9d23a9023aa44a0a';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -19,7 +19,7 @@ export function prepareStyles(edges,{state,dates,stations},zoom){
     if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
     const value=edgeCount(edge,state,dates)/days,review=pass&&state.review?conditionalCount(edge,state,dates)/days:0;
     frequencies[i*2]=value;frequencies[i*2+1]=review;
-    if(value>0)put(i*16,colorFor(value),Math.min(4.4,.42+Math.log1p(value)*.47)*(zoom<5?.8:1),/schematic|train_ferry/.test(edge.geometryStatus||''),value);
+    if(value>0)put(i*16,colorFor(value),Math.min(4.4,.75+Math.log1p(value)*.48)*(zoom<5?.95:1),/schematic|train_ferry/.test(edge.geometryStatus||''),value);
     if(review>0)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32),true,review);
   }
   return{pixels,frequencies};

@@ -1,17 +1,17 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=80af8db1c2bf3cc1';
-import{decodeDisplay}from'./display-codec.js?v=80af8db1c2bf3cc1';
-import{prepareEdge,normalize}from'./atlas-core.js?v=80af8db1c2bf3cc1';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=9d23a9023aa44a0a';
+import{decodeDisplay}from'./display-codec.js?v=9d23a9023aa44a0a';
+import{prepareEdge,normalize}from'./atlas-core.js?v=9d23a9023aa44a0a';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
 export function prepareLoadedData(data){
   data=decodeDisplay(data);
-  const transfer=[];
+  const transfer=[],transferred=new Set();
   const prepare=rows=>rows.map(row=>{
     const edge=prepareEdge(row);if(!edge)return null;
     edge._pointCount=edge._world.length/2;
     edge.coords=[edge.coords[0],edge.coords[edge.coords.length-1]];
-    transfer.push(edge._world.buffer);return edge;
+    if(!transferred.has(edge._world.buffer)){transferred.add(edge._world.buffer);transfer.push(edge._world.buffer);}return edge;
   }).filter(Boolean);
   if(Array.isArray(data?.edges))data.edges=prepare(data.edges);
   else if(Array.isArray(data)&&data[0]?.coords)data=prepare(data);

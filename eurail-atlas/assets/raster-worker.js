@@ -1,6 +1,6 @@
 // Native Canvas paint and rasterization may take hundreds of milliseconds on
 // software graphics. Keeping those operations here leaves input/rAF responsive.
-let canvas,context,paths=[],epoch=null;const styleGroups=new Map();
+let canvas,context,paths=[],epoch=null;const styleGroups=new Map(),groupPaths=new Map();
 function pathFor(world){const path=new Path2D();path.moveTo(world[0],world[1]);for(let i=2;i<world.length;i+=2)path.lineTo(world[i],world[i+1]);return path;}
 function groupsFor(message){
   const key=message.styleKey+'|'+message.reviewOn;
@@ -10,10 +10,20 @@ function groupsFor(message){
     const offset=i*16+pass*8;if(!pixels[offset+4])continue;
     const color=`rgb(${pixels[offset]},${pixels[offset+1]},${pixels[offset+2]})`,width=Math.round(pixels[offset+3]/255*16*4)/4,dash=!!pixels[offset+5];
     const style=pass+':'+color+':'+width+':'+dash;let group=groups.get(style);
-    if(!group){group={path:new Path2D(),color,width,dash,pass,priority:pixels[offset+7]};groups.set(style,group);}
-    group.path.addPath(paths[i]);
+    if(!group){group={style,indices:[],color,width,dash,pass,priority:pixels[offset+7]};groups.set(style,group);}
+    group.indices.push(i);
   }
-  const result=[...groups.values()].sort((a,b)=>a.pass-b.pass||a.priority-b.priority);
+  const result=[...groups.values()].map(group=>{
+    // A slider boundary changes only a few frequency/style groups. Reuse every
+    // other native path after proving identical route membership, including
+    // source/day/pass filters. No hash or approximate threshold is involved.
+    const previous=groupPaths.get(group.style),indices=group.indices;
+    if(previous&&previous.indices.length===indices.length&&indices.every((id,i)=>id===previous.indices[i]))group.path=previous.path;
+    else{group.path=new Path2D();for(const id of indices)group.path.addPath(paths[id]);}
+    groupPaths.delete(group.style);groupPaths.set(group.style,{path:group.path,indices});
+    return group;
+  }).sort((a,b)=>a.pass-b.pass||a.priority-b.priority);
+  while(groupPaths.size>128)groupPaths.delete(groupPaths.keys().next().value);
   if(message.styleKey)styleGroups.set(key,result);while(styleGroups.size>2)styleGroups.delete(styleGroups.keys().next().value);
   return result;
 }
@@ -23,7 +33,7 @@ globalThis.onmessage=event=>{
   try{
     if(message.op==='geometry'){
       paths=[];for(let i=0;i<message.offsets.length-1;i++)paths.push(pathFor(message.coordinates.subarray(message.offsets[i],message.offsets[i+1])));
-      epoch=message.epoch;styleGroups.clear();return;
+      epoch=message.epoch;styleGroups.clear();groupPaths.clear();return;
     }
     if(message.op!=='paint')return;
     if(message.epoch!==epoch)throw new Error('Raster geometry epoch mismatch');
