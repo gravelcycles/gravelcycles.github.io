@@ -1,43 +1,177 @@
-import{perDay,colorFor,qualifiesEdge,segmentDistanceSquared,effectivePass,selectedDays,threshold,conditionalCount}from'./atlas-core.js?v=93165b59b2a7dd02';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=11a88b388351503c';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=11a88b388351503c';
+import{RouteIndex}from'./rail-picking.js?v=11a88b388351503c';
+import{renderWorld}from'./rail-lod.js?v=11a88b388351503c';
+import{RasterClient}from'./raster-client.js?v=11a88b388351503c';
+
+const intersects=(b,v,pad=12)=>b[2]>=v.centerX-(v.width/2+pad)/v.scale&&b[0]<=v.centerX+(v.width/2+pad)/v.scale&&b[3]>=v.centerY-(v.height/2+pad)/v.scale&&b[1]<=v.centerY+(v.height/2+pad)/v.scale;
+
+// Same policy predicates as qualifiesEdge, with each service count calculated
+// only once. The tests compare visibility for all modes/days/source switches.
+export function renderStyles(edges,{state,dates,stations},zoom){
+  const pixels=new Uint8Array(edges.length*16),minimum=threshold(state.min),days=Math.max(1,selectedDays(state.day,dates).length),pass=effectivePass(state),colors=new Map();
+  const put=(offset,color,width,dash,value)=>{let c=colors.get(color);if(!c){c=rgb(color);colors.set(color,c);}pixels[offset]=Math.round(c[0]*255);pixels[offset+1]=Math.round(c[1]*255);pixels[offset+2]=Math.round(c[2]*255);pixels[offset+3]=Math.round(width/16*255);pixels[offset+4]=255;pixels[offset+5]=dash?255:0;pixels[offset+6]=255;pixels[offset+7]=frequencyPriority(value);};
+  for(let i=0;i<edges.length;i++){
+    const edge=edges[i];
+    if(state.sources&&!state.sources.has(edge.source)||edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source)||!state.schematic&&/schematic|unresolved/.test(edge.geometryStatus||''))continue;
+    if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
+    const value=edgeCount(edge,state,dates)/days,review=pass&&state.review?conditionalCount(edge,state,dates)/days:0;
+    if(value>0&&value>=minimum)put(i*16,colorFor(value),Math.min(4.4,.42+Math.log1p(value)*.47)*(zoom<5?.8:1),/schematic/.test(edge.geometryStatus||''),value);
+    if(review>0&&review>=minimum)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32),true,review);
+  }
+  return pixels;
+}
+
+function canvas(){const c=document.createElement('canvas');c.className='atlas-canvas leaflet-zoom-animated';c.style.transformOrigin='0 0';c.setAttribute('aria-hidden','true');return c;}
+
 export class RailRenderer{
   constructor(map,getData,onPick,onHover){
-    this.map=map;this.getData=getData;this.onPick=onPick;this.onHover=onHover;
-    this.canvas=document.createElement('canvas');this.canvas.className='atlas-canvas';this.canvas.setAttribute('aria-hidden','true');map.getContainer().appendChild(this.canvas);
-    this.ctx=this.canvas.getContext('2d');this.grid=new Map();this.paths=new WeakMap();this.frame=0;this.hoverFrame=0;this.dragging=false;
-    map.on('move',()=>this.pan());map.on('moveend zoomend resize',()=>this.schedule());
+    this.map=map;this.getData=getData;this.onPick=onPick;this.onHover=onHover;this.canvas=canvas();this.surface=this.canvas;
+    this.paths=new WeakMap();this.styleCache=new Map();this.canvasGroups=new Map();this.frame=0;this.hoverFrame=0;this.dragging=false;this.gpuLost=false;this.intent=0;this.geometryEpoch=0;
+    const requested=new URLSearchParams(location.search).get('renderer');
+    try{if(requested==='canvas'||requested==='worker')throw new Error('Canvas requested');this.gpu=new RailGPU(this.canvas,{allowSoftware:requested==='webgl'});}
+    catch{
+      this.canvas=canvas();this.surface=this.canvas;
+      if(requested!=='canvas'&&typeof Worker!=='undefined'&&typeof OffscreenCanvas!=='undefined'){
+        try{this.raster=new RasterClient(this.canvas,{onFrame:info=>this.workerPresented(info),onError:()=>this.workerFailed(),canPresent:job=>!this.zoomAnimating&&job.metadata.intent===this.intent});}
+        catch{this.canvas=canvas();this.surface=this.canvas;}
+      }
+      if(!this.raster)this.ctx=this.canvas.getContext('2d');
+    }
+    this.canvas.dataset.renderer=this.gpu?'webgl':this.raster?'worker-canvas':'canvas';map.getContainer().appendChild(this.canvas);
+    if(this.gpu){
+      this.canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();this.gpuLost=true;this.canvas.hidden=true;this.surface=canvas();this.surface.dataset.renderer='canvas';this.ctx=this.surface.getContext('2d');map.getContainer().appendChild(this.surface);this.canvas.dataset.renderer='canvas-fallback';this.schedule();});
+      this.canvas.addEventListener('webglcontextrestored',()=>{try{this.gpu.restore();if(this.surface!==this.canvas)this.surface.remove();this.surface=this.canvas;this.canvas.hidden=false;this.gpuLost=false;this.canvas.dataset.renderer='webgl';this.edgesReference=null;this.highlightKey=null;this.highlightEdgesReference=null;this.schedule();}catch{this.gpuLost=true;}});
+    }
+    map.on('move',()=>this.pan());map.on('moveend resize',()=>this.schedule());
+    map.on('zoomanim',event=>this.zoomAnimation(event));map.on('zoomend',()=>{this.zoomAnimating=false;this.surface.style.transition='none';if(this.raster)this.alignBitmap(this.view());else this.surface.style.transform='';this.schedule();});
     map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge);});
-    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';this.onHover(edge,point);});});
+    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';this.onHover(edge,point);});});
     map.on('mouseout',()=>this.clearHover());map.on('dragstart',()=>{this.dragging=true;this.clearHover();});map.on('dragend',()=>{this.dragging=false;});
   }
+  view(){const size=this.map.getSize(),zoom=this.map.getZoom(),center=this.map.project(this.map.getCenter(),0);return{width:size.x,height:size.y,zoom,scale:2**zoom,centerX:center.x,centerY:center.y};}
   clearHover(){if(this.hoverFrame)cancelAnimationFrame(this.hoverFrame);this.hoverFrame=0;this.map.getContainer().style.cursor='';this.onHover(null);}
-  pan(){if(!this.paintCenter||this.paintZoom!==this.map.getZoom()){this.schedule();return;}const center=this.map.project(this.map.getCenter(),this.paintZoom);this.panX=this.paintCenter.x-center.x;this.panY=this.paintCenter.y-center.y;this.canvas.style.transform=`translate3d(${this.panX}px,${this.panY}px,0)`;this.clearHover();}
-  schedule(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.draw();});}
-  pathFor(edge){let path=this.paths.get(edge._world);if(path)return path;path=new Path2D();const p=edge._world;path.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)path.lineTo(p[i],p[i+1]);this.paths.set(p,path);return path;}
-  draw(){
-    const started=performance.now(),{edges,state,dates,stations,selected,highlightIds}=this.getData(),size=this.map.getSize(),dpr=Math.min(2,devicePixelRatio||1);
-    if(this.canvas.width!==Math.round(size.x*dpr)||this.canvas.height!==Math.round(size.y*dpr)){this.canvas.width=Math.round(size.x*dpr);this.canvas.height=Math.round(size.y*dpr);this.canvas.style.width=size.x+'px';this.canvas.style.height=size.y+'px';}
-    const ctx=this.ctx;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size.x,size.y);this.grid.clear();
-    const z=this.map.getZoom(),scale=2**z,center=this.map.project(this.map.getCenter(),z);this.paintCenter=center;this.paintZoom=z;this.panX=0;this.panY=0;this.canvas.style.transform='';this.left=center.x-size.x/2;this.top=center.y-size.y/2;this.scale=scale;
-    const groups=new Map(),minimum=threshold(state.min),days=Math.max(1,selectedDays(state.day,dates).length),pass=effectivePass(state);let visible=0;
-    for(const edge of edges){
-      const b=edge._bbox;if(b[2]*scale<this.left-12||b[0]*scale>this.left+size.x+12||b[3]*scale<this.top-12||b[1]*scale>this.top+size.y+12)continue;
-      if(!qualifiesEdge(edge,state,dates,stations))continue;visible++;
-      const value=perDay(edge,state,dates),review=pass&&state.review?conditionalCount(edge,state,dates)/days:0,styles=[];
-      if(value>0&&value>=minimum)styles.push({value,color:colorFor(value),width:Math.min(4.4,.42+Math.log1p(value)*.47)*(z<5?.8:1),dash:/schematic/.test(edge.geometryStatus||''),review:false});
-      if(review>0&&review>=minimum)styles.push({value:review,color:'#b99453',width:Math.min(3.3,.85+Math.log1p(review)*.32),dash:true,review:true});
-      for(const style of styles){const key=style.color+':'+Math.round(style.width*3)+':'+style.dash;let group=groups.get(key);if(!group){group={path:new Path2D(),...style};groups.set(key,group);}group.path.addPath(this.pathFor(edge));}
-      const x0=Math.max(0,Math.floor((b[0]*scale-this.left-7)/48)),x1=Math.min(Math.ceil(size.x/48),Math.floor((b[2]*scale-this.left+7)/48)),y0=Math.max(0,Math.floor((b[1]*scale-this.top-7)/48)),y1=Math.min(Math.ceil(size.y/48),Math.floor((b[3]*scale-this.top+7)/48));
-      for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const key=x+','+y;if(!this.grid.has(key))this.grid.set(key,[]);this.grid.get(key).push(edge);}
-    }
-    // Paths stay in projected world coordinates. Panning/filters reuse their
-    // native geometry instead of reprojecting every vertex on the main thread.
-    ctx.setTransform(dpr*scale,0,0,dpr*scale,-this.left*dpr,-this.top*dpr);ctx.lineCap='round';ctx.lineJoin='round';
-    for(const group of [...groups.values()].sort((a,b)=>Number(a.review)-Number(b.review)||a.value-b.value)){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/scale;ctx.globalAlpha=1;ctx.setLineDash(group.dash?[4/scale,4/scale]:[]);ctx.stroke(group.path);}
-    ctx.globalAlpha=1;ctx.setLineDash([]);
-    if(highlightIds?.size)for(const edge of edges)if((edge._directionEdges||[edge]).some(row=>highlightIds.has(row.id)))this.highlight(edge,2.5);
-    if(selected?._world)this.highlight(selected);this.visible=visible;
-    this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{visible,renderMs:performance.now()-started}}));
+  pan(){
+    this.clearHover();if(this.zoomAnimating)return;
+    if(this.raster&&this.meshEdges){this.alignBitmap(this.view());this.scheduleView();return;}
+    if(this.gpu&&!this.gpuLost&&this.meshEdges){this.scheduleView();return;}
+    if(!this.paintView||this.paintView.zoom!==this.map.getZoom()){this.schedule();return;}
+    const view=this.view();this.surface.style.transform=`translate3d(${(this.paintView.centerX-view.centerX)*view.scale}px,${(this.paintView.centerY-view.centerY)*view.scale}px,0)`;
   }
-  highlight(edge,width=3.2){const ctx=this.ctx,path=this.pathFor(edge);ctx.globalAlpha=1;ctx.strokeStyle='#fffcf1';ctx.lineWidth=(width+4)/this.scale;ctx.stroke(path);ctx.strokeStyle='#c95b32';ctx.lineWidth=width/this.scale;ctx.stroke(path);}
-  pick(x,y){x-=this.panX||0;y-=this.panY||0;const candidates=this.grid.get(Math.floor(x/48)+','+Math.floor(y/48))||[],padding=7.5/this.scale;let winner=null,best=padding**2;const wx=(x+this.left)/this.scale,wy=(y+this.top)/this.scale;for(const edge of candidates){const b=edge._bbox;if(wx<b[0]-padding||wx>b[2]+padding||wy<b[1]-padding||wy>b[3]+padding)continue;const p=edge._world;for(let i=2;i<p.length;i+=2){const d=segmentDistanceSquared(wx,wy,p[i-2],p[i-1],p[i],p[i+1]);if(d<best){best=d;winner=edge;}}}return winner;}
+  zoomAnimation(event){
+    if(!this.paintView)return;this.zoomAnimating=true;this.clearHover();
+    const view=this.paintView,target=this.map.project(event.center,0),scale=2**(event.zoom-view.zoom),factor=2**event.zoom;
+    const x=(view.centerX-target.x)*factor+(1-scale)*view.width/2,y=(view.centerY-target.y)*factor+(1-scale)*view.height/2;
+    this.surface.style.transition='transform 250ms cubic-bezier(0.25,0.1,0.25,1)';
+    this.surface.style.transform=`translate3d(${x}px,${y}px,0) scale(${scale})`;
+  }
+  schedule(){this.intent++;this.fullFrame=true;this.requestFrame();}
+  scheduleView(){this.intent++;this.requestFrame();}
+  requestFrame(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;if(this.fullFrame){this.fullFrame=false;this.draw();}else this.drawView();});}
+  resize(view){
+    const dpr=Math.min(2,devicePixelRatio||1),width=Math.round(view.width*dpr),height=Math.round(view.height*dpr);
+    this.dpr=dpr;if(this.raster)return;
+    if(this.surface.width!==width||this.surface.height!==height){this.surface.width=width;this.surface.height=height;this.surface.style.width=view.width+'px';this.surface.style.height=view.height+'px';}
+    this.dpr=dpr;
+  }
+  drawView(){
+    if(this.raster&&this.meshEdges&&this.lastPixels&&!this.zoomAnimating){const view=this.view();this.alignBitmap(view);this.queueRaster(view,{geometryReused:true,styleReused:true,meshMs:0,cpuSubmitMs:0});return;}
+    if(!this.gpu||this.gpuLost||!this.meshEdges||this.zoomAnimating)return;
+    const view=this.view();this.resize(view);this.gpu.draw(view,this.reviewOn);this.paintView=view;
+    this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
+  }
+  meshContains(view){const b=this.meshBounds;return b&&b[0]<=view.centerX-view.width/2/view.scale&&b[1]<=view.centerY-view.height/2/view.scale&&b[2]>=view.centerX+view.width/2/view.scale&&b[3]>=view.centerY+view.height/2/view.scale;}
+  prepareGeometry(edges,view){
+    const padded={...view,width:view.width*2,height:view.height*2};
+    this.meshEdges=edges.filter(edge=>intersects(edge._bbox,padded)).sort((a,b)=>(a.weekly||0)-(b.weekly||0));
+    this.meshBounds=[view.centerX-padded.width/2/view.scale,view.centerY-padded.height/2/view.scale,view.centerX+padded.width/2/view.scale,view.centerY+padded.height/2/view.scale];
+    this.index=new RouteIndex(this.meshEdges);this.edgesReference=edges;this.styleCache.clear();this.canvasGroups.clear();this.currentStyleKey=null;
+    this.lodBucket=Math.ceil(view.zoom);
+    if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
+    if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})));
+  }
+  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.min,state.alternatives,state.schematic,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,stations.size]);}
+  draw(){
+    if(this.zoomAnimating)return;
+    const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';
+    const geometryChanged=this.edgesReference!==data.edges||!this.meshContains(view)||this.lodBucket!==Math.ceil(view.zoom),meshStarted=performance.now();
+    if(geometryChanged)this.prepareGeometry(data.edges,view);
+    const meshMs=performance.now()-meshStarted,key=this.filterKey(data,view.zoom);let pixels=this.styleCache.get(key),styleReused=!!pixels;
+    if(!pixels){pixels=renderStyles(this.meshEdges,data,view.zoom);this.styleCache.set(key,pixels);if(this.styleCache.size>4)this.styleCache.delete(this.styleCache.keys().next().value);}
+    this.reviewOn=effectivePass(data.state)&&data.state.review;
+    if(this.raster){
+      this.currentStyleKey=key;this.lastPixels=pixels;this.rasterHighlights=this.rasterHighlightItems(data);
+      this.queueRaster(view,{geometryReused:!geometryChanged,styleReused,meshMs,cpuSubmitMs:performance.now()-started});return;
+    }
+    if(this.gpu&&!this.gpuLost){
+      if(this.currentStyleKey!==key||geometryChanged)this.gpu.styles(pixels);
+      this.updateHighlights(data);this.reviewOn=effectivePass(data.state)&&data.state.review;this.gpu.draw(view,this.reviewOn);
+    }else this.drawCanvas(data,view,pixels,key);
+    this.currentStyleKey=key;this.paintView=view;let visible=0;
+    for(let i=0;i<this.meshEdges.length;i++)if((pixels[i*16+4]||pixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
+    this.visible=visible;this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
+    this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{visible,renderMs:performance.now()-started,meshMs,geometryReused:!geometryChanged,styleReused,engine:this.gpu&&!this.gpuLost?'webgl':'canvas',segments:this.gpu&&!this.gpuLost?this.gpu.main.count:undefined}}));
+  }
+  alignBitmap(view){
+    if(!this.paintView)return;
+    const painted=this.paintView,scale=view.scale/painted.scale,x=(painted.centerX-view.centerX)*view.scale+(view.width-painted.width*scale)/2,y=(painted.centerY-view.centerY)*view.scale+(view.height-painted.height*scale)/2;
+    this.surface.style.transform=Math.abs(x)+Math.abs(y)+Math.abs(scale-1)<.000001?'':`translate3d(${x}px,${y}px,0) scale(${scale})`;
+  }
+  rasterHighlightItems(data){
+    const key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',');
+    if(this.rasterHighlightKey===key&&this.rasterHighlightEdges===data.edges)return this.rasterHighlights;
+    const selected=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id))),items=[];
+    for(const edge of selected)items.push({world:edge._world,color:'#fbfaf6',width:6.5});
+    for(const edge of selected)items.push({world:edge._world,color:'#d4512c',width:2.5});
+    if(data.selected?._world)items.push({world:data.selected._world,color:'#fbfaf6',width:7.2},{world:data.selected._world,color:'#d4512c',width:3.2});
+    this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;return items;
+  }
+  queueRaster(view,detail){
+    let visible=0;for(let i=0;i<this.meshEdges.length;i++)if((this.lastPixels[i*16+4]||this.lastPixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
+    this.canvas.setAttribute('aria-busy','true');this.map.getContainer().setAttribute('aria-busy','true');
+    this.raster.paint({...view,dpr:this.dpr},this.lastPixels,{styleKey:this.currentStyleKey+':lod:'+this.lodBucket,reviewOn:this.reviewOn,highlights:this.rasterHighlights||[],metadata:{intent:this.intent,detail:{...detail,visible}}});
+  }
+  workerPresented(info){
+    this.paintView=info.view;this.alignBitmap(this.view());this.visible=info.metadata.detail.visible;
+    this.canvas.setAttribute('aria-busy','false');this.map.getContainer().setAttribute('aria-busy','false');this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
+    this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{...info.metadata.detail,renderMs:info.latencyMs,workerPaintMs:info.workerPaintMs,latencyMs:info.latencyMs,engine:'worker-canvas'}}));
+  }
+  workerFailed(){
+    this.raster?.destroy();this.raster=null;if(this.surface!==this.canvas)this.surface.remove();
+    this.canvas.hidden=true;this.surface=canvas();this.surface.dataset.renderer='canvas';this.ctx=this.surface.getContext('2d');this.map.getContainer().appendChild(this.surface);this.canvas.dataset.renderer='canvas-fallback';this.canvas.setAttribute('aria-busy','false');this.map.getContainer().setAttribute('aria-busy','false');this.schedule();
+  }
+  updateHighlights(data){
+    const ids=[...data.highlightIds||[]],key=(data.selected?.id||'')+'|'+ids.join(',');
+    if(this.highlightKey===key&&this.highlightEdgesReference===data.edges)return;
+    const edges=[],styles=[],chosen=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id)));
+    for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#fbfaf6',width:6.5}});}
+    for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#d4512c',width:2.5}});}
+    if(data.selected?._world){edges.push(data.selected,data.selected);styles.push({normal:{color:'#fbfaf6',width:7.2}},{normal:{color:'#d4512c',width:3.2}});}
+    this.gpu.upload(edges,true);this.gpu.styles(styles,true);this.highlightKey=key;this.highlightEdgesReference=data.edges;
+  }
+  pathFor(edge,zoom){
+    let paths=this.paths.get(edge._world);if(!paths){paths=new Map();this.paths.set(edge._world,paths);}
+    const bucket=Math.ceil(zoom);if(paths.has(bucket))return paths.get(bucket);
+    const path=new Path2D(),p=renderWorld(edge._world,zoom);path.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)path.lineTo(p[i],p[i+1]);paths.set(bucket,path);if(paths.size>3)paths.delete(paths.keys().next().value);return path;
+  }
+  drawCanvas(data,view,pixels,key){
+    const ctx=this.ctx,dpr=this.dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,view.width,view.height);
+    ctx.setTransform(dpr*view.scale,0,0,dpr*view.scale,dpr*(view.width/2-view.centerX*view.scale),dpr*(view.height/2-view.centerY*view.scale));ctx.lineCap='round';ctx.lineJoin='round';
+    key+=':lod:'+Math.ceil(view.zoom);let cached=this.canvasGroups.get(key);
+    if(!cached){cached=[];for(let pass=0;pass<2;pass++){
+      const groups=new Map();
+      for(let i=0;i<this.meshEdges.length;i++){
+        const edge=this.meshEdges[i],offset=i*16+pass*8;if(!pixels[offset+4])continue;
+        const color=`rgb(${pixels[offset]},${pixels[offset+1]},${pixels[offset+2]})`,width=Math.max(.25,Math.round(pixels[offset+3]/255*16*4)/4),dash=!!pixels[offset+5],key=color+':'+width+':'+dash;
+        let group=groups.get(key);if(!group){group={path:new Path2D(),color,width,dash,priority:pixels[offset+7]};groups.set(key,group);}group.path.addPath(this.pathFor(edge,view.zoom));
+      }
+      cached.push([...groups.values()].sort((a,b)=>a.priority-b.priority));
+    }this.canvasGroups.set(key,cached);if(this.canvasGroups.size>4)this.canvasGroups.delete(this.canvasGroups.keys().next().value);}
+    for(const groups of cached)for(const group of groups){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/view.scale;ctx.setLineDash(group.dash?[4/view.scale,4/view.scale]:[]);ctx.stroke(group.path);}
+    ctx.setLineDash([]);
+    for(const edge of data.edges)if((edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id)))this.highlightCanvas(edge,view,2.5);
+    if(data.selected?._world)this.highlightCanvas(data.selected,view,3.2);
+  }
+  highlightCanvas(edge,view,width){const ctx=this.ctx,path=this.pathFor(edge,view.zoom);ctx.strokeStyle='#fbfaf6';ctx.lineWidth=(width+4)/view.scale;ctx.stroke(path);ctx.strokeStyle='#d4512c';ctx.lineWidth=width/view.scale;ctx.stroke(path);}
+  pick(x,y){if(!this.index||this.zoomAnimating)return null;const data=this.getData();return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.state,data.dates,data.stations));}
 }
