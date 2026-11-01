@@ -17,8 +17,8 @@
       "sha256": "c0a9c1796070892b83af5535cbfcb7fe116ad5eb5d575df8fe8b840ae727a06c"
     },
     "assets/app.js": {
-      "bytes": 53328,
-      "sha256": "3ce0ba9f038699ac0ff911c8562b5b905b6f341767731fda02a4a30e94903198"
+      "bytes": 53346,
+      "sha256": "4249c0fe47b8c9f910d439c652dc1156836ccd7f070d54cc8e8848dd3612b9b5"
     },
     "assets/atlas-core.js": {
       "bytes": 11786,
@@ -54,7 +54,7 @@
     },
     "assets/map-renderer.js": {
       "bytes": 6134,
-      "sha256": "0737f35b3cf009327c0215628f6f8bb395c8b5b3a439bade9b0e6e87318fe89e"
+      "sha256": "560b4ecb6b214e4c1a4a8bd647f07868f78c44c0b365169dacb5a711ad78de90"
     },
     "assets/public-sources/pl-polish-national-e3736d72067c.zip": {
       "bytes": 7746876,
@@ -1534,7 +1534,7 @@
     },
     "index.html": {
       "bytes": 11515,
-      "sha256": "a8d02644ace4dac23905d207b8b9ed359b4a8d187ca59edb59b5e4f45db6e6d6"
+      "sha256": "4392db63071a399f6537662171544f0bc36055a0d377a6a8c53d3849bf3444f8"
     }
   },
   "kind": "rail-atlas-public-pages",
