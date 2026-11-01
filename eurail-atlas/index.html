@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#153238">
   <meta name="description" content="An interactive atlas of European railway schedules, Eurail services and the places they connect.">
   <title>Rail Atlas — Europe, by rail</title>
-  <link rel="stylesheet" href="assets/leaflet.css?v=11a88b388351503c">
-  <link rel="stylesheet" href="assets/app.css?v=11a88b388351503c">
-  <script defer src="assets/leaflet.js?v=11a88b388351503c"></script>
-  <script type="module" src="assets/app.js?v=11a88b388351503c"></script>
+  <link rel="stylesheet" href="assets/leaflet.css?v=c57723f34959554f">
+  <link rel="stylesheet" href="assets/app.css?v=c57723f34959554f">
+  <script defer src="assets/leaflet.js?v=c57723f34959554f"></script>
+  <script type="module" src="assets/app.js?v=c57723f34959554f"></script>
 </head>
 <body>
   <header class="site-header">
@@ -60,8 +61,9 @@
       </div>
     </aside>
     <section class="map-area" aria-label="Interactive European railway map">
-      <div id="map" tabindex="0" role="region" aria-label="Railway map. Use the plus and minus controls to zoom, or drag to pan."></div>
+      <div id="map" tabindex="0" role="region" aria-label="Railway map. Pinch or use the plus and minus controls to zoom, and drag to explore cities and streets."></div>
       <div class="map-heading"><div class="map-kicker"><span class="small-line"></span><span id="mapKicker">EUROPEAN RAIL ATLAS</span></div><h2 id="mapTitle">Train frequency</h2><p id="mapSubtitle">Scheduled services per day, along recorded station pairs.</p></div>
+      <div class="map-notices"><button class="map-coverage-warning" id="italyCoverage" hidden>Timetable gaps in Italy: national Trenitalia / Italo feeds aren’t in this public snapshot. <span>Details ↗</span></button><p class="basemap-status" id="basemapStatus" role="status" hidden>Street map unavailable. Showing the country outline fallback.</p></div>
       <div class="map-tools"><button id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out" title="Zoom out">−</button><span></span><button id="fitMap" aria-label="Fit the current region" title="Fit the current region"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button><button id="fullscreenMap" aria-label="Enter fullscreen map" aria-pressed="false" title="Fullscreen map"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 2H2v5m11-5h5v5M2 13v5h5m11-5v5h-5"/></svg></button></div>
       <div class="map-loading" id="mapLoading" role="status"><span class="loading-track"><i></i></span><strong>Opening the atlas</strong><span>Preparing the recorded rail network…</span></div>
       <div class="map-error" id="mapError" role="alert" hidden><strong>The map data could not be loaded.</strong><p>Check your connection and try again.</p><button id="retryButton">Try again</button></div>
@@ -70,7 +72,7 @@
       <div class="map-legend"><div class="legend-heading"><span id="legendTitle">SCHEDULED TRAINS / DAY</span><span class="legend-help" title="Scheduled train traversals, not passenger counts or actual operations">i</span></div><div class="legend-gradient"></div><div class="legend-labels"><span>1</span><span>6</span><span>24</span><span>72</span><span>150+</span></div><div class="review-key" id="reviewKey" hidden><i></i>Conditional · check before travel</div><p id="legendNote">Each line follows a retained or inferred railway corridor.</p></div>
       <div class="map-summary" id="mapSummary"><span class="summary-dot"></span><span>Loading the network…</span></div>
       <div class="overview-note" id="overviewNote">Overview: busiest corridors. Zoom in for local lines.</div>
-      <div class="map-credits"><span>Natural Earth · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span><span id="swissCredit" hidden>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></span><button id="creditsButton">Sources & method</button></div>
+      <div class="map-credits"><span>Map: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span><span id="swissCredit" hidden>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></span><button id="creditsButton">Sources & method</button></div>
     </section>
   </main>
   <dialog class="method-dialog" id="methodDialog" aria-labelledby="methodTitle"><button class="close-button" id="closeMethod" aria-label="Close data information">×</button><p class="eyebrow">A MAP WITH ITS SOURCES ATTACHED</p><h2 id="methodTitle">Read the network.<br><em>Know the limits.</em></h2><div id="methodContent"><p>This atlas represents scheduled services for <strong>1–7 November 2026</strong>. Frequencies describe timetabled trains, not passenger use or proof of actual running. Frequency counts services between recorded station calls. Overlapping express and local paths are not summed into a single physical-track total.</p><p>National and regional source feeds can overlap. Source filters retain that distinction; these are not certified counts of unique trains across Europe.</p><p>The Eurail views show canonical included services plus a small, separately labelled set reviewed against current primary sources for Global Pass second class. Other conditional services appear only with the optional amber overlay; unknown eligibility stays excluded. Reservations, supplements and seat availability are separate.</p><p>Railway alignments are source-provided or inferred from physical infrastructure. They do not certify exact operating track. Explicitly schematic geometry is hidden unless selected.</p></div><div class="method-footer"><span id="methodRelease">Dated source snapshot</span><button class="primary-button" id="backToMap">Back to the map <span>↗</span></button></div></dialog>

@@ -1,10 +1,10 @@
-import{prepareLoadedData,readJSON,queryJourneys}from'./data-worker.js?v=11a88b388351503c';
+import{prepareLoadedData,readJSON,queryJourneys}from'./data-worker.js?v=c57723f34959554f';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=11a88b388351503c',import.meta.url);
+      const url=new URL('./data-worker.js?v=c57723f34959554f',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });

@@ -13,16 +13,16 @@
       "sha256": "9cc8cef15f5e8bcbe99a13ee8d268f6f6f6a5811cd1ed05056ef4608c9b16fd1"
     },
     "assets/app.css": {
-      "bytes": 25421,
-      "sha256": "715d568023174356919993bf7818070ee2df978fab9134a998946400578c779f"
+      "bytes": 26442,
+      "sha256": "a6a6f537d29e8a2f5633cce8fdad52b61bc85e967e0aaea4a511f68f2971522e"
     },
     "assets/app.js": {
-      "bytes": 55922,
-      "sha256": "4aaa9e780a92e7c23ed970303010d88e6858201eec3b703dc3841292aba1466b"
+      "bytes": 57696,
+      "sha256": "9fa817057364b404c92692331fffa777ae23a2a95cacc982cd694b3c03896292"
     },
     "assets/atlas-core.js": {
       "bytes": 12045,
-      "sha256": "3413201f27d987ae14ee4106d1053dd3986698d933fab035a607db46fad28625"
+      "sha256": "0633493f077eb2e1b66689ba63cfa923301f386d2ebbf43594b6a20268332925"
     },
     "assets/countries.geojson": {
       "bytes": 838726,
@@ -34,11 +34,11 @@
     },
     "assets/data-loader.js": {
       "bytes": 2628,
-      "sha256": "67fb002278d391a5f06952ed95f0d01343d82974f409415404f20f81be18907b"
+      "sha256": "607df848c37e5f08527b12d4e1c79e8d5bbaa0d7516e4de3b9286566686f4a5f"
     },
     "assets/data-worker.js": {
       "bytes": 6189,
-      "sha256": "c020d0ab579bfb00b1dd20a4432c7b8e1978bba6937a4e121adc09a79a57b628"
+      "sha256": "cd84155f5af9b2dae47c8da22f346760ee45e00b7531266dceb15fdf98dbe41d"
     },
     "assets/dm-sans-400.ttf": {
       "bytes": 48280,
@@ -62,7 +62,7 @@
     },
     "assets/map-renderer.js": {
       "bytes": 17326,
-      "sha256": "3ca941f1a8acb3b7549324f402e52e9b862ee4ea021b61afa427154264a6667d"
+      "sha256": "bef20c7c9d24bc1ae0f4dc6feb143e49002d869c062011f69db6925c798a6fd3"
     },
     "assets/public-sources/pl-polish-national-e3736d72067c.zip": {
       "bytes": 7746876,
@@ -74,15 +74,15 @@
     },
     "assets/rail-lod.js": {
       "bytes": 1680,
-      "sha256": "22600a86db2a3d522be97bd2cbfe35647f0894a0fe4ba0d3b89540067cc981a8"
+      "sha256": "c545488b7c8f5c52650c8f4af30a3a1ed93a784b5c84d3521412540b7cff1de0"
     },
     "assets/rail-picking.js": {
       "bytes": 4729,
-      "sha256": "e4a7bf860532fa902cceaa2d21337dc0aec4c13a37f53644da8bca11da7a97af"
+      "sha256": "2c8035394d10d738bde144c4e27224e929e786502e420a6c8a24848a8fc189cb"
     },
     "assets/raster-client.js": {
       "bytes": 5115,
-      "sha256": "02ae9df7f7f59ef40978e8e70bee5f14b59537ff55e2dc9b2486e4a4ca4576af"
+      "sha256": "cab5ad78dcc3da3ce2d8b919ee48735684054312f57bd9cc22a0d2d8d55bf527"
     },
     "assets/raster-worker.js": {
       "bytes": 3965,
@@ -1517,8 +1517,12 @@
       "sha256": "8155eb195a92bec3eb195ece67ffd982f7e8587e52f14e6dc355abc9d4fb6f3b"
     },
     "data/manifest.json": {
-      "bytes": 274579,
-      "sha256": "8e9a9431c973ae80e56bcae32d628c250f15f64b9b51f016010220bcafb3e2ae"
+      "bytes": 275197,
+      "sha256": "40064ed8021fe3d3877de5bb0c6eb47352dad3346ea52587dd0600391b94f638"
+    },
+    "data/network/italy.json.gz": {
+      "bytes": 147059,
+      "sha256": "ad6598060b8c9d01832a15a1cf6036fb73adac3a712d38a9569d022311a86a03"
     },
     "data/network/n000.json.gz": {
       "bytes": 1106802,
@@ -1561,12 +1565,12 @@
       "sha256": "1a29cec70bcd963a40879c48fc51431f501e85fce459a26d2c154dcdaa6da3e9"
     },
     "index.html": {
-      "bytes": 11508,
-      "sha256": "6034b9c38e62397d5f8a95aafbd44b38ff6eec42b24d1cc0ed84a5bd3a6d2bdc"
+      "bytes": 11954,
+      "sha256": "e28ff364de4f7de1c4304b55eff4722ef28a8ca4566d036bff3424d80038e911"
     }
   },
   "kind": "rail-atlas-public-pages",
-  "manifestSha256": "8e9a9431c973ae80e56bcae32d628c250f15f64b9b51f016010220bcafb3e2ae",
+  "manifestSha256": "40064ed8021fe3d3877de5bb0c6eb47352dad3346ea52587dd0600391b94f638",
   "prefix": "eurail-atlas",
   "sourceIds": [
     "at_mvo_rail_transitous",

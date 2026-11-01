@@ -1,12 +1,13 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount}from'./atlas-core.js?v=11a88b388351503c';
-import{RailRenderer}from'./map-renderer.js?v=11a88b388351503c';
-import{resolveAssetURL}from'./data-codec.js?v=11a88b388351503c';
-import{AtlasDataLoader}from'./data-loader.js?v=11a88b388351503c';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount}from'./atlas-core.js?v=c57723f34959554f';
+import{RailRenderer}from'./map-renderer.js?v=c57723f34959554f';
+import{resolveAssetURL}from'./data-codec.js?v=c57723f34959554f';
+import{AtlasDataLoader}from'./data-loader.js?v=c57723f34959554f';
 
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=new Map(),chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
 let chunkPaintTimer=0;
+let italyNetworkPromise=null;
 function paintChunks(flush=false){if(flush){clearTimeout(chunkPaintTimer);chunkPaintTimer=0;renderer.schedule();}else if(!chunkPaintTimer)chunkPaintTimer=setTimeout(()=>{chunkPaintTimer=0;renderer.schedule();},300);}
 const manifestURL=new URL('data/manifest.json',location.href),dataURL=path=>resolveAssetURL(path,manifest,manifestURL);
 function json(url,{fresh=false,signal}={}){if(!cache.has(url)){const promise=dataLoader.load(url,{fresh,signal}).catch(error=>{if(cache.get(url)===promise)cache.delete(url);throw error;});cache.set(url,promise);}return cache.get(url);}
@@ -42,7 +43,7 @@ function setControlsOpen(open){
 function mapFramePadding(){
   const phone=matchMedia('(max-width:600px)').matches,compact=matchMedia('(max-width:900px)').matches;
   const top=document.body.classList.contains('map-focus')?56:compact?112:64;
-  return{paddingTopLeft:[18,top+76],paddingBottomRight:[phone?48:72,phone?165:110]};
+  return{paddingTopLeft:[18,top+76],paddingBottomRight:[phone?18:72,phone?165:110]};
 }
 let controlsBeforeFullscreen=false;
 function syncMapFullscreen(active){
@@ -64,28 +65,54 @@ async function toggleMapFullscreen(){
 function setupMapControls(){
   $('controlsToggle').onclick=()=>setControlsOpen($('mapControls').hidden);
   $('closeControls').onclick=()=>{setControlsOpen(false);$('controlsToggle').focus();};
-  $('coverageMethod').onclick=method;$('fullscreenMap').onclick=toggleMapFullscreen;
+  $('coverageMethod').onclick=method;$('italyCoverage').onclick=method;$('fullscreenMap').onclick=toggleMapFullscreen;
   document.addEventListener('fullscreenchange',()=>syncMapFullscreen(Boolean(document.fullscreenElement)));
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!document.fullscreenElement&&document.body.classList.contains('map-focus'))syncMapFullscreen(false);});
   setControlsOpen(state.mode==='leg');
 }
 
-function initMap(){map=L.map('map',{zoomControl:false,attributionControl:false,zoomSnap:.25,zoomDelta:.5,minZoom:3,maxZoom:12,maxBounds:[[-5,-55],[85,90]],maxBoundsViscosity:.6,preferCanvas:true});if(state.center)map.setView(state.center.slice(0,2),state.center[2]);else map.fitBounds(state.mode==='italy'?ITALY_BOUNDS:EUROPE_BOUNDS,mapFramePadding());markers=L.layerGroup().addTo(map);renderer=new RailRenderer(map,()=>({edges:currentEdges(),state,dates,stations:stationMap,selected,highlightIds:journeyHighlights}),pickEdge,hoverEdge);renderer.canvas.addEventListener('atlasdraw',event=>updateMapSummary(event.detail.visible));map.on('moveend zoomend',()=>{saveURL();scheduleChunks();renderHubs();});$('zoomIn').onclick=()=>map.zoomIn(.5);$('zoomOut').onclick=()=>map.zoomOut(.5);$('fitMap').onclick=()=>fitRegion();}
-function drawCountries(geo){if(baseLayer)map.removeLayer(baseLayer);baseLayer=L.geoJSON(geo,{interactive:false,style:{fillColor:'#f3f3ed',fillOpacity:1,color:'#bdcbc5',weight:.8,opacity:.9}}).addTo(map);baseLayer.bringToBack();}
+function initMap(){
+  map=L.map('map',{zoomControl:false,attributionControl:false,zoomSnap:.25,zoomDelta:1,minZoom:3,maxZoom:19,touchZoom:true,maxBounds:[[-5,-55],[85,90]],maxBoundsViscosity:.6,preferCanvas:true});
+  // The compact country layer is an offline fallback beneath the detailed map.
+  map.createPane('countryFallback').style.zIndex=150;
+  if(state.center)map.setView(state.center.slice(0,2),state.center[2]);else map.fitBounds(state.mode==='italy'?ITALY_BOUNDS:EUROPE_BOUNDS,mapFramePadding());
+  let loadedTiles=0;
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,maxNativeZoom:19,updateWhenIdle:true,updateWhenZooming:false,
+    keepBuffer:0,detectRetina:false,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  }).on('loading',()=>{loadedTiles=0;}).on('tileload',()=>{loadedTiles++;$('basemapStatus').hidden=true;map.getContainer().dataset.basemap='available';})
+    .on('tileerror',event=>{event.tile.style.visibility='hidden';})
+    .on('load',()=>{$('basemapStatus').hidden=loadedTiles>0;if(!loadedTiles)map.getContainer().dataset.basemap='fallback';}).addTo(map);
+  markers=L.layerGroup().addTo(map);renderer=new RailRenderer(map,()=>({edges:currentEdges(),state,dates,stations:stationMap,selected,highlightIds:journeyHighlights}),pickEdge,hoverEdge);
+  renderer.canvas.addEventListener('atlasdraw',event=>updateMapSummary(event.detail.visible));map.on('moveend zoomend',()=>{saveURL();scheduleChunks();renderHubs();});
+  $('zoomIn').onclick=()=>map.zoomIn();$('zoomOut').onclick=()=>map.zoomOut();$('fitMap').onclick=()=>fitRegion();
+}
+function drawCountries(geo){if(baseLayer)map.removeLayer(baseLayer);baseLayer=L.geoJSON(geo,{pane:'countryFallback',interactive:false,style:{fillColor:'#f3f3ed',fillOpacity:1,color:'#bdcbc5',weight:.8,opacity:.9}}).addTo(map);}
 function fitRegion(){map.fitBounds(state.mode==='italy'?ITALY_BOUNDS:EUROPE_BOUNDS,{...mapFramePadding(),animate:true});}
 function updateMapSummary(visible){const count=fmt(visible||0),text=state.mode==='hubs'?'city connector legs':'source-defined connections';$('mapSummary').lastElementChild.textContent=`${count} ${text} in view · ${dateLabel(state.day,dates)}`;$('overviewNote').hidden=state.mode==='hubs'||map.getZoom()>=5.5;if(visible===0&&!$('mapLoading').hidden)return;if(visible===0&&manifest)$('mapSummary').lastElementChild.textContent='No matching services in this view · adjust filters or zoom out';}
-function applyControls(){document.body.dataset.view=state.mode;$('controlsTitle').textContent=state.mode==='leg'?'Your journey':'Map filters';$('controlsToggleLabel').textContent=state.mode==='leg'?'Journey':'Filters';document.querySelectorAll('[data-mode]').forEach(b=>{const active=b.dataset.mode===state.mode;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});$('legForm').hidden=state.mode!=='leg';$('mapTitle').textContent=MODES[state.mode].title;$('mapKicker').textContent=MODES[state.mode].kicker;$('mapSubtitle').textContent=MODES[state.mode].subtitle;$('showHubs').checked=state.hubs;$('showSchematic').checked=state.schematic;$('showReview').checked=state.review;$('reviewToggleRow').hidden=!effectivePass(state);$('reviewKey').hidden=!(effectivePass(state)&&state.review);$('eurailOnly').checked=effectivePass(state);$('eurailOnly').disabled=PASS_MODES.has(state.mode);$('passToggleRow').title=PASS_MODES.has(state.mode)?'This view requires published or explicitly reviewed Eurail inclusion.':'';$('minFrequency').value=state.min;$('frequencyValue').textContent=state.min?threshold(state.min)+' / day':'Any';$('dateSelect').value=state.day;document.querySelectorAll('[data-day]').forEach(b=>{b.classList.toggle('active',b.dataset.day===state.day);b.setAttribute('aria-pressed',String(b.dataset.day===state.day));});$('legendTitle').textContent=effectivePass(state)?'EURAIL-INCLUDED TRAINS / DAY':'SCHEDULED TRAINS / DAY';$('legendNote').textContent=state.mode==='hubs'?'Same-service city connections. Canonical + reviewed inclusion.':effectivePass(state)?'Canonical + map-reviewed inclusion; conditions apply.':'Each line follows a retained or inferred railway corridor.';updateSourceCount();}
+function applyControls(){document.body.dataset.view=state.mode;$('italyCoverage').hidden=state.mode!=='italy'||manifest?.publication?.audience!=='public';$('controlsTitle').textContent=state.mode==='leg'?'Your journey':'Map filters';$('controlsToggleLabel').textContent=state.mode==='leg'?'Journey':'Filters';document.querySelectorAll('[data-mode]').forEach(b=>{const active=b.dataset.mode===state.mode;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});$('legForm').hidden=state.mode!=='leg';$('mapTitle').textContent=MODES[state.mode].title;$('mapKicker').textContent=MODES[state.mode].kicker;$('mapSubtitle').textContent=MODES[state.mode].subtitle;$('showHubs').checked=state.hubs;$('showSchematic').checked=state.schematic;$('showReview').checked=state.review;$('reviewToggleRow').hidden=!effectivePass(state);$('reviewKey').hidden=!(effectivePass(state)&&state.review);$('eurailOnly').checked=effectivePass(state);$('eurailOnly').disabled=PASS_MODES.has(state.mode);$('passToggleRow').title=PASS_MODES.has(state.mode)?'This view requires published or explicitly reviewed Eurail inclusion.':'';$('minFrequency').value=state.min;$('frequencyValue').textContent=state.min?threshold(state.min)+' / day':'Any';$('dateSelect').value=state.day;document.querySelectorAll('[data-day]').forEach(b=>{b.classList.toggle('active',b.dataset.day===state.day);b.setAttribute('aria-pressed',String(b.dataset.day===state.day));});$('legendTitle').textContent=effectivePass(state)?'EURAIL-INCLUDED TRAINS / DAY':'SCHEDULED TRAINS / DAY';$('legendNote').textContent=state.mode==='hubs'?'Same-service city connections. Canonical + reviewed inclusion.':effectivePass(state)?'Canonical + map-reviewed inclusion; conditions apply.':'Each line follows a retained or inferred railway corridor.';updateSourceCount();}
 function refresh({details=true}={}){applyControls();renderer.schedule();renderHubs();saveURL();if(details&&selected&&!$('inspector').hidden)renderSelected();if(legResult&&state.mode==='leg'&&details)renderJourneyResult(legResult);}
-function setMode(mode){if(!MODES[mode])return;state.mode=mode;setControlsOpen(mode==='leg');closeInspector();refresh();if(mode==='italy')fitRegion();if(mode==='hubs')loadHubs();if(mode==='leg'||mode==='italy')ensureStations().then(()=>{if(state.mode===mode){refresh({details:false});if(mode==='leg'&&state.from&&state.to)compareStations();}}).catch(()=>toast('Station search could not load. Please retry.'));scheduleChunks();status(MODES[mode].title);}
+function setMode(mode){if(!MODES[mode])return;state.mode=mode;setControlsOpen(mode==='leg');closeInspector();refresh();if(mode==='italy')fitRegion();if(mode==='hubs')loadHubs();if(mode==='leg'||(mode==='italy'&&!manifest?.files?.italyNetwork))ensureStations().then(()=>{if(state.mode===mode){refresh({details:false});if(mode==='leg'&&state.from&&state.to)compareStations();}}).catch(()=>toast('Station search could not load. Please retry.'));scheduleChunks();status(MODES[mode].title);}
 function setDay(day){state.day=day;refresh();status('Showing '+dateLabel(day,dates));}
 function setupDates(){const select=$('dateSelect'),first=new Date(dates[0]+'T12:00:00Z'),last=new Date(dates.at(-1)+'T12:00:00Z');const month=first.toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'}),longMonth=first.toLocaleDateString('en-GB',{month:'long',timeZone:'UTC'}),range=first.getUTCDate()+'–'+last.getUTCDate()+' '+month;$('snapshotLabel').textContent=(range+' '+first.getUTCFullYear()).toUpperCase();$('dateRange').textContent=(first.getUTCDate()+'–'+last.getUTCDate()+' '+longMonth).toUpperCase();select.replaceChildren();for(const[value,label]of[['all','Full week · '+range],['weekdays','Weekdays only'],['weekend','Weekend only'],...dates.map((d,i)=>['day-'+i,new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',timeZone:'UTC'})])]){const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);}select.value=state.day;select.onchange=()=>setDay(select.value);}
 function updateSourceCount(){if(!manifest)return;$('sourceCount').textContent=(state.sources?.size||0)+' / '+manifest.sources.length;$('swissCredit').hidden=!state.sources?.has('ch_gtfs_2026');}
 function setupSources(){const list=$('sourceList');list.replaceChildren();for(const source of manifest.sources||[]){const label=document.createElement('label'),input=document.createElement('input'),span=document.createElement('span');input.type='checkbox';input.checked=state.sources.has(source.id);input.value=source.id;span.textContent=source.name||source.id;const small=document.createElement('small');small.textContent=[source.country,source.defaultVisible===false?'alternative / overlapping feed':'recommended coverage'].filter(Boolean).join(' · ');span.appendChild(small);label.append(input,span);list.appendChild(label);input.onchange=()=>{input.checked?state.sources.add(source.id):state.sources.delete(source.id);alternativeSources();refresh();};}updateSourceCount();}
 function chooseSources(all){state.sources=new Set(manifest.sources.filter(s=>all||s.defaultVisible!==false).map(s=>s.id));state.alternatives=all;alternativeSources();setupSources();refresh();}
-function scheduleChunks(){clearTimeout(chunkTimer);chunkRun++;if(map){const view=map.getBounds().pad(.15);for(const request of chunkRequests.values())if(map.getZoom()<5.5||state.mode==='hubs'||!boundsIntersect(request.chunk.bounds,view))request.controller.abort();}chunkTimer=setTimeout(loadVisibleChunks,100);}
+function detailZoomThreshold(){return state.mode==='italy'&&manifest?.files?.italyNetwork?7:5.5;}
+function scheduleChunks(){clearTimeout(chunkTimer);chunkRun++;if(state.mode==='italy')loadItalyNetwork().catch(()=>{});if(map){const view=map.getBounds().pad(.15);for(const request of chunkRequests.values())if(map.getZoom()<detailZoomThreshold()||state.mode==='hubs'||!boundsIntersect(request.chunk.bounds,view))request.controller.abort();}chunkTimer=setTimeout(loadVisibleChunks,100);}
+async function loadItalyNetwork(){
+  if(!manifest?.files?.italyNetwork)return;
+  if(!italyNetworkPromise)italyNetworkPromise=(async()=>{
+    const url=dataURL(manifest.files.italyNetwork),data=await json(url);
+    await mergeStations(data);await addEdges(data.edges||[]);cache.delete(url);
+    renderer.schedule();renderHubs();
+  })().catch(error=>{italyNetworkPromise=null;toast('Italian timetable layer could not load. Pan or zoom to retry.');throw error;});
+  return italyNetworkPromise;
+}
 function boundsIntersect(bounds,view){if(!Array.isArray(bounds)||bounds.length!==4)return true;const[w,s,e,n]=bounds;return e>=view.getWest()&&w<=view.getEast()&&n>=view.getSouth()&&s<=view.getNorth();}
 async function loadVisibleChunks(){
-  if(!manifest||map.getZoom()<5.5||state.mode==='hubs')return;
+  if(!manifest||map.getZoom()<detailZoomThreshold()||state.mode==='hubs')return;
   const run=++chunkRun,view=map.getBounds().pad(.15),queue=(manifest.chunks||[]).filter(chunk=>boundsIntersect(chunk.bounds,view)&&!chunkLoaded.has(chunk.id));
   ensureStations().catch(()=>{});let failed=false;
   async function worker(){while(queue.length){if(run!==chunkRun)return;const chunk=queue.shift(),request={chunk,controller:new AbortController()};chunkLoaded.add(chunk.id);chunkRequests.set(chunk.id,request);try{const url=dataURL(chunk.url),data=await json(url,{signal:request.controller.signal});if(request.controller.signal.aborted)throw new DOMException('Data request cancelled','AbortError');await addEdges(data.edges||data);cache.delete(url);paintChunks();}catch(error){if(chunkRequests.get(chunk.id)===request)chunkLoaded.delete(chunk.id);if(error.name!=='AbortError'){failed=true;console.warn('Rail Atlas chunk unavailable:',chunk.id);}}finally{if(chunkRequests.get(chunk.id)===request)chunkRequests.delete(chunk.id);}}}
@@ -218,7 +245,7 @@ async function boot(){
     dates=manifest.dates;state.defaultSources=new Set(manifest.sources.filter(s=>s.defaultVisible!==false).map(s=>s.id));state.sources=state.sources?new Set([...state.sources].filter(id=>manifest.sources.some(s=>s.id===id))):new Set(manifest.sources.filter(s=>s.defaultVisible!==false).map(s=>s.id));alternativeSources();setupDates();setupSources();applyControls();updateMethod();
     json(manifest.files.context?dataURL(manifest.files.context):new URL('assets/countries.geojson',location.href).href).then(drawCountries).catch(()=>{});
     const overview=await json(dataURL(manifest.files.overview));await addEdges(overview.edges||overview);
-    if(state.mode==='italy')await ensureStations();
+    if(state.mode==='italy'){if(manifest.files.italyNetwork)await loadItalyNetwork().catch(()=>{});else await ensureStations();}
     $('mapLoading').hidden=true;renderer.schedule();
     loadBootstrapStations().then(async()=>{if(state.mode==='leg'){await ensureStations();if((stationMap.has(state.from)||hubMap.has(state.from))&&(stationMap.has(state.to)||hubMap.has(state.to)))compareStations();}}).catch(()=>toast('Station search could not load. Reload to retry.'));
     if(state.hubs||state.mode==='hubs')loadHubs();scheduleChunks();

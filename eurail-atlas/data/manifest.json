@@ -31,8 +31,8 @@
     },
     "missingStationTraversalRecords": 0,
     "overviewEdges": 6879,
-    "rawAssetBytes": 492703637,
-    "estimatedGzipAssetBytes": 50671099,
+    "rawAssetBytes": 493879132,
+    "estimatedGzipAssetBytes": 50818158,
     "hubGeometry": {
       "inferred": 406,
       "schematic": 46,
@@ -309,7 +309,8 @@
         "url": "network/n005.json",
         "count": 4958
       }
-    ]
+    ],
+    "italyNetwork": "network/italy.json"
   },
   "chunks": [
     {
@@ -7066,6 +7067,15 @@
       "contentSha256": "7a0c8e3c781a92c5f7ce9f4608b7678c99caaf39d2454ef567b6081a7cb0a2a4",
       "encoding": "gzip",
       "logicalPath": "stations.json"
+    },
+    "network/italy.json.gz": {
+      "encoding": "gzip",
+      "logicalPath": "network/italy.json",
+      "bytes": 147059,
+      "gzipBytes": 147059,
+      "sha256": "ad6598060b8c9d01832a15a1cf6036fb73adac3a712d38a9569d022311a86a03",
+      "contentBytes": 1175495,
+      "contentSha256": "dad278012a167b1ebf363d0305727b08b4f5538a14298da4193da7ad320cc318"
     }
   },
   "methodology": {
@@ -7185,9 +7195,9 @@
     "deliveryProducerSha256": "443c0f5c2d75acc99b969475c3cd5505862c02f5639a4a0434ff57fe9bae8692",
     "overviewProjection": {
       "schemaVersion": 1,
-      "createdAt": "2026-11-01T15:38:00.456314+00:00",
+      "createdAt": "2026-11-01T16:57:56.351156+00:00",
       "inputManifestSha256": "87369bbbd956312165056aa1ea17b9147bdac5a6f32dacda37e39ebf1a28d675",
-      "producerSha256": "095102cee01536a044df127cbac00edea5bef699388dd78f421d67c859f1782a",
+      "producerSha256": "1b1d824562df50b2c933b5a39dc4e9abdc92c371485f4f087dcc76d861c3995f",
       "sourceAssets": {
         "overview.json": "6baf1e92983928a485b449ec9ff2985034cb96678a539f38882c7d64a3afc1c7",
         "network/n000.json": "a365cd14bb2478fe0b37a7054f0d9e8fa9c8afe29d933196f5dfaa5310fd99c9",
@@ -7212,6 +7222,12 @@
       "preservedOriginalIdsAndRows": true,
       "allPerEdgeCountsPreserved": true,
       "additionalRowsCopiedFromPublicNetwork": true,
+      "italyNetwork": {
+        "rows": 1683,
+        "stations": 699,
+        "exactPublicNetworkRows": true,
+        "domesticPhysicalCountry": "Italy"
+      },
       "meaning": "Additive existing long passenger-call pairs; original rows/counts are unchanged. Not physical-track traffic."
     }
   },
@@ -7746,14 +7762,15 @@
     "overview.json": "overview.json.gz",
     "source-register.json": "source-register.json.gz",
     "stations-overview.json": "stations-overview.json.gz",
-    "stations.json": "stations.json.gz"
+    "stations.json": "stations.json.gz",
+    "network/italy.json": "network/italy.json.gz"
   },
   "delivery": {
     "schemaVersion": 1,
     "encoding": "gzip",
     "compressionLevel": 6,
-    "logicalAssets": 367,
-    "bytes": 50671099,
-    "contentBytes": 492703637
+    "logicalAssets": 368,
+    "bytes": 50818158,
+    "contentBytes": 493879132
   }
 }
