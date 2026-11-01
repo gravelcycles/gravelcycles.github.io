@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f3eb">
+  <meta name="description" content="An interactive atlas of European railway schedules, Eurail services and the places they connect.">
+  <title>Rail Atlas — Europe, by rail</title>
+  <link rel="stylesheet" href="assets/leaflet.css?v=78f812658bed1120">
+  <link rel="stylesheet" href="assets/app.css?v=78f812658bed1120">
+  <script defer src="assets/leaflet.js?v=78f812658bed1120"></script>
+  <script type="module" src="assets/app.js?v=78f812658bed1120"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Rail Atlas home">
+      <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><path d="M7 6v11c0 7 22 2 22 13M29 6v9c0 7-22 5-22 15"/><circle cx="7" cy="7" r="3"/><circle cx="29" cy="7" r="3"/><circle cx="18" cy="20" r="3"/></svg>
+      <span>rail<span class="brand-light">atlas</span><span class="brand-period">.</span></span>
+    </a>
+    <div class="header-caption">A different way to see Europe</div>
+    <nav class="header-actions" aria-label="Atlas information">
+      <span class="snapshot-badge"><span class="status-dot"></span><span id="snapshotLabel">1–7 NOV 2026</span></span>
+      <button class="text-button" id="methodButton">About the data <span aria-hidden="true">↗</span></button>
+      <button class="share-button" id="shareButton" aria-label="Copy a link to this view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 12 4-4M7.2 13.8l-1.1 1.1a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0M12.8 6.2l1.1-1.1a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0"/></svg><span>Share view</span></button>
+    </nav>
+  </header>
+  <main class="workspace">
+    <aside class="sidebar" aria-label="Map controls">
+      <div class="sidebar-scroll">
+        <div class="sidebar-heading"><p class="eyebrow">THE EUROPEAN RAIL ATLAS</p><h1>Europe,<br><em>by rail.</em></h1><p class="intro">A week of scheduled trains.<br>Five ways to explore the network.</p></div>
+        <section class="views-section" aria-label="Choose a map">
+          <div class="section-label"><span>CHOOSE YOUR VIEW</span><span>01—05</span></div>
+          <div class="view-buttons" id="viewButtons">
+            <button class="view-button active" data-mode="frequency"><span class="view-number">01</span><span><strong>Scheduled frequency</strong><small>Find the busiest corridors</small></span><span class="view-arrow">↗</span></button>
+            <button class="view-button" data-mode="leg"><span class="view-number">02</span><span><strong>Compare a journey leg</strong><small>See which trains serve your route</small></span><span class="view-arrow">↗</span></button>
+            <button class="view-button" data-mode="eurail"><span class="view-number">03</span><span><strong>The Eurail network</strong><small>Explore published pass coverage</small></span><span class="view-arrow">↗</span></button>
+            <button class="view-button" data-mode="hubs"><span class="view-number">04</span><span><strong>Major hub connectors</strong><small>Follow the connections between cities</small></span><span class="view-arrow">↗</span></button>
+            <button class="view-button" data-mode="italy"><span class="view-number">05</span><span><strong>Italy, by Eurail</strong><small>A closer look at the peninsula</small></span><span class="view-arrow">↗</span></button>
+          </div>
+        </section>
+        <section class="leg-form" id="legForm" hidden aria-label="Choose journey stations">
+          <div class="station-input"><label for="fromStation">FROM</label><input id="fromStation" placeholder="Choose a departure station" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fromSuggestions"><ul id="fromSuggestions" class="suggestions" role="listbox" hidden></ul></div>
+          <button class="swap-button" id="swapStations" aria-label="Swap departure and arrival">⇅</button>
+          <div class="station-input"><label for="toStation">TO</label><input id="toStation" placeholder="Choose an arrival station" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="toSuggestions"><ul id="toSuggestions" class="suggestions" role="listbox" hidden></ul></div>
+          <button class="primary-button" id="compareButton">Compare services <span aria-hidden="true">→</span></button>
+          <p class="helper" id="legHelper">Choose two stations to explore the services between them.</p>
+        </section>
+        <section class="date-section">
+          <div class="section-label"><span>SERVICE DATES</span><span id="dateRange">1–7 NOVEMBER</span></div>
+          <div class="date-tabs" id="dateTabs"><button data-day="all" class="active">All week</button><button data-day="weekdays">Weekdays</button><button data-day="weekend">Weekend</button></div>
+          <label class="select-label" for="dateSelect"><span>Or choose a date</span><select id="dateSelect" aria-label="Service date"><option value="all">Full week · 1–7 November</option></select><span aria-hidden="true">⌄</span></label>
+        </section>
+        <section class="filter-section">
+          <div class="section-label"><span>REFINE THE MAP</span><button class="inline-button" id="resetFilters">Reset</button></div>
+          <label class="toggle-row"><span>Show major stations</span><input id="showHubs" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row" id="passToggleRow"><span>Eurail-included services only</span><input id="eurailOnly" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row review-toggle" id="reviewToggleRow" hidden><span>Conditional / review needed</span><input id="showReview" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row muted-toggle"><span>Show schematic alignments</span><input id="showSchematic" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+          <div class="frequency-filter"><label for="minFrequency"><span>Minimum frequency</span><strong id="frequencyValue">Any</strong></label><input id="minFrequency" type="range" min="0" max="100" value="0" step="1"><div class="range-labels"><span>All corridors</span><span>Busy lines</span></div></div>
+          <details class="sources-control"><summary><span>Timetable sources</span><span id="sourceCount">Loading…</span></summary><p class="helper">Recommended sources are selected initially. Adding overlapping feeds can count the same train twice.</p><div class="source-actions"><button id="recommendedSources">Recommended</button><button id="allSources">All</button></div><div id="sourceList" class="source-list"></div></details>
+        </section>
+        <div class="sidebar-footer"><span class="tiny-star">✳</span><p>Follow the timetable.<br><strong>Leave room for the journey.</strong></p></div>
+      </div>
+    </aside>
+    <section class="map-area" aria-label="Interactive European railway map">
+      <div id="map" tabindex="0" role="region" aria-label="Railway map. Use the plus and minus controls to zoom, or drag to pan."></div>
+      <div class="map-heading"><div class="map-kicker"><span class="small-line"></span><span id="mapKicker">THE RHYTHM OF THE NETWORK</span></div><h2 id="mapTitle">Where the trains run.</h2><p id="mapSubtitle">Scheduled services per day, along recorded station pairs.</p></div>
+      <div class="map-tools"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><span></span><button id="fitMap" aria-label="Fit the current region"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button></div>
+      <div class="map-loading" id="mapLoading" role="status"><span class="loading-track"><i></i></span><strong>Opening the atlas</strong><span>Preparing the recorded rail network…</span></div>
+      <div class="map-error" id="mapError" role="alert" hidden><strong>The map data could not be loaded.</strong><p>Check your connection and try again.</p><button id="retryButton">Try again</button></div>
+      <div class="map-tooltip" id="mapTooltip" hidden></div>
+      <aside class="inspector" id="inspector" aria-label="Selected rail connection" hidden><button class="close-button" id="closeInspector" aria-label="Close connection details">×</button><div id="inspectorContent"></div></aside>
+      <div class="map-legend"><div class="legend-heading"><span id="legendTitle">SCHEDULED TRAINS / DAY</span><span class="legend-help" title="Scheduled train traversals, not passenger counts or actual operations">i</span></div><div class="legend-gradient"></div><div class="legend-labels"><span>1</span><span>6</span><span>24</span><span>72</span><span>150+</span></div><div class="review-key" id="reviewKey" hidden><i></i>Conditional · check before travel</div><p id="legendNote">Each line follows a retained or inferred railway corridor.</p></div>
+      <div class="map-summary" id="mapSummary"><span class="summary-dot"></span><span>Loading the network…</span></div>
+      <div class="overview-note" id="overviewNote">Overview: busiest corridors. Zoom in for local lines.</div>
+      <div class="map-credits"><span>Natural Earth · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span><span id="swissCredit" hidden>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></span><button id="creditsButton">Sources & method</button></div>
+    </section>
+  </main>
+  <dialog class="method-dialog" id="methodDialog" aria-labelledby="methodTitle"><button class="close-button" id="closeMethod" aria-label="Close data information">×</button><p class="eyebrow">A MAP WITH ITS SOURCES ATTACHED</p><h2 id="methodTitle">Read the network.<br><em>Know the limits.</em></h2><div id="methodContent"><p>This atlas represents scheduled services for <strong>1–7 November 2026</strong>. Frequencies describe timetabled trains, not passenger use or proof of actual running. Frequency counts services between recorded station calls. Overlapping express and local paths are not summed into a single physical-track total.</p><p>National and regional source feeds can overlap. Source filters retain that distinction; these are not certified counts of unique trains across Europe.</p><p>The Eurail views show canonical included services plus a small, separately labelled set reviewed against current primary sources for Global Pass second class. Other conditional services appear only with the optional amber overlay; unknown eligibility stays excluded. Reservations, supplements and seat availability are separate.</p><p>Railway alignments are source-provided or inferred from physical infrastructure. They do not certify exact operating track. Explicitly schematic geometry is hidden unless selected.</p></div><div class="method-footer"><span id="methodRelease">Dated source snapshot</span><button class="primary-button" id="backToMap">Back to the map <span>↗</span></button></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <span id="screenReaderStatus" class="sr-only" aria-live="polite"></span>
+</body>
+</html>
