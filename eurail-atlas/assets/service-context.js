@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=f171bbf710647896';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=c01c2da84bdcd979';
 
 export function noticeDates(notice,dates){
   const confirmed=dates.filter(day=>day>=notice.closedFrom&&day<=notice.closedThrough),

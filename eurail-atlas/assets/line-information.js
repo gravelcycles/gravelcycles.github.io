@@ -1,4 +1,4 @@
-import{approximateAlignment,sumDays}from'./atlas-core.js?v=f171bbf710647896';
+import{approximateAlignment,sumDays}from'./atlas-core.js?v=c01c2da84bdcd979';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];

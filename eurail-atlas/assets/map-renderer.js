@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=f171bbf710647896';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=f171bbf710647896';
-import{RouteIndex}from'./rail-picking.js?v=f171bbf710647896';
-import{renderWorld}from'./rail-lod.js?v=f171bbf710647896';
-import{RasterClient}from'./raster-client.js?v=f171bbf710647896';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=c01c2da84bdcd979';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=c01c2da84bdcd979';
+import{RouteIndex}from'./rail-picking.js?v=c01c2da84bdcd979';
+import{renderWorld}from'./rail-lod.js?v=c01c2da84bdcd979';
+import{RasterClient}from'./raster-client.js?v=c01c2da84bdcd979';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -63,8 +63,8 @@ export function paintedRouteOrder(pixels,index,highlight=null){
 function canvas(){const c=document.createElement('canvas');c.className='atlas-canvas leaflet-zoom-animated';c.style.transformOrigin='0 0';c.setAttribute('aria-hidden','true');return c;}
 
 export class RailRenderer{
-  constructor(map,getData,onPick,onHover){
-    this.map=map;this.getData=getData;this.onPick=onPick;this.onHover=onHover;this.canvas=canvas();this.surface=this.canvas;
+  constructor(map,getData,onPick){
+    this.map=map;this.getData=getData;this.onPick=onPick;this.canvas=canvas();this.surface=this.canvas;
     this.paths=new WeakMap();this.styleCache=new Map();this.canvasGroups=new Map();this.frame=0;this.hoverFrame=0;this.dragging=false;this.gpuLost=false;this.intent=0;this.geometryEpoch=0;
     const requested=new URLSearchParams(location.search).get('renderer');
     try{if(requested==='canvas'||requested==='worker')throw new Error('Canvas requested');this.gpu=new RailGPU(this.canvas,{allowSoftware:requested==='webgl'});}
@@ -84,11 +84,11 @@ export class RailRenderer{
     map.on('move',()=>this.pan());map.on('moveend resize',()=>this.schedule());
     map.on('zoomanim',event=>this.zoomAnimation(event));map.on('zoomend',()=>{this.zoomAnimating=false;this.surface.style.transition='none';if(this.raster)this.alignBitmap(this.view());else this.surface.style.transform='';this.schedule();});
     map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge);});
-    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';this.onHover(edge,point);});});
+    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';});});
     map.on('mouseout',()=>this.clearHover());map.on('dragstart',()=>{this.dragging=true;this.clearHover();});map.on('dragend',()=>{this.dragging=false;});
   }
   view(){const size=this.map.getSize(),zoom=this.map.getZoom(),center=this.map.project(this.map.getCenter(),0);return{width:size.x,height:size.y,zoom,scale:2**zoom,centerX:center.x,centerY:center.y};}
-  clearHover(){if(this.hoverFrame)cancelAnimationFrame(this.hoverFrame);this.hoverFrame=0;this.map.getContainer().style.cursor='';this.onHover(null);}
+  clearHover(){if(this.hoverFrame)cancelAnimationFrame(this.hoverFrame);this.hoverFrame=0;this.map.getContainer().style.cursor='';}
   pan(){
     this.clearHover();if(this.zoomAnimating)return;
     if(this.raster&&this.meshEdges){this.alignBitmap(this.view());this.scheduleView();return;}
