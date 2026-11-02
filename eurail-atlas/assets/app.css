@@ -41,3 +41,13 @@
 .closed-corridor-toggle{display:flex;align-items:center;gap:9px;min-height:44px;font-size:11px;line-height:1.4;cursor:pointer}.closed-corridor-toggle input{width:18px;height:18px;accent-color:#686f7c}.closed-corridor-explanation,.service-context-updated{font-size:10px!important;color:var(--muted)!important}.closure-key{display:flex;align-items:center;gap:6px;font-size:10px;line-height:1.4;color:var(--ink-soft);margin-top:8px}.closure-key i{width:19px;border-top:2px dashed #686f7c}@media(max-width:600px){.closure-key{font-size:9px}}
 
 .pass-condition-filter{margin:12px 0 16px}.pass-condition-filter>label{display:block;font-size:12px;font-weight:650;margin-bottom:7px}.pass-condition-filter select{width:100%;min-height:42px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font:inherit;font-size:12px}.pass-condition-filter .helper,.uncertainty-help{font-size:11px;line-height:1.5;margin:8px 0 12px}.about-sources{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:22px}.about-sources .primary-button{width:auto;font-size:12px}.review-toggle:has(input:disabled){opacity:.6}
+.map-footer{position:absolute;left:18px;right:15px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:650;display:flex;align-items:center;gap:8px;pointer-events:none;text-shadow:0 1px 2px var(--panel),0 -1px 2px var(--panel),1px 0 2px var(--panel),-1px 0 2px var(--panel)}
+.map-footer .map-summary{position:static;flex:1;min-width:0;max-width:none;gap:5px;padding:0;background:none;border-radius:0;white-space:nowrap}
+.map-footer .map-summary>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.map-footer .map-credits{position:static;flex:0 0 auto;max-width:none;flex-wrap:nowrap;padding:0;background:none;border-radius:0;white-space:nowrap}
+.map-footer .map-credits a{pointer-events:auto}
+.map-key{bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.sidebar{max-height:calc(100dvh - var(--toolbar-height) - 102px - env(safe-area-inset-bottom,0px))}
+.inspector{bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.overview-note{bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+@media(max-width:600px){.map-footer{left:12px;right:12px}.map-footer .map-summary{font-size:10px}.sidebar{max-height:calc(100dvh - var(--toolbar-height) - 95px - env(safe-area-inset-bottom,0px))}}
