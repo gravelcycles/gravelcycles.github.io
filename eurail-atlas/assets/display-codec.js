@@ -1,4 +1,4 @@
-import{worldPoint}from'./atlas-core.js?v=1383befb74f8ac49';
+import{worldPoint,validMapLocation}from'./atlas-core.js?v=c09a9e213777d88e';
 
 export const DISPLAY_FORMAT='rail-atlas-display-v1';
 const metrics=['daily','eurailDaily','reviewedEurailDaily','conditionalDaily','reviewedConditionalDaily'];
@@ -26,10 +26,11 @@ export function decodeDisplay(data){
     const source=at(sources,row[0]),country=at(countries,row[1]),geometryStatus=at(geometry,row[2]),primary=Boolean(row[3]);
     const id='pair:'+JSON.stringify([source,pair,primary,geometryStatus]);
     if(identities.has(id))invalid();identities.add(id);
-    const world=projected.subarray(start*2,end*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    const world=projected.subarray(start*2,end*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,missingLocation=false;
     for(let i=start;i<end;i++){
       const lon=coordinates[i*2],lat=coordinates[i*2+1];
       if(typeof lon!=='number'||typeof lat!=='number'||!Number.isFinite(lon)||!Number.isFinite(lat)||lon< -180||lon>180||lat< -85||lat>85)invalid();
+      if(!validMapLocation(lon,lat))missingLocation=true;
       const[x,y]=worldPoint(lon,lat),offset=(i-start)*2;world[offset]=x;world[offset+1]=y;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
     }
@@ -37,7 +38,8 @@ export function decodeDisplay(data){
       _world:world,_pointCount:end-start,_bbox:[minX,minY,maxX,maxY],
       coords:[[coordinates[start*2],coordinates[start*2+1]],[coordinates[(end-1)*2],coordinates[(end-1)*2+1]]]};
     for(let field=0;field<metrics.length;field++)edge[metrics[field]]=at(daily,row[field+4]);
-    edges.push(edge);
+    // Preserve original row indexes: metadata pages use _startupIndex.
+    if(!missingLocation)edges.push(edge);
   }
   return{edges,displayOnly:true,format:DISPLAY_FORMAT};
 }

@@ -52,3 +52,5 @@
 .inspector{bottom:calc(42px + env(safe-area-inset-bottom,0px))}
 .overview-note{bottom:calc(42px + env(safe-area-inset-bottom,0px))}
 @media(max-width:600px){.map-footer{left:12px;right:12px}.map-footer .map-summary{font-size:10px}.sidebar{max-height:calc(100dvh - var(--toolbar-height) - 105px - env(safe-area-inset-bottom,0px))}}
+
+.line-explanation{margin:14px 0;padding:12px 13px;border:1px solid #c9d9d3;border-radius:5px;background:#e7eeea;color:var(--ink-soft)}.line-explanation h4{font-size:12px;line-height:1.4;margin:0 0 6px}.line-explanation p{font-size:11px;line-height:1.65;margin:0}
