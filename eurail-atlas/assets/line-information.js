@@ -1,4 +1,19 @@
-import{approximateAlignment}from'./atlas-core.js?v=9d6789b4d9f4d11d';
+import{approximateAlignment,sumDays}from'./atlas-core.js?v=f171bbf710647896';
+
+export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
+  const rows=edge._directionEdges||[edge];
+  const movement=rows.reduce((n,row)=>n+sumDays(row,day,dates),0);
+  const hasBoarding=row=>Array.isArray(row.boardableDaily)||(day==='all'&&Number.isFinite(row.boardableWeekly));
+  let boardingRows=rows,knownBoarding=rows.every(hasBoarding);
+  if(!knownBoarding&&detail?.otherLines===0&&detail.lines?.length&&detail.lines.every(hasBoarding)
+    &&detail.lines.reduce((n,row)=>n+sumDays(row,day,dates),0)===movement){boardingRows=detail.lines;knownBoarding=true;}
+  const boardable=knownBoarding?boardingRows.reduce((n,row)=>n+sumDays(row,day,dates,'boardableDaily','boardableWeekly'),0):null;
+  return{
+    scope:'This count covers one source and services with these consecutive recorded calls. Other trains between these stations may call at intermediate stops and appear on separate lines. Overlapping lines are not a total for the railway corridor.',
+    boardingRestricted:movement>0&&boardable===0,
+    boardingNote:movement>0&&boardable===0?'These trains run between the stations, but this source does not allow a passenger journey between them. They are counted as train movements, not permitted passenger trips.':''
+  };
+}
 
 export function lineInformation(edge,{uncertain=false}={}){
   const notes=[];

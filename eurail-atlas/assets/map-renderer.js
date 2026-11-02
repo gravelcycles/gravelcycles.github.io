@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=9d6789b4d9f4d11d';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=9d6789b4d9f4d11d';
-import{RouteIndex}from'./rail-picking.js?v=9d6789b4d9f4d11d';
-import{renderWorld}from'./rail-lod.js?v=9d6789b4d9f4d11d';
-import{RasterClient}from'./raster-client.js?v=9d6789b4d9f4d11d';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=f171bbf710647896';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=f171bbf710647896';
+import{RouteIndex}from'./rail-picking.js?v=f171bbf710647896';
+import{renderWorld}from'./rail-lod.js?v=f171bbf710647896';
+import{RasterClient}from'./raster-client.js?v=f171bbf710647896';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -38,6 +38,27 @@ export function thresholdStyles(base,minimum){
   return pixels;
 }
 export function renderStyles(edges,data,zoom){return thresholdStyles(prepareStyles(edges,data,zoom),threshold(data.state.min));}
+
+// Selection is an outline, not a second frequency scale. Reuse the same
+// visibility, color and dash decision as the ordinary network in every engine.
+export function highlightItems(edges,data,zoom,width=3.2){
+  const pixels=renderStyles(edges,data,zoom),items=[],boost=zoomStrokeBoost(zoom);
+  for(let pass=0;pass<2;pass++)for(const[layer,extra]of[['#fbfaf6',4],['#173f3b',2],[null,0]]){
+    for(let i=0;i<edges.length;i++){
+      const offset=i*16+pass*8;if(!pixels[offset+4])continue;
+      const color=layer||'#'+[...pixels.slice(offset,offset+3)].map(value=>value.toString(16).padStart(2,'0')).join('');
+      items.push({world:edges[i]._world,color,width:width+boost+extra,dash:!!pixels[offset+5]});
+    }
+  }
+  return items;
+}
+
+// Review strokes are painted over normal strokes, followed by frequency
+// priority. Keep picking bound to those actual styles rather than weekly totals.
+export function paintedRouteOrder(pixels,index,highlight=null){
+  const pass=pixels[index*16+12]?1:0,offset=index*16+pass*8;
+  return pixels[offset+4]?{pass:pass+(highlight?(highlight.selected?4:2):0),priority:pixels[offset+7],width:highlight?highlight.width:pixels[offset+3]/255*16,order:index}:null;
+}
 
 function canvas(){const c=document.createElement('canvas');c.className='atlas-canvas leaflet-zoom-animated';c.style.transformOrigin='0 0';c.setAttribute('aria-hidden','true');return c;}
 
@@ -139,13 +160,11 @@ export class RailRenderer{
     this.surface.style.transform=Math.abs(x)+Math.abs(y)+Math.abs(scale-1)<.000001?'':`translate3d(${x}px,${y}px,0) scale(${scale})`;
   }
   rasterHighlightItems(data){
-    const boost=zoomStrokeBoost(this.map.getZoom()),key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+boost;
+    const zoom=this.map.getZoom(),key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,zoom)+'|'+threshold(data.state.min);
     if(this.rasterHighlightKey===key&&this.rasterHighlightEdges===data.edges)return this.rasterHighlights;
-    const selected=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id))),items=[];
-    for(const edge of selected)items.push({world:edge._world,color:'#fbfaf6',width:6.5+boost});
-    for(const edge of selected)items.push({world:edge._world,color:'#d4512c',width:2.5+boost});
-    if(data.selected?._world)items.push({world:data.selected._world,color:'#fbfaf6',width:7.2+boost},{world:data.selected._world,color:'#d4512c',width:3.2+boost});
-    this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;return items;
+    const selected=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id))),items=highlightItems(selected,data,zoom,2.5);
+    if(data.selected?._world)items.push(...highlightItems([data.selected],data,zoom));
+    this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;this.rasterHighlights=items;return items;
   }
   queueRaster(view,detail){
     let visible=0;for(let i=0;i<this.meshEdges.length;i++)if((this.lastPixels[i*16+4]||this.lastPixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
@@ -162,12 +181,9 @@ export class RailRenderer{
     this.canvas.hidden=true;this.surface=canvas();this.surface.dataset.renderer='canvas';this.ctx=this.surface.getContext('2d');this.map.getContainer().appendChild(this.surface);this.canvas.dataset.renderer='canvas-fallback';this.canvas.setAttribute('aria-busy','false');this.map.getContainer().setAttribute('aria-busy','false');this.schedule();
   }
   updateHighlights(data){
-    const boost=zoomStrokeBoost(this.map.getZoom()),ids=[...data.highlightIds||[]],key=(data.selected?.id||'')+'|'+ids.join(',')+'|'+boost;
+    const key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,this.map.getZoom())+'|'+threshold(data.state.min);
     if(this.highlightKey===key&&this.highlightEdgesReference===data.edges)return;
-    const edges=[],styles=[],chosen=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id)));
-    for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#fbfaf6',width:6.5+boost}});}
-    for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#d4512c',width:2.5+boost}});}
-    if(data.selected?._world){edges.push(data.selected,data.selected);styles.push({normal:{color:'#fbfaf6',width:7.2+boost}},{normal:{color:'#d4512c',width:3.2+boost}});}
+    const items=this.rasterHighlightItems(data),edges=items.map(item=>({_world:item.world})),styles=items.map(({world,...style})=>({normal:style}));
     const view=this.view();this.gpu.upload(edges,true,[view.centerX,view.centerY]);this.gpu.styles(styles,true);this.highlightKey=key;this.highlightEdgesReference=data.edges;
   }
   pathFor(edge,zoom){
@@ -189,10 +205,22 @@ export class RailRenderer{
       cached.push([...groups.values()].sort((a,b)=>a.priority-b.priority));
     }this.canvasGroups.set(key,cached);if(this.canvasGroups.size>4)this.canvasGroups.delete(this.canvasGroups.keys().next().value);}
     for(const groups of cached)for(const group of groups){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/view.scale;ctx.setLineDash(group.dash?[4/view.scale,4/view.scale]:[]);ctx.stroke(group.path);}
+    for(const item of this.rasterHighlightItems(data)){
+      ctx.strokeStyle=item.color;ctx.lineWidth=item.width/view.scale;ctx.setLineDash(item.dash?[4/view.scale,4/view.scale]:[]);ctx.stroke(this.pathFor({_world:item.world},view.zoom));
+    }
     ctx.setLineDash([]);
-    for(const edge of data.edges)if((edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id)))this.highlightCanvas(edge,view,2.5);
-    if(data.selected?._world)this.highlightCanvas(data.selected,view,3.2);
   }
-  highlightCanvas(edge,view,width){width+=zoomStrokeBoost(view.zoom);const ctx=this.ctx,path=this.pathFor(edge,view.zoom);ctx.strokeStyle='#fbfaf6';ctx.lineWidth=(width+4)/view.scale;ctx.stroke(path);ctx.strokeStyle='#d4512c';ctx.lineWidth=width/view.scale;ctx.stroke(path);}
-  pick(x,y){if(!this.index||this.zoomAnimating)return null;const data=this.getData();return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.state,data.dates,data.stations));}
+  pick(x,y){
+    if(!this.index||this.zoomAnimating)return null;
+    const data=this.getData(),zoom=this.map.getZoom(),baseKey=this.filterKey(data,zoom),minimum=threshold(data.state.min),key=baseKey+':min:'+minimum+':selected:'+(data.selected?.id||'')+':highlighted:'+JSON.stringify([...data.highlightIds||[]]);
+    if(this.pickStyleKey!==key||this.pickStyleEdges!==this.meshEdges){
+      let base=this.styleCache.get(baseKey);if(!base){base=prepareStyles(this.meshEdges,data,zoom);this.styleCache.set(baseKey,base);}
+      const pixels=thresholdStyles(base,minimum);this.pickStyles=new Map(this.meshEdges.map((edge,index)=>{
+        const selected=edge.id===data.selected?.id||(edge._directionEdges||[]).some(row=>row.id===data.selected?.id),highlighted=(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id));
+        return[edge,paintedRouteOrder(pixels,index,selected||highlighted?{selected,width:(selected?3.2:2.5)+4+zoomStrokeBoost(zoom)}:null)];
+      }));
+      this.pickStyleKey=key;this.pickStyleEdges=this.meshEdges;
+    }
+    return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
+  }
 }

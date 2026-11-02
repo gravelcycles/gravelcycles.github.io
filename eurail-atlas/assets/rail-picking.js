@@ -1,19 +1,25 @@
 // Index individual visible segments, rather than a long route's entire box.
 // Segment-cell traversal is linear in the screen distance, not its box area.
-import{segmentDistanceSquared}from'./atlas-core.js?v=9d6789b4d9f4d11d';
+import{segmentDistanceSquared}from'./atlas-core.js?v=f171bbf710647896';
 
 // Building a vertex grid on every arriving geometry chunk creates millions of
 // allocations. Bboxes are already prepared in the data worker. Hover first
 // rejects distant routes, then checks the full vertices of nearby candidates.
 export class RouteIndex{
   constructor(edges){this.edges=edges;}
-  pick(x,y,view,radius=7.5,qualifies=()=>true){
+  pick(x,y,view,radius=7.5,qualifies=()=>true,paintOrder=null){
     const wx=(x-view.width/2)/view.scale+view.centerX,wy=(y-view.height/2)/view.scale+view.centerY,padding=radius/view.scale;
-    let winner=null,best=padding*padding;
+    let winner=null,best=padding*padding,winnerPaint=null,winnerHit=false;
+    const above=(a,b)=>a&&(!b||a.pass>b.pass||a.pass===b.pass&&(a.priority>b.priority||a.priority===b.priority&&a.order>b.order));
     for(const edge of this.edges){
       const b=edge._bbox;if(wx<b[0]-padding||wx>b[2]+padding||wy<b[1]-padding||wy>b[3]+padding||!qualifies(edge))continue;
-      const p=edge._world;
-      for(let i=2;i<p.length;i+=2){if(p[i]===p[i-2]&&p[i+1]===p[i-1])continue;const d=segmentDistanceSquared(wx,wy,p[i-2],p[i-1],p[i],p[i+1]);if(d<best){best=d;winner=edge;}}
+      const p=edge._world;let distance=padding*padding;
+      for(let i=2;i<p.length;i+=2){if(p[i]===p[i-2]&&p[i+1]===p[i-1])continue;distance=Math.min(distance,segmentDistanceSquared(wx,wy,p[i-2],p[i-1],p[i],p[i+1]));}
+      if(distance>=padding*padding)continue;
+      const paint=paintOrder?.(edge),hit=!!paint&&distance<=((paint.width/2+.65)/view.scale)**2;
+      if(!winner||(hit&&!winnerHit)||(hit&&winnerHit&&above(paint,winnerPaint))||(!hit&&!winnerHit&&(distance<best||distance===best&&above(paint,winnerPaint)))){
+        best=distance;winner=edge;winnerPaint=paint;winnerHit=hit;
+      }
     }
     return winner;
   }
