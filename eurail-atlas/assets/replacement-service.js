@@ -1,4 +1,6 @@
-import{escapeHTML as esc,formatNumber,isTemporaryReplacement}from'./atlas-core.js?v=3de5543a986268fa';
+import{escapeHTML as esc,formatNumber,isTemporaryReplacement,approximateAlignment}from'./atlas-core.js?v=51d3849f1dd8774c';
+
+export function replacementRailCorridor(row){return isTemporaryReplacement(row)&&row.geometryRole==='replacement_rail_corridor'&&!approximateAlignment(row);}
 
 export function replacementEvidence(row){
   const entries=row?._directionEdges?.filter(isTemporaryReplacement)||[row];
@@ -20,7 +22,7 @@ export function replacementHTML(row,{compact=false}={}){
     (from?'Replacement from '+from+'; end date not supplied.':'Replacement end date not supplied.');
   const links=info.evidenceUrls.map((url,index)=>`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Operator notice${info.evidenceUrls.length>1?' '+(index+1):''} ↗</a>`).join(' · ');
   return compact?`<span class="replacement-label">Temporary replacement bus</span>`:
-    `<section class="replacement-information"><span class="badge replacement">Temporary replacement bus</span><p>${esc(scope)}</p><p>Included in the service total. The actual vehicle is a bus; boarding stops and ticket conditions can differ from the train.</p>${links?'<div class="evidence-links">'+links+'</div>':''}</section>`;
+    `<section class="replacement-information"><span class="badge replacement">Temporary replacement bus</span><p>${esc(scope)}</p><p>Included in the service total. The actual vehicle is a bus; boarding stops and ticket conditions can differ from the train.</p>${replacementRailCorridor(row)?'<p>The line follows the railway corridor for orientation. Bus boarding may be near the station; this is not the road route driven.</p>':''}${links?'<div class="evidence-links">'+links+'</div>':''}</section>`;
 }
 
 export function serviceBreakdown(rows,count){

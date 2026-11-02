@@ -1,5 +1,5 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible}from'./atlas-core.js?v=3de5543a986268fa';
-import{mergeSleepServices}from'./sleep-service.js?v=3de5543a986268fa';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=51d3849f1dd8774c';
+import{mergeSleepServices}from'./sleep-service.js?v=51d3849f1dd8774c';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -32,7 +32,7 @@ export function journeyDaily(journey,state,dates){
   });
 }
 export function groupSegmentRoutes(journeys,edge,state,dates){
-  const directions=(edge._directionEdges||[edge]).map(direction=>state.mode==='hubs'?{...direction,isHub:true}:direction),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
+  const directions=(edge._directionEdges||[edge]).map(direction=>usesHubConnections(state)?{...direction,isHub:true}:direction),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   for(const journey of journeys||[]){
     const identity=journeyIdentity(journey);if(seen.has(identity)||!directions.some(direction=>journeyMatchesEdge(journey,direction)))continue;seen.add(identity);
     const daily=journeyDaily(journey,state,dates),count=days.reduce((sum,i)=>sum+daily[i],0);if(!count)continue;

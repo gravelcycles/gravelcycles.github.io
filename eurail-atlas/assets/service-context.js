@@ -1,4 +1,6 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=3de5543a986268fa';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=51d3849f1dd8774c';
+
+export function contextVisible(state){return !['trains','replacement'].includes(state.service);}
 
 export function noticeDates(notice,dates){
   const confirmed=dates.filter(day=>day>=notice.closedFrom&&day<=notice.closedThrough),
@@ -39,7 +41,7 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
   let documentData=null,promise=null,path=null,active=[],request=0,version=null,
     geometryData=null,geometryPromise=null,geometryVersion=null,geometryPath=null,layer=null,hitLayer=null,shownKey=null;
   function hide(focus=false){request++;panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus&&!chip.hidden)chip.focus();}
-  function candidates(){const view=getView(),manifest=getManifest(),state=getState();return view&&state.service!=='trains'?relevantNotices(manifest?.serviceContext,{...view,dates:getDates(),day:state.day,inspect:['replacement','works'].includes(state.service)}):[];}
+  function candidates(){const view=getView(),manifest=getManifest(),state=getState();return view&&contextVisible(state)?relevantNotices(manifest?.serviceContext,{...view,dates:getDates(),day:state.day,inspect:state.service==='works'}):[];}
   function render(){
     if(!documentData)return;
     const selected=selectedDays(getState().day,getDates()).map(index=>getDates()[index]),ids=new Set(active.map(notice=>notice.id));
@@ -52,7 +54,7 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
     if(toggle)toggle.checked=enabled;
     if(toggleRow)toggleRow.hidden=!manifest?.serviceContext?.geometryAvailable;if(explanation)explanation.hidden=!manifest?.serviceContext?.geometryAvailable;
     if(!map||!view||!enabled||!active.length||!geometryPath){clearGeometry();return;}
-    const ids=new Set(confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:getState().day,inspect:['replacement','works'].includes(getState().service)}));
+    const ids=new Set(confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:getState().day,inspect:getState().service==='works'}));
     if(!ids.size){clearGeometry();return;}
     if(!geometryData){
       if(!geometryPromise){const expected=geometryVersion;geometryPromise=load(geometryPath).then(data=>{
@@ -83,7 +85,7 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
     }
     const data={...geometryData,features:geometryData.features.filter(feature=>ids.has(feature.properties?.notice_id))};
     layer.clearLayers();hitLayer.clearLayers();layer.addData(data);hitLayer.addData(data);shownKey=next;
-    layer.setStyle({weight:['replacement','works'].includes(getState().service)?3.8:2.3});
+    layer.setStyle({weight:getState().service==='works'?3.8:2.3});
     if(key)key.hidden=!layer.getLayers().length;
   }
   function refresh(){
@@ -94,7 +96,7 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
       nextVersion=manifest?.assets?.[manifest?.assetPaths?.[nextGeometry]||nextGeometry]?.sha256;
     if(nextGeometry!==geometryPath||nextVersion!==geometryVersion){geometryPath=nextGeometry;geometryVersion=nextVersion;geometryData=null;geometryPromise=null;clearGeometry();}
     active=candidates();chip.hidden=!active.length;
-    const title=['replacement','works'].includes(getState().service)?'Recorded replacement-bus sections':'Rail works in this area';
+    const title=getState().service==='works'?'Recorded replacement-bus sections':'Rail works in this area';
     chip.querySelector('span').textContent=active.length>1?`${title} · ${active.length}`:title;
     const heading=document.getElementById('serviceContextTitle');if(heading)heading.textContent=title;
     if(!active.length)hide();else if(!panel.hidden)render();updateGeometry();
@@ -112,7 +114,7 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
   chip.onclick=open;close.onclick=()=>hide(true);
   if(toggle)toggle.onchange=()=>{getState().closedCorridors=toggle.checked;updateGeometry();onChange();};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden&&(panel.contains(document.activeElement)||chip===document.activeElement)){event.stopPropagation();event.preventDefault();hide(true);}},true);
-  function visibleCount(){const view=getView(),state=getState(),manifest=getManifest();return view&&state.service!=='trains'&&state.closedCorridors!==false&&manifest?.serviceContext?.geometryAvailable?confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:state.day,inspect:['replacement','works'].includes(state.service)}).length:0;}
+  function visibleCount(){const view=getView(),state=getState(),manifest=getManifest();return view&&contextVisible(state)&&state.closedCorridors!==false&&manifest?.serviceContext?.geometryAvailable?confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:state.day,inspect:state.service==='works'}).length:0;}
   function fitAll(){
     const state=getState(),selected=selectedDays(state.day,getDates()).map(index=>getDates()[index]),notices=(getManifest()?.serviceContext?.notices||[]).filter(notice=>noticeDates(notice,selected).confirmed.length),bounds=notices.flatMap(notice=>[[notice.bounds[1],notice.bounds[0]],[notice.bounds[3],notice.bounds[2]]]);
     if(!bounds.length)return false;

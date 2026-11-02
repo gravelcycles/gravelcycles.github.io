@@ -1,4 +1,5 @@
-import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=3de5543a986268fa';
+import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=51d3849f1dd8774c';
+import{replacementRailCorridor}from'./replacement-service.js?v=51d3849f1dd8774c';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];
@@ -17,7 +18,11 @@ export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=n
 
 export function lineInformation(edge,{uncertain=false}={}){
   const notes=[];
-  if(isTemporaryReplacement(edge)&&approximateAlignment(edge))notes.push({
+  if(replacementRailCorridor(edge))notes.push({
+    title:'Temporary replacement on this rail corridor',
+    text:'This replacement service is drawn along the railway corridor for orientation. The actual vehicle is a bus; boarding may be at a nearby stop rather than the station platform. This line does not show the road route driven. Its color counts scheduled replacement services.'
+  });
+  else if(isTemporaryReplacement(edge)&&approximateAlignment(edge))notes.push({
     title:'Why this replacement connection is dashed',
     text:'The timetable confirms a temporary replacement bus, but its exact road route is not available. This approximate line joins recorded boarding stops; it does not trace the road driven or indicate a train on the tracks. Its color shows scheduled service frequency.'
   });
