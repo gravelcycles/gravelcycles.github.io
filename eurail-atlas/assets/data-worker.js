@@ -1,6 +1,6 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=f2f54f4d0cc395a9';
-import{decodeDisplay}from'./display-codec.js?v=f2f54f4d0cc395a9';
-import{prepareEdge,normalize}from'./atlas-core.js?v=f2f54f4d0cc395a9';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=1383befb74f8ac49';
+import{decodeDisplay}from'./display-codec.js?v=1383befb74f8ac49';
+import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=1383befb74f8ac49';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -85,6 +85,18 @@ export async function queryJourneys(urls,from,to,{signal}={}){
   if(signal?.aborted)throw abortError();
   return findMatchingJourneys(parts,from,to);
 }
+export function findEdgeJourneys(parts,directions){
+  const matches=new Map();
+  for(const part of parts)for(const journey of part.journeys||[]){
+    if(directions.some(edge=>journeyMatchesEdge(journey,edge)))matches.set(JSON.stringify([journey.source,journey.id,journey.agencyPrimary!==false]),journey);
+  }
+  return[...matches.values()];
+}
+export async function queryEdgeJourneys(urls,directions,{signal}={}){
+  const parts=await Promise.all(urls.map(url=>journeyPart(url,signal)));
+  if(signal?.aborted)throw abortError();
+  return findEdgeJourneys(parts,directions);
+}
 
 if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope){
   const controllers=new Map();
@@ -99,6 +111,9 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result:result.data},result.transfer);
       }else if(message.op==='journeys'){
         const result=await queryJourneys(message.urls,message.from,message.to,{signal:controller.signal});
+        if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
+      }else if(message.op==='edgeJourneys'){
+        const result=await queryEdgeJourneys(message.urls,message.directions,{signal:controller.signal});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else throw new Error('Unsupported data-worker request');
     }catch(error){globalThis.postMessage({id:message.id,error:{name:error.name,message:error.message}});}

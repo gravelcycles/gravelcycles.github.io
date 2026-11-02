@@ -1,11 +1,11 @@
-import{prepareLoadedData,readJSON,queryJourneys}from'./data-worker.js?v=f2f54f4d0cc395a9';
-import{decodeJSONBytes}from'./data-codec.js?v=f2f54f4d0cc395a9';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys}from'./data-worker.js?v=1383befb74f8ac49';
+import{decodeJSONBytes}from'./data-codec.js?v=1383befb74f8ac49';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=f2f54f4d0cc395a9',import.meta.url);
+      const url=new URL('./data-worker.js?v=1383befb74f8ac49',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
@@ -33,6 +33,7 @@ export class AtlasDataLoader{
   fallback(message,signal){
     if(signal?.aborted)return Promise.reject(aborted());
     if(message.op==='journeys')return queryJourneys(message.urls,message.from,message.to,{signal});
+    if(message.op==='edgeJourneys')return queryEdgeJourneys(message.urls,message.directions,{signal});
     if(message.op==='decode')return decodeJSONBytes(message.bytes).then(data=>prepareLoadedData(data).data);
     return readJSON(message.url,{fresh:message.fresh,signal}).then(data=>prepareLoadedData(data).data);
   }
@@ -50,4 +51,5 @@ export class AtlasDataLoader{
   load(url,{fresh=false,signal}={}){return this.request({op:'load',url,fresh},{signal});}
   decode(bytes,options={}){return this.request({op:'decode',bytes},options);}
   findJourneys(urls,from,to,options={}){return this.request({op:'journeys',urls,from:[...from],to:[...to]},options);}
+  findEdgeJourneys(urls,directions,options={}){return this.request({op:'edgeJourneys',urls,directions},options);}
 }

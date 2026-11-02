@@ -32,7 +32,37 @@ export const FREQUENCY_LABELS=Object.freeze(['<4','4','8','16','32','64','128','
 export function frequencyBand(value){const n=Number(value)||0;let index=0;while(index<FREQUENCY_BREAKS.length-1&&n>=FREQUENCY_BREAKS[index+1])index++;return index;}
 export function colorFor(value){return FREQUENCY_COLORS[frequencyBand(value)];}
 export function searchStations(stations,query,limit=8){const q=normalize(query);if(q.length<2||limit<1)return[];const terms=q.split(' '),best=[],rank=s=>s._name.startsWith(q)?0:1;for(const station of stations){if(!terms.every(term=>station._name.includes(term)))continue;let i=0;while(i<best.length&&(rank(best[i])<rank(station)||(rank(best[i])===rank(station)&&(best[i].weekly||0)>=(station.weekly||0))))i++;if(i<limit){best.splice(i,0,station);if(best.length>limit)best.pop();}}return best;}
-export function publicTrainLabels(values){return(values||[]).filter(v=>v&&v.label&&!/internal|retail|opaque/i.test(v.kind||'')).slice(0,8);}
+export function publicTrainLabels(values,{day='all',dates,limit=8}={}){
+  const unique=new Map();
+  for(const value of values||[]){
+    if(!value?.label||/internal|retail|opaque/i.test(value.kind||''))continue;
+    const key=String(value.label),previous=unique.get(key);
+    if(!previous)unique.set(key,{...value,...(Array.isArray(value.daily)?{daily:value.daily.slice()}:{} )});
+    else if(Array.isArray(value.daily)){if(!Array.isArray(previous.daily))previous.daily=Array(value.daily.length).fill(0);for(let i=0;i<value.daily.length;i++)previous.daily[i]=Math.max(Number(previous.daily[i])||0,Number(value.daily[i])||0);}
+  }
+  // These vectors describe identifier presence, never additional train counts.
+  return[...unique.values()].filter(value=>!dates||!Array.isArray(value.daily)||sumDays(value,day,dates)>0).slice(0,Math.max(0,limit));
+}
+export function journeyMatchesEdge(journey,edge){
+  if(!journey?.id||journey.source!==edge?.source||(journey.agencyPrimary!==false)!==(edge.primary!==false))return false;
+  const calls=journey.stops||[],id=call=>Array.isArray(call)?call[0]:call?.id;
+  return(journey.edgeIds||[]).some((identity,i)=>identity===edge.id&&id(calls[i])===edge.a&&id(calls[i+1])===edge.b);
+}
+export function journeyPublicTrainLines(journeys,edge,{fields=['daily']}={}){
+  const directions=edge?._directionEdges||[edge],groups=new Map(),seen=new Set();
+  for(const journey of journeys||[]){
+    const identity=JSON.stringify([journey.source,journey.id,journey.agencyPrimary!==false]);
+    if(seen.has(identity)||!directions.some(direction=>journeyMatchesEdge(journey,direction)))continue;seen.add(identity);
+    const key=JSON.stringify([journey.source,journey.operator||'',journey.line||'']);
+    if(!groups.has(key))groups.set(key,{source:journey.source,operator:journey.operator||'',label:journey.line||'',publicTrains:[]});
+    for(const train of journey.publicTrains||[]){
+      if(!Array.isArray(train.daily))continue;
+      const daily=train.daily.map((value,i)=>fields.some(field=>Number(journey[field]?.[i])>0)?Math.max(0,Number(value)||0):0);
+      if(daily.some(value=>value>0))groups.get(key).publicTrains.push({...train,daily});
+    }
+  }
+  return[...groups.values()].map(group=>({...group,publicTrains:publicTrainLabels(group.publicTrains,{limit:Infinity})}));
+}
 export function worldPoint(lon,lat){const sin=Math.sin(Math.max(-85,Math.min(85,lat))*Math.PI/180);return[(lon+180)/360*256,(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*256];}
 export function edgePointCount(edge){return Number.isInteger(edge?._pointCount)?edge._pointCount:edge?.coords?.length||0;}
 export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2)return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY]};}
