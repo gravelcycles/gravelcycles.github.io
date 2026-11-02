@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=51d3849f1dd8774c';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=6d01324ad8527f21';
 
 export function contextVisible(state){return !['trains','replacement'].includes(state.service);}
 
