@@ -33,8 +33,8 @@
     },
     "missingStationTraversalRecords": 0,
     "overviewEdges": 7165,
-    "rawAssetBytes": 921687634,
-    "estimatedGzipAssetBytes": 124673561,
+    "rawAssetBytes": 931667500,
+    "estimatedGzipAssetBytes": 127095019,
     "hubGeometry": {
       "inferred": 501,
       "schematic": 46,
@@ -33135,20 +33135,20 @@
     "service-context.json.gz": {
       "encoding": "gzip",
       "logicalPath": "service-context.json",
-      "bytes": 1364,
-      "gzipBytes": 1364,
-      "sha256": "8c503514966c3a42d6bf4d5984c3d3c8ca5e9d28f38ce601050be8ae41afaee9",
-      "contentBytes": 3275,
-      "contentSha256": "793950405b5614d73f0f03b5b094baad199ad46496b5be87112886c5024bf844"
+      "bytes": 2744,
+      "gzipBytes": 2744,
+      "sha256": "81a89a4716f7b42b6a3d889d560c688dc852008112d4eb228361112a2a769c35",
+      "contentBytes": 7908,
+      "contentSha256": "39fab3e482c8365cb08e7d66c74e76b17cc1df462c97aada3429276dead4ca47"
     },
     "service-context-geometry.json.gz": {
       "encoding": "gzip",
       "logicalPath": "service-context-geometry.json",
-      "bytes": 7986,
-      "gzipBytes": 7986,
-      "sha256": "9dcbffacbc87087148822b1b6dc1a46e387d00968e19a1e9905a6185b01ebbbb",
-      "contentBytes": 24203,
-      "contentSha256": "884f9cdbd805b2e1ba689afcb0dfb8a8dbcf1521c27aca94da188a77554131c8"
+      "bytes": 13185,
+      "gzipBytes": 13185,
+      "sha256": "89a13c92168b3b54a69ba1d5824a4d4ca00c91f7c624c88d22f665429fa16f98",
+      "contentBytes": 40105,
+      "contentSha256": "1b09e11d7af983bb20de6ddd562f0793e91c7137958c7edae54cc0987d872602"
     },
     "pass-policies.json.gz": {
       "bytes": 2414879,
@@ -33457,14 +33457,26 @@
     },
     "serviceContextProjection": {
       "schemaVersion": 1,
-      "createdAt": "2026-11-02T05:41:11.995604+00:00",
-      "inputManifestSha256": "686be9fdb6d52c423a72c811c38e410caf4d3b505fb4d07d831677ba6575a378",
-      "producerSha256": "33246bf13e47cda0a63e9dc7486dc429d75eeeeef1a2b4f45a863e091b03c42a",
-      "configSha256": "5ef3b63ab9ab510b76732d50f28fa2fb25b307045e0a2fe9f1fff4e482667255",
-      "geometrySha256": "8031023613379220d492fcc3403055b6884db771013f2f0668d7843fe938c169",
-      "noticeCount": 3,
-      "closedInfrastructureFeatures": 3,
+      "createdAt": "2026-11-02T07:58:56.630758+00:00",
+      "inputManifestSha256": "28bc3b69c646d9bca28babf70e587a0f04b3ec4ab95e5cc1600c4078c0ef97b8",
+      "producerSha256": "de13ce28899a9614b16b7cf4266c479f762b1cb46189b01f1df033cbe7928b62",
+      "configSha256": "123274fbb7099eeabf30dad7b14d7f80cf9cae0966d7b41a4949f78310a3a70e",
+      "inputConfigFileSha256": "f3eb969d6283ce948517f39d914067aeb426b753c751ffe89574876348ed48e3",
+      "geometrySha256": "47faaf9f26a3bc19777616b8d7c5f9b864dc61fb5e0b1f53164c3ddcc7dc186f",
+      "noticeCount": 6,
+      "closedInfrastructureFeatures": 6,
       "railRecordsUnchanged": true
+    },
+    "contextMerge": {
+      "schemaVersion": 1,
+      "producerSha256": "a874c90a457822829f9de18457cc5b8df108d47c92b5b6af2a2ef188a0a980d2",
+      "baseManifestSha256": "5820abb515af8920ab52b2e92b82f912f94af45dd323a023f7a82a67e8e450d4",
+      "contextManifestSha256": "5a79a02fcb27e08f3320cb8d5bf3c768d56d9d268b1b7a05aba7c9cd85883aea",
+      "baseUiFilesPreserved": true,
+      "allScheduledAssetsAndCountsPreserved": true,
+      "preservedAdditionalAssets": [
+        "pass-policies.json.gz"
+      ]
     }
   },
   "attribution": {
@@ -35465,8 +35477,8 @@
     "encoding": "gzip",
     "compressionLevel": 6,
     "logicalAssets": 1832,
-    "bytes": 127088440,
-    "contentBytes": 931646965
+    "bytes": 127095019,
+    "contentBytes": 931667500
   },
   "serviceContext": {
     "schemaVersion": 1,
@@ -35510,6 +35522,51 @@
           46.480318728483745,
           9.934617079772972,
           46.80595826151625
+        ]
+      },
+      {
+        "id": "de-plattling-passau-phase-c-2026",
+        "closedFrom": "2026-09-21",
+        "closedThrough": "2026-12-11",
+        "uncertainBoundaryDates": [
+          "2026-09-20",
+          "2026-12-12"
+        ],
+        "bounds": [
+          12.700502254837586,
+          48.46641147848375,
+          13.615080745162414,
+          48.887535521516256
+        ]
+      },
+      {
+        "id": "de-plattling-obertraubling-phase-c-2026",
+        "closedFrom": "2026-09-21",
+        "closedThrough": "2026-12-11",
+        "uncertainBoundaryDates": [
+          "2026-09-20",
+          "2026-12-12"
+        ],
+        "bounds": [
+          12.005916940145843,
+          48.67169847848375,
+          13.028019059854156,
+          49.075455521516254
+        ]
+      },
+      {
+        "id": "de-plattling-zwiesel-rb35-2026",
+        "closedFrom": "2026-09-16",
+        "closedThrough": "2026-11-15",
+        "uncertainBoundaryDates": [
+          "2026-09-15",
+          "2026-11-16"
+        ],
+        "bounds": [
+          12.699773297999576,
+          48.67169847848375,
+          13.390546702000425,
+          49.12886152151626
         ]
       }
     ],

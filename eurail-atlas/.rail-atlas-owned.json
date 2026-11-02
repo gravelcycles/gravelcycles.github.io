@@ -1717,8 +1717,8 @@
       "sha256": "f7e537b2629b4ea3348969e887b04c6b153ecc8967792248ac62ce52e80de565"
     },
     "data/manifest.json": {
-      "bytes": 1148635,
-      "sha256": "5820abb515af8920ab52b2e92b82f912f94af45dd323a023f7a82a67e8e450d4"
+      "bytes": 1150399,
+      "sha256": "fb5e85ee4a34e5aa869856657d3b7e90e367fafc9b6dd879f86090427702c241"
     },
     "data/network-metadata/p000.json.gz": {
       "bytes": 26259,
@@ -3101,12 +3101,12 @@
       "sha256": "4255cb1f6bae9b3be3f9a8f0101ac407dc2300db74c1d215572002a89b527440"
     },
     "data/service-context-geometry.json.gz": {
-      "bytes": 7986,
-      "sha256": "9dcbffacbc87087148822b1b6dc1a46e387d00968e19a1e9905a6185b01ebbbb"
+      "bytes": 13185,
+      "sha256": "89a13c92168b3b54a69ba1d5824a4d4ca00c91f7c624c88d22f665429fa16f98"
     },
     "data/service-context.json.gz": {
-      "bytes": 1364,
-      "sha256": "8c503514966c3a42d6bf4d5984c3d3c8ca5e9d28f38ce601050be8ae41afaee9"
+      "bytes": 2744,
+      "sha256": "81a89a4716f7b42b6a3d889d560c688dc852008112d4eb228361112a2a769c35"
     },
     "data/source-register.json.gz": {
       "bytes": 9433,
@@ -7441,12 +7441,12 @@
       "sha256": "35a45276906cc08352ef66796969e8d5932287f4471ad339f2f20e99be32a4a4"
     },
     "index.html": {
-      "bytes": 77167,
-      "sha256": "d0dafdb2702941e72386e577c63e5dc125eb4f8ce5cdd7d66e675c6fc571c09d"
+      "bytes": 77879,
+      "sha256": "c6cbe5a1f547761395f24e67ed7545650a468fd25f82048b5cca8e3f0f535886"
     }
   },
   "kind": "rail-atlas-public-pages",
-  "manifestSha256": "5820abb515af8920ab52b2e92b82f912f94af45dd323a023f7a82a67e8e450d4",
+  "manifestSha256": "fb5e85ee4a34e5aa869856657d3b7e90e367fafc9b6dd879f86090427702c241",
   "prefix": "eurail-atlas",
   "sourceIds": [
     "at_mvo_rail_transitous",
