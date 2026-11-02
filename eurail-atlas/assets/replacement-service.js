@@ -1,4 +1,4 @@
-import{escapeHTML as esc,formatNumber,isTemporaryReplacement}from'./atlas-core.js?v=823828fc0f74b5ce';
+import{escapeHTML as esc,formatNumber,isTemporaryReplacement}from'./atlas-core.js?v=998cb452f17802a3';
 
 export function replacementEvidence(row){
   const entries=row?._directionEdges?.filter(isTemporaryReplacement)||[row];

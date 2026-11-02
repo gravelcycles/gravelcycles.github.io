@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=823828fc0f74b5ce';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=823828fc0f74b5ce';
-import{RouteIndex}from'./rail-picking.js?v=823828fc0f74b5ce';
-import{renderWorld}from'./rail-lod.js?v=823828fc0f74b5ce';
-import{RasterClient}from'./raster-client.js?v=823828fc0f74b5ce';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible}from'./atlas-core.js?v=998cb452f17802a3';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=998cb452f17802a3';
+import{RouteIndex}from'./rail-picking.js?v=998cb452f17802a3';
+import{renderWorld}from'./rail-lod.js?v=998cb452f17802a3';
+import{RasterClient}from'./raster-client.js?v=998cb452f17802a3';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -20,7 +20,7 @@ export function prepareStyles(edges,{state,dates,stations},zoom){
   const put=(offset,color,width,dash,value)=>{let c=colors.get(color);if(!c){c=rgb(color);colors.set(color,c);}pixels[offset]=Math.round(c[0]*255);pixels[offset+1]=Math.round(c[1]*255);pixels[offset+2]=Math.round(c[2]*255);pixels[offset+3]=Math.round(width/16*255);pixels[offset+4]=255;pixels[offset+5]=dash?255:0;pixels[offset+6]=255;pixels[offset+7]=frequencyPriority(value);};
   for(let i=0;i<edges.length;i++){
     const edge=edges[i];
-    if(state.sources&&!state.sources.has(edge.source)||edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source)||!state.schematic&&approximateAlignment(edge))continue;
+    if(state.sources&&!state.sources.has(edge.source)||edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source)||!serviceVisible(edge,state)||!matchesGeometry(edge,state))continue;
     if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
     const value=edgeCount(edge,state,dates)/days,review=pass&&state.review?conditionalCount(edge,state,dates)/days:0;
     frequencies[i*2]=value;frequencies[i*2+1]=review;
@@ -129,7 +129,7 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
-  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.alternatives,state.schematic,state.replacements,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size]);}
+  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,state.service,state.replacements,state.alternatives,state.schematic,state.aligned,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size]);}
   draw(){
     if(this.zoomAnimating)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';

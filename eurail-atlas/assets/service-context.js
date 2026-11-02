@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=823828fc0f74b5ce';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=998cb452f17802a3';
 
 export function noticeDates(notice,dates){
   const confirmed=dates.filter(day=>day>=notice.closedFrom&&day<=notice.closedThrough),
@@ -6,8 +6,8 @@ export function noticeDates(notice,dates){
   return{confirmed,uncertain};
 }
 
-export function relevantNotices(summary,{zoom,bounds,dates,day='all'}){
-  if(summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
+export function relevantNotices(summary,{zoom,bounds,dates,day='all',inspect=false}){
+  if(summary?.schemaVersion!==1||!inspect&&zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
   const selected=selectedDays(day,dates).map(index=>dates[index]);
   return(summary.notices||[]).filter(notice=>{
     const b=notice.bounds,overlap=Array.isArray(b)&&b.length===4&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3],
@@ -37,22 +37,22 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
     toggle=document.getElementById('showClosedCorridors'),toggleRow=document.getElementById('closedCorridorToggleRow'),explanation=document.getElementById('closedCorridorExplanation'),key=document.getElementById('closedCorridorKey');
   if(!chip||!panel||!content||!close)return{refresh(){}};
   let documentData=null,promise=null,path=null,active=[],request=0,version=null,
-    geometryData=null,geometryPromise=null,geometryVersion=null,geometryPath=null,layer=null,shownKey=null;
+    geometryData=null,geometryPromise=null,geometryVersion=null,geometryPath=null,layer=null,hitLayer=null,shownKey=null;
   function hide(focus=false){request++;panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus&&!chip.hidden)chip.focus();}
-  function candidates(){const view=getView(),manifest=getManifest();return view?relevantNotices(manifest?.serviceContext,{...view,dates:getDates(),day:getState().day}):[];}
+  function candidates(){const view=getView(),manifest=getManifest(),state=getState();return view&&state.service!=='trains'?relevantNotices(manifest?.serviceContext,{...view,dates:getDates(),day:state.day,inspect:['replacement','works'].includes(state.service)}):[];}
   function render(){
     if(!documentData)return;
     const selected=selectedDays(getState().day,getDates()).map(index=>getDates()[index]),ids=new Set(active.map(notice=>notice.id));
     content.innerHTML=documentData.closures.filter(notice=>ids.has(notice.id)).map(notice=>noticeHTML(notice,documentData.sources,selected)).join('')+`<p class="service-context-updated">Notices checked ${esc(pretty(documentData.checkedAt))}.</p>`;
     panel.setAttribute('aria-busy','false');
   }
-  function clearGeometry(){if(layer){layer.clearLayers();shownKey=null;}if(key)key.hidden=true;}
+  function clearGeometry(){if(layer){layer.clearLayers();hitLayer?.clearLayers();shownKey=null;}if(key)key.hidden=true;}
   function updateGeometry(){
     const manifest=getManifest(),map=getMap?.(),view=getView(),enabled=getState().closedCorridors!==false;
     if(toggle)toggle.checked=enabled;
     if(toggleRow)toggleRow.hidden=!manifest?.serviceContext?.geometryAvailable;if(explanation)explanation.hidden=!manifest?.serviceContext?.geometryAvailable;
     if(!map||!view||!enabled||!active.length||!geometryPath){clearGeometry();return;}
-    const ids=new Set(confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:getState().day}));
+    const ids=new Set(confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:getState().day,inspect:['replacement','works'].includes(getState().service)}));
     if(!ids.size){clearGeometry();return;}
     if(!geometryData){
       if(!geometryPromise){const expected=geometryVersion;geometryPromise=load(geometryPath).then(data=>{
@@ -61,18 +61,29 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
       }).catch(()=>{if(expected===geometryVersion){geometryPromise=null;clearGeometry();}});}
       return;
     }
-    const next=[...ids].sort().join('|');if(next===shownKey)return;
+    const next=[...ids].sort().join('|')+':'+getState().service;if(next===shownKey)return;
     if(!layer){
       const L=globalThis.L;if(!L)return;
       if(!map.getPane('closedRailContext'))map.createPane('closedRailContext').style.zIndex=360;
+      // Leaflet's retained station-marker canvas occupies pane 400 even after
+      // its markers are cleared. Put click targets above it and the rail canvas.
+      if(!map.getPane('closedRailContextHits'))map.createPane('closedRailContextHits').style.zIndex=450;
+      const onEachFeature=(feature,path)=>{
+        path.bindTooltip('Temporarily closed rail corridor · inferred infrastructure',{sticky:true});
+        path.on('click',event=>{if(event.originalEvent)L.DomEvent.stopPropagation(event.originalEvent);if(panel.hidden)open();else close.focus();});
+      };
       layer=L.geoJSON(null,{pane:'closedRailContext',renderer:L.svg({pane:'closedRailContext'}),
         style:{color:'#686f7c',weight:2.3,opacity:.9,dashArray:'6 5',lineCap:'round'},
-        bubblingMouseEvents:false,onEachFeature:(feature,path)=>{
-          path.bindTooltip('Temporarily closed rail corridor · inferred infrastructure',{sticky:true});
-          path.on('click',event=>{if(event.originalEvent)L.DomEvent.stopPropagation(event.originalEvent);if(panel.hidden)open();else close.focus();});
-        }}).addTo(map);
+        interactive:false}).addTo(map);
+      // A continuous invisible stroke makes dash gaps and thin sections easy
+      // to click/tap without changing the visible railway geometry.
+      hitLayer=L.geoJSON(null,{pane:'closedRailContextHits',renderer:L.svg({pane:'closedRailContextHits'}),
+        style:{color:'#686f7c',weight:14,opacity:0,dashArray:null},
+        bubblingMouseEvents:false,onEachFeature}).addTo(map);
     }
-    layer.clearLayers();layer.addData({...geometryData,features:geometryData.features.filter(feature=>ids.has(feature.properties?.notice_id))});shownKey=next;
+    const data={...geometryData,features:geometryData.features.filter(feature=>ids.has(feature.properties?.notice_id))};
+    layer.clearLayers();hitLayer.clearLayers();layer.addData(data);hitLayer.addData(data);shownKey=next;
+    layer.setStyle({weight:['replacement','works'].includes(getState().service)?3.8:2.3});
     if(key)key.hidden=!layer.getLayers().length;
   }
   function refresh(){
@@ -83,7 +94,9 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
       nextVersion=manifest?.assets?.[manifest?.assetPaths?.[nextGeometry]||nextGeometry]?.sha256;
     if(nextGeometry!==geometryPath||nextVersion!==geometryVersion){geometryPath=nextGeometry;geometryVersion=nextVersion;geometryData=null;geometryPromise=null;clearGeometry();}
     active=candidates();chip.hidden=!active.length;
-    chip.querySelector('span').textContent=active.length>1?`Rail works in this area · ${active.length}`:'Rail works in this area';
+    const title=['replacement','works'].includes(getState().service)?'Recorded replacement-bus sections':'Rail works in this area';
+    chip.querySelector('span').textContent=active.length>1?`${title} · ${active.length}`:title;
+    const heading=document.getElementById('serviceContextTitle');if(heading)heading.textContent=title;
     if(!active.length)hide();else if(!panel.hidden)render();updateGeometry();
   }
   async function open(){
@@ -99,5 +112,11 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
   chip.onclick=open;close.onclick=()=>hide(true);
   if(toggle)toggle.onchange=()=>{getState().closedCorridors=toggle.checked;updateGeometry();onChange();};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden&&(panel.contains(document.activeElement)||chip===document.activeElement)){event.stopPropagation();event.preventDefault();hide(true);}},true);
-  return{refresh};
+  function visibleCount(){const view=getView(),state=getState(),manifest=getManifest();return view&&state.service!=='trains'&&state.closedCorridors!==false&&manifest?.serviceContext?.geometryAvailable?confirmedCorridorIds(manifest.serviceContext,{...view,dates:getDates(),day:state.day,inspect:['replacement','works'].includes(state.service)}).length:0;}
+  function fitAll(){
+    const state=getState(),selected=selectedDays(state.day,getDates()).map(index=>getDates()[index]),notices=(getManifest()?.serviceContext?.notices||[]).filter(notice=>noticeDates(notice,selected).confirmed.length),bounds=notices.flatMap(notice=>[[notice.bounds[1],notice.bounds[0]],[notice.bounds[3],notice.bounds[2]]]);
+    if(!bounds.length)return false;
+    getMap()?.fitBounds(bounds,{padding:[45,130],maxZoom:10});return true;
+  }
+  return{refresh,visibleCount,fitAll};
 }
