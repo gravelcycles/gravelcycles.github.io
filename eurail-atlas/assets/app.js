@@ -1,11 +1,11 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount}from'./atlas-core.js?v=2f8afe3c193b9e7c';
-import{decodePassPolicies}from'./pass-policies.js?v=2f8afe3c193b9e7c';
-import{RailRenderer}from'./map-renderer.js?v=2f8afe3c193b9e7c';
-import{resolveAssetURL}from'./data-codec.js?v=2f8afe3c193b9e7c';
-import{AtlasDataLoader}from'./data-loader.js?v=2f8afe3c193b9e7c';
-import{setupCoverage}from'./coverage-panel.js?v=2f8afe3c193b9e7c';
-import{mergeCompletePairs}from'./network-view.js?v=2f8afe3c193b9e7c';
-import{setupServiceContext}from'./service-context.js?v=2f8afe3c193b9e7c';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount}from'./atlas-core.js?v=197d453e36779eb7';
+import{decodePassPolicies}from'./pass-policies.js?v=197d453e36779eb7';
+import{RailRenderer}from'./map-renderer.js?v=197d453e36779eb7';
+import{resolveAssetURL}from'./data-codec.js?v=197d453e36779eb7';
+import{AtlasDataLoader}from'./data-loader.js?v=197d453e36779eb7';
+import{setupCoverage}from'./coverage-panel.js?v=197d453e36779eb7';
+import{mergeCompletePairs}from'./network-view.js?v=197d453e36779eb7';
+import{setupServiceContext}from'./service-context.js?v=197d453e36779eb7';
 
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=new Map(),chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
