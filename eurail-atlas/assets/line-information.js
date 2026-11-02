@@ -1,4 +1,4 @@
-import{approximateAlignment}from'./atlas-core.js?v=c09a9e213777d88e';
+import{approximateAlignment}from'./atlas-core.js?v=9d6789b4d9f4d11d';
 
 export function lineInformation(edge,{uncertain=false}={}){
   const notes=[];
