@@ -54,3 +54,5 @@
 @media(max-width:600px){.map-footer{left:12px;right:12px}.map-footer .map-summary{font-size:10px}.sidebar{max-height:calc(100dvh - var(--toolbar-height) - 105px - env(safe-area-inset-bottom,0px))}}
 
 .line-explanation{margin:14px 0;padding:12px 13px;border:1px solid #c9d9d3;border-radius:5px;background:#e7eeea;color:var(--ink-soft)}.line-explanation h4{font-size:12px;line-height:1.4;margin:0 0 6px}.line-explanation p{font-size:11px;line-height:1.65;margin:0}
+/* Temporary replacements stay in the same frequency scale with visible mode evidence. */
+.replacement-information{margin:12px 0;padding:11px 12px;border:1px solid #b8c9c5;border-radius:5px;background:#eaf0eb}.replacement-information p{font-size:11px;line-height:1.5;margin:7px 0;color:var(--ink-soft)}.replacement-information .badge.replacement,.replacement-label{color:#255e62;font-weight:650}.replacement-label{display:inline-block;margin-top:3px}.service-breakdown{font-size:12px;line-height:1.5;color:var(--ink-soft);margin:0 0 17px}.service-line .replacement-information{grid-column:1/-1}.replacement-information .evidence-links a{font-size:11px}

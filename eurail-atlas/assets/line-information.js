@@ -1,4 +1,4 @@
-import{approximateAlignment,sumDays}from'./atlas-core.js?v=c01c2da84bdcd979';
+import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=823828fc0f74b5ce';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];
@@ -9,15 +9,19 @@ export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=n
     &&detail.lines.reduce((n,row)=>n+sumDays(row,day,dates),0)===movement){boardingRows=detail.lines;knownBoarding=true;}
   const boardable=knownBoarding?boardingRows.reduce((n,row)=>n+sumDays(row,day,dates,'boardableDaily','boardableWeekly'),0):null;
   return{
-    scope:'This count covers one source and services with these consecutive recorded calls. Other trains between these stations may call at intermediate stops and appear on separate lines. Overlapping lines are not a total for the railway corridor.',
+    scope:'This count covers one source and services with these consecutive recorded calls. Other services between these stations may call at intermediate stops and appear on separate lines. Overlapping lines are not a total for the railway corridor.',
     boardingRestricted:movement>0&&boardable===0,
-    boardingNote:movement>0&&boardable===0?'These trains run between the stations, but this source does not allow a passenger journey between them. They are counted as train movements, not permitted passenger trips.':''
+    boardingNote:movement>0&&boardable===0?'These services run between the stations, but this source does not allow a passenger journey between them. They are counted as service movements, not permitted passenger trips.':''
   };
 }
 
 export function lineInformation(edge,{uncertain=false}={}){
   const notes=[];
-  if(edge.geometryStatus==='train_ferry')notes.push({
+  if(isTemporaryReplacement(edge)&&approximateAlignment(edge))notes.push({
+    title:'Why this replacement connection is dashed',
+    text:'The timetable confirms a temporary replacement bus, but its exact road route is not available. This approximate line joins recorded boarding stops; it does not trace the road driven or indicate a train on the tracks. Its color shows scheduled service frequency.'
+  });
+  else if(edge.geometryStatus==='train_ferry')notes.push({
     title:'Why this crossing is dashed',
     text:'The train is carried by ferry here. The dashed line shows an approximate crossing, rather than railway tracks over the water. Its color shows the recorded scheduled train frequency.'
   });

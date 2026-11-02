@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=c01c2da84bdcd979';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=c01c2da84bdcd979';
-import{RouteIndex}from'./rail-picking.js?v=c01c2da84bdcd979';
-import{renderWorld}from'./rail-lod.js?v=c01c2da84bdcd979';
-import{RasterClient}from'./raster-client.js?v=c01c2da84bdcd979';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment}from'./atlas-core.js?v=823828fc0f74b5ce';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=823828fc0f74b5ce';
+import{RouteIndex}from'./rail-picking.js?v=823828fc0f74b5ce';
+import{renderWorld}from'./rail-lod.js?v=823828fc0f74b5ce';
+import{RasterClient}from'./raster-client.js?v=823828fc0f74b5ce';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -129,7 +129,7 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
-  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.alternatives,state.schematic,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size]);}
+  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.alternatives,state.schematic,state.replacements,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size]);}
   draw(){
     if(this.zoomAnimating)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';
