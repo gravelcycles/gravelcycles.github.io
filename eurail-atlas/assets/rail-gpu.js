@@ -64,11 +64,13 @@ export function rgb(color){
   return[(value>>16&255)/255,(value>>8&255)/255,(value&255)/255,1];
 }
 
-export function frequencyPriority(value){return Math.round(Math.max(0,Math.min(1,Math.log1p(value)/Math.log(181)))*255);}
+// Busy station-call corridors exceed 1,000/day. Keep their draw order graded
+// instead of assigning the same top priority to everything above 180/day.
+export function frequencyPriority(value){return Math.round(Math.max(0,Math.min(1,Math.log1p(value)/Math.log(2049)))*255);}
 
 // A segment is [x0,y0,x1,y1,cumulative_world_length,edge_style_index].
 // Zero-length source vertices are deliberately omitted before shader normalize.
-export function lineInstances(edges){
+export function lineInstances(edges,origin=[0,0]){
   let count=0;
   for(const edge of edges){const p=edge._world;for(let i=2;i<p.length;i+=2)if(p[i]!==p[i-2]||p[i+1]!==p[i-1])count++;}
   const data=new Float32Array(count*6);let offset=0;
@@ -76,7 +78,9 @@ export function lineInstances(edges){
     const p=edges[index]._world;let distance=0;
     for(let i=2;i<p.length;i+=2){
       const length=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);if(!length)continue;
-      data[offset++]=p[i-2];data[offset++]=p[i-1];data[offset++]=p[i];data[offset++]=p[i+1];
+      // Subtract in JavaScript's double precision before the Float32 upload.
+      // Absolute world positions otherwise lose metres of detail at street zoom.
+      data[offset++]=p[i-2]-origin[0];data[offset++]=p[i-1]-origin[1];data[offset++]=p[i]-origin[0];data[offset++]=p[i+1]-origin[1];
       data[offset++]=distance;data[offset++]=index;distance+=length;
     }
   }
@@ -122,10 +126,12 @@ export class RailGPU{
     const corner=gl.getAttribLocation(this.program,'a_corner');gl.bindBuffer(gl.ARRAY_BUFFER,this.corner);gl.enableVertexAttribArray(corner);gl.vertexAttribPointer(corner,2,gl.FLOAT,false,0,0);
     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
     for(const[name,size,offset]of[['a_segment',4,0],['a_start',1,4],['a_index',1,5]]){const location=gl.getAttribLocation(this.program,name);gl.enableVertexAttribArray(location);gl.vertexAttribPointer(location,size,gl.FLOAT,false,24,offset*4);gl.vertexAttribDivisor(location,1);}
-    gl.bindVertexArray(null);return{vao,buffer,texture:gl.createTexture(),stride,count:0};
+    gl.bindVertexArray(null);return{vao,buffer,texture:gl.createTexture(),stride,count:0,origin:[0,0]};
   }
-  upload(edges,highlight=false){
-    const gl=this.gl,batch=highlight?this.highlight:this.main,data=lineInstances(edges);
+  upload(edges,highlight=false,origin=null){
+    const gl=this.gl,batch=highlight?this.highlight:this.main;
+    batch.origin=origin||[edges[0]?._world[0]||0,edges[0]?._world[1]||0];
+    const data=lineInstances(edges,batch.origin);
     gl.bindBuffer(gl.ARRAY_BUFFER,batch.buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);batch.count=data.length/6;
     return batch.count;
   }
@@ -138,8 +144,9 @@ export class RailGPU{
   }
   draw(view,review=false){
     const gl=this.gl;gl.viewport(0,0,this.canvas.width,this.canvas.height);gl.clearColor(0,0,0,0);gl.clearDepth(1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(this.program);
-    gl.uniform2f(this.center,view.centerX,view.centerY);gl.uniform2f(this.size,view.width,view.height);gl.uniform1f(this.scale,view.scale);
+    gl.uniform2f(this.size,view.width,view.height);gl.uniform1f(this.scale,view.scale);
     for(const batch of [this.main,this.highlight])if(batch.count){
+      gl.uniform2f(this.center,view.centerX-batch.origin[0],view.centerY-batch.origin[1]);
       gl.bindVertexArray(batch.vao);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,batch.texture);gl.uniform1i(this.textureWidth,batch.width);gl.uniform1i(this.styleStride,batch.stride);gl.uniform1i(this.layer,batch===this.main?0:2);gl.uniform1i(this.pass,0);gl.drawArraysInstanced(gl.TRIANGLES,0,6,batch.count);
       if(batch===this.main&&review){gl.uniform1i(this.pass,1);gl.uniform1i(this.layer,1);gl.drawArraysInstanced(gl.TRIANGLES,0,6,batch.count);}
     }

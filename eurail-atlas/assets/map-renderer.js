@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=9d23a9023aa44a0a';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=9d23a9023aa44a0a';
-import{RouteIndex}from'./rail-picking.js?v=9d23a9023aa44a0a';
-import{renderWorld}from'./rail-lod.js?v=9d23a9023aa44a0a';
-import{RasterClient}from'./raster-client.js?v=9d23a9023aa44a0a';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly}from'./atlas-core.js?v=5829383eaaf72451';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=5829383eaaf72451';
+import{RouteIndex}from'./rail-picking.js?v=5829383eaaf72451';
+import{renderWorld}from'./rail-lod.js?v=5829383eaaf72451';
+import{RasterClient}from'./raster-client.js?v=5829383eaaf72451';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -101,7 +101,7 @@ export class RailRenderer{
     this.index=new RouteIndex(this.meshEdges);this.edgesReference=edges;this.styleCache.clear();this.canvasGroups.clear();this.currentStyleKey=null;
     this.lodBucket=Math.ceil(view.zoom);
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
-    if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})));
+    if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
   filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.alternatives,state.schematic,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,stations.size]);}
   draw(){
@@ -163,7 +163,7 @@ export class RailRenderer{
     for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#fbfaf6',width:6.5}});}
     for(const edge of chosen){edges.push(edge);styles.push({normal:{color:'#d4512c',width:2.5}});}
     if(data.selected?._world){edges.push(data.selected,data.selected);styles.push({normal:{color:'#fbfaf6',width:7.2}},{normal:{color:'#d4512c',width:3.2}});}
-    this.gpu.upload(edges,true);this.gpu.styles(styles,true);this.highlightKey=key;this.highlightEdgesReference=data.edges;
+    const view=this.view();this.gpu.upload(edges,true,[view.centerX,view.centerY]);this.gpu.styles(styles,true);this.highlightKey=key;this.highlightEdgesReference=data.edges;
   }
   pathFor(edge,zoom){
     let paths=this.paths.get(edge._world);if(!paths){paths=new Map();this.paths.set(edge._world,paths);}
