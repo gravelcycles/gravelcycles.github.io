@@ -710,7 +710,8 @@
     },
     "coverage": "coverage.json",
     "serviceContext": "service-context.json",
-    "serviceContextGeometry": "service-context-geometry.json"
+    "serviceContextGeometry": "service-context-geometry.json",
+    "passPolicies": "pass-policies.json"
   },
   "chunks": [
     {
@@ -33148,6 +33149,15 @@
       "sha256": "9dcbffacbc87087148822b1b6dc1a46e387d00968e19a1e9905a6185b01ebbbb",
       "contentBytes": 24203,
       "contentSha256": "884f9cdbd805b2e1ba689afcb0dfb8a8dbcf1521c27aca94da188a77554131c8"
+    },
+    "pass-policies.json.gz": {
+      "bytes": 2414879,
+      "gzipBytes": 2414879,
+      "sha256": "4255cb1f6bae9b3be3f9a8f0101ac407dc2300db74c1d215572002a89b527440",
+      "contentBytes": 9959331,
+      "contentSha256": "2f6837945822d944cf89699f55daf2e3c241b0e8ee124ea7b6ff37fd0765a4d8",
+      "encoding": "gzip",
+      "logicalPath": "pass-policies.json"
     }
   },
   "methodology": {
@@ -35447,15 +35457,16 @@
     "network-metadata/p335.json": "network-metadata/p335.json.gz",
     "coverage.json": "coverage.json.gz",
     "service-context.json": "service-context.json.gz",
-    "service-context-geometry.json": "service-context-geometry.json.gz"
+    "service-context-geometry.json": "service-context-geometry.json.gz",
+    "pass-policies.json": "pass-policies.json.gz"
   },
   "delivery": {
     "schemaVersion": 1,
     "encoding": "gzip",
     "compressionLevel": 6,
-    "logicalAssets": 1831,
-    "bytes": 124673561,
-    "contentBytes": 921687634
+    "logicalAssets": 1832,
+    "bytes": 127088440,
+    "contentBytes": 931646965
   },
   "serviceContext": {
     "schemaVersion": 1,
@@ -35504,5 +35515,14 @@
     ],
     "changesRailRecords": false,
     "geometryAvailable": true
+  },
+  "passPolicyProjection": {
+    "journeys": 46516,
+    "directionalEdges": 81723,
+    "identities": 124967,
+    "inputManifestSha256": "28bc3b69c646d9bca28babf70e587a0f04b3ec4ab95e5cc1600c4078c0ef97b8",
+    "semantics": "Valid Global Pass; ordinary second-class seated travel. No mandatory reservation or listed train supplement does not price optional reservations, accommodation or other travel costs. Named-segment/corridor and conditional supplements remain charge-unknown until their exact passenger segment is resolved; they never enter the strict supplement-required or no-extra-charge filters.",
+    "format": "rail-atlas-pass-policies-v1",
+    "producerSha256": "2b1acae5a9e1a04bb6e6083b0113174aa99f2ae06de72cd4e84d5ddc19c5c25d"
   }
 }
