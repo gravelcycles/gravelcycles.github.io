@@ -8119,13 +8119,13 @@
       "sha256": "d8f96e52d985b4beba6321cf4db5be7ace37e902636e8517c9328a8b8f31b94f"
     },
     "details/base-delta-d5c.json.gz": {
-      "bytes": 1443,
-      "contentBytes": 10043,
-      "contentSha256": "8c024e9027c6fea5dbe9fab31f667b1a7920da7ebfffc2998c7505d9892dcedd",
+      "bytes": 1792,
+      "contentBytes": 10640,
+      "contentSha256": "b2d86cc1aa921dd6fa1c8eec58695d01333eb50b7fd6f66a3cfc74a0a04cd0b0",
       "encoding": "gzip",
-      "gzipBytes": 1443,
+      "gzipBytes": 1792,
       "logicalPath": "details/base-delta-d5c.json",
-      "sha256": "1becb539220b564cec62a135b2bac8731be00a2f3ff8b7f60f4bf054f2b0f0be"
+      "sha256": "190919bee5b612be816ec4c377ed2ccff03d91e300cc0030e306e78421948528"
     },
     "details/base-delta-d5d.json.gz": {
       "bytes": 1465,
@@ -8461,13 +8461,13 @@
       "sha256": "1e56ff67aebf191b053cd3e7488683922a6712e506eab0649baf3b47a4a358de"
     },
     "details/base-delta-d83.json.gz": {
-      "bytes": 2246,
-      "contentBytes": 20851,
-      "contentSha256": "43a666468af93ad3c705f6d0c5870b7a1877d840e3d44a4cbbaa16305e53c914",
+      "bytes": 2609,
+      "contentBytes": 21448,
+      "contentSha256": "c3a297acadc99b742736c6a31d8985dfa72b61e94ced50466cfd7b7637641926",
       "encoding": "gzip",
-      "gzipBytes": 2246,
+      "gzipBytes": 2609,
       "logicalPath": "details/base-delta-d83.json",
-      "sha256": "53898c4f46373a76bc6f9fbe7d46dcdfbcfc125f518428fa58ecf56a5da29dea"
+      "sha256": "59d4b4fb9708af5b7d80c25314cafd13dea1551bc9bd4c52014a60e67e7920a5"
     },
     "details/base-delta-d84.json.gz": {
       "bytes": 956,
@@ -8731,13 +8731,13 @@
       "sha256": "221b58bed88d90cef2d3e61c4431c1147b6355cf002f3af383d0302c5a76e55d"
     },
     "details/base-delta-da1.json.gz": {
-      "bytes": 2229,
-      "contentBytes": 21269,
-      "contentSha256": "28d9eb2710825dc0e4b65c609eb55aa3d337ce9ddf7812699a949d7f6ec54acb",
+      "bytes": 2583,
+      "contentBytes": 21866,
+      "contentSha256": "030daa66b544550bf5465e540e6d4252ba63d1c6a483eef21561bb11bdb4c131",
       "encoding": "gzip",
-      "gzipBytes": 2229,
+      "gzipBytes": 2583,
       "logicalPath": "details/base-delta-da1.json",
-      "sha256": "b2102b81600d3c7da8f1147d9d7c75f7aabf36181e464e56028e29ad39e6b172"
+      "sha256": "c3195cb8d63ff0b0f318618663c7d10737ef5bcf0fc77740ba8fe5f7f8288f8f"
     },
     "details/base-delta-da2.json.gz": {
       "bytes": 1910,
@@ -9316,13 +9316,13 @@
       "sha256": "ceb10f24a65e5dcf92eeb676a1da4a91adf828dd9ff9a6c5380638441062e228"
     },
     "details/base-delta-de2.json.gz": {
-      "bytes": 2239,
-      "contentBytes": 20378,
-      "contentSha256": "dfca6d4d86999821ebb32b219e01bdf4329a7ddf13d0753384572741911c641b",
+      "bytes": 2590,
+      "contentBytes": 20975,
+      "contentSha256": "bd6167b9fa4cc20d34f9d83a16f0710c52d4df995ecbd2d9590819d67b59cfae",
       "encoding": "gzip",
-      "gzipBytes": 2239,
+      "gzipBytes": 2590,
       "logicalPath": "details/base-delta-de2.json",
-      "sha256": "97213ef37d5325a30304639f8b90fcd82ce561f4f4f7783ac57ce1e0ba56bf8a"
+      "sha256": "089d1b9b4d66d642af22442025aad3f3191c9ffd34e3601e7120e61f85e7d6cb"
     },
     "details/base-delta-de3.json.gz": {
       "bytes": 2250,
@@ -10522,13 +10522,13 @@
       "sha256": "5ec2a194f516ab38634ac662156439c61477d4416455108447cd16f14fe31e35"
     },
     "network/n0006.json.gz": {
-      "bytes": 854909,
-      "contentBytes": 6977435,
-      "contentSha256": "edab097eac5aeae31e8906d66551db71c4b07d512ed6336172805512e1fdbcf3",
+      "bytes": 855579,
+      "contentBytes": 6980415,
+      "contentSha256": "b3d9c34a65cf605b984e9183031a930af94baef67c7c75f9eba6b3ccbba3764b",
       "encoding": "gzip",
-      "gzipBytes": 854909,
+      "gzipBytes": 855579,
       "logicalPath": "network/n0006.json",
-      "sha256": "515d86ec8cff4bc2fda455ca7dcd3804c3472721beb3e1bda71c4c5c0d68c560"
+      "sha256": "2c7d519a76a391b04c36867aa93e087558a7fc76fef312d0404fcee8410bba8c"
     },
     "overview.json.gz": {
       "bytes": 1726578,
@@ -12630,11 +12630,11 @@
     "spatial/s00226.json.gz": {
       "encoding": "gzip",
       "logicalPath": "spatial/s00226.json",
-      "bytes": 23439,
-      "gzipBytes": 23439,
-      "sha256": "471c7917cc8f439b83582ba41e512de5dfd34ed8d5cd087b70cf43a0573c070e",
-      "contentBytes": 225402,
-      "contentSha256": "b645e6fa5a415278ee99e152fdc7dc1205dd29cb8f855aae6078943eda0fcf6c"
+      "bytes": 24092,
+      "gzipBytes": 24092,
+      "sha256": "f21bfaca1c4fe03172db153b805b78aea296d7042112082f619ffe497cf35086",
+      "contentBytes": 249710,
+      "contentSha256": "04daf7e69d079399ff86c086a10879fbb3288e5bbc229419f52615cba69bcdb5"
     },
     "spatial/s00227.json.gz": {
       "encoding": "gzip",
@@ -20928,11 +20928,11 @@
     "display-network.json.gz": {
       "encoding": "gzip",
       "logicalPath": "display-network.json",
-      "bytes": 1675625,
-      "gzipBytes": 1675625,
-      "sha256": "c41c7365353050c828ab30e30b36d0905c8687ea3d5957d82b0f2ad0c94100d2",
-      "contentBytes": 5612935,
-      "contentSha256": "4f177065618b6acaf4b2b17d0880931666863cc4131372c5ff35d59aab744a08"
+      "bytes": 1675716,
+      "gzipBytes": 1675716,
+      "sha256": "483ff3c5e5abdbf91cf1df1c58adab406ab2f34f719f5791c9a75be0b6a6c024",
+      "contentBytes": 5613199,
+      "contentSha256": "0205b8f21feb6eea259f9bebc2e606ffa723f062dfdcd057f9411baf0e5b3fb2"
     },
     "network-metadata/p000.json.gz": {
       "encoding": "gzip",
@@ -24348,11 +24348,11 @@
     "network-metadata/p379.json.gz": {
       "encoding": "gzip",
       "logicalPath": "network-metadata/p379.json",
-      "bytes": 18782,
-      "gzipBytes": 18782,
-      "sha256": "44c9dada7ec03dfc34509da06e5b65453b79c89c48df30877d375cd8f6b0f534",
-      "contentBytes": 154574,
-      "contentSha256": "7af97c5ba2aa8cdb511b8ac5b0606bc29cffaae5b5afd3f00c88457a77a76754"
+      "bytes": 19399,
+      "gzipBytes": 19399,
+      "sha256": "fcf0f0266fd1ab74b9e3fe080712ecfd02f1a429a1ced0bd0dbeaa35698a4fda",
+      "contentBytes": 157554,
+      "contentSha256": "071c54a325e72ced51f8b2fd32f55d7be0c63e8dbb9889a6a7529495dba8f8eb"
     },
     "network-metadata/p380.json.gz": {
       "encoding": "gzip",
@@ -24364,11 +24364,11 @@
       "contentSha256": "0554eb8ce362fb8646ac99ae9f2fcdd52e59df6518c661b8ac30df2d0cf74096"
     },
     "pass-policies.json.gz": {
-      "bytes": 2720956,
-      "gzipBytes": 2720956,
-      "sha256": "ed68a051952c58d68a6f218a73f949436b0c9523c460986aea06dd14ab207d18",
+      "bytes": 2720971,
+      "gzipBytes": 2720971,
+      "sha256": "e32d912bcded2ad083c1d1528be114fef7c980e18dca2f55f320e0303a67a5eb",
       "contentBytes": 11294494,
-      "contentSha256": "e936ca52ffee55d33d1c95a44085bd7174037c995500401460d60a5d678ff68d",
+      "contentSha256": "76547c9f1949bc32035d535403a78ccc65f97a077eae550e1a61581db69b4a0c",
       "encoding": "gzip",
       "logicalPath": "pass-policies.json"
     }
@@ -37437,9 +37437,9 @@
     "2026-11-07"
   ],
   "delivery": {
-    "bytes": 122780388,
+    "bytes": 122783851,
     "compressionLevel": 6,
-    "contentBytes": 1089672568,
+    "contentBytes": 1089705488,
     "encoding": "gzip",
     "logicalAssets": 2437,
     "schemaVersion": 1
@@ -46824,12 +46824,77 @@
       "stationObjectsUnchanged": true,
       "meaning": "Lossless spatial delivery repack; source rows are not clipped, aggregated, quantized or reclassified."
     },
+    "reviewedMapGeometry": {
+      "review": {
+        "schemaVersion": 1,
+        "id": "gotthard-ec32-33-2026-11-02",
+        "source": "it_liguria_trenitalia_tper_gtfs",
+        "snapshot": "2df530ba65826c29b3417a3e2983f23d2ce51a09ced30a68825a0f4acaa489af",
+        "donorSource": "ch_gtfs_2026",
+        "donorSnapshot": "f4d87e846a6f6cf588fda8bc67fd78fb028f2c7778588a70710378295bafa782",
+        "dates": [
+          "2026-11-01",
+          "2026-11-02",
+          "2026-11-03",
+          "2026-11-04",
+          "2026-11-05",
+          "2026-11-06",
+          "2026-11-07"
+        ],
+        "maximumStationDistanceM": 40,
+        "reason": "The Italian regional feed retains a 101 km station-to-station chord as provider geometry. The official Swiss timetable contains the same EC32/33, dates and ordered Bellinzona/Arth-Goldau calls with a detailed inferred railway corridor. Reuse that reviewed corridor without merging source records or certifying exact operating tracks.",
+        "rules": [
+          {
+            "edge": "5c4760415569b1c510",
+            "pattern": "022fdaf9688ed1d5a9",
+            "donorEdge": "eb20d2c14aaf01b621",
+            "donorPattern": "66103fd30091d2f0d6",
+            "train": "32",
+            "donorGeometrySha256": "2839bba66d9d35edd12260c2a2920af64a21039c6b24aa1aed644ea7a2426756"
+          },
+          {
+            "edge": "e253f8d97d1550565d",
+            "pattern": "ef462d4bd5d242fd66",
+            "donorEdge": "eb20d2c14aaf01b621",
+            "donorPattern": "66103fd30091d2f0d6",
+            "train": "32",
+            "donorGeometrySha256": "2839bba66d9d35edd12260c2a2920af64a21039c6b24aa1aed644ea7a2426756"
+          },
+          {
+            "edge": "837fbfdc22ee7ee71d",
+            "pattern": "898ccfb13c1eab2557",
+            "donorEdge": "ea4c857af52b58e5b3",
+            "donorPattern": "8ae5581518ba884ee4",
+            "train": "33",
+            "donorGeometrySha256": "7f4ced01def32e5dff79f49bd8bbac4dd28dd790c7c55dba0761c92e345227dc"
+          },
+          {
+            "edge": "a1a6bcb8919710a409",
+            "pattern": "edece10be1b5664756",
+            "donorEdge": "ea4c857af52b58e5b3",
+            "donorPattern": "8ae5581518ba884ee4",
+            "train": "33",
+            "donorGeometrySha256": "7f4ced01def32e5dff79f49bd8bbac4dd28dd790c7c55dba0761c92e345227dc"
+          }
+        ]
+      },
+      "configSha256": "8be10524528077b83c846c25266edf1fe297f8e3a092f40809e8d702b9e7fac8",
+      "inputManifestSha256": "40b7901e7415bb6cd20530aae419b0f7f812e6e390d698d7022a88a24aa5a0df",
+      "producerSha256": "424d5e5589f3481d96ab6d00587748310c6301f069c6f036bb179ce401828ce5",
+      "counts": {
+        "fine": 4,
+        "network": 4,
+        "detail": 4
+      },
+      "canonicalTimetablesChanged": false,
+      "sourceStationIdentitiesMerged": false
+    },
     "displayProjection": {
       "schemaVersion": 1,
       "audience": "public",
-      "createdAt": "2026-11-02T11:55:18.757097+00:00",
+      "createdAt": "2026-11-02T12:39:27.651144+00:00",
       "format": "rail-atlas-display-v1",
-      "inputManifestSha256": "804ffbc91172e5955d0f3e5c69269534851441896ec530038ab3ee6529e23e62",
+      "inputManifestSha256": "359b5f0902118abc2247b2ae7659cdd0a8eba86fb1f194affcce8daec5450e12",
       "producerSha256": "4e8ab6baca3ec99098e7bb9ae212dd204604eec557ca8f39ff4e17674c515487",
       "inputOverviewSha256": "176049caa3a0a49c408b197de43d86a4a3d65a8acfe25b5c852e7a32eaf19cd9",
       "originalDirectedRows": 14910,
@@ -46844,8 +46909,8 @@
     "completeDisplayProjection": {
       "schemaVersion": 1,
       "audience": "public",
-      "createdAt": "2026-11-02T11:55:28.987548+00:00",
-      "inputManifestSha256": "16953f401fd2ce3c71d0ff5dc181397b00917f40866c6ec27811c1153b000eef",
+      "createdAt": "2026-11-02T12:39:33.972860+00:00",
+      "inputManifestSha256": "8299c544b339d1b055c27b37642c4f10bea0c38e62c8905bec06fcbb6f962739",
       "producerSha256": "0d47d178f4a1db524a829645f71710ef8dadba5a5f7be8aadaf8d927608787e5",
       "compactProducerSha256": "4e8ab6baca3ec99098e7bb9ae212dd204604eec557ca8f39ff4e17674c515487",
       "sourceAssets": {
@@ -46855,12 +46920,12 @@
         "network/n0003.json.gz": "fa605f204852fdc6caf03ad8178566f1068c23ab3bed626cfc16f5b110ea9139",
         "network/n0004.json.gz": "6b087a4125b846eec008602fafc4602bba8505ce531cd5393cdca1c07bea622f",
         "network/n0005.json.gz": "5ec2a194f516ab38634ac662156439c61477d4416455108447cd16f14fe31e35",
-        "network/n0006.json.gz": "515d86ec8cff4bc2fda455ca7dcd3804c3472721beb3e1bda71c4c5c0d68c560",
+        "network/n0006.json.gz": "2c7d519a76a391b04c36867aa93e087558a7fc76fef312d0404fcee8410bba8c",
         "stations.json.gz": "24bdcb0d45d67c3b8db1d651475e96f910a4bd4e0dd569c835affe4c0ade1690"
       },
       "directedRows": 91984,
       "mapPairs": 48701,
-      "vertices": 155282,
+      "vertices": 155298,
       "metadataPages": 381,
       "allSourceRowsRetained": true,
       "dailyFilterCountsExact": true,
@@ -49148,12 +49213,12 @@
     "boardableWeeklyLegs": 11582812,
     "defaultWeeklyLegTraversals": 11501118,
     "edges": 91984,
-    "estimatedGzipAssetBytes": 120059432,
+    "estimatedGzipAssetBytes": 120062880,
     "eurailWeeklyLegs": 8979185,
     "geometry": {
-      "inferred": 59883,
+      "inferred": 59887,
       "inferred_partial": 9,
-      "provider": 26806,
+      "provider": 26802,
       "schematic": 5284,
       "train_ferry": 2
     },
@@ -49167,7 +49232,7 @@
     "missingStationTraversalRecords": 0,
     "overviewEdges": 14910,
     "patterns": 52606,
-    "rawAssetBytes": 1078378074,
+    "rawAssetBytes": 1078410994,
     "reviewedEurailWeeklyLegs": 10179,
     "reviewedTripDates": 662,
     "scheduledTripDates": 1001347,
@@ -49183,367 +49248,9 @@
     "journeys": 52644,
     "directionalEdges": 92678,
     "identities": 141738,
-    "inputManifestSha256": "10201f4e901c4eee21c226472202cce9bf431095012509aa42c42b1ac1cd30e8",
+    "inputManifestSha256": "8c5e9dc579e9e13fddd30fc69fdf583673f62b4224e80d4166bacb551839407f",
     "semantics": "Valid Global Pass; ordinary second-class seated travel. No mandatory reservation or listed train supplement does not price optional reservations, accommodation or other travel costs. Named-segment/corridor and conditional supplements remain charge-unknown until their exact passenger segment is resolved; they never enter the strict supplement-required or no-extra-charge filters.",
     "format": "rail-atlas-pass-policies-v1",
-    "producerSha256": "2b1acae5a9e1a04bb6e6083b0113174aa99f2ae06de72cd4e84d5ddc19c5c25d",
-    "cacheBinding": {
-      "schemaVersion": 1,
-      "producerSha256": "2b1acae5a9e1a04bb6e6083b0113174aa99f2ae06de72cd4e84d5ddc19c5c25d",
-      "dates": [
-        "2026-11-01",
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07"
-      ],
-      "sourceIds": [
-        "at_mvo_rail_transitous",
-        "be_sncb_official",
-        "bg_bdz",
-        "ch_gtfs_2026",
-        "cz_czptt",
-        "de_fv",
-        "de_rv",
-        "dk_rejseplanen_official",
-        "ee_elron",
-        "es_euskotren",
-        "es_fgc",
-        "es_mallorca",
-        "es_renfe_cercanias_transitous",
-        "es_renfe_ld",
-        "fi_digitraffic",
-        "fr_idfm",
-        "fr_renfe",
-        "fr_sncf",
-        "gb_eurostar_official",
-        "gb_nir_official_txc",
-        "hr_hz",
-        "ie_tfi",
-        "it_arst",
-        "it_eav",
-        "it_italo_nap",
-        "it_liguria_trenitalia_tper_gtfs",
-        "it_sta_odh",
-        "it_tft_toscana",
-        "it_trenitalia_nap",
-        "it_trenord",
-        "it_trentino_trasporti",
-        "lu_atp",
-        "lv_pieturas",
-        "me_zpcg",
-        "mk_mzt_community",
-        "nl_openov",
-        "no_entur",
-        "pl_pkp_intercity",
-        "pl_pkp_intercity_de",
-        "pl_polish_trains",
-        "pl_wkd",
-        "pt_fertagus",
-        "ro_railway",
-        "se_sverige2_transitous",
-        "si_dujpp_official",
-        "sk_zsr_official"
-      ],
-      "assets": {
-        "hubs.json": {
-          "physical": "hubs.json.gz",
-          "bytes": 3845956,
-          "sha256": "e18ed44e3a20c5d17127a3c9c29ce820aa168a345ffa8638bf3e440030f2098c"
-        },
-        "journeys/0089df8d99dd9536ad-0.json": {
-          "physical": "journeys/0089df8d99dd9536ad-0.json.gz",
-          "bytes": 522932,
-          "sha256": "0cbc6a234cfe9da398d8f2358944f079e875af043a06839d8273f998adc34c59"
-        },
-        "journeys/0089df8d99dd9536ad-1.json": {
-          "physical": "journeys/0089df8d99dd9536ad-1.json.gz",
-          "bytes": 47559,
-          "sha256": "7add67d4c62e94c48b1a2c66c422940828ac95bb5a8a467c20e0f086e6e7c0e3"
-        },
-        "journeys/0d47f895079454918b-0.json": {
-          "physical": "journeys/0d47f895079454918b-0.json.gz",
-          "bytes": 4024,
-          "sha256": "8621f6162dafd7b5c9e17ba5c8e09ab628deceea482e67293e5d251b2adad169"
-        },
-        "journeys/24a64265c67ea75c0c-0.json": {
-          "physical": "journeys/24a64265c67ea75c0c-0.json.gz",
-          "bytes": 212646,
-          "sha256": "6e9dd93d247cb783730816dd5ce9edaca494f4b609b24667d988465847088751"
-        },
-        "journeys/2639a55c16ea439a71-0.json": {
-          "physical": "journeys/2639a55c16ea439a71-0.json.gz",
-          "bytes": 4085,
-          "sha256": "7909809b6cdd59759f2f7de965dda0a4d36ae042fc7c5f5fd5eb80c484df8646"
-        },
-        "journeys/28ed1d0db13da45cef-0.json": {
-          "physical": "journeys/28ed1d0db13da45cef-0.json.gz",
-          "bytes": 82301,
-          "sha256": "c741c8608169151cb2d1356ca8b74f7a4ac04c5ea285aa42425ae7b1b5f23b37"
-        },
-        "journeys/2a2b9606c21dd7ffb9-0.json": {
-          "physical": "journeys/2a2b9606c21dd7ffb9-0.json.gz",
-          "bytes": 1546,
-          "sha256": "f07306554c5c5001c990a64c2029fb809b869dee58e65d5cd86967169b8789cb"
-        },
-        "journeys/300f75ebe130396269-0.json": {
-          "physical": "journeys/300f75ebe130396269-0.json.gz",
-          "bytes": 138359,
-          "sha256": "1f4d18aa58e6a201318667efa82152119ea24df4d6bee71a11fb14be6b59c910"
-        },
-        "journeys/30129f3ba80781c0fc-0.json": {
-          "physical": "journeys/30129f3ba80781c0fc-0.json.gz",
-          "bytes": 455667,
-          "sha256": "827ba5410a11b8eddc62f2437c0a415f3ae6f9a7c0c50306466fa5b81f7d5e14"
-        },
-        "journeys/30129f3ba80781c0fc-1.json": {
-          "physical": "journeys/30129f3ba80781c0fc-1.json.gz",
-          "bytes": 319578,
-          "sha256": "1fc76d32c6147dad1079bf252ec9523a946718cc953f884ce9be8540158429bb"
-        },
-        "journeys/3816bf318e006ed3bb-0.json": {
-          "physical": "journeys/3816bf318e006ed3bb-0.json.gz",
-          "bytes": 6394,
-          "sha256": "e2adf4558ba77500c5d2ffa9852b0b44e2d174aaedd016959f35cb3417249a9a"
-        },
-        "journeys/3e497a1864bc2b9bd7-0.json": {
-          "physical": "journeys/3e497a1864bc2b9bd7-0.json.gz",
-          "bytes": 1931,
-          "sha256": "61f906b623da162601b94de3ba259d3c814f0c098b41dc21abd6837a527e6627"
-        },
-        "journeys/4c37445a0638efc937-0.json": {
-          "physical": "journeys/4c37445a0638efc937-0.json.gz",
-          "bytes": 141996,
-          "sha256": "c8bf05d9a9d42a6468d158c99ff69783c474b1834083c635c748693cffb48096"
-        },
-        "journeys/518ba9803ac74c9a7f-0.json": {
-          "physical": "journeys/518ba9803ac74c9a7f-0.json.gz",
-          "bytes": 49305,
-          "sha256": "ba80f2e6d64f551fbc3f466855e3d4b18fa7755b19c851d22313ce4e0a26a0b4"
-        },
-        "journeys/54cb4fe85e69986af0-0.json": {
-          "physical": "journeys/54cb4fe85e69986af0-0.json.gz",
-          "bytes": 23522,
-          "sha256": "c089c0003cbe8aec263120828618ffd15fdf0543d112dc3b84bc59f4d4a57fbc"
-        },
-        "journeys/61465dd3b9067e0e21-0.json": {
-          "physical": "journeys/61465dd3b9067e0e21-0.json.gz",
-          "bytes": 18084,
-          "sha256": "873fffb4101fa74b211b04641a7af57923c7a944fe0d8c75feab7707425278da"
-        },
-        "journeys/635e1a71dc8397dfee-0.json": {
-          "physical": "journeys/635e1a71dc8397dfee-0.json.gz",
-          "bytes": 457207,
-          "sha256": "b2532dcba34901143bddac135b8c77aa01684e7d30c0947dc50d0f3766952ed8"
-        },
-        "journeys/72c152e024c30b4518-0.json": {
-          "physical": "journeys/72c152e024c30b4518-0.json.gz",
-          "bytes": 271473,
-          "sha256": "fc7cdfac0495713000c0fa008d784a473c0182e2460c9972718aa3da3542929d"
-        },
-        "journeys/8057ad85043ef791f6-0.json": {
-          "physical": "journeys/8057ad85043ef791f6-0.json.gz",
-          "bytes": 511058,
-          "sha256": "3b612a20e7f8a5b2d23483d1210c712ebe84b7df4be7120a2dd8de3b5c1fe9fe"
-        },
-        "journeys/8057ad85043ef791f6-1.json": {
-          "physical": "journeys/8057ad85043ef791f6-1.json.gz",
-          "bytes": 624069,
-          "sha256": "02058bb64e5327096a8ee9c0e9dc19a0c3a6cb3c437acc865a2a1fbee400b970"
-        },
-        "journeys/8057ad85043ef791f6-2.json": {
-          "physical": "journeys/8057ad85043ef791f6-2.json.gz",
-          "bytes": 596582,
-          "sha256": "9bfae9d0a4b94cb23d2884ac00f052f01b8867976afcfcfa25544a966af8b6c7"
-        },
-        "journeys/86e861d45e4a6ff412-0.json": {
-          "physical": "journeys/86e861d45e4a6ff412-0.json.gz",
-          "bytes": 206382,
-          "sha256": "6c1fda3322039fbbbde007c8c57605dd7b3ed2c2271a2510526197f290adb0af"
-        },
-        "journeys/8fb90426eda6c3fff4-0.json": {
-          "physical": "journeys/8fb90426eda6c3fff4-0.json.gz",
-          "bytes": 2971,
-          "sha256": "be9bd8fc191ad5a58b47d6eb74097f4d9c2eb4ca00aac5464a9e561501f782b2"
-        },
-        "journeys/97590a698472825370-0.json": {
-          "physical": "journeys/97590a698472825370-0.json.gz",
-          "bytes": 581806,
-          "sha256": "236e5faa0a812b0071dbbc0d2cb223b64ae311c41f6a2189a2910f4e382bfee7"
-        },
-        "journeys/98bcf34258d4baf596-0.json": {
-          "physical": "journeys/98bcf34258d4baf596-0.json.gz",
-          "bytes": 69237,
-          "sha256": "9729d343daaba31f327890f729ec04ba6620ce55557af353eaf9eb55eea230d7"
-        },
-        "journeys/9b20805a977a41c5e4-0.json": {
-          "physical": "journeys/9b20805a977a41c5e4-0.json.gz",
-          "bytes": 2134,
-          "sha256": "fb32996169b462a2a856ad7044799197bce130619d2bff005cceb0f91fbd8eec"
-        },
-        "journeys/a6dd09b79a9cc7b5cb-0.json": {
-          "physical": "journeys/a6dd09b79a9cc7b5cb-0.json.gz",
-          "bytes": 437934,
-          "sha256": "115bac77251a89f33556a16601e0c1baa7425dc5e43b30ef0c877ecf60b78902"
-        },
-        "journeys/a6dd09b79a9cc7b5cb-1.json": {
-          "physical": "journeys/a6dd09b79a9cc7b5cb-1.json.gz",
-          "bytes": 396267,
-          "sha256": "6a8278ecd93bd917ec475c08449fd159679cfc21e4a277e8ab62248f6b8e4aa6"
-        },
-        "journeys/ae74575c4701b04f21-0.json": {
-          "physical": "journeys/ae74575c4701b04f21-0.json.gz",
-          "bytes": 3552,
-          "sha256": "c1b9434e9478289ffca48e8eb619165a7046a5c087c57606a5ed1c5a095f92a1"
-        },
-        "journeys/b0a3c293800e9a4e00-0.json": {
-          "physical": "journeys/b0a3c293800e9a4e00-0.json.gz",
-          "bytes": 699394,
-          "sha256": "ad5afc7044998169d676c3516a2095fee20766aa10ebd4579f672bb8fea9058a"
-        },
-        "journeys/b0a3c293800e9a4e00-1.json": {
-          "physical": "journeys/b0a3c293800e9a4e00-1.json.gz",
-          "bytes": 712028,
-          "sha256": "a8f2264e71686632de3e4c3565e0175f03439996373e990e7f3a6cf45116b95d"
-        },
-        "journeys/b42e7775c597e24edc-0.json": {
-          "physical": "journeys/b42e7775c597e24edc-0.json.gz",
-          "bytes": 40029,
-          "sha256": "788a1ce47070f5b96a4bf800b1fb5227f5a13737b1867835e074f42e18b8ef35"
-        },
-        "journeys/b630805a2f19644da4-0.json": {
-          "physical": "journeys/b630805a2f19644da4-0.json.gz",
-          "bytes": 437178,
-          "sha256": "e57c1c998a252cbe131170eedb4483fe2469d7bead06aa93f72d133895aeb404"
-        },
-        "journeys/b630805a2f19644da4-1.json": {
-          "physical": "journeys/b630805a2f19644da4-1.json.gz",
-          "bytes": 842954,
-          "sha256": "69184252a668cafa4a24a04642d295eef55e8dd9e6eafe38b273c1e7bdd4bf82"
-        },
-        "journeys/b630805a2f19644da4-2.json": {
-          "physical": "journeys/b630805a2f19644da4-2.json.gz",
-          "bytes": 845305,
-          "sha256": "0451d7d150ba392508fe06884a835856ea07ba617efa169c269fe9b8e31eb363"
-        },
-        "journeys/b630805a2f19644da4-3.json": {
-          "physical": "journeys/b630805a2f19644da4-3.json.gz",
-          "bytes": 838154,
-          "sha256": "eaaa95cc6d9c4795c7e832a3febe16ace2e46d5f5567e6cfa073e07b8233fad7"
-        },
-        "journeys/b630805a2f19644da4-4.json": {
-          "physical": "journeys/b630805a2f19644da4-4.json.gz",
-          "bytes": 425940,
-          "sha256": "22623cdc422b0cca394b840e0dc4da1f19501b73dce13f722e4b313992a3afa7"
-        },
-        "journeys/b8cfbbee69f1799fe4-0.json": {
-          "physical": "journeys/b8cfbbee69f1799fe4-0.json.gz",
-          "bytes": 4325,
-          "sha256": "ad510e5544a1f727cd145167381a588f9e9a2e9db3c18f6b62ca2c41f77ed221"
-        },
-        "journeys/ccbaa65c8b7a6dd416-0.json": {
-          "physical": "journeys/ccbaa65c8b7a6dd416-0.json.gz",
-          "bytes": 279254,
-          "sha256": "00cf0453ff4dac2cdf6aa550374ab5b93ff4de07b4f7415702207c769868b66b"
-        },
-        "journeys/cd18f5cd51787d2b21-0.json": {
-          "physical": "journeys/cd18f5cd51787d2b21-0.json.gz",
-          "bytes": 620700,
-          "sha256": "a0a0d5c7ca1b90394e8f578f48d973fdd744104eaae69afbaab5cf8cfa7a6ecc"
-        },
-        "journeys/cd18f5cd51787d2b21-1.json": {
-          "physical": "journeys/cd18f5cd51787d2b21-1.json.gz",
-          "bytes": 666569,
-          "sha256": "55d286082e727a1639b192d651029412b117010b554e5d1aac190addc0bfb057"
-        },
-        "journeys/cd18f5cd51787d2b21-2.json": {
-          "physical": "journeys/cd18f5cd51787d2b21-2.json.gz",
-          "bytes": 235442,
-          "sha256": "7d30afab680f61485b88534754ab9fb03b43ea1106b5922b488437992b997efe"
-        },
-        "journeys/d5458c81db58200e1e-0.json": {
-          "physical": "journeys/d5458c81db58200e1e-0.json.gz",
-          "bytes": 604857,
-          "sha256": "d6e9c7bb88de0f8ea19bae15cbb2c3fb6262df1a9e29375625a8e80f04e98777"
-        },
-        "journeys/d5458c81db58200e1e-1.json": {
-          "physical": "journeys/d5458c81db58200e1e-1.json.gz",
-          "bytes": 601002,
-          "sha256": "64ded1129a37b9b235ea7dceb8b19b50c2eada80900c419cf90b7cd4c5597ada"
-        },
-        "journeys/d5458c81db58200e1e-2.json": {
-          "physical": "journeys/d5458c81db58200e1e-2.json.gz",
-          "bytes": 208951,
-          "sha256": "23df34f3ed384d0ae062950609846ee8e21b2f36c27ad7866fb1e23cad8e55e9"
-        },
-        "journeys/dd13f6634192c73ad6-0.json": {
-          "physical": "journeys/dd13f6634192c73ad6-0.json.gz",
-          "bytes": 51180,
-          "sha256": "dbfcb40c4814836645abf873e427827a43607d9a7e30e65c1cc109e432d44e55"
-        },
-        "journeys/ed062b1e13730e8212-0.json": {
-          "physical": "journeys/ed062b1e13730e8212-0.json.gz",
-          "bytes": 27286,
-          "sha256": "ba8723d3d920da45b72978a34aa39febd07d5d5a6212e695fcc90cf62a36c629"
-        },
-        "journeys/f11f369b59a31fdb8b-0.json": {
-          "physical": "journeys/f11f369b59a31fdb8b-0.json.gz",
-          "bytes": 579940,
-          "sha256": "78205511a5d1c27a1b7cbfa7a78229a94ccefaa25dc367779f118d5568ba8b77"
-        },
-        "journeys/f11f369b59a31fdb8b-1.json": {
-          "physical": "journeys/f11f369b59a31fdb8b-1.json.gz",
-          "bytes": 595666,
-          "sha256": "055dadec8dbe7d69922bf95ef8b4170af966d4d969a8500f98f6d8d4a8d44480"
-        },
-        "journeys/f11f369b59a31fdb8b-2.json": {
-          "physical": "journeys/f11f369b59a31fdb8b-2.json.gz",
-          "bytes": 75601,
-          "sha256": "d8659d12df789e68a6ce4286cc1c9143d38d6bdf00c36f8a9e67231a26c68b2b"
-        },
-        "journeys/faa904ca3141292b78-0.json": {
-          "physical": "journeys/faa904ca3141292b78-0.json.gz",
-          "bytes": 1581,
-          "sha256": "1e4343d62191e36925e8c711707798740383c18c388b91d25d05c2075065c0e6"
-        },
-        "network/n0000.json": {
-          "physical": "network/n0000.json.gz",
-          "bytes": 1097517,
-          "sha256": "9e9294dfe9c56c37ecbf1ecd3dbdd653202106d359e3a04ffab5a4117d0c1acd"
-        },
-        "network/n0001.json": {
-          "physical": "network/n0001.json.gz",
-          "bytes": 1131085,
-          "sha256": "56825ab779cd1fc8e54bc5c813bb77803a379007231805e5134258f529b5141d"
-        },
-        "network/n0002.json": {
-          "physical": "network/n0002.json.gz",
-          "bytes": 1127257,
-          "sha256": "7753922d02b8a7e0110addbbada21b5dcb9c365799332f2f4a9c3adac76083cb"
-        },
-        "network/n0003.json": {
-          "physical": "network/n0003.json.gz",
-          "bytes": 1188205,
-          "sha256": "fa605f204852fdc6caf03ad8178566f1068c23ab3bed626cfc16f5b110ea9139"
-        },
-        "network/n0004.json": {
-          "physical": "network/n0004.json.gz",
-          "bytes": 1094811,
-          "sha256": "6b087a4125b846eec008602fafc4602bba8505ce531cd5393cdca1c07bea622f"
-        },
-        "network/n0005.json": {
-          "physical": "network/n0005.json.gz",
-          "bytes": 1053683,
-          "sha256": "5ec2a194f516ab38634ac662156439c61477d4416455108447cd16f14fe31e35"
-        },
-        "network/n0006.json": {
-          "physical": "network/n0006.json.gz",
-          "bytes": 854909,
-          "sha256": "515d86ec8cff4bc2fda455ca7dcd3804c3472721beb3e1bda71c4c5c0d68c560"
-        }
-      }
-    }
+    "producerSha256": "2b1acae5a9e1a04bb6e6083b0113174aa99f2ae06de72cd4e84d5ddc19c5c25d"
   }
 }

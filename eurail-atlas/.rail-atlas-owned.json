@@ -2645,8 +2645,8 @@
       "sha256": "d8f96e52d985b4beba6321cf4db5be7ace37e902636e8517c9328a8b8f31b94f"
     },
     "data/details/base-delta-d5c.json.gz": {
-      "bytes": 1443,
-      "sha256": "1becb539220b564cec62a135b2bac8731be00a2f3ff8b7f60f4bf054f2b0f0be"
+      "bytes": 1792,
+      "sha256": "190919bee5b612be816ec4c377ed2ccff03d91e300cc0030e306e78421948528"
     },
     "data/details/base-delta-d5d.json.gz": {
       "bytes": 1465,
@@ -2797,8 +2797,8 @@
       "sha256": "1e56ff67aebf191b053cd3e7488683922a6712e506eab0649baf3b47a4a358de"
     },
     "data/details/base-delta-d83.json.gz": {
-      "bytes": 2246,
-      "sha256": "53898c4f46373a76bc6f9fbe7d46dcdfbcfc125f518428fa58ecf56a5da29dea"
+      "bytes": 2609,
+      "sha256": "59d4b4fb9708af5b7d80c25314cafd13dea1551bc9bd4c52014a60e67e7920a5"
     },
     "data/details/base-delta-d84.json.gz": {
       "bytes": 956,
@@ -2917,8 +2917,8 @@
       "sha256": "221b58bed88d90cef2d3e61c4431c1147b6355cf002f3af383d0302c5a76e55d"
     },
     "data/details/base-delta-da1.json.gz": {
-      "bytes": 2229,
-      "sha256": "b2102b81600d3c7da8f1147d9d7c75f7aabf36181e464e56028e29ad39e6b172"
+      "bytes": 2583,
+      "sha256": "c3195cb8d63ff0b0f318618663c7d10737ef5bcf0fc77740ba8fe5f7f8288f8f"
     },
     "data/details/base-delta-da2.json.gz": {
       "bytes": 1910,
@@ -3177,8 +3177,8 @@
       "sha256": "ceb10f24a65e5dcf92eeb676a1da4a91adf828dd9ff9a6c5380638441062e228"
     },
     "data/details/base-delta-de2.json.gz": {
-      "bytes": 2239,
-      "sha256": "97213ef37d5325a30304639f8b90fcd82ce561f4f4f7783ac57ce1e0ba56bf8a"
+      "bytes": 2590,
+      "sha256": "089d1b9b4d66d642af22442025aad3f3191c9ffd34e3601e7120e61f85e7d6cb"
     },
     "data/details/base-delta-de3.json.gz": {
       "bytes": 2250,
@@ -3725,8 +3725,8 @@
       "sha256": "56ecd6905f7ebd1d7c0bad83311dc2e1977c8852ef7587b348e49a661c71f705"
     },
     "data/display-network.json.gz": {
-      "bytes": 1675625,
-      "sha256": "c41c7365353050c828ab30e30b36d0905c8687ea3d5957d82b0f2ad0c94100d2"
+      "bytes": 1675716,
+      "sha256": "483ff3c5e5abdbf91cf1df1c58adab406ab2f34f719f5791c9a75be0b6a6c024"
     },
     "data/display-overview.json.gz": {
       "bytes": 364739,
@@ -3949,8 +3949,8 @@
       "sha256": "1e4343d62191e36925e8c711707798740383c18c388b91d25d05c2075065c0e6"
     },
     "data/manifest.json": {
-      "bytes": 1683437,
-      "sha256": "40b7901e7415bb6cd20530aae419b0f7f812e6e390d698d7022a88a24aa5a0df"
+      "bytes": 1671136,
+      "sha256": "0a4823d4a0a54234bc73e94aa601519638db3bb7387b2e79dd5d1cd362e463f6"
     },
     "data/network-metadata/p000.json.gz": {
       "bytes": 26496,
@@ -5469,8 +5469,8 @@
       "sha256": "7f472ea2805354327630dd0a1c51fd01b7a2d8095e8275309aa48321bf39748e"
     },
     "data/network-metadata/p379.json.gz": {
-      "bytes": 18782,
-      "sha256": "44c9dada7ec03dfc34509da06e5b65453b79c89c48df30877d375cd8f6b0f534"
+      "bytes": 19399,
+      "sha256": "fcf0f0266fd1ab74b9e3fe080712ecfd02f1a429a1ced0bd0dbeaa35698a4fda"
     },
     "data/network-metadata/p380.json.gz": {
       "bytes": 9204,
@@ -5505,16 +5505,16 @@
       "sha256": "5ec2a194f516ab38634ac662156439c61477d4416455108447cd16f14fe31e35"
     },
     "data/network/n0006.json.gz": {
-      "bytes": 854909,
-      "sha256": "515d86ec8cff4bc2fda455ca7dcd3804c3472721beb3e1bda71c4c5c0d68c560"
+      "bytes": 855579,
+      "sha256": "2c7d519a76a391b04c36867aa93e087558a7fc76fef312d0404fcee8410bba8c"
     },
     "data/overview.json.gz": {
       "bytes": 1726578,
       "sha256": "176049caa3a0a49c408b197de43d86a4a3d65a8acfe25b5c852e7a32eaf19cd9"
     },
     "data/pass-policies.json.gz": {
-      "bytes": 2720956,
-      "sha256": "ed68a051952c58d68a6f218a73f949436b0c9523c460986aea06dd14ab207d18"
+      "bytes": 2720971,
+      "sha256": "e32d912bcded2ad083c1d1528be114fef7c980e18dca2f55f320e0303a67a5eb"
     },
     "data/service-context-geometry.json.gz": {
       "bytes": 13175,
@@ -6433,8 +6433,8 @@
       "sha256": "4f11bee69e856e27f5329f7b6c7f852f17ac9da546717c1f10be484c4e9ad62e"
     },
     "data/spatial/s00226.json.gz": {
-      "bytes": 23439,
-      "sha256": "471c7917cc8f439b83582ba41e512de5dfd34ed8d5cd087b70cf43a0573c070e"
+      "bytes": 24092,
+      "sha256": "f21bfaca1c4fe03172db153b805b78aea296d7042112082f619ffe497cf35086"
     },
     "data/spatial/s00227.json.gz": {
       "bytes": 29219,
@@ -9874,11 +9874,11 @@
     },
     "index.html": {
       "bytes": 108023,
-      "sha256": "63d157e7102615c611981845334d40f5bdc09d511abb966f6f39ee5c6b7d51ac"
+      "sha256": "efe7a6f76b93776419f3860c646eaff67446b4a48567a9e1a11eb721547eae7d"
     }
   },
   "kind": "rail-atlas-public-pages",
-  "manifestSha256": "40b7901e7415bb6cd20530aae419b0f7f812e6e390d698d7022a88a24aa5a0df",
+  "manifestSha256": "0a4823d4a0a54234bc73e94aa601519638db3bb7387b2e79dd5d1cd362e463f6",
   "prefix": "eurail-atlas",
   "sourceIds": [
     "at_mvo_rail_transitous",
