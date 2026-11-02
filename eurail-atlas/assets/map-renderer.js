@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible}from'./atlas-core.js?v=998cb452f17802a3';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=998cb452f17802a3';
-import{RouteIndex}from'./rail-picking.js?v=998cb452f17802a3';
-import{renderWorld}from'./rail-lod.js?v=998cb452f17802a3';
-import{RasterClient}from'./raster-client.js?v=998cb452f17802a3';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible}from'./atlas-core.js?v=3de5543a986268fa';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=3de5543a986268fa';
+import{RouteIndex}from'./rail-picking.js?v=3de5543a986268fa';
+import{renderWorld}from'./rail-lod.js?v=3de5543a986268fa';
+import{RasterClient}from'./raster-client.js?v=3de5543a986268fa';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -15,7 +15,7 @@ export const zoomStrokeBoost=zoom=>Math.max(0,Math.min(7,Math.floor(zoom)-11))*2
 
 // Same policy predicates as qualifiesEdge, with each service count calculated
 // only once. The tests compare visibility for all modes/days/source switches.
-export function prepareStyles(edges,{state,dates,stations},zoom){
+export function prepareStyles(edges,{state,dates,stations,focusIds},zoom){
   const pixels=new Uint8Array(edges.length*16),frequencies=new Float64Array(edges.length*2),days=Math.max(1,selectedDays(state.day,dates).length),pass=effectivePass(state),colors=new Map();
   const put=(offset,color,width,dash,value)=>{let c=colors.get(color);if(!c){c=rgb(color);colors.set(color,c);}pixels[offset]=Math.round(c[0]*255);pixels[offset+1]=Math.round(c[1]*255);pixels[offset+2]=Math.round(c[2]*255);pixels[offset+3]=Math.round(width/16*255);pixels[offset+4]=255;pixels[offset+5]=dash?255:0;pixels[offset+6]=255;pixels[offset+7]=frequencyPriority(value);};
   for(let i=0;i<edges.length;i++){
@@ -26,6 +26,9 @@ export function prepareStyles(edges,{state,dates,stations},zoom){
     frequencies[i*2]=value;frequencies[i*2+1]=review;
     if(value>0)put(i*16,colorFor(value),Math.min(4.4,.75+Math.log1p(value)*.48)*(zoom<5?.95:1)+zoomStrokeBoost(zoom),approximateAlignment(edge),value);
     if(review>0)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32)+zoomStrokeBoost(zoom),true,review);
+    if(focusIds?.size&&!(edge._directionEdges||[edge]).some(row=>focusIds.has(row.id))&&!focusIds.has(edge.id)){
+      for(const offset of[i*16,i*16+8])if(pixels[offset+4]){pixels[offset]=176;pixels[offset+1]=184;pixels[offset+2]=179;}
+    }
   }
   return{pixels,frequencies};
 }
@@ -38,11 +41,13 @@ export function thresholdStyles(base,minimum){
   return pixels;
 }
 export function renderStyles(edges,data,zoom){return thresholdStyles(prepareStyles(edges,data,zoom),threshold(data.state.min));}
+const fullRouteState=state=>({...state,mode:['italy','hubs'].includes(state.mode)?'frequency':state.mode,pass:effectivePass(state),min:0});
 
 // Selection is an outline, not a second frequency scale. Reuse the same
 // visibility, color and dash decision as the ordinary network in every engine.
 export function highlightItems(edges,data,zoom,width=3.2){
-  const pixels=renderStyles(edges,data,zoom),items=[],boost=zoomStrokeBoost(zoom);
+  const focused=!!data.focusIds?.size,highlightData=focused?{...data,focusIds:null,state:fullRouteState(data.state)}:data;
+  const pixels=renderStyles(edges,highlightData,zoom),items=[],boost=zoomStrokeBoost(zoom);
   for(let pass=0;pass<2;pass++)for(const[layer,extra]of[['#fbfaf6',4],['#173f3b',2],[null,0]]){
     for(let i=0;i<edges.length;i++){
       const offset=i*16+pass*8;if(!pixels[offset+4])continue;
@@ -129,7 +134,7 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
-  filterKey({state,stations},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,state.service,state.replacements,state.alternatives,state.schematic,state.aligned,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size]);}
+  filterKey({state,stations,focusIds},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,state.service,state.replacements,state.alternatives,state.schematic,state.aligned,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size,focusIds?[...focusIds]:null]);}
   draw(){
     if(this.zoomAnimating)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';
@@ -215,12 +220,14 @@ export class RailRenderer{
     const data=this.getData(),zoom=this.map.getZoom(),baseKey=this.filterKey(data,zoom),minimum=threshold(data.state.min),key=baseKey+':min:'+minimum+':selected:'+(data.selected?.id||'')+':highlighted:'+JSON.stringify([...data.highlightIds||[]]);
     if(this.pickStyleKey!==key||this.pickStyleEdges!==this.meshEdges){
       let base=this.styleCache.get(baseKey);if(!base){base=prepareStyles(this.meshEdges,data,zoom);this.styleCache.set(baseKey,base);}
-      const pixels=thresholdStyles(base,minimum);this.pickStyles=new Map(this.meshEdges.map((edge,index)=>{
+      const pixels=thresholdStyles(base,minimum),focusData=data.focusIds?.size?{...data,focusIds:null,state:fullRouteState(data.state)}:null;
+      const focusPixels=focusData?renderStyles(this.meshEdges,focusData,zoom):null;
+      this.pickStyles=new Map(this.meshEdges.map((edge,index)=>{
         const selected=edge.id===data.selected?.id||(edge._directionEdges||[]).some(row=>row.id===data.selected?.id),highlighted=(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id));
-        return[edge,paintedRouteOrder(pixels,index,selected||highlighted?{selected,width:(selected?3.2:2.5)+4+zoomStrokeBoost(zoom)}:null)];
+        return[edge,paintedRouteOrder(focusPixels&&highlighted?focusPixels:pixels,index,selected||highlighted?{selected,width:(selected?3.2:2.5)+4+zoomStrokeBoost(zoom)}:null)];
       }));
       this.pickStyleKey=key;this.pickStyleEdges=this.meshEdges;
     }
-    return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
+    return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.focusIds?.size&&(edge._directionEdges||[edge]).some(row=>data.focusIds.has(row.id))?fullRouteState(data.state):data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
   }
 }

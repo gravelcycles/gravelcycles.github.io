@@ -1,0 +1,49 @@
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels}from'./atlas-core.js?v=3de5543a986268fa';
+import{serviceSleepHTML}from'./sleep-service.js?v=3de5543a986268fa';
+import{replacementHTML}from'./replacement-service.js?v=3de5543a986268fa';
+import{callId,groupSegmentRoutes,formatClock,routeRuns,serviceDates}from'./train-services.js?v=3de5543a986268fa';
+
+const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
+
+export function setupTrainInspector({getState,getDates,getJourneys,station,sourceName,loadTimetables,onFocus,onBack,onRetry}){
+  let edgeId='',routeKey='',trainLabel='',runId='',generation=0,loading=false,failure=false,timetable=null,groups=[],listScroll=0;
+  const name=id=>station(id).name||'Recorded station';
+  const endpoints=group=>`${esc(name(callId(group.stops[0])))} → ${esc(name(callId(group.stops.at(-1))))}`;
+  function reset(){edgeId='';routeKey='';trainLabel='';runId='';generation++;loading=false;failure=false;timetable=null;}
+  function back(){if(!routeKey)return false;routeKey='';trainLabel='';runId='';generation++;onBack();render();const panel=document.getElementById('segmentTrains')?.closest('.inspector');if(panel)panel.scrollTop=listScroll;return true;}
+  function currentGroup(){return groups.find(group=>group.key===routeKey);}
+  async function choose(group){
+    if(!routeKey)listScroll=document.getElementById('segmentTrains')?.closest('.inspector')?.scrollTop||0;routeKey=group.key;trainLabel='';runId='';timetable=null;loading=true;failure=false;const ticket=++generation;
+    onFocus(group);render();const panel=document.getElementById('segmentTrains')?.closest('.inspector');if(panel)panel.scrollTop=0;document.getElementById('trainRouteBack')?.focus({preventScroll:true});
+    try{const result=await loadTimetables(group);if(ticket!==generation)return;timetable=result;}
+    catch{if(ticket!==generation)return;failure=true;}
+    if(ticket===generation){loading=false;render();}
+  }
+  function render(edge,error=false){
+    const root=document.getElementById('segmentTrains');if(!root)return;
+    if(edge){if(edge.id!==edgeId){reset();edgeId=edge.id;}root._trainEdge=edge;}
+    edge=root._trainEdge;if(!edge)return;
+    const state=getState(),dates=getDates(),journeys=getJourneys(edge.id),days=Math.max(1,selectedDays(state.day,dates).length);
+    groups=groupSegmentRoutes(journeys,edge,state,dates);
+    if(routeKey&&!currentGroup()){routeKey='';trainLabel='';runId='';generation++;onBack();}
+    const group=currentGroup();root.className='segment-trains';
+    const sleepMarkup=group=>serviceSleepHTML(group,item=>sumDays(item,state.day,dates));
+    if(!group){
+      root.innerHTML=`<h4 class="detail-heading">SERVICES ON THIS CONNECTION</h4>${journeys?`<p class="helper">${fmt(groups.length)} route${groups.length===1?'':'s'} · ${fmt(groups.reduce((sum,g)=>sum+g.count,0)/days)} scheduled services / day. Select a route for its train numbers, dates and full stopping pattern.</p><div class="route-service-list">${groups.map((g,i)=>`<article class="route-service-card"><button class="route-service" data-route-index="${i}"><strong>${esc(g.operator)}</strong>${g.serviceMode==='temporary_replacement_bus'?'<small class="replacement-label">Temporary rail-replacement bus</small>':''}<span>${endpoints(g)}</span><small>${g.stops.length} stops · ${fmt(g.count/days)} / day</small><small>${g.serviceMode==='temporary_replacement_bus'?'Replacement services':'Trains'}: ${g.labels.length?esc(g.labels.slice(0,8).map(n=>n.label).join(', '))+(g.labels.length>8?` +${g.labels.length-8} more`:''):'public number unavailable'}</small><span class="route-service-action">Times & full route →</span></button>${sleepMarkup(g)}</article>`).join('')}</div>${groups.length?'':'<p class="helper">No recorded services match the selected dates and filters.</p>'}`:error?'<p class="helper">The complete train list could not load.</p><button class="text-button" id="retrySegmentTrains">Retry train list →</button>':'<p class="helper" role="status">Loading every matching service and its full route…</p>'}`;
+      root.querySelectorAll('[data-route-index]').forEach(button=>button.onclick=()=>choose(groups[Number(button.dataset.routeIndex)]));
+      root.querySelector('#retrySegmentTrains')?.addEventListener('click',onRetry);return;
+    }
+    const runs=routeRuns(group,timetable?.journeys||new Map(),state,dates),labels=group.labels;
+    if(trainLabel&&!labels.some(label=>label.label===trainLabel)){trainLabel='';runId='';}
+    const filteredRuns=trainLabel?runs.filter(run=>run.label===trainLabel):runs;
+    const selectedRun=filteredRuns.find(run=>run.id===runId),activeLabels=trainLabel?labels.filter(label=>label.label===trainLabel):labels;
+    const missing=group.journeys.filter(j=>!timetable?.journeys?.has(j.id)),scope=timetable?.status;
+    root.innerHTML=`<button class="train-route-back text-button" id="trainRouteBack">← All services on this connection</button><div class="route-focus-note"><span>Full route highlighted</span><button class="text-button" id="clearTrainFocus">Restore map</button></div><h4 class="train-route-title">${endpoints(group)}</h4><p class="helper">${esc(group.operator)} · ${group.stops.length} stops · ${fmt(group.count/days)} services / day</p>${replacementHTML(group.journeys[0])}${sleepMarkup(group)}<label class="train-number-filter" for="routeTrainNumber">Train number<select id="routeTrainNumber"><option value="">All ${labels.length||''} train numbers</option>${labels.map(label=>`<option value="${esc(label.label)}"${label.label===trainLabel?' selected':''}>${esc(label.label)}</option>`).join('')}</select></label>${activeLabels.length?`<div class="train-number-list">${activeLabels.map(label=>`<button class="train-number${trainLabel===label.label?' active':''}" data-train-number="${esc(label.label)}">${esc(label.label)}<small>${esc(dayText(serviceDates(label.daily,state,dates)))}</small></button>`).join('')}</div>`:''}<h4 class="detail-heading">SCHEDULED DEPARTURES</h4>${loading?'<p class="helper" role="status">Loading departure and arrival times…</p>':failure?'<p class="helper">Departure times could not load.</p><button class="text-button" id="retryTrainTimes">Retry times →</button>':filteredRuns.length?`<p class="helper">Times use ${esc(filteredRuns[0].timezone||'the timetable source')}. +1 means the next day after the service date. Select a departure for all stop times.</p><div class="train-run-list">${filteredRuns.map((run,i)=>`<button class="train-run${run.id===runId?' active':''}" data-run-index="${i}" aria-expanded="${run.id===runId}"><strong>${esc(run.label||'Scheduled train')}</strong><span>${formatClock(run.callTimes[0]?.[1]??run.callTimes[0]?.[0])} → ${formatClock(run.callTimes.at(-1)?.[0]??run.callTimes.at(-1)?.[1])}</span><small>${esc(dayText(run.dates))}</small></button>`).join('')}</div>`:'<p class="helper">Exact departure times are unavailable in this release. The recorded operating dates and full route are shown here.</p>'}${!loading&&!failure&&(missing.length||scope?.observation)?`<p class="helper">${scope?.restricted?'This source’s published edition includes dates and routes; individual clock times are outside its current reuse scope.':missing.length?'Timetable coverage is partial; some recorded trains have dates only.':''}${scope?.observation?' Clock times use a newer observation of the same source, matched to the complete calls, train labels and service dates. Frequencies retain the map snapshot.':''}</p>`:''}<h4 class="detail-heading" id="trainStopsHeading">${selectedRun?'ALL STOPS · '+esc(selectedRun.label||'SELECTED TRAIN'):'FULL STOPPING PATTERN'}</h4><div class="train-stop-table-wrap"><table class="train-stop-table"><thead><tr><th>Station</th>${selectedRun?'<th>Arrives</th><th>Departs</th>':''}</tr></thead><tbody>${(selectedRun?.journey.stops||group.stops).map((call,i)=>`<tr${[edge.a,edge.b].includes(callId(call))?' class="clicked-segment-stop"':''}><th scope="row">${esc(name(callId(call)))}${selectedRun&&String(call[1])==='1'?'<small>No boarding</small>':''}${selectedRun&&String(call[2])==='1'?'<small>No alighting</small>':''}</th>${selectedRun?`<td>${selectedRun.timepoints?.[i]===false?'≈ ':''}${formatClock(selectedRun.callTimes[i]?.[0])}</td><td>${selectedRun.timepoints?.[i]===false?'≈ ':''}${formatClock(selectedRun.callTimes[i]?.[1])}</td>`:''}</tr>`).join('')}</tbody></table></div><p class="detail-note">Source: ${esc(sourceName(group.source))}. Routes combine numbers only for the same provider, service mode and complete ordered stop sequence. Map alignments remain representative; exact operating tracks are unverified.</p>`;
+    root.querySelector('#trainRouteBack').onclick=back;root.querySelector('#clearTrainFocus').onclick=back;
+    root.querySelector('#routeTrainNumber').onchange=event=>{trainLabel=event.target.value;runId='';render();};
+    root.querySelectorAll('[data-train-number]').forEach(button=>button.onclick=()=>{trainLabel=trainLabel===button.dataset.trainNumber?'':button.dataset.trainNumber;runId='';render();});
+    root.querySelectorAll('[data-run-index]').forEach(button=>button.onclick=()=>{const run=filteredRuns[Number(button.dataset.runIndex)];runId=runId===run.id?'':run.id;render();if(runId)document.getElementById('trainStopsHeading')?.scrollIntoView({block:'start'});});
+    root.querySelector('#retryTrainTimes')?.addEventListener('click',()=>choose(group));
+  }
+  return{render,reset,back,get focused(){return!!routeKey;}};
+}

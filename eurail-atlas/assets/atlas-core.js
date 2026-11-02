@@ -62,6 +62,18 @@ export function publicTrainLabels(values,{day='all',dates,limit=8}={}){
 export function journeyMatchesEdge(journey,edge){
   if(!journey?.id||journey.source!==edge?.source||(journey.agencyPrimary!==false)!==(edge.primary!==false))return false;
   const calls=journey.stops||[],id=call=>Array.isArray(call)?call[0]:call?.id;
+  if(edge.isHub){
+    let previous=null;
+    for(let i=0;i<calls.length;i++){
+      const hub=journey.hubIds?.[i];if(!hub)continue;
+      if(previous&&previous.hub!==hub&&previous.hub===edge.a&&hub===edge.b){
+        const from=calls[previous.index],to=calls[i],pickup=Array.isArray(from)?from[1]:from.pickup,dropoff=Array.isArray(to)?to[2]:to.dropoff;
+        if(String(pickup??'0')!=='1'&&String(dropoff??'0')!=='1')return true;
+      }
+      previous={hub,index:i};
+    }
+    return false;
+  }
   return(journey.edgeIds||[]).some((identity,i)=>identity===edge.id&&id(calls[i])===edge.a&&id(calls[i+1])===edge.b);
 }
 export function journeyPublicTrainLines(journeys,edge,{fields=['daily']}={}){
