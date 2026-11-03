@@ -1,4 +1,4 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=1e666867170d77aa';
+import{normalize,validMapLocation}from'./atlas-core.js?v=d5c7f826e6e0fec4';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];

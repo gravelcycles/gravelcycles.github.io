@@ -81,6 +81,7 @@ export function journeyMatchesEdge(journey,edge){
   if(edge.isHub){
     let previous=null;
     for(let i=0;i<calls.length;i++){
+      if(journey.unmappedCallIndices?.includes(i)){previous=null;continue;}
       const hub=journey.hubIds?.[i];if(!hub)continue;
       if(previous&&previous.hub!==hub&&previous.hub===edge.a&&hub===edge.b){
         const from=calls[previous.index],to=calls[i],pickup=Array.isArray(from)?from[1]:from.pickup,dropoff=Array.isArray(to)?to[2]:to.dropoff;
@@ -111,6 +112,8 @@ export function worldPoint(lon,lat){const sin=Math.sin(Math.max(-85,Math.min(85,
 // (0,0) is a missing-location sentinel in retained European rail feeds. Keep
 // those timetable records, but never turn that placeholder into a map path.
 export function validMapLocation(lon,lat){return Number.isFinite(lon)&&Number.isFinite(lat)&&Math.abs(lon)<=180&&Math.abs(lat)<=85&&!(lon===0&&lat===0);}
+export function stationMapPoint(station){return station&&validMapLocation(station.lon,station.lat)?[station.lat,station.lon]:null;}
+export function nearbyStationLocations(a,b){return!!stationMapPoint(a)&&!!stationMapPoint(b)&&Math.abs(a.lat-b.lat)<.006&&Math.abs(a.lon-b.lon)<.008;}
 export function approximateAlignment(edge){return /schematic|unresolved|train_ferry/.test(edge.geometryStatus||'');}
 export function edgePointCount(edge){return Number.isInteger(edge?._pointCount)?edge._pointCount:edge?.coords?.length||0;}
 export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2||edge.coords.some(p=>!Array.isArray(p)||!validMapLocation(p[0],p[1])))return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY]};}

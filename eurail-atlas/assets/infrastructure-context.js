@@ -1,11 +1,11 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=1e666867170d77aa';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=d5c7f826e6e0fec4';
 
 export function relevantInfrastructure(summary,{zoom,bounds,dates,day='all',physicalRailways=false}){
   if(!physicalRailways||summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
   const selected=selectedDays(day,dates).map(index=>dates[index]);
   return(summary.corridors||[]).filter(row=>{
     const b=row.bounds;
-    return row.effect==='physical_railway_no_verified_passenger_service'&&Array.isArray(b)&&b.length===4&&
+    return row.effect==='physical_railway_no_verified_passenger_service'&&zoom>=(row.minimumZoom??summary.minimumZoom??7)&&Array.isArray(b)&&b.length===4&&
       b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3]&&
       selected.some(date=>date>=row.observedFrom&&date<=row.observedThrough);
   });

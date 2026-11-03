@@ -3,6 +3,27 @@ const $=id=>document.getElementById(id);
 const number=value=>Number.isFinite(Number(value))?Number(value).toLocaleString('en-GB'):'—';
 const node=(tag,className,text)=>{const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element;};
 
+export function countrySourceVisibility(row,manifest,state){
+  const available=new Set((manifest?.sources||[]).map(source=>source.id));
+  const sources=[...new Set(row?.publicDomesticSources||[])].filter(id=>available.has(id));
+  const hidden=state?.sources instanceof Set?sources.filter(id=>!state.sources.has(id)):[];
+  return{sources,hidden,allHidden:sources.length>0&&hidden.length===sources.length};
+}
+
+function observationDate(value){const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}):String(value||'unknown date');}
+function observationDetails(source,manifest){
+  const observation=source.timetableObservation||{},observed=observationDate(observation.observedAt||observation.observed_at),dates=manifest?.dates||[];
+  return 'Baseline timetable observed '+observed+'.'+(dates.length?' Source calendars cover '+observationDate(dates[0])+' to '+observationDate(dates.at(-1))+'.':'')+((observation.laterAmendmentsIncluded??observation.later_amendments_included)===false?' Later amendments are not included.':'')+' These historical counts do not establish the current timetable.';
+}
+export function historicalTimetableWarnings(manifest,state,bounds){
+  if(!Array.isArray(bounds)||bounds.length!==4||!bounds.every(Number.isFinite))return[];
+  return(manifest?.sources||[]).filter(source=>{
+    if(source.timetableObservation?.kind!=='historical_base_snapshot'||state?.sources instanceof Set&&!state.sources.has(source.id))return false;
+    const extent=source.timetableObservation.viewportBounds;
+    return Array.isArray(extent)&&extent.length===4&&extent.every(Number.isFinite)&&extent[0]<=extent[2]&&extent[1]<=extent[3]&&extent[0]<=bounds[2]&&extent[2]>=bounds[0]&&extent[1]<=bounds[3]&&extent[3]>=bounds[1];
+  }).map(source=>({id:source.id,country:source.country,label:(source.country==='Great Britain'?'Britain':source.country||source.name)+' · '+observationDate(source.timetableObservation.observedAt||source.timetableObservation.observed_at)+' baseline',detail:observationDetails(source,manifest)}));
+}
+
 export function countryCoverageSummary(row,audience='public'){
   if(!row)return{label:'Coverage not certified',detail:'A country inventory is unavailable for this snapshot. Missing lines do not establish that no trains run.',tone:'unknown'};
   const statuses={
@@ -28,7 +49,7 @@ export function setupCoverage(options){
   hooks=options||{};
   if(controller)return controller;
   const dialog=$('coverageDialog'),button=$('coverageButton'),select=$('coverageCountry');
-  if(!dialog||!button||!select)return{open:async()=>{},refresh:async()=>{},getCountrySummary:async country=>({country,...countryCoverageSummary(null)})};
+  if(!dialog||!button||!select)return{open:async()=>{},refresh:async()=>{},refreshViewport:()=>{},getCountrySummary:async country=>({country,...countryCoverageSummary(null)})};
   const eyebrow=dialog.querySelector('.eyebrow'),intro=dialog.querySelector('.coverage-intro'),publicEyebrow=eyebrow?.textContent,publicIntro=intro?.textContent;
   function audience(){const declared=hooks.getManifest?.()?.publication?.audience;return declared==='private'||(!declared&&(census?.audience==='private'||census?.kind==='private_personal_rail_coverage'))?'private':'public';}
   async function ensure(){
@@ -47,6 +68,12 @@ export function setupCoverage(options){
   function selectedRows(){return(census?.countries||[]).filter(row=>typeof row.country==='string').sort((a,b)=>a.country.localeCompare(b.country));}
   function paragraph(parent,text,className){parent.appendChild(node('p',className,text));}
   function section(parent,title,text){const area=node('section','coverage-section');area.appendChild(node('h3','',title));if(text)paragraph(area,text);parent.appendChild(area);return area;}
+  function refreshViewport(){
+    const warning=$('timetableObservationWarning');if(!warning)return;
+    const rows=historicalTimetableWarnings(hooks.getManifest?.(),hooks.getState?.(),hooks.getView?.()?.bounds),first=rows[0];
+    warning.hidden=!first;if(!first)return;
+    warning.textContent=first.label+(rows.length>1?' +'+(rows.length-1):'');warning.title=rows.map(row=>row.detail).join(' ');warning.setAttribute('aria-label',warning.textContent+'. '+first.detail+' Open coverage details.');warning.onclick=()=>open(first.country);
+  }
   function renderCountry(row){
     const body=$('coverageBody'),privateEdition=audience()==='private',summary=countryCoverageSummary(row,audience());body.replaceChildren();
     const title=node('div','coverage-country-heading');title.append(node('h3','',row.country),node('span','coverage-chip '+summary.tone,summary.label));body.appendChild(title);
@@ -54,6 +81,12 @@ export function setupCoverage(options){
     const metrics=node('dl','coverage-metrics');
     for(const[label,value]of[[privateEdition?'Available station records':'Published station records',row.publicStationRecords],['Frequency connections',row.publicPrimaryFrequencyPairs],['Eurail connections',row.publicPrimaryIncludedPairs]]){const item=node('div');item.append(node('dt','',label),node('dd','',number(value)));metrics.appendChild(item);}body.appendChild(metrics);
     paragraph(body,'Snapshot totals before map filters. Connections are source-defined station pairs, not distinct trains or physical lines.','coverage-small');
+    const visibility=countrySourceVisibility(row,hooks.getManifest?.(),hooks.getState?.());
+    if(visibility.hidden.length){
+      const area=section(body,visibility.allHidden?'Hidden by source filters':'Some sources are hidden',visibility.allHidden?'All published timetable sources serving '+row.country+' are switched off in this view.':number(visibility.hidden.length)+' published timetable source(s) serving '+row.country+' are switched off in this view.');
+      if(typeof hooks.onShowSources==='function'){const show=node('button','coverage-country-card','Show '+row.country+' sources');show.type='button';show.onclick=()=>{hooks.onShowSources(visibility.hidden);renderCountry(row);};area.appendChild(show);}
+    }
+    for(const source of hooks.getManifest?.()?.sources||[])if(source.timetableObservation?.kind==='historical_base_snapshot'&&(source.country===row.country||row.publicDomesticSources?.includes(source.id)))section(body,'Historical base timetable',observationDetails(source,hooks.getManifest?.()));
     if(summary.policyGap)section(body,'Eurail policy gap','Pass inclusion needs review. Zero included map connections does not establish that Eurail excludes this country or its trains.');
     if(row.heldHomeSourceCount>0){const area=section(body,privateEdition?'Acquired but not in this personal snapshot':'Acquired but withheld from this public edition',privateEdition?'These timetable feeds were acquired but are not included in this personal snapshot. Their absence does not establish that their trains are unavailable.':'These timetable feeds are acquired, but their inclusion is restricted by the current publication policy. This is a dataset publication gap, not a statement that their trains are unavailable.');const list=node('ul');for(const name of row.omittedFeedNames||[])list.appendChild(node('li','',String(name)));area.appendChild(list);}
     if(row.allowedHomeSourcesNotExported>0)section(body,privateEdition?'Awaiting snapshot inclusion':'Awaiting map publication',number(row.allowedHomeSourcesNotExported)+(privateEdition?' acquired feed(s) are not yet included in this personal snapshot.':' acquired feed(s) permitted by the publication policy have not been exported into this snapshot.'));
@@ -85,6 +118,6 @@ export function setupCoverage(options){
   }
   select.onchange=render;button.onclick=()=>open();$('closeCoverage').onclick=()=>dialog.close();
   dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}});
-  controller={open,refresh:async()=>{census=null;censusKey=null;pending=null;if(dialog.open){await ensure();render();}},getCountrySummary:async country=>{await ensure();const row=selectedRows().find(row=>row.country===country),summary=countryCoverageSummary(row,audience());return{country,...summary,row,shortText:country+': '+summary.label.toLowerCase()+'.'};}};
+  controller={open,refreshViewport,refresh:async()=>{refreshViewport();census=null;censusKey=null;pending=null;if(dialog.open){await ensure();render();}},getCountrySummary:async country=>{await ensure();const row=selectedRows().find(row=>row.country===country),summary=countryCoverageSummary(row,audience());return{country,...summary,row,shortText:country+': '+summary.label.toLowerCase()+'.'};}};
   return controller;
 }
