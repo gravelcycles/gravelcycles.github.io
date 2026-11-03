@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=399d5d2188699f63';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=5908c601d2f8d54f';
 
 export function contextVisible(state){return state.closedCorridors!==false;}
 
@@ -87,7 +87,6 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
       // Station canvases route real marker hits without blocking this target.
       if(!map.getPane('closedRailContextHits'))map.createPane('closedRailContextHits').style.zIndex=450;
       const onEachFeature=(feature,path)=>{
-        path.bindTooltip('Temporarily closed rail corridor · inferred infrastructure',{sticky:true});
         path.on('click',event=>{if(event.originalEvent)L.DomEvent.stopPropagation(event.originalEvent);if(panel.hidden)open();else close.focus();});
       };
       layer=L.geoJSON(null,{pane:'closedRailContext',renderer:L.svg({pane:'closedRailContext'}),

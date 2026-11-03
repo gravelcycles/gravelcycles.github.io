@@ -1,20 +1,21 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=399d5d2188699f63';
-import{serviceSleepHTML}from'./sleep-service.js?v=399d5d2188699f63';
-import{replacementHTML}from'./replacement-service.js?v=399d5d2188699f63';
-import{callId,groupSegmentRoutes,formatClock,routeRuns,serviceDates}from'./train-services.js?v=399d5d2188699f63';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=5908c601d2f8d54f';
+import{serviceSleepHTML}from'./sleep-service.js?v=5908c601d2f8d54f';
+import{replacementHTML}from'./replacement-service.js?v=5908c601d2f8d54f';
+import{callId,groupSegmentRoutes,formatClock,routeRuns,serviceDates}from'./train-services.js?v=5908c601d2f8d54f';
 
 const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
 
 export function setupTrainInspector({getState,getDates,getJourneys,station,sourceName,loadTimetables,onFocus,onBack,onRetry,onStation}){
   let edgeId='',routeKey='',trainLabel='',runId='',generation=0,loading=false,failure=false,timetable=null,groups=[],listScroll=0;
   const name=id=>station(id).name||'Recorded station';
+  const scrollPanel=()=>{const body=document.getElementById('inspectorScroll');return body?.clientHeight>0?body:document.getElementById('inspector');};
   const endpoints=group=>`${esc(name(callId(group.stops[0])))} → ${esc(name(callId(group.stops.at(-1))))}`;
   function reset(){edgeId='';routeKey='';trainLabel='';runId='';generation++;loading=false;failure=false;timetable=null;}
-  function back(){if(!routeKey)return false;routeKey='';trainLabel='';runId='';generation++;onBack();render();const panel=document.getElementById('segmentTrains')?.closest('.inspector');if(panel)panel.scrollTop=listScroll;return true;}
+  function back(){if(!routeKey)return false;routeKey='';trainLabel='';runId='';generation++;onBack();render();const panel=scrollPanel();if(panel)panel.scrollTop=listScroll;return true;}
   function currentGroup(){return groups.find(group=>group.key===routeKey);}
   async function choose(group){
-    if(!routeKey)listScroll=document.getElementById('segmentTrains')?.closest('.inspector')?.scrollTop||0;routeKey=group.key;trainLabel='';runId='';timetable=null;loading=true;failure=false;const ticket=++generation;
-    onFocus(group);render();const panel=document.getElementById('segmentTrains')?.closest('.inspector');if(panel)panel.scrollTop=0;document.getElementById('trainRouteBack')?.focus({preventScroll:true});
+    if(!routeKey)listScroll=scrollPanel()?.scrollTop||0;routeKey=group.key;trainLabel='';runId='';timetable=null;loading=true;failure=false;const ticket=++generation;
+    onFocus(group);render();const panel=scrollPanel();if(panel)panel.scrollTop=0;document.getElementById('trainRouteBack')?.focus({preventScroll:true});
     try{const result=await loadTimetables(group);if(ticket!==generation)return;timetable=result;}
     catch{if(ticket!==generation)return;failure=true;}
     if(ticket===generation){loading=false;render();}
@@ -23,7 +24,7 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     const root=document.getElementById('segmentTrains');if(!root)return;
     if(edge){if(edge.id!==edgeId){reset();edgeId=edge.id;}root._trainEdge=edge;}
     edge=root._trainEdge;if(!edge)return;
-    const atStation=!!edge._stationIds;
+    const atStation=!!edge._stationIds&&!edge._cityConnection;
     const state=getState(),dates=getDates(),journeys=getJourneys(edge.id),days=Math.max(1,selectedDays(state.day,dates).length);
     groups=groupSegmentRoutes(journeys,edge,state,dates);
     if(routeKey&&!currentGroup()){routeKey='';trainLabel='';runId='';generation++;onBack();}

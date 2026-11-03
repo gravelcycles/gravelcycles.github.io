@@ -74,7 +74,7 @@
 @media(max-width:600px){.station-search{left:12px;right:56px;width:auto;max-width:none;top:calc(var(--toolbar-height) + 63px);padding:13px}.station-search input{font-size:16px}.station-inspector-open:not(.train-route-focus) .inspector{top:auto;max-height:52dvh;bottom:calc(42px + env(safe-area-inset-bottom,0px));padding:19px}.station-inspector-open .map-key{display:none}.station-inspector-open .map-summary{display:none}.map-focus .station-search{top:119px}}
 .inspector h3 .station-link{color:inherit;text-decoration-thickness:1px;text-underline-offset:4px}
 
-.leaflet-tooltip.selected-station-label{max-width:220px;white-space:normal;text-align:center;background:var(--ink);color:var(--panel);border:2px solid var(--panel);border-radius:5px;padding:7px 10px;font:650 12px/1.35 var(--sans);box-shadow:0 2px 10px #15323833}.leaflet-tooltip-top.selected-station-label:before{border-top-color:var(--ink)}.station-focus-note{margin:16px 0}
+.station-focus-note{margin:16px 0}
 .route-stop-label>span{display:block;width:max-content}.route-stop-label>.route-label-left{transform:translateX(calc(-100% - 10px))}
 .context-group .service-context-chip{min-height:36px;padding:5px 0;margin:5px 0 0;box-shadow:none;border:0;background:transparent;font-size:11px;text-align:left;color:var(--route);text-decoration:underline;text-underline-offset:3px}.context-group .service-context-chip b{margin-left:8px;text-decoration:none}
 

@@ -1,20 +1,21 @@
-import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=399d5d2188699f63';
-import{stationSourceSelected}from'./station-identity.js?v=399d5d2188699f63';
-import{stationInScope}from'./project-scope.js?v=399d5d2188699f63';
+import{validMapLocation,isItaly}from'./atlas-core.js?v=5908c601d2f8d54f';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=5908c601d2f8d54f';
+import{stationInScope}from'./project-scope.js?v=5908c601d2f8d54f';
+import{countryMatches}from'./explorer-core.js?v=5908c601d2f8d54f';
 
 export const STATION_ZOOM=9;
 export function visibleStations(stations,bounds,state,zoom,selected=null){
-  const rows=state.stations!==false&&zoom>=STATION_ZOOM?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))):[];
+  const rows=state.stations!==false&&zoom>=STATION_ZOOM?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))&&(state.mode!=='countries'||countryMatches(s.country,state.country))):[];
   if(stationInScope(selected,state)&&validMapLocation(selected.lon,selected.lat)&&!rows.some(s=>s.id===selected.id))rows.push(selected);
   return rows.sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id)||(a.weekly||0)-(b.weekly||0)||a.id.localeCompare(b.id));
 }
 export class StationMarkers{
-  constructor(map,{getStations,getState,getSelected,isFocused,onPick}){
-    this.map=map;this.getStations=getStations;this.getState=getState;this.getSelected=getSelected;this.isFocused=isFocused;this.onPick=onPick;this.key='';
+  constructor(map,{getStations,getState,getSelected,getFocus=()=>null,onPick}){
+    this.map=map;this.getStations=getStations;this.getState=getState;this.getSelected=getSelected;this.getFocus=getFocus;this.onPick=onPick;this.key='';
     // Rail canvases are siblings of Leaflet's transformed map pane. Put the
     // stops above those canvases and mirror the map pane's pan translation;
     // a higher z-index inside the original pane cannot escape its stacking
-    // context. Leaflet still handles path/tooltip layout and zoom transforms.
+    // context. Leaflet still handles path layout and zoom transforms.
     const pane=map.createPane('stationNodes',map.getContainer());pane.style.zIndex=490;pane.style.pointerEvents='none';
     const sync=()=>{pane.style.transform=map.getPane('mapPane').style.transform;};map.on('move zoomanim zoomend resize',sync);sync();
     this.renderer=L.canvas({pane:'stationNodes',tolerance:5,padding:.15});this.layer=L.layerGroup().addTo(map);
@@ -71,12 +72,12 @@ export class StationMarkers{
     map.on('unload',()=>{for(const type of['click','dblclick','contextmenu'])container.removeEventListener(type,click,true);for(const type of['pointerdown','pointerup','pointercancel'])container.removeEventListener(type,pointer,true);for(const type of['touchstart','touchend','touchcancel'])container.removeEventListener(type,touch,true);container.removeEventListener('mousemove',move,true);container.removeEventListener('mouseleave',leave,true);});
   }
   render(){
-    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),rows=visibleStations(this.isFocused()?[]:this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected);
-    const key=(selected?.id||'')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;this.layer.clearLayers();this.selectedHalo=null;this.selectedMarker=null;
-    for(const station of rows){const active=station.id===selected?.id;
+    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected);
+    const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;this.layer.clearLayers();this.selectedHalo=null;this.selectedMarker=null;
+    for(const station of rows){const active=station.id===selected?.id,dimmed=!active&&focus!==null&&!stationMemberIds(station).some(id=>focus.has(id));
       if(active)this.selectedHalo=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:9,weight:5,color:'#fbfaf6',fill:false,interactive:false}).addTo(this.layer);
-      const marker=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':'#3d615d',fillColor:'#fbfaf6',fillOpacity:1,interactive:true,bubblingMouseEvents:false}).addTo(this.layer).on('click',()=>this.onPick(station));
-      if(active){this.selectedMarker=marker;marker.bindTooltip(esc(station.name),{pane:'stationNodes',permanent:true,direction:'top',offset:[0,-11],className:'selected-station-label',opacity:1});}
+      const marker=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':dimmed?'#a6b0a9':'#3d615d',opacity:dimmed?.6:1,fillColor:dimmed?'#d3d9d3':'#fbfaf6',fillOpacity:dimmed?.7:1,interactive:true,bubblingMouseEvents:false}).addTo(this.layer).on('click',()=>this.onPick(station));
+      if(active)this.selectedMarker=marker;
     }
     this.map.getContainer().dataset.stationMarkers=String(rows.length);
   }

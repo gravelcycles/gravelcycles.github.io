@@ -1,12 +1,12 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=399d5d2188699f63';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=399d5d2188699f63';
-import{RouteIndex}from'./rail-picking.js?v=399d5d2188699f63';
-import{renderWorld}from'./rail-lod.js?v=399d5d2188699f63';
-import{RasterClient}from'./raster-client.js?v=399d5d2188699f63';
-import{matchesFocus}from'./route-focus.js?v=399d5d2188699f63';
-import{isPhysicalSection}from'./physical-heat.js?v=399d5d2188699f63';
-import{edgeInScope}from'./project-scope.js?v=399d5d2188699f63';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=399d5d2188699f63';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=5908c601d2f8d54f';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=5908c601d2f8d54f';
+import{RouteIndex}from'./rail-picking.js?v=5908c601d2f8d54f';
+import{renderWorld}from'./rail-lod.js?v=5908c601d2f8d54f';
+import{RasterClient}from'./raster-client.js?v=5908c601d2f8d54f';
+import{matchesFocus}from'./route-focus.js?v=5908c601d2f8d54f';
+import{isPhysicalSection}from'./physical-heat.js?v=5908c601d2f8d54f';
+import{edgeInScope}from'./project-scope.js?v=5908c601d2f8d54f';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=5908c601d2f8d54f';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -60,7 +60,7 @@ export function visibleFrequencyHistogram(edges,base,view){
   }
   for(let i=150;i>=0;i--)counts[i]+=counts[i+1];return counts;
 }
-const fullRouteState=state=>({...state,mode:['italy','hubs'].includes(state.mode)?'frequency':state.mode,pass:effectivePass(state),min:0});
+const fullRouteState=state=>({...state,mode:['italy','hubs'].includes(state.mode)?'frequency':state.mode,pass:effectivePass(state),...(state.mode==='hubs'?{replacements:false}:{}),min:0});
 
 // Selection is an outline, not a second frequency scale. Reuse the same
 // visibility, color and dash decision as the ordinary network in every engine.
