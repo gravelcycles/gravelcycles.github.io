@@ -1,5 +1,5 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=565b892b7ecd08e0';
-import{mergeSleepServices}from'./sleep-service.js?v=565b892b7ecd08e0';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=aab3ec7847fa66d0';
+import{mergeSleepServices}from'./sleep-service.js?v=aab3ec7847fa66d0';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -33,8 +33,9 @@ export function journeyDaily(journey,state,dates){
 }
 export function groupSegmentRoutes(journeys,edge,state,dates){
   const directions=(edge._directionEdges||[edge]).map(direction=>usesHubConnections(state)?{...direction,isHub:true}:direction),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
+  const stationIds=edge._stationIds?new Set(edge._stationIds):null;
   for(const journey of journeys||[]){
-    const identity=journeyIdentity(journey);if(seen.has(identity)||!directions.some(direction=>journeyMatchesEdge(journey,direction)))continue;seen.add(identity);
+    const identity=journeyIdentity(journey);if(seen.has(identity)||(stationIds?!(journey.stops||[]).some(call=>stationIds.has(callId(call))):!directions.some(direction=>journeyMatchesEdge(journey,direction))))continue;seen.add(identity);
     const daily=journeyDaily(journey,state,dates),count=days.reduce((sum,i)=>sum+daily[i],0);if(!count)continue;
     const key=routeIdentity(journey);
     if(!groups.has(key))groups.set(key,{key,source:journey.source,operator:journey.operator||'Recorded operator',serviceMode:journey.serviceMode||'rail',stops:journey.stops,daily:dates.map(()=>0),count:0,journeys:[],labels:[],sleepServices:[],edgeIds:new Set()});
@@ -45,6 +46,7 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
   }
   return[...groups.values()].map(group=>({...group,labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))})).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
 }
+export function groupStationRoutes(journeys,stationIds,state,dates){return groupSegmentRoutes(journeys,{_stationIds:[...stationIds],_directionEdges:[]},state,dates);}
 
 export function formatClock(seconds){
   if(!Number.isSafeInteger(seconds)||seconds<0)return'—';

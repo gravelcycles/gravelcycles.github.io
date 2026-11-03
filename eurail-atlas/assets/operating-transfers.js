@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize}from'./atlas-core.js?v=565b892b7ecd08e0';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize}from'./atlas-core.js?v=aab3ec7847fa66d0';
 
 export function relevantTransfers(summary,{zoom,bounds,dates,day='all',sources=null,mode='frequency',service='all',replacements=true,schematic=true,representedInMainServiceLayer=[]}){
   if(summary?.schemaVersion!==1||zoom<(summary.minimumZoom||4)||!Array.isArray(bounds)||bounds.length!==4||service==='trains'||service==='works'||replacements===false||schematic===false)return[];

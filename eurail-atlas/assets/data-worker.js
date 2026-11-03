@@ -1,6 +1,6 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=565b892b7ecd08e0';
-import{decodeDisplay}from'./display-codec.js?v=565b892b7ecd08e0';
-import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=565b892b7ecd08e0';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=aab3ec7847fa66d0';
+import{decodeDisplay}from'./display-codec.js?v=aab3ec7847fa66d0';
+import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=aab3ec7847fa66d0';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -97,6 +97,18 @@ export async function queryEdgeJourneys(urls,directions,{signal}={}){
   if(signal?.aborted)throw abortError();
   return findEdgeJourneys(parts,directions);
 }
+export function findStationJourneys(parts,stationIds){
+  const ids=new Set(stationIds),matches=new Map();
+  for(const part of parts)for(const journey of part.journeys||[]){
+    if((journey.stops||[]).some(call=>ids.has(Array.isArray(call)?call[0]:call.id)))matches.set(JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]),journey);
+  }
+  return[...matches.values()];
+}
+export async function queryStationJourneys(urls,stationIds,{signal}={}){
+  const parts=await Promise.all(urls.map(url=>journeyPart(url,signal)));
+  if(signal?.aborted)throw abortError();
+  return findStationJourneys(parts,stationIds);
+}
 
 if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope){
   const controllers=new Map();
@@ -114,6 +126,9 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else if(message.op==='edgeJourneys'){
         const result=await queryEdgeJourneys(message.urls,message.directions,{signal:controller.signal});
+        if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
+      }else if(message.op==='stationJourneys'){
+        const result=await queryStationJourneys(message.urls,message.stationIds,{signal:controller.signal});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else throw new Error('Unsupported data-worker request');
     }catch(error){globalThis.postMessage({id:message.id,error:{name:error.name,message:error.message}});}
