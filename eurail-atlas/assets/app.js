@@ -1,24 +1,25 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement}from'./atlas-core.js?v=aab3ec7847fa66d0';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=aab3ec7847fa66d0';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=aab3ec7847fa66d0';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=aab3ec7847fa66d0';
-import{decodePassPolicies}from'./pass-policies.js?v=aab3ec7847fa66d0';
-import{RailRenderer}from'./map-renderer.js?v=aab3ec7847fa66d0';
-import{resolveAssetURL}from'./data-codec.js?v=aab3ec7847fa66d0';
-import{AtlasDataLoader}from'./data-loader.js?v=aab3ec7847fa66d0';
-import{setupCoverage}from'./coverage-panel.js?v=aab3ec7847fa66d0';
-import{mergeCompletePairs}from'./network-view.js?v=aab3ec7847fa66d0';
-import{setupServiceContext}from'./service-context.js?v=aab3ec7847fa66d0';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=aab3ec7847fa66d0';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=aab3ec7847fa66d0';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=aab3ec7847fa66d0';
-import{setupTrainInspector}from'./train-inspector.js?v=aab3ec7847fa66d0';
-import{routeMapPairs,callId,groupStationRoutes}from'./train-services.js?v=aab3ec7847fa66d0';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=aab3ec7847fa66d0';
-import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=aab3ec7847fa66d0';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement}from'./atlas-core.js?v=5b93a3430fea6c94';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=5b93a3430fea6c94';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=5b93a3430fea6c94';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=5b93a3430fea6c94';
+import{decodePassPolicies}from'./pass-policies.js?v=5b93a3430fea6c94';
+import{RailRenderer}from'./map-renderer.js?v=5b93a3430fea6c94';
+import{resolveAssetURL}from'./data-codec.js?v=5b93a3430fea6c94';
+import{AtlasDataLoader}from'./data-loader.js?v=5b93a3430fea6c94';
+import{setupCoverage}from'./coverage-panel.js?v=5b93a3430fea6c94';
+import{mergeCompletePairs}from'./network-view.js?v=5b93a3430fea6c94';
+import{setupServiceContext}from'./service-context.js?v=5b93a3430fea6c94';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=5b93a3430fea6c94';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=5b93a3430fea6c94';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=5b93a3430fea6c94';
+import{setupTrainInspector}from'./train-inspector.js?v=5b93a3430fea6c94';
+import{routeMapPairs,callId,groupStationRoutes}from'./train-services.js?v=5b93a3430fea6c94';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=5b93a3430fea6c94';
+import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=5b93a3430fea6c94';
 
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=new Map(),chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
+let feeCustom=state.charge!=='all'&&state.charge!=='free';
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
 let chunkPaintTimer=0;
 let selectedStation=null,stationMarkers=null,stationMarkerLoad=null,stationSearch=null;
@@ -29,7 +30,7 @@ let completeNetworkPromise=null,completeNetworkLoaded=false,completeNetworkGener
 let passPolicies=null,passPoliciesPromise=null,passPoliciesFailed=false;
 function attachPassPolicy(edge){if(!passPolicies)return edge;return{...edge,_passPolicy:passPolicies.get(edge.id),...(edge._directionEdges?{_directionEdges:edge._directionEdges.map(e=>({...e,_passPolicy:passPolicies.get(e.id)}))}:{})};}
 async function ensurePassPolicies(){
-  if(state.mode!=='eurail'||state.service==='works')return;
+  if(state.mode!=='eurail'||!hasServices())return;
   if(!passPoliciesPromise)passPoliciesPromise=(async()=>{await ensureManifest();if(!manifest.files.passPolicies)throw new Error('Pass conditions unavailable');passPolicies=decodePassPolicies(await json(dataURL(manifest.files.passPolicies)));passPoliciesFailed=false;edgeVersion++;pairVersion=-1;if(selected)selected=attachPassPolicy(selected);refresh();})().catch(error=>{passPoliciesPromise=null;passPoliciesFailed=true;applyControls();toast('Pass conditions could not load. Re-select the filter to retry.');throw error;});
   return passPoliciesPromise;
 }
@@ -38,7 +39,7 @@ const edgePublicNumbers=new Map(),publicNumberRequests=new Map();
 const edgeServiceErrors=new Set();
 let trainFocus=null,trainFocusGroup=null,trainFocusView=null,trainFocusGeneration=0;
 const coverage=setupCoverage({getManifest:()=>manifest,load:path=>json(dataURL(path))});
-const serviceContext=setupServiceContext({getManifest:()=>manifest,getState:()=>state,getDates:()=>dates,getMap:()=>map,onChange:()=>{saveURL();renderer?.schedule();},getView:()=>map?{zoom:map.getZoom(),bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path))});
+const serviceContext=setupServiceContext({getManifest:()=>manifest,getState:()=>state,getDates:()=>dates,getMap:()=>map,onChange:()=>refresh({details:false}),onOpen:()=>setControlsOpen(false),getView:()=>map?{zoom:map.getZoom(),bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path))});
 const trainInspector=setupTrainInspector({getState:()=>state,getDates:()=>dates,getJourneys:id=>edgePublicNumbers.get(id)?.journeys,station,sourceName,loadTimetables:loadRouteTimetables,onFocus:focusTrainRoute,onBack:()=>clearTrainFocus(true),onRetry:()=>{if(selectedStation)pickStation(selectedStation,{inspect:true,restore:true});else if(selected)pickEdge(selected,false);},onStation:id=>{const s=stationMap.get(id);if(s)pickStation(s,{inspect:true});}});
 async function loadRouteTimetables(group){
   await ensureManifest();const journeys=new Map();if(!manifest.files.timetables)return{journeys,status:{}};
@@ -124,7 +125,7 @@ async function hydrateDisplayEdge(edge){
   return upgraded;
 }
 async function loadCompleteNetwork({forRoute=false}={}){
-  if(completeNetworkLoaded||!manifest?.files?.displayNetwork||!forRoute&&(usesHubConnections(state)||state.mode==='italy'&&state.service!=='replacement'))return;
+  if(completeNetworkLoaded||!manifest?.files?.displayNetwork||!forRoute&&(usesHubConnections(state)||state.mode==='italy'&&!busesOnly()))return;
   const generation=completeNetworkGeneration;
   if(!completeNetworkPromise)completeNetworkPromise=(async()=>{
     const data=window.atlasCompletePromise?await dataLoader.decode(await window.atlasCompletePromise):await json(dataURL(manifest.files.displayNetwork));
@@ -145,6 +146,7 @@ async function loadPublicDownloads(){
 function closeMethod(){$('methodDialog').close();}
 
 function setControlsOpen(open){
+  if(open)stationSearch?.close();
   $('mapControls').hidden=!open;$('controlsToggle').setAttribute('aria-expanded',String(open));
 }
 function mapFramePadding(){
@@ -169,20 +171,14 @@ async function toggleMapFullscreen(){
   syncMapFullscreen(true);
   if(document.documentElement.requestFullscreen){try{await document.documentElement.requestFullscreen();}catch{/* The map focus layout also works where browser fullscreen is unavailable. */}}
 }
-function setupReplacementControl(){
-  if($('showReplacements'))return;
-  const label=document.createElement('label');label.className='toggle-row';label.innerHTML='<span>Include temporary replacement buses</span><input id="showReplacements" type="checkbox" checked><span class="switch" aria-hidden="true"></span>';
-  ($('showSchematic').closest('fieldset')||$('showSchematic').closest('label')).before(label);
-  $('showReplacements').onchange=event=>{state.replacements=event.target.checked;if(selected&&!serviceVisible(selected,state))closeInspector();refresh();};
-}
 function setupMapControls(){
-  setupReplacementControl();
   $('controlsToggle').onclick=()=>setControlsOpen($('mapControls').hidden);
   $('closeControls').onclick=()=>{setControlsOpen(false);$('controlsToggle').focus();};
   $('coverageMethod').onclick=()=>coverage.open();$('italyCoverage').onclick=()=>coverage.open('Italy');$('fullscreenMap').onclick=toggleMapFullscreen;
   document.addEventListener('fullscreenchange',()=>syncMapFullscreen(Boolean(document.fullscreenElement)));
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!document.fullscreenElement&&document.body.classList.contains('map-focus'))syncMapFullscreen(false);});
-  setControlsOpen(state.mode==='leg');
+  setControlsOpen(false);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('mapControls').hidden&&!document.querySelector('dialog[open]')){event.preventDefault();event.stopImmediatePropagation();setControlsOpen(false);$('controlsToggle').focus();}},true);
 }
 
 function initMap(){
@@ -206,55 +202,97 @@ function initMap(){
 function drawCountries(geo){if(baseLayer)map.removeLayer(baseLayer);baseLayer=L.geoJSON(geo,{pane:'countryFallback',interactive:false,style:{fillColor:'#f3f3ed',fillOpacity:1,color:'#bdcbc5',weight:.8,opacity:.9}}).addTo(map);}
 function loadCountryFallback(){if(manifest&&!baseLayer)json(manifest.files.context?dataURL(manifest.files.context):new URL('assets/countries.geojson',location.href).href).then(drawCountries).catch(()=>{});}
 function fitRegion(){map.fitBounds(state.mode==='italy'?ITALY_BOUNDS:EUROPE_BOUNDS,{...mapFramePadding(),animate:true});}
+function hasServices(){return state.trains||state.replacements;}
+function busesOnly(){return !state.trains&&state.replacements;}
 function updateMapSummary(visible){
-  if(state.service==='works'){const count=serviceContext.visibleCount();$('mapSummary').lastElementChild.textContent=count?`${count} replacement sections · ${state.day==='all'?'All week':dateLabel(state.day,dates)}`:'No recorded replacement sections here';$('mapSummary').title='Confirmed dated bus-replacement sections in the recorded notices. Partial coverage; no bus frequency is inferred.';$('overviewNote').hidden=true;return;}
-  const count=fmt(visible||0),label=usesHubConnections(state)?'city links':'connections',date=state.day==='all'?'All week':state.day==='weekdays'?'Weekdays':state.day==='weekend'?'Weekend':dateLabel(state.day,dates),summary=$('mapSummary'),loading=manifest?.files?.displayNetwork&&!completeNetworkLoaded&&!['hubs','italy'].includes(state.mode);
-  summary.lastElementChild.textContent=`${count} ${label} · ${date}${loading?' · loading…':''}`;
-  summary.title=`${count} ${usesHubConnections(state)?'city connector legs':'source-defined connections'} in view · ${dateLabel(state.day,dates)}`;
+  const summary=$('mapSummary'),date=state.day==='all'?'All week':state.day==='weekdays'?'Weekdays':state.day==='weekend'?'Weekend':dateLabel(state.day,dates);
+  if(!hasServices()){
+    const count=serviceContext.visibleCount();summary.lastElementChild.textContent=`Services hidden${count?' · '+count+' affected sections':''}`;
+    summary.title='No service types selected. Enable trains or replacement buses in Filters. Context overlays are independent.';$('overviewNote').hidden=true;return;
+  }
+  const label=usesHubConnections(state)?'city links':'connections',loading=manifest?.files?.displayNetwork&&!completeNetworkLoaded&&!usesHubConnections(state)&&state.mode!=='italy';
+  summary.lastElementChild.textContent=`${fmt(visible||0)} ${label} · ${date}${loading?' · loading…':''}`;
+  summary.title=`${fmt(visible||0)} source-defined ${label} in view · ${dateLabel(state.day,dates)}`;
   $('overviewNote').hidden=usesHubConnections(state)||state.mode==='italy'||completeNetworkLoaded;
   $('overviewNote').textContent=manifest?.files?.displayNetwork?'Loading all available network connections…':'Partial overview; zoom in for detail';
-  if(visible===0&&!$('mapLoading').hidden)return;
-  if(visible===0&&manifest){summary.lastElementChild.textContent=state.service==='replacement'?'No matching replacement services · adjust filters':'No matching connections · adjust filters';summary.title='No matching records in view. Adjust filters or check coverage.';}
+  if(visible===0&&manifest&&$('mapLoading').hidden){summary.lastElementChild.textContent='No matching services here · adjust filters';summary.title='The current date, sources and service filters have no matches in view. This does not establish that no services operate.';}
 }
 function applyLegend(){const visible=state.legend!==false;$('mapLegend').hidden=!visible;$('mapKey').dataset.collapsed=String(!visible);$('legendToggle').setAttribute('aria-expanded',String(visible));$('legendToggle').setAttribute('aria-label',visible?'Hide map key':'Show map key');$('legendToggle').title=visible?'Hide map key':'Show map key';$('legendToggleIcon').textContent=visible?'−':'+';}
 function setupLegend(){for(let i=0;i<FREQUENCY_COLORS.length;i++){const swatch=document.createElement('span');swatch.style.backgroundColor=FREQUENCY_COLORS[i];$('legendGradient').appendChild(swatch);const label=document.createElement('span');label.textContent=FREQUENCY_LABELS[i];$('legendLabels').appendChild(label);}$('legendToggle').onclick=()=>{state.legend=state.legend===false;applyLegend();saveURL();};applyLegend();}
 function applyControls(){
-  const replacement=state.service==='works',bus=state.service==='replacement',filtered=chargeFiltered(state),pass=effectivePass(state);
-  const emptySources=$('emptySourceSelection');if(emptySources)emptySources.hidden=replacement||!manifest||state.sources?.size!==0;
+  const filtered=chargeFiltered(state),pass=effectivePass(state),services=hasServices(),bus=busesOnly();
+  $('emptySourceSelection').hidden=!services||!manifest||state.sources?.size!==0;
   applyLegend();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();document.body.dataset.view=state.mode;
-  $('serviceView').value=state.service||'all';$('trainFilters').hidden=replacement;
-  $('replacementHelp').hidden=!(replacement||bus);$('fitReplacementSections').hidden=!(replacement||bus);$('fitReplacementSections').textContent=bus?'Find timetabled replacement services ↗':'Find all affected railway sections ↗';$('replacementHelp').textContent=bus?'Timetabled replacement buses follow the filters below. Lines follow railway corridors for orientation; bus boarding can be near the stations. Closure notices have their own inspection view. Coverage is partial.':'Recorded, dated closures with bus replacements. Lines mark affected railway sections, not bus roads or bus frequency. Coverage is partial.';$('showReplacements').checked=state.replacements!==false;$('showReplacements').closest('label').hidden=state.service!=='all';
-  $('italyCoverage').hidden=replacement||state.mode!=='italy'||manifest?.publication?.audience!=='public';
-  if(state.mode==='italy')$('italyCoverage').textContent=manifest?.sources?.some(s=>s.id==='it_trenitalia_nap')?'National Trenitalia services included; regional coverage remains partial. Coverage ↗':'Italian timetable coverage is partial. Coverage ↗';
-  $('controlsTitle').textContent=state.mode==='leg'&&!replacement?'Your journey':'Map filters';
-  $('controlsToggleLabel').textContent=state.mode==='leg'&&!replacement?'Journey':'Filters';
-  document.querySelectorAll('[data-mode]').forEach(b=>{const active=b.dataset.mode===state.mode;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
-  $('legForm').hidden=state.mode!=='leg'||replacement;
-  $('mapTitle').textContent=replacement?'Affected railway sections':bus?'Replacement bus services':MODES[state.mode].title;
-  $('mapKicker').textContent=replacement?'RECORDED RAIL WORKS':bus?'TEMPORARY REPLACEMENTS':MODES[state.mode].kicker;
-  $('mapSubtitle').textContent=replacement?'Dated sections with confirmed bus replacements. Coverage is partial.':bus?'Timetabled replacement buses. Dashed routes are approximate.':MODES[state.mode].subtitle;
-  $('showHubs').checked=state.hubs;$('showSchematic').checked=state.schematic;$('showAligned').checked=state.aligned!==false;
-  $('showIncluded').checked=state.included!==false;$('includedToggleRow').hidden=state.mode!=='eurail';
-  $('showReview').checked=state.review;$('reviewToggleRow').hidden=!pass;$('showReview').disabled=filtered;
-  $('reviewKey').hidden=replacement||!(pass&&state.review&&!filtered);
+  $('showTrains').checked=state.trains;$('showReplacements').checked=state.replacements;
+  $('showClosedCorridors').checked=state.closedCorridors!==false;
+  $('findReplacementServices').hidden=!state.replacements;
+  const context=serviceContext.summary?.();
+  $('contextLayerHelp').textContent=context?.available?`${context.available} recorded sections for these dates · independent of service filters. Grey paths mark affected railways, not bus roads.`:'Dated closure notices, separate from service frequencies. Coverage is partial.';
+  $('fitReplacementSections').disabled=!context?.available||state.closedCorridors===false;
+  $('italyCoverage').hidden=!services||state.mode!=='italy'||manifest?.publication?.audience!=='public';
+  if(state.mode==='italy')$('italyCoverage').textContent=manifest?.sources?.some(source=>source.id==='it_trenitalia_nap')?'National Trenitalia services included; regional coverage remains partial. Coverage ↗':'Italian timetable coverage is partial. Coverage ↗';
+  $('controlsTitle').textContent=state.mode==='leg'?'Your journey':'Map filters';$('controlsToggleLabel').textContent=state.mode==='leg'?'Journey':'Filters';
+  document.querySelectorAll('[data-mode]').forEach(button=>{const active=button.dataset.mode===state.mode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+  $('legForm').hidden=state.mode!=='leg';
+  $('mapTitle').textContent=!services?'Context view':bus?'Replacement bus services':MODES[state.mode].title;
+  $('mapKicker').textContent=!services?'MAP CONTEXT':bus?'TEMPORARY REPLACEMENTS':MODES[state.mode].kicker;
+  $('mapSubtitle').textContent=!services?'Service layers are hidden. Enable them in Filters.':bus?'Timetabled replacement buses. Railway paths show orientation, not bus roads.':MODES[state.mode].subtitle;
+  $('showStations').checked=state.stations!==false;$('showHubs').checked=state.hubs;$('showSchematic').checked=state.schematic;$('showAligned').checked=state.aligned!==false;
+  $('passToggleRow').hidden=PASS_MODES.has(state.mode);$('eurailOnly').checked=pass;$('eurailOnly').disabled=false;
+  $('passCoverageGroup').hidden=!pass;$('includedToggleRow').hidden=state.mode!=='eurail';
+  $('showIncluded').checked=state.included!==false;$('showReview').checked=state.review;$('showReview').disabled=filtered;
+  $('reviewKey').hidden=!(services&&pass&&state.review&&!filtered);
+  $('uncertaintyHelp').textContent=state.mode==='eurail'?(filtered?'Choose All fee conditions to include uncertain coverage. Fees filter confirmed included services only.':'Uncertain inclusion is shown in amber, separately from confirmed inclusion. Known exclusions stay excluded.'):'Conditional pass coverage is shown separately from confirmed included services.';
   $('passConditionRow').hidden=state.mode!=='eurail';
+  $('feePreset').value=feeCustom?'custom':state.charge==='free'?'free':'all';
+  const advancedWasHidden=$('feeAdvanced').hidden;$('feeAdvanced').hidden=!feeCustom;if(feeCustom&&advancedWasHidden)$('feeAdvanced').open=true;
   const charges=state.charge==='all'||!state.charge?Object.keys(CHARGE_BITS):state.charge.split(',');
-  document.querySelectorAll('[data-charge]').forEach(input=>{input.checked=charges.includes(input.dataset.charge);});
-  $('chargeMatch').value=state.chargeMatch||'any';
-  $('uncertaintyHelp').hidden=!pass;
-  $('uncertaintyHelp').textContent=state.mode==='eurail'?(filtered?'Choose All fees to inspect uncertain pass inclusion. Fee rules apply only to confirmed included services.':'Amber dashes show conditional or unknown inclusion. Turn off confirmed inclusion to inspect only uncertain coverage.'):'Amber dashes show conditional pass coverage, separately from included trains.';
-  $('passConditionHelp').textContent=!passPolicies?(passPoliciesFailed?'Pass conditions unavailable. Change a choice to retry.':'Loading recorded pass conditions…'):state.charge==='none'?'No fee conditions selected: no included trains match.':state.charge==='free'?'No mandatory reservation or listed train supplement. Optional reservations, upgrades and accommodation may cost extra.':(state.chargeMatch==='all'?'Each train must meet every checked condition.':'Matches any checked condition; each train is counted once.')+' Unknown fees never qualify as free.';
-  $('eurailOnly').checked=pass;$('eurailOnly').disabled=PASS_MODES.has(state.mode);
-  $('passToggleRow').title=PASS_MODES.has(state.mode)?'This view requires published or explicitly reviewed Eurail inclusion.':'';
+  document.querySelectorAll('[data-charge]').forEach(input=>{input.checked=charges.includes(input.dataset.charge);});$('chargeMatch').value=state.chargeMatch||'any';
+  $('passConditionHelp').textContent=!passPolicies?(passPoliciesFailed?'Pass conditions unavailable. Change a choice to retry.':'Loading recorded pass conditions…'):state.charge==='none'?'No fee conditions selected: no included services match.':state.charge==='free'?'Explicitly no mandatory reservation or listed train supplement. Optional reservations, upgrades and accommodation may cost extra.':(state.chargeMatch==='all'?'Every checked condition must apply.':'Matches any checked condition; each service is counted once.')+' Unknown fees never qualify as free.';
   $('minFrequency').value=state.min;$('frequencyValue').textContent=state.min?threshold(state.min)+' / day':'Any';$('dateSelect').value=state.day;
-  document.querySelectorAll('[data-day]').forEach(b=>{b.classList.toggle('active',b.dataset.day===state.day);b.setAttribute('aria-pressed',String(b.dataset.day===state.day));});
-  $('legendTitle').textContent=bus?'RECORDED REPLACEMENT BUSES / DAY':pass?'RECORDED EURAIL SERVICES / DAY':state.service==='trains'||state.replacements===false?'RECORDED TRAINS / DAY':'RECORDED SERVICES / DAY';
-  for(const id of ['legendGradient','legendLabels'])$(id).hidden=replacement;
-  document.querySelector('.legend-heading').hidden=replacement;document.querySelector('.frequency-scope').hidden=replacement;document.querySelector('.alignment-key').hidden=replacement;
-  $('legendNote').textContent=replacement?'Grey dashes mark affected railways, not replacement-bus road routes.':usesHubConnections(state)?'Same-service city connections. Canonical + reviewed inclusion.':pass?'Canonical + map-reviewed inclusion; conditions apply.':'Frequencies in available data; coverage varies. Dashed alignments are approximate.';
-  updateSourceCount();
+  document.querySelectorAll('[data-day]').forEach(button=>{button.classList.toggle('active',button.dataset.day===state.day);button.setAttribute('aria-pressed',String(button.dataset.day===state.day));});
+  $('legendTitle').textContent=bus?'RECORDED REPLACEMENT BUSES / DAY':pass?'RECORDED EURAIL SERVICES / DAY':!state.replacements?'RECORDED TRAINS / DAY':'RECORDED SERVICES / DAY';
+  for(const id of ['legendGradient','legendLabels'])$(id).hidden=!services;
+  for(const selector of ['.legend-heading','.frequency-scope','.alignment-key'])document.querySelector(selector).hidden=!services;
+  $('legendNote').textContent=!services?'Grey paths show affected railways, independently of service layers.':usesHubConnections(state)?'Same-service city connections. Canonical + reviewed inclusion.':pass?'Confirmed inclusion and uncertainty are counted separately; conditions apply.':'Frequencies in available data; coverage varies. Dashed paths carry an alignment explanation.';
+  updateSourceCount();updateFilterSummary();
+}
+function updateFilterSummary(){
+  const chips=[];
+  if(!state.trains||!state.replacements)chips.push(['services',!hasServices()?'Services hidden':state.trains?'Trains only':'Replacement buses only']);
+  if(state.aligned===false||!state.schematic)chips.push(['geometry',state.aligned===false&&!state.schematic?'Service paths hidden':state.aligned===false?'Dotted paths only':'Railway alignments only']);
+  if(state.closedCorridors===false)chips.push(['context','Affected railways hidden']);
+  if(!state.hubs)chips.push(['stations','Major stations hidden']);if(state.stations===false)chips.push(['localStations','Local stops hidden']);
+  if(state.pass&&!PASS_MODES.has(state.mode))chips.push(['pass','Eurail coverage']);
+  if(state.mode==='eurail'&&(state.included===false||state.review))chips.push(['inclusion',state.included===false?(state.review?'Uncertain inclusion only':'No inclusion selected'):'Confirmed + uncertain inclusion']);
+  if(chargeFiltered(state))chips.push(['fees',state.charge==='free'?'No mandatory extras':chargeDescription(state)]);
+  if(state.day!=='all')chips.push(['day',dateLabel(state.day,dates)]);
+  if(state.min)chips.push(['frequency','At least '+threshold(state.min)+' / day']);
+  if(state.sources&&state.defaultSources&&(state.sources.size!==state.defaultSources.size||[...state.sources].some(id=>!state.defaultSources.has(id))))chips.push(['sources',state.sources.size+' timetable sources']);
+  $('filterCount').hidden=!chips.length;$('filterCount').textContent=String(chips.length);
+  $('controlsToggle').title=chips.length?'Filters: '+chips.map(chip=>chip[1]).join('; '):'Open map filters';
+  const host=$('filterSummary');host.hidden=!chips.length;host.replaceChildren();
+  for(const[key,label]of chips){const button=document.createElement('button');button.className='filter-chip';button.dataset.clearFilter=key;button.type='button';button.textContent=label+' ×';button.setAttribute('aria-label','Clear filter: '+label);button.onclick=()=>{clearFilter(key);($('filterSummary').querySelector('button')||$('closeControls')).focus();};host.appendChild(button);}
+}
+function clearFilter(key){
+  if(key==='services'){state.trains=true;state.replacements=true;}
+  if(key==='geometry'){state.aligned=true;state.schematic=true;}
+  if(key==='context')state.closedCorridors=true;
+  if(key==='stations')state.hubs=true;if(key==='localStations')state.stations=true;
+  if(key==='pass')state.pass=false;
+  if(key==='inclusion'){state.included=true;state.review=false;}
+  if(key==='fees'){state.charge='all';state.chargeMatch='any';feeCustom=false;}
+  if(key==='day')state.day='all';if(key==='frequency')state.min=0;
+  if(key==='sources'){chooseSources(false);return;}
+  layersChanged();
+}
+function layersChanged(){
+  if(selected&&!serviceVisible(selected,state))closeInspector();
+  if(trainFocusGroup&&!serviceVisible(trainFocusGroup,state))closeInspector();
+  refresh();scheduleChunks();ensurePassPolicies().catch(()=>{});
 }
 function updateCharges(){
+  feeCustom=true;
   const kinds=[...document.querySelectorAll('[data-charge]:checked')].map(input=>input.dataset.charge);
   state.chargeMatch=$('chargeMatch').value;
   state.charge=!kinds.length?'none':kinds.length===4&&state.chargeMatch==='any'?'all':normalizeCharge(kinds.join(','));
@@ -268,8 +306,8 @@ function setupDates(){const select=$('dateSelect'),first=new Date(dates[0]+'T12:
 function updateSourceCount(){if(!manifest)return;$('sourceCount').textContent=(state.sources?.size||0)+' / '+manifest.sources.length;$('swissCredit').hidden=!state.sources?.has('ch_gtfs_2026');}
 function setupSources(){const list=$('sourceList');list.replaceChildren();for(const source of manifest.sources||[]){const label=document.createElement('label'),input=document.createElement('input'),span=document.createElement('span');input.type='checkbox';input.checked=state.sources.has(source.id);input.value=source.id;span.textContent=source.name||source.id;const small=document.createElement('small');small.textContent=[source.country,source.defaultVisible===false?'alternative / overlapping feed':'recommended coverage'].filter(Boolean).join(' · ');span.appendChild(small);label.append(input,span);list.appendChild(label);input.onchange=()=>{input.checked?state.sources.add(source.id):state.sources.delete(source.id);alternativeSources();refresh();};}updateSourceCount();}
 function chooseSources(all){state.sources=new Set(manifest.sources.filter(s=>all||s.defaultVisible!==false).map(s=>s.id));state.alternatives=all;alternativeSources();setupSources();refresh();}
-function detailZoomThreshold(){return state.service!=='replacement'&&state.mode==='italy'&&manifest?.files?.italyNetwork?7:5.5;}
-function scheduleChunks(){clearTimeout(chunkTimer);chunkRun++;if(state.service==='works'){for(const request of chunkRequests.values())request.controller.abort();return;}if(state.service==='replacement'||state.mode!=='italy'&&!usesHubConnections(state))loadCompleteNetwork().catch(()=>{});if(state.mode==='italy')loadItalyNetwork().catch(()=>{});if(map){const view=map.getBounds().pad(.15);for(const request of chunkRequests.values())if(map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!boundsIntersect(request.chunk.bounds,view))request.controller.abort();}chunkTimer=setTimeout(loadVisibleChunks,100);}
+function detailZoomThreshold(){return !busesOnly()&&state.mode==='italy'&&manifest?.files?.italyNetwork?7:5.5;}
+function scheduleChunks(){clearTimeout(chunkTimer);chunkRun++;if(!hasServices()){for(const request of chunkRequests.values())request.controller.abort();return;}if(busesOnly()||state.mode!=='italy'&&!usesHubConnections(state))loadCompleteNetwork().catch(()=>{});if(state.mode==='italy')loadItalyNetwork().catch(()=>{});if(map){const view=map.getBounds().pad(.15);for(const request of chunkRequests.values())if(map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!boundsIntersect(request.chunk.bounds,view))request.controller.abort();}chunkTimer=setTimeout(loadVisibleChunks,100);}
 async function loadItalyNetwork(){
   if(!manifest?.files?.italyNetwork)return;
   if(!italyNetworkPromise)italyNetworkPromise=(async()=>{
@@ -281,10 +319,11 @@ async function loadItalyNetwork(){
 }
 function boundsIntersect(bounds,view){if(!Array.isArray(bounds)||bounds.length!==4)return true;const[w,s,e,n]=bounds;return e>=view.getWest()&&w<=view.getEast()&&n>=view.getSouth()&&s<=view.getNorth();}
 async function loadVisibleChunks(){
-  if(!manifest||map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||state.service==='works')return;
+  if(!manifest||map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!hasServices())return;
   await ensureManifest();await ensureOverviewMetadata();
-  if(map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||state.service==='works')return;
-  const run=++chunkRun,view=map.getBounds().pad(.15),queue=(manifest.chunks||[]).filter(chunk=>(state.service!=='replacement'||chunk.serviceMode==='temporary_replacement_bus')&&boundsIntersect(chunk.bounds,view)&&!chunkLoaded.has(chunk.id));
+  if(map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!hasServices())return;
+  const run=++chunkRun,view=map.getBounds().pad(.15),queue=(manifest.chunks||[]).filter(chunk=>(!busesOnly()||chunk.serviceMode==='temporary_replacement_bus')&&boundsIntersect(chunk.bounds,view)&&!chunkLoaded.has(chunk.id));
+  if(!queue.length)return;
   if(!manifest.provenance?.spatialProjection)ensureStations().catch(()=>{});let failed=false;
   async function worker(){while(queue.length){if(run!==chunkRun)return;const chunk=queue.shift(),request={chunk,controller:new AbortController()};chunkLoaded.add(chunk.id);chunkRequests.set(chunk.id,request);try{const url=dataURL(chunk.url),data=await json(url,{signal:request.controller.signal});if(request.controller.signal.aborted)throw new DOMException('Data request cancelled','AbortError');if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||data);cache.delete(url);paintChunks();}catch(error){if(chunkRequests.get(chunk.id)===request)chunkLoaded.delete(chunk.id);if(error.name!=='AbortError'){failed=true;console.warn('Rail Atlas chunk unavailable:',chunk.id);}}finally{if(chunkRequests.get(chunk.id)===request)chunkRequests.delete(chunk.id);}}}
   await Promise.all(Array.from({length:Math.min(3,queue.length)},worker));
@@ -309,7 +348,7 @@ function loadHubCities(){
   return hubCitiesPromise;
 }
 function cityConnections(id){const neighbors=new Set();for(const edge of hubEdges){if(edge.a!==id&&edge.b!==id)continue;if(state.sources&&!state.sources.has(edge.source))continue;if(edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))continue;if(edgeCount(edge,state,dates)>0)neighbors.add(edge.a===id?edge.b:edge.a);}return neighbors.size;}
-function renderHubs(){if(!map||!markers)return;renderStationMarkers();markers.clearLayers();if(trainFocusGroup){renderTrainStops();return;}if(!state.hubs||['replacement','works'].includes(state.service))return;const bounds=map.getBounds(),zoom=map.getZoom();let candidates=hubCities.length?hubCities:stationList.filter(s=>s.hub);candidates=candidates.filter(s=>(!s.source||!state.sources||state.sources.has(s.source))&&(!effectivePass(state)||!Number.isFinite(s.eurailWeekly)||s.eurailWeekly>0)&&validMapLocation(s.lon,s.lat)&&bounds.contains([s.lat,s.lon])&&(state.mode!=='italy'||isItaly(s.country))).sort((a,b)=>(b.weekly||b.degree||0)-(a.weekly||a.degree||0));const positions=[];let shown=0;for(const s of candidates){const point=map.latLngToContainerPoint([s.lat,s.lon]);if(positions.some(p=>Math.hypot(p.x-point.x,p.y-point.y)<(zoom<5?80:zoom<6?65:50)))continue;positions.push(point);const count=s.memberStationCount?cityConnections(s.id):(effectivePass(state)?s.eurailWeekly:s.weekly);const radius=s.memberStationCount?Math.min(5.3,2.1+Math.sqrt(count)*.5):Math.min(5,2.2+Math.log1p(count||1)/8);L.circleMarker([s.lat,s.lon],{radius,color:'#fbfaf6',weight:1.3,fillColor:'#006f92',fillOpacity:.9,interactive:true,bubblingMouseEvents:false}).addTo(markers).on('click',()=>pickStation(s));const name=shortName(s).replace(/\s*(Hbf|Centrale|Central|Termini|HB|Centraal|Centrální|Hlavní nádraží)$/i,'').trim();L.marker([s.lat,s.lon],{interactive:false,icon:L.divIcon({className:'city-label'+(shown<7?' strong':''),html:esc(name),iconSize:[120,20],iconAnchor:[0,-2]})}).addTo(markers);if(++shown>=(zoom<5?17:35))break;}}
+function renderHubs(){if(!map||!markers)return;renderStationMarkers();markers.clearLayers();if(trainFocusGroup){renderTrainStops();return;}if(!state.hubs)return;const bounds=map.getBounds(),zoom=map.getZoom();let candidates=hubCities.length?hubCities:stationList.filter(s=>s.hub);candidates=candidates.filter(s=>(!s.source||!state.sources||state.sources.has(s.source))&&(!effectivePass(state)||!Number.isFinite(s.eurailWeekly)||s.eurailWeekly>0)&&validMapLocation(s.lon,s.lat)&&bounds.contains([s.lat,s.lon])&&(state.mode!=='italy'||isItaly(s.country))).sort((a,b)=>(b.weekly||b.degree||0)-(a.weekly||a.degree||0));const positions=[];let shown=0;for(const s of candidates){const point=map.latLngToContainerPoint([s.lat,s.lon]);if(positions.some(p=>Math.hypot(p.x-point.x,p.y-point.y)<(zoom<5?80:zoom<6?65:50)))continue;positions.push(point);const count=s.memberStationCount?cityConnections(s.id):(effectivePass(state)?s.eurailWeekly:s.weekly);const radius=s.memberStationCount?Math.min(5.3,2.1+Math.sqrt(count)*.5):Math.min(5,2.2+Math.log1p(count||1)/8);L.circleMarker([s.lat,s.lon],{radius,color:'#fbfaf6',weight:1.3,fillColor:'#006f92',fillOpacity:.9,interactive:true,bubblingMouseEvents:false}).addTo(markers).on('click',()=>pickStation(s));const name=shortName(s).replace(/\s*(Hbf|Centrale|Central|Termini|HB|Centraal|Centrální|Hlavní nádraží)$/i,'').trim();L.marker([s.lat,s.lon],{interactive:false,icon:L.divIcon({className:'city-label'+(shown<7?' strong':''),html:esc(name),iconSize:[120,20],iconAnchor:[0,-2]})}).addTo(markers);if(++shown>=(zoom<5?17:35))break;}}
 function renderTrainStops(){
   const calls=trainFocusGroup.stops.map(call=>station(callId(call)));
   calls.forEach((s,i)=>{
@@ -453,7 +492,21 @@ function renderJourneyResult(result){
   bindChart();renderer.schedule();status(total?fmt(total)+' scheduled services match this leg.':'No matching service in the selected data.');
 }
 
-function setupEvents(){setupMapControls();setupLegend();stationSearch=setupStationSearch({getStations:()=>stationList,getState:()=>state,ensureStations,sourceName,onPick:s=>pickStation(s,{inspect:true,center:true}),onOpen:()=>setControlsOpen(false)});$('showStations').onchange=event=>{state.stations=event.target.checked;renderHubs();saveURL();};$('emptySourceSelection')?.addEventListener('click',()=>chooseSources(false));document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>setDay(b.dataset.day));$('showHubs').onchange=event=>{state.hubs=event.target.checked;if(state.hubs)loadHubs();refresh({details:false});};$('eurailOnly').onchange=event=>{state.pass=event.target.checked;refresh();};document.querySelectorAll('[data-charge]').forEach(input=>input.onchange=updateCharges);$('chargeMatch').onchange=updateCharges;document.querySelectorAll('[data-charge-preset]').forEach(button=>button.onclick=()=>{state.charge=button.dataset.chargePreset;state.chargeMatch='any';refresh();ensurePassPolicies().catch(()=>{});});$('showIncluded').onchange=event=>{state.included=event.target.checked;refresh();};$('showAligned').onchange=event=>{state.aligned=event.target.checked;refresh();};document.querySelectorAll('[data-geometry-preset]').forEach(button=>button.onclick=()=>{state.aligned=button.dataset.geometryPreset==='all';state.schematic=button.dataset.geometryPreset!=='none';refresh();});$('serviceView').onchange=event=>{state.service=event.target.value;state.replacements=state.service!=='trains';if(selected&&!serviceVisible(selected,state))closeInspector();if(['replacement','works'].includes(state.service)){state.closedCorridors=true;closeInspector();}refresh();scheduleChunks();ensurePassPolicies().catch(()=>{});ensureManifest().then(()=>refresh({details:false})).catch(()=>toast('Recorded replacement sections could not load. Please retry.'));};$('fitReplacementSections').onclick=()=>ensureManifest().then(async()=>{if(state.service==='replacement'){await loadCompleteNetwork();const bounds=currentEdges().filter(edge=>isTemporaryReplacement(edge)&&qualifiesEdge(edge,state,dates,stationMap)).flatMap(edge=>edge.coords.map(([lon,lat])=>[lat,lon]));if(bounds.length)map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10});else toast('No timetabled replacement buses match these filters.');}else if(!serviceContext.fitAll())toast('No confirmed replacement sections are recorded for these dates.');}).catch(()=>toast('Recorded replacement sections could not load. Please retry.'));$('showReview').onchange=event=>{state.review=event.target.checked;refresh();};$('showSchematic').onchange=event=>{state.schematic=event.target.checked;refresh();};$('minFrequency').oninput=event=>{const previous=threshold(state.min);state.min=Number(event.target.value);$('frequencyValue').textContent=state.min?threshold(state.min)+' / day':'Any';if(previous!==threshold(state.min))renderer.previewThreshold();clearTimeout(filterSaveTimer);filterSaveTimer=setTimeout(saveURL,180);};$('minFrequency').onchange=()=>{renderer.schedule();clearTimeout(filterSaveTimer);saveURL();if(selected&&!$('inspector').hidden)renderSelected();};$('resetFilters').onclick=()=>{state.day='all';state.pass=false;state.min=0;state.hubs=true;state.stations=true;state.schematic=true;state.aligned=true;state.service='all';state.replacements=true;state.closedCorridors=true;state.included=true;state.review=false;state.charge='all';state.chargeMatch='any';chooseSources(false);scheduleChunks();ensurePassPolicies().catch(()=>{});toast('Recommended sources and default filters restored.');};$('recommendedSources').onclick=()=>chooseSources(false);$('allSources').onclick=()=>chooseSources(true);$('closeInspector').onclick=closeInspector;$('methodButton').onclick=method;$('closeMethod').onclick=closeMethod;$('backToMap').onclick=closeMethod;$('methodDialog').onclick=event=>{if(event.target===$('methodDialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeMethod();}};document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('methodDialog').open){if(!trainInspector.back())closeInspector();}});$('retryButton').onclick=boot;$('compareButton').onclick=compareStations;$('swapStations').onclick=()=>{const from=state.from;state.from=state.to;state.to=from;$('fromStation').value=state.from?station(state.from).name:'';$('toStation').value=state.to?station(state.to).name:'';saveURL();};$('shareButton').onclick=async()=>{saveURL();try{await navigator.clipboard.writeText(location.href);toast('View link copied. Site access is unchanged.');}catch(error){const input=document.createElement('input');input.value=location.href;document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'View link copied. Site access is unchanged.':'The current view link is ready in your address bar.');}};setupAutocomplete('from');setupAutocomplete('to');}
+function setupEvents(){setupMapControls();setupLegend();stationSearch=setupStationSearch({getStations:()=>stationList,getState:()=>state,ensureStations,sourceName,onPick:s=>pickStation(s,{inspect:true,center:true}),onOpen:()=>setControlsOpen(false)});$('showStations').onchange=event=>{state.stations=event.target.checked;renderHubs();refresh({details:false});};$('emptySourceSelection')?.addEventListener('click',()=>chooseSources(false));document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>setDay(b.dataset.day));$('showHubs').onchange=event=>{state.hubs=event.target.checked;if(state.hubs)loadHubCities();refresh({details:false});};
+$('showTrains').onchange=event=>{state.trains=event.target.checked;layersChanged();};$('showReplacements').onchange=event=>{state.replacements=event.target.checked;layersChanged();};
+document.querySelectorAll('[data-service-only]').forEach(button=>button.onclick=()=>{state.trains=button.dataset.serviceOnly==='trains';state.replacements=button.dataset.serviceOnly==='replacements';layersChanged();});
+document.querySelectorAll('[data-service-preset]').forEach(button=>button.onclick=()=>{state.trains=state.replacements=button.dataset.servicePreset==='all';layersChanged();});
+document.querySelector('[data-context-only]').onclick=()=>{state.trains=false;state.replacements=false;state.closedCorridors=true;layersChanged();};
+$('fitReplacementSections').onclick=()=>ensureManifest().then(()=>{if(!serviceContext.fitAll())toast('No affected railway sections are recorded for these dates.');}).catch(()=>toast('Recorded notices could not load. Please retry.'));
+$('findReplacementServices').onclick=()=>ensureManifest().then(async()=>{await loadCompleteNetwork({forRoute:true});const bounds=currentEdges().filter(edge=>isTemporaryReplacement(edge)&&qualifiesEdge(edge,state,dates,stationMap)).flatMap(edge=>edge.coords.map(([lon,lat])=>[lat,lon]));if(bounds.length)map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10});else toast('No recorded replacement buses match these filters.');}).catch(()=>toast('Replacement services could not load. Please retry.'));
+$('eurailOnly').onchange=event=>{state.pass=event.target.checked;refresh();};
+$('feePreset').onchange=event=>{feeCustom=event.target.value==='custom';if(!feeCustom){state.charge=event.target.value;state.chargeMatch='any';}refresh();ensurePassPolicies().catch(()=>{});};
+document.querySelectorAll('[data-charge]').forEach(input=>input.onchange=updateCharges);$('chargeMatch').onchange=updateCharges;
+document.querySelectorAll('[data-charge-preset]').forEach(button=>button.onclick=()=>{feeCustom=true;state.charge=button.dataset.chargePreset;state.chargeMatch='any';refresh();ensurePassPolicies().catch(()=>{});});
+$('showIncluded').onchange=event=>{state.included=event.target.checked;refresh();};$('showReview').onchange=event=>{state.review=event.target.checked;refresh();};
+$('showAligned').onchange=event=>{state.aligned=event.target.checked;refresh();};$('showSchematic').onchange=event=>{state.schematic=event.target.checked;refresh();};
+document.querySelectorAll('[data-geometry-preset]').forEach(button=>button.onclick=()=>{state.aligned=button.dataset.geometryPreset==='all';state.schematic=button.dataset.geometryPreset!=='none';refresh();});
+$('minFrequency').oninput=event=>{const previous=threshold(state.min);state.min=Number(event.target.value);$('frequencyValue').textContent=state.min?threshold(state.min)+' / day':'Any';if(previous!==threshold(state.min))renderer.previewThreshold();clearTimeout(filterSaveTimer);filterSaveTimer=setTimeout(()=>{saveURL();updateFilterSummary();},180);};$('minFrequency').onchange=()=>{renderer.schedule();clearTimeout(filterSaveTimer);saveURL();if(selected&&!$('inspector').hidden)renderSelected();};$('resetFilters').onclick=()=>{state.day='all';state.pass=false;state.stations=true;state.min=0;state.hubs=true;state.schematic=true;state.aligned=true;state.trains=true;state.replacements=true;feeCustom=false;state.closedCorridors=true;state.included=true;state.review=false;state.charge='all';state.chargeMatch='any';chooseSources(false);scheduleChunks();ensurePassPolicies().catch(()=>{});toast('Recommended sources and default filters restored.');};$('recommendedSources').onclick=()=>chooseSources(false);$('allSources').onclick=()=>chooseSources(true);$('closeInspector').onclick=closeInspector;$('methodButton').onclick=method;$('closeMethod').onclick=closeMethod;$('backToMap').onclick=closeMethod;$('methodDialog').onclick=event=>{if(event.target===$('methodDialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeMethod();}};document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('methodDialog').open){if(!trainInspector.back())closeInspector();}});$('retryButton').onclick=boot;$('compareButton').onclick=compareStations;$('swapStations').onclick=()=>{const from=state.from;state.from=state.to;state.to=from;$('fromStation').value=state.from?station(state.from).name:'';$('toStation').value=state.to?station(state.to).name:'';saveURL();};$('shareButton').onclick=async()=>{saveURL();try{await navigator.clipboard.writeText(location.href);toast('View link copied. Site access is unchanged.');}catch(error){const input=document.createElement('input');input.value=location.href;document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'View link copied. Site access is unchanged.':'The current view link is ready in your address bar.');}};setupAutocomplete('from');setupAutocomplete('to');}
 function updateMethod(){
   if(!manifest)return;
   document.getElementById('generatedMethods')?.remove();const extra=document.createElement('div');extra.id='generatedMethods';

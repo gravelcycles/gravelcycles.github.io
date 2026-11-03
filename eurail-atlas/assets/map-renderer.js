@@ -1,8 +1,8 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible}from'./atlas-core.js?v=aab3ec7847fa66d0';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=aab3ec7847fa66d0';
-import{RouteIndex}from'./rail-picking.js?v=aab3ec7847fa66d0';
-import{renderWorld}from'./rail-lod.js?v=aab3ec7847fa66d0';
-import{RasterClient}from'./raster-client.js?v=aab3ec7847fa66d0';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers}from'./atlas-core.js?v=5b93a3430fea6c94';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=5b93a3430fea6c94';
+import{RouteIndex}from'./rail-picking.js?v=5b93a3430fea6c94';
+import{renderWorld}from'./rail-lod.js?v=5b93a3430fea6c94';
+import{RasterClient}from'./raster-client.js?v=5b93a3430fea6c94';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -134,7 +134,7 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)));}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
-  filterKey({state,stations,focusIds},zoom){return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,state.service,state.replacements,state.alternatives,state.schematic,state.aligned,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size,focusIds?[...focusIds]:null]);}
+  filterKey({state,stations,focusIds},zoom){const layers=serviceLayers(state);return JSON.stringify([state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,layers.trains,layers.replacements,state.alternatives,state.schematic,state.aligned,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size,focusIds?[...focusIds]:null]);}
   draw(){
     if(this.zoomAnimating)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';

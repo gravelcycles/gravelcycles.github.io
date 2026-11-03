@@ -1,5 +1,5 @@
-import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=aab3ec7847fa66d0';
-import{replacementRailCorridor}from'./replacement-service.js?v=aab3ec7847fa66d0';
+import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=5b93a3430fea6c94';
+import{replacementRailCorridor}from'./replacement-service.js?v=5b93a3430fea6c94';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];
@@ -34,7 +34,7 @@ export function lineInformation(edge,{uncertain=false}={}){
     title:'Why this line is dashed',
     text:'These services are in the timetable, but the available data does not establish their exact railway route. The dashed line joins recorded stops and may cut across land or water. Its color still shows scheduled frequency; the line does not trace the tracks used.'
   });
-  if(approximateAlignment(edge))notes.at(-1).text+=' To hide these lines, turn off “Approximate routes · dotted” in Filters.';
+  if(approximateAlignment(edge))notes.at(-1).text+=' To hide these lines, turn off “Approximate paths · dotted” in Filters.';
   if(uncertain)notes.push({
     title:'Why there are amber dashes',
     text:'Amber dashes show scheduled services with conditional or unknown Eurail pass eligibility. They are excluded from the included-train count. This is separate from whether the railway alignment is approximate.'
