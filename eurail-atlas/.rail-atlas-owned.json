@@ -13,12 +13,12 @@
       "sha256": "9cc8cef15f5e8bcbe99a13ee8d268f6f6f6a5811cd1ed05056ef4608c9b16fd1"
     },
     "assets/app.css": {
-      "bytes": 40434,
-      "sha256": "b3a97d86ed2c8141aeb7b53b527c61e543b630dd4cc9c68b6789861c5e3d0fef"
+      "bytes": 40510,
+      "sha256": "34745fce78d1cdbf3799eed315ebf8102950b6263b8a15d8097023e50dc328af"
     },
     "assets/app.js": {
       "bytes": 84925,
-      "sha256": "83bd33b75760d904ccaef3af8664b0f83c9664afa838db6b58ec4651a8568191"
+      "sha256": "8f6c3addecb3731edc84521ca141ea5b1a887311e4b806bb761bf311603d19d9"
     },
     "assets/atlas-core.js": {
       "bytes": 19088,
@@ -38,15 +38,15 @@
     },
     "assets/data-loader.js": {
       "bytes": 3115,
-      "sha256": "875173bd3f9f11003781dc11275b316b94f3a10b95cec5d185618e5d497fd546"
+      "sha256": "66461077d236a67f4757cf0e5fd57c00fe65bfbb87d3614e8884c3e8879f17f5"
     },
     "assets/data-worker.js": {
       "bytes": 7310,
-      "sha256": "52c9d82fda06640e04a90eff1dec4e8842454137876b3d949e057ec0f207ee5e"
+      "sha256": "bcb1d8dddcf91ec1f6451a90b27951050fc9a7beb2465a567099f07b09914a29"
     },
     "assets/display-codec.js": {
       "bytes": 3895,
-      "sha256": "0854e92775743d329830c89adaa487d1cc990c354d493136f6e6b9e25cce768d"
+      "sha256": "07d887c61425647e6d63973bfa91fea8d5927229225a6d305324d45ed53128db"
     },
     "assets/dm-sans-400.ttf": {
       "bytes": 48280,
@@ -58,7 +58,7 @@
     },
     "assets/infrastructure-context.js": {
       "bytes": 7482,
-      "sha256": "fe00f0b5b5c64e36453f83288fef9d8549e7c35755e77ce29e1a5c74fcfe72a6"
+      "sha256": "d10a90e138d2ffe2c50b16aedc12b14fdc90078c3ffe7d7d837ef635e8110894"
     },
     "assets/leaflet.css": {
       "bytes": 14806,
@@ -74,19 +74,19 @@
     },
     "assets/line-information.js": {
       "bytes": 3446,
-      "sha256": "19fe0be7098fab1fc5a84d6a2b9787b319ff7fa60891090602249fabbca8a68e"
+      "sha256": "4b78e36d8850a78a0eb6d9dca583363ec39b3c6c600007828e7af9bbed66a94a"
     },
     "assets/map-renderer.js": {
       "bytes": 21766,
-      "sha256": "a9a55a1887f1b0bf2b74f021b09c662951554f0b7cba9f9165f723fbe2fda4aa"
+      "sha256": "66a4888e43fdf16b16a2fe6716d48edc6d62a9ad977f00dab0e1b1b20087c7b2"
     },
     "assets/network-view.js": {
       "bytes": 822,
       "sha256": "b496ac2a788edfb254aba0a5acf0600d87c6d7c44c67896def8c097b22a243c5"
     },
     "assets/operating-transfers.js": {
-      "bytes": 16503,
-      "sha256": "aaa673afef75c9ee46c4acd93542f3635a374e32bda3e0914727390720bec121"
+      "bytes": 15526,
+      "sha256": "31dbf74b3fe9a347b1f89318f8434c5cbe2f8c04b581f9e428e9be431b7e7083"
     },
     "assets/pass-policies.js": {
       "bytes": 1169,
@@ -102,15 +102,15 @@
     },
     "assets/rail-lod.js": {
       "bytes": 1680,
-      "sha256": "4fd40a76c494d42ad48c685532e0149f1b6470dff02b734417f910e87f8bee63"
+      "sha256": "3f25e5a8e718e423ea456a0faf4ae2d159ab924e59eba86f42fae2d049290efb"
     },
     "assets/rail-picking.js": {
       "bytes": 5306,
-      "sha256": "0f91127fe82dc6bafce7ef995aa4dd484475ee53e1e53a8c461e29e8ce703a31"
+      "sha256": "675f3d027094ab129587df51d8f6f7f6774bcd574f7620403333bfbd7c855d02"
     },
     "assets/raster-client.js": {
       "bytes": 5215,
-      "sha256": "1866e9494ebf5464879616025c75c0b8a80058699b8ae8a3bcca77748289cfc4"
+      "sha256": "80456511056122b326b53685076460f35640fba328e0c2676d5e5c06f31239bc"
     },
     "assets/raster-worker.js": {
       "bytes": 4729,
@@ -118,15 +118,15 @@
     },
     "assets/replacement-service.js": {
       "bytes": 2825,
-      "sha256": "20bd50dbb78ffe28d39831fd51f37dfb0476b5e9718ab3d5085689710428822f"
+      "sha256": "7c75d0951490d378f672638ddbd45b20da5d230ac7a19e064a7703edff607c88"
     },
     "assets/service-context.js": {
       "bytes": 10935,
-      "sha256": "92c41d45fc77a4f883ff7c20fce903960f0062e14f62eb4c49ef0729b4faaa4b"
+      "sha256": "aa3669ff8e50e28421e139a9a0710ed90a256e3e593a24d188971b24df99ba2f"
     },
     "assets/sleep-service.js": {
       "bytes": 2458,
-      "sha256": "bef915e61040f462773ca4cd924b577c88fc0a0d6e7e5826b01b289ce1db7c90"
+      "sha256": "8bc7b7de90ff6ebd9267d465cbf212b12737bbb0b96e8ce1cb56124b04abce1c"
     },
     "assets/source-selection.js": {
       "bytes": 1659,
@@ -134,11 +134,11 @@
     },
     "assets/train-inspector.js": {
       "bytes": 9901,
-      "sha256": "93c7d02ca857f8e0dc663adba7b367e0732f934ce8822bdc0dc97c92b25cd0d0"
+      "sha256": "058a18f90f717c1c7bfb2f0ddbfaf7e3fe1479ed6d773a8c67176e0e0df308ee"
     },
     "assets/train-services.js": {
       "bytes": 6815,
-      "sha256": "bcdcd40a7947124b53b88d518279a7ce2e53eb3ec8dc56bfaf432094929b229e"
+      "sha256": "a8425f9b79d34f516d6091618e8ffbdcf0c76e0b98a07938dad599928a473742"
     },
     "data/chunks/composed-0000.json.gz": {
       "bytes": 954602,
@@ -18518,7 +18518,7 @@
     },
     "index.html": {
       "bytes": 633335,
-      "sha256": "36f291ce0cb2f1a3f4eb70ff85b105bbf09e1761b46606a34b83aa8a85dc7a54"
+      "sha256": "06439486cc998dcc8e85dd0eb450d206757c1542fcd340a720b6f7a627fe1b83"
     }
   },
   "kind": "rail-atlas-public-pages",
