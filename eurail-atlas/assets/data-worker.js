@@ -1,6 +1,6 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=d5c7f826e6e0fec4';
-import{decodeDisplay}from'./display-codec.js?v=d5c7f826e6e0fec4';
-import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=d5c7f826e6e0fec4';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=0c2f14c2bb7ee3cb';
+import{decodeDisplay}from'./display-codec.js?v=0c2f14c2bb7ee3cb';
+import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.

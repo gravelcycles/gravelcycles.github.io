@@ -1,4 +1,4 @@
-import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=d5c7f826e6e0fec4';
+import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
 
 export const STATION_ZOOM=9;
 export function visibleStations(stations,bounds,state,zoom,selected=null){

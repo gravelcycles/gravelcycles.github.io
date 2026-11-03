@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=d5c7f826e6e0fec4';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
 
 export function relevantInfrastructure(summary,{zoom,bounds,dates,day='all',physicalRailways=false}){
   if(!physicalRailways||summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];

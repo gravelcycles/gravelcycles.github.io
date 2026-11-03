@@ -1,6 +1,6 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=d5c7f826e6e0fec4';
-import{mergeSleepServices}from'./sleep-service.js?v=d5c7f826e6e0fec4';
-import{mapPairFocusId}from'./route-focus.js?v=d5c7f826e6e0fec4';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
+import{mergeSleepServices}from'./sleep-service.js?v=0c2f14c2bb7ee3cb';
+import{mapPairFocusId}from'./route-focus.js?v=0c2f14c2bb7ee3cb';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -61,7 +61,13 @@ function routePairValues(group){
   for(let i=1;i<stops.length;i++)if(stops[i-1]!==stops[i]){
     const pair=[stops[i-1],stops[i]].sort();
     if(group.serviceMode==='temporary_replacement_bus'){
-      values.push(['mode-map-pair',first.source,first.snapshot,group.serviceMode,...pair],['temporary-replacement-map-pair',first.source,first.snapshot,...pair,group.serviceMode]);
+      // Compact rows omit directed edge IDs. Match each existing bus producer's
+      // source/snapshot/mode identity so route and station focus survive that
+      // projection; never fall back to an unscoped station pair or rail hash.
+      values.push(['mode-map-pair',first.source,first.snapshot,group.serviceMode,...pair],
+        ['temporary-replacement-map-pair',first.source,first.snapshot,...pair,group.serviceMode],
+        ['replacement-backfill-map-pair',first.source,first.snapshot,...pair,group.serviceMode],
+        ['context-replacement-map-pair',first.source,first.snapshot,group.serviceMode,...pair,first.agencyPrimary!==false]);
     }else values.push(['map-pair',first.source,...pair,first.agencyPrimary!==false]);
   }
   return values;
