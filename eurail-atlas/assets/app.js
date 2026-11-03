@@ -1,22 +1,22 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath}from'./atlas-core.js?v=276a13428c88e502';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=276a13428c88e502';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=276a13428c88e502';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=276a13428c88e502';
-import{decodePassPolicies}from'./pass-policies.js?v=276a13428c88e502';
-import{RailRenderer}from'./map-renderer.js?v=276a13428c88e502';
-import{resolveAssetURL}from'./data-codec.js?v=276a13428c88e502';
-import{AtlasDataLoader}from'./data-loader.js?v=276a13428c88e502';
-import{setupCoverage}from'./coverage-panel.js?v=276a13428c88e502';
-import{mergeCompletePairs}from'./network-view.js?v=276a13428c88e502';
-import{setupServiceContext}from'./service-context.js?v=276a13428c88e502';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=276a13428c88e502';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=276a13428c88e502';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=276a13428c88e502';
-import{setupTrainInspector}from'./train-inspector.js?v=276a13428c88e502';
-import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=276a13428c88e502';
-import{matchesFocus}from'./route-focus.js?v=276a13428c88e502';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=276a13428c88e502';
-import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=276a13428c88e502';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath}from'./atlas-core.js?v=adb4bb867aacfc42';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=adb4bb867aacfc42';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=adb4bb867aacfc42';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=adb4bb867aacfc42';
+import{decodePassPolicies}from'./pass-policies.js?v=adb4bb867aacfc42';
+import{RailRenderer}from'./map-renderer.js?v=adb4bb867aacfc42';
+import{resolveAssetURL}from'./data-codec.js?v=adb4bb867aacfc42';
+import{AtlasDataLoader}from'./data-loader.js?v=adb4bb867aacfc42';
+import{setupCoverage}from'./coverage-panel.js?v=adb4bb867aacfc42';
+import{mergeCompletePairs}from'./network-view.js?v=adb4bb867aacfc42';
+import{setupServiceContext}from'./service-context.js?v=adb4bb867aacfc42';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=adb4bb867aacfc42';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=adb4bb867aacfc42';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=adb4bb867aacfc42';
+import{setupTrainInspector}from'./train-inspector.js?v=adb4bb867aacfc42';
+import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=adb4bb867aacfc42';
+import{matchesFocus}from'./route-focus.js?v=adb4bb867aacfc42';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=adb4bb867aacfc42';
+import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=adb4bb867aacfc42';
 
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=new Map(),chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
@@ -52,11 +52,11 @@ async function loadRouteTimetables(group){
 function clearTrainFocus(restore=false){
   trainFocusGeneration++;trainFocus=null;trainFocusGroup=null;journeyHighlights.clear();document.body.classList.remove('train-route-focus');
   const view=trainFocusView;trainFocusView=null;if(restore&&view)map.setView(view.center,view.zoom,{animate:false});
-  renderer?.schedule();if(map)renderHubs();
+  refreshRouteFocus();if(map)renderHubs();
 }
 async function focusTrainRoute(group){
   const ticket=++trainFocusGeneration;if(!trainFocusView)trainFocusView={center:map.getCenter(),zoom:map.getZoom()};
-  trainFocus=group.key;trainFocusGroup=group;journeyHighlights=new Set(group.edgeIds);document.body.classList.add('train-route-focus');renderHubs();renderer.schedule();
+  trainFocus=group.key;trainFocusGroup=group;journeyHighlights=new Set(group.edgeIds);document.body.classList.add('train-route-focus');renderHubs();refreshRouteFocus();
   try{
     const[,ids]=await Promise.all([loadCompleteNetwork({forRoute:true}),routeFocusIds([group])]);if(ticket!==trainFocusGeneration)return;
     journeyHighlights=ids;const rows=currentEdges().filter(edge=>matchesFocus(edge,ids));renderer.schedule();
@@ -66,11 +66,11 @@ async function focusTrainRoute(group){
     if(ticket===trainFocusGeneration)renderer.schedule();
   }catch{if(ticket===trainFocusGeneration)toast('Some route geometry could not load. Its recorded stops are still available.');}
 }
-function clearStationFocus(){stationFocusGeneration++;stationFocus=null;document.body.classList.remove('station-route-focus');}
+function clearStationFocus(){stationFocusGeneration++;stationFocus=null;document.body.classList.remove('station-route-focus');refreshRouteFocus();}
 function focusStationRoutes(s,groups,loaded){
   const key=JSON.stringify([s.id,loaded,groups.map(group=>group.key).sort()]);if(stationFocus?.key===key)return;
   const ticket=++stationFocusGeneration,focus={key,stationId:s.id,ids:new Set(groups.flatMap(group=>[...group.edgeIds]))};stationFocus=focus;
-  document.body.classList.add('station-route-focus');renderer?.schedule();
+  document.body.classList.add('station-route-focus');refreshRouteFocus();
   if(!groups.length)return;
   Promise.all([loadCompleteNetwork({forRoute:true}),routeFocusIds(groups)]).then(([,ids])=>{
     if(ticket!==stationFocusGeneration||selectedStation?.id!==s.id)return;
@@ -78,6 +78,7 @@ function focusStationRoutes(s,groups,loaded){
   }).catch(()=>{if(ticket===stationFocusGeneration&&selectedStation?.id===s.id)toast('Some route geometry could not load. The station’s recorded services are still available.');});
 }
 function activeFocusIds(){return trainFocus?journeyHighlights:selectedStation&&stationFocus?.stationId===selectedStation.id?stationFocus.ids:null;}
+function refreshRouteFocus(){renderer?.schedule();operatingTransfers.refresh();}
 function mapFocusTop(){
   const origin=map.getContainer().getBoundingClientRect().top;
   let top=document.querySelector('.site-header').getBoundingClientRect().bottom+70;
@@ -85,7 +86,7 @@ function mapFocusTop(){
   return top-origin;
 }
 const infrastructureContext=setupInfrastructureContext({getManifest:()=>manifest,getState:()=>state,getDates:()=>dates,getMap:()=>map,getView:()=>map?{zoom:map.getZoom(),bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path))});
-const operatingTransfers=setupOperatingTransfers({getManifest:()=>manifest,getState:()=>state,getDates:()=>dates,getMap:()=>map,getView:()=>map?{zoom:map.getZoom(),bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path))});
+const operatingTransfers=setupOperatingTransfers({getManifest:()=>manifest,getState:()=>state,getDates:()=>dates,getMap:()=>map,isFocused:()=>activeFocusIds()!==null,getView:()=>map?{zoom:map.getZoom(),bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path))});
 
 function paintChunks(flush=false){if(flush){clearTimeout(chunkPaintTimer);chunkPaintTimer=0;renderer.schedule();}else if(!chunkPaintTimer)chunkPaintTimer=setTimeout(()=>{chunkPaintTimer=0;renderer.schedule();},300);}
 const manifestURL=new URL('data/manifest.json',location.href),dataURL=path=>resolveAssetURL(path,manifest,manifestURL);

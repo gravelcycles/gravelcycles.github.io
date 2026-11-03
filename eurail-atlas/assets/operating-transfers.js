@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible}from'./atlas-core.js?v=276a13428c88e502';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible}from'./atlas-core.js?v=adb4bb867aacfc42';
 
 export function relevantTransfers(summary,view){
   const{zoom,bounds,dates,day='all',sources=null,mode='frequency',schematic=true,representedInMainServiceLayer=[]}=view;
@@ -40,7 +40,7 @@ export function transferHTML(row,day='all',dates=row.dates||[]){
   return`<article class="service-notice"><h4>${esc(row.stops.map(stop=>stop.name).join(separator))}</h4><p><strong>${esc(row.serviceLabel||'Celta')} connecting replacement bus</strong></p><p><strong>Temporary replacement bus · approximate connection</strong></p><p>${esc(row.meaning)}</p>${row.sourceOverlapStatus==='unresolved_potential_overlap'?'<p>Potential overlap with another source; both source inventories are retained separately.</p>':''}${row.timeScope?`<p>${esc(typeof row.timeScope==='string'?row.timeScope:JSON.stringify(row.timeScope))}</p>`:''}${row.partialResumptionMeaning?`<p>${esc(row.partialResumptionMeaning)}</p>`:''}${counts?`<p>${counts}</p>`:''}${labels.length?`<p>Published service numbers: ${esc(labels.slice(0,20).join(', '))}${labels.length>20?` · ${esc(fmt(labels.length-20))} more labels in the downloadable data`:''}.</p>`:''}<p class="service-notice-dates">${period}</p><div class="service-notice-links">${links}</div></article>`;
 }
 
-export function setupOperatingTransfers({getManifest,getState,getDates,getView,getMap,load}){
+export function setupOperatingTransfers({getManifest,getState,getDates,getView,getMap,isFocused=()=>false,load}){
   const host=document.querySelector('.map-notices'),filters=document.querySelector('.inspection-filter');if(!host||!filters)return{refresh(){}};
   const chip=document.createElement('button');chip.type='button';chip.id='operatingTransfersToggle';chip.className='inline-button operating-transfers-trigger';chip.hidden=true;chip.setAttribute('aria-controls','operatingTransfersPanel');chip.setAttribute('aria-expanded','false');chip.textContent='Replacement connection details ↗';
   const panel=document.createElement('section');panel.id='operatingTransfersPanel';panel.className='service-context-panel';panel.hidden=true;panel.setAttribute('role','region');panel.setAttribute('aria-labelledby','operatingTransfersTitle');panel.innerHTML='<button class="close-button" aria-label="Close connecting bus information">×</button><h3 id="operatingTransfersTitle">Connecting replacement buses</h3><p>Dashed lines retain temporary replacement-bus connections between documented calling points. They are schematic; the road route is unknown. No bus is counted as a train. Check boarding locations, pass acceptance and ticket or reservation requirements with the operator.</p><label for="operatingTransfersFilter">Filter stops, line or operator</label><input id="operatingTransfersFilter" type="search" placeholder="Find a replacement connection" style="width:100%;margin:6px 0;padding:8px"><button id="operatingTransfersAll" type="button" hidden>Show all connections in view</button><p id="operatingTransfersSummary"></p><div id="operatingTransfersContent" aria-live="polite"></div>';
@@ -66,17 +66,20 @@ export function setupOperatingTransfers({getManifest,getState,getDates,getView,g
   }
   function updateMarkers(){
     const map=getMap?.(),state=getState();if(!map||!serviceVisible({serviceMode:'temporary_replacement_bus'},state)||state.schematic===false||!active.length||!documentData){clearMarkers();return;}
-    const view=getView(),next=JSON.stringify([getState().day,active.map(row=>row.id).sort(),view?.zoom,view?.bounds]);if(next===shown)return;
+    const view=getView(),focused=!!isFocused(),next=JSON.stringify([getState().day,active.map(row=>row.id).sort(),view?.zoom,view?.bounds,focused]);if(next===shown)return;
     const L=globalThis.L;if(!L)return;if(!layer){layer=L.layerGroup().addTo(map);if(!map.getPane('connectingBusContext'))map.createPane('connectingBusContext').style.zIndex=370;}
     const ids=new Set(active.map(row=>row.id)),rows=documentData.transfers.filter(row=>ids.has(row.id)),connections=transferConnections(rows,getState().day,getDates());
     const nextRenderer=connections.length>100?'canvas':'svg';if(nextRenderer!==rendererKind){clearMarkers();if(busRenderer&&map.hasLayer(busRenderer))map.removeLayer(busRenderer);busRenderer=nextRenderer==='canvas'?L.canvas({pane:'connectingBusContext',padding:.1}):L.svg({pane:'connectingBusContext'});rendererKind=nextRenderer;}
     const connectionIds=new Set(connections.map(connection=>connection.id));for(const[id,entry]of lineLayers)if(!connectionIds.has(id)){layer.removeLayer(entry.halo);layer.removeLayer(entry.line);lineLayers.delete(id);}
+    // These independent notices have no matching timetabled journey identity.
+    // Keep their dashed geometry and click targets, but yield to route focus.
+    const lineStyle={color:focused?'#b0b8b3':'#276b88',opacity:focused?.65:1},haloStyle={opacity:focused?.35:.9};
     for(const connection of connections){
       const points=connection.stops.map(stop=>[stop.lat,stop.lon]),directions=connection.directions.filter(row=>row.count===null||row.count>0).length>1?'both recorded directions':'recorded direction',counts=connection.frequencyKnown?`${fmt(connection.count)} recorded bus services across ${connection.selectedDates} selected dates`:'documented temporary replacement · bus frequency unavailable';
       const label=`Temporary replacement bus · approximate connection · ${connection.stops.map(stop=>stop.name).join(' ↔ ')} · ${counts} · ${directions}`;
-      let entry=lineLayers.get(connection.id);if(entry){entry.connection=connection;entry.line.getElement?.()?.setAttribute('aria-label',label);continue;}
-      entry={connection};entry.halo=L.polyline(points,{pane:'connectingBusContext',renderer:busRenderer,className:'temporary-bus-halo',weight:6.2,color:'#fffaf0',opacity:.9,dashArray:'7 6',lineCap:'round',interactive:false}).addTo(layer);
-      entry.line=activate(L.polyline(points,{pane:'connectingBusContext',renderer:busRenderer,className:'temporary-bus-connection',weight:3.4,color:'#276b88',opacity:1,dashArray:'7 6',lineCap:'round',bubblingMouseEvents:false}),label,()=>entry.connection.transferIds).addTo(layer);lineLayers.set(connection.id,entry);
+      let entry=lineLayers.get(connection.id);if(entry){entry.connection=connection;entry.line.setStyle(lineStyle);entry.halo.setStyle(haloStyle);entry.line.getElement?.()?.setAttribute('aria-label',label);continue;}
+      entry={connection};entry.halo=L.polyline(points,{pane:'connectingBusContext',renderer:busRenderer,className:'temporary-bus-halo',weight:6.2,color:'#fffaf0',...haloStyle,dashArray:'7 6',lineCap:'round',interactive:false}).addTo(layer);
+      entry.line=activate(L.polyline(points,{pane:'connectingBusContext',renderer:busRenderer,className:'temporary-bus-connection',weight:3.4,...lineStyle,dashArray:'7 6',lineCap:'round',bubblingMouseEvents:false}),label,()=>entry.connection.transferIds).addTo(layer);lineLayers.set(connection.id,entry);
     }
     key.hidden=!connections.length;
     shown=next;

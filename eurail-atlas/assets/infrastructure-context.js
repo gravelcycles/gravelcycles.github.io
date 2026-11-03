@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=276a13428c88e502';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=adb4bb867aacfc42';
 
 export function relevantInfrastructure(summary,{zoom,bounds,dates,day='all'}){
   if(summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
