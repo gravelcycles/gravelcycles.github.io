@@ -1,8 +1,9 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement}from'./atlas-core.js?v=7dc9e8c1b12684fe';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=7dc9e8c1b12684fe';
-import{RouteIndex}from'./rail-picking.js?v=7dc9e8c1b12684fe';
-import{renderWorld}from'./rail-lod.js?v=7dc9e8c1b12684fe';
-import{RasterClient}from'./raster-client.js?v=7dc9e8c1b12684fe';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement}from'./atlas-core.js?v=276a13428c88e502';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=276a13428c88e502';
+import{RouteIndex}from'./rail-picking.js?v=276a13428c88e502';
+import{renderWorld}from'./rail-lod.js?v=276a13428c88e502';
+import{RasterClient}from'./raster-client.js?v=276a13428c88e502';
+import{matchesFocus}from'./route-focus.js?v=276a13428c88e502';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -27,7 +28,7 @@ export function prepareStyles(edges,{state,dates,stations,focusIds},zoom){
     const dashed=isTemporaryReplacement(edge)||(approximateAlignment(edge)&&edge.geometryStatus!=='train_ferry');
     if(value>0)put(i*16,colorFor(value),Math.min(4.4,.75+Math.log1p(value)*.48)*(zoom<5?.95:1)+zoomStrokeBoost(zoom),dashed,value);
     if(review>0)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32)+zoomStrokeBoost(zoom),dashed,review);
-    if(focusIds?.size&&!(edge._directionEdges||[edge]).some(row=>focusIds.has(row.id))&&!focusIds.has(edge.id)){
+    if(focusIds&&!matchesFocus(edge,focusIds)){
       for(const offset of[i*16,i*16+8])if(pixels[offset+4]){pixels[offset]=176;pixels[offset+1]=184;pixels[offset+2]=179;}
     }
   }
@@ -168,7 +169,7 @@ export class RailRenderer{
   rasterHighlightItems(data){
     const zoom=this.map.getZoom(),key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,zoom)+'|'+threshold(data.state.min);
     if(this.rasterHighlightKey===key&&this.rasterHighlightEdges===data.edges)return this.rasterHighlights;
-    const selected=data.edges.filter(edge=>(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id))),items=highlightItems(selected,data,zoom,2.5);
+    const selected=data.edges.filter(edge=>matchesFocus(edge,data.highlightIds)),items=highlightItems(selected,data,zoom,2.5);
     if(data.selected?._world)items.push(...highlightItems([data.selected],data,zoom));
     this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;this.rasterHighlights=items;return items;
   }
@@ -224,11 +225,11 @@ export class RailRenderer{
       const pixels=thresholdStyles(base,minimum),focusData=data.focusIds?.size?{...data,focusIds:null,state:fullRouteState(data.state)}:null;
       const focusPixels=focusData?renderStyles(this.meshEdges,focusData,zoom):null;
       this.pickStyles=new Map(this.meshEdges.map((edge,index)=>{
-        const selected=edge.id===data.selected?.id||(edge._directionEdges||[]).some(row=>row.id===data.selected?.id),highlighted=(edge._directionEdges||[edge]).some(row=>data.highlightIds?.has(row.id));
+        const selected=edge.id===data.selected?.id||(edge._directionEdges||[]).some(row=>row.id===data.selected?.id),highlighted=matchesFocus(edge,data.highlightIds);
         return[edge,paintedRouteOrder(focusPixels&&highlighted?focusPixels:pixels,index,selected||highlighted?{selected,width:(selected?3.2:2.5)+4+zoomStrokeBoost(zoom)}:null)];
       }));
       this.pickStyleKey=key;this.pickStyleEdges=this.meshEdges;
     }
-    return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,data.focusIds?.size&&(edge._directionEdges||[edge]).some(row=>data.focusIds.has(row.id))?fullRouteState(data.state):data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
+    return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,matchesFocus(edge,data.focusIds)?fullRouteState(data.state):data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
   }
 }

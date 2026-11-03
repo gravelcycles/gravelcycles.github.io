@@ -1,5 +1,6 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=7dc9e8c1b12684fe';
-import{mergeSleepServices}from'./sleep-service.js?v=7dc9e8c1b12684fe';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=276a13428c88e502';
+import{mergeSleepServices}from'./sleep-service.js?v=276a13428c88e502';
+import{mapPairFocusId}from'./route-focus.js?v=276a13428c88e502';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -55,7 +56,7 @@ export function formatClock(seconds){
 }
 export function serviceDates(daily,state,dates){return selectedDays(state.day,dates).filter(i=>Number(daily?.[i])>0).map(i=>dates[i]);}
 
-export async function routeMapPairs(group){
+function routePairValues(group){
   const first=group.journeys[0],stops=group.stops.map(callId),values=[];
   for(let i=1;i<stops.length;i++)if(stops[i-1]!==stops[i]){
     const pair=[stops[i-1],stops[i]].sort();
@@ -63,7 +64,18 @@ export async function routeMapPairs(group){
       values.push(['mode-map-pair',first.source,first.snapshot,group.serviceMode,...pair],['temporary-replacement-map-pair',first.source,first.snapshot,...pair,group.serviceMode]);
     }else values.push(['map-pair',first.source,...pair,first.agencyPrimary!==false]);
   }
-  return new Set(await Promise.all(values.map(async value=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value))))].map(n=>n.toString(16).padStart(2,'0')).join('').slice(0,18))));
+  return values;
+}
+const pairHash=async value=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))].map(n=>n.toString(16).padStart(2,'0')).join('').slice(0,18);
+export async function routeMapPairs(group){return new Set(await Promise.all(routePairValues(group).map(value=>pairHash(JSON.stringify(value)))));}
+
+export async function routeFocusIds(groups){
+  const ids=new Set(groups.flatMap(group=>[...group.edgeIds])),pairs=new Map();
+  // Many stopping patterns share the same legs at busy stations. Hash each
+  // distinct identity once rather than once for every serving route.
+  for(const group of groups)for(const value of routePairValues(group))pairs.set(JSON.stringify(value),group.source);
+  await Promise.all([...pairs].map(async([value,source])=>ids.add(mapPairFocusId(source,await pairHash(value)))));
+  return ids;
 }
 
 // Timetable pages refer to exact journey identities. A date belongs to the
