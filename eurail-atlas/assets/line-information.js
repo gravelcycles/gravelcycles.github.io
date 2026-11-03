@@ -1,5 +1,5 @@
-import{approximateAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=5b93a3430fea6c94';
-import{replacementRailCorridor}from'./replacement-service.js?v=5b93a3430fea6c94';
+import{approximateAlignment,inferredRailPath,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=7dc9e8c1b12684fe';
+import{replacementRailCorridor}from'./replacement-service.js?v=7dc9e8c1b12684fe';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];
@@ -18,7 +18,11 @@ export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=n
 
 export function lineInformation(edge,{uncertain=false}={}){
   const notes=[];
-  if(replacementRailCorridor(edge))notes.push({
+  if(inferredRailPath(edge))notes.push({
+    title:'Inferred railway path',
+    text:'The timetable confirms these services. This solid line follows a connected railway path inferred between the recorded stops, using known rail alignments or OpenStreetMap infrastructure. The shortest available rail path may differ from the route used by an individual train. Its color still shows scheduled frequency. To hide just these paths, turn off “Inferred rail paths” in Filters.'
+  });
+  else if(replacementRailCorridor(edge))notes.push({
     title:'Temporary replacement on this rail corridor',
     text:'This replacement service is drawn along the railway corridor for orientation. The actual vehicle is a bus; boarding may be at a nearby stop rather than the station platform. This line does not show the road route driven. Its color counts scheduled replacement services.'
   });
@@ -27,8 +31,8 @@ export function lineInformation(edge,{uncertain=false}={}){
     text:'The timetable confirms a temporary replacement bus, but its exact road route is not available. This approximate line joins recorded boarding stops; it does not trace the road driven or indicate a train on the tracks. Its color shows scheduled service frequency.'
   });
   else if(edge.geometryStatus==='train_ferry')notes.push({
-    title:'Why this crossing is dashed',
-    text:'The train is carried by ferry here. The dashed line shows an approximate crossing, rather than railway tracks over the water. Its color shows the recorded scheduled train frequency.'
+    title:'Train carried by ferry',
+    text:'The train is carried by ferry here. The line shows an approximate crossing, rather than railway tracks over the water. Its color shows the recorded scheduled train frequency.'
   });
   else if(approximateAlignment(edge))notes.push({
     title:'Why this line is dashed',
@@ -36,8 +40,8 @@ export function lineInformation(edge,{uncertain=false}={}){
   });
   if(approximateAlignment(edge))notes.at(-1).text+=' To hide these lines, turn off “Approximate paths · dotted” in Filters.';
   if(uncertain)notes.push({
-    title:'Why there are amber dashes',
-    text:'Amber dashes show scheduled services with conditional or unknown Eurail pass eligibility. They are excluded from the included-train count. This is separate from whether the railway alignment is approximate.'
+    title:'Pass inclusion uncertain',
+    text:'Amber lines show scheduled services with conditional or unknown Eurail pass eligibility. They are excluded from the included-train count. This is separate from whether the railway alignment is inferred or unresolved.'
   });
   return notes;
 }

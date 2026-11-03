@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible}from'./atlas-core.js?v=5b93a3430fea6c94';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible}from'./atlas-core.js?v=7dc9e8c1b12684fe';
 
 export function relevantTransfers(summary,view){
   const{zoom,bounds,dates,day='all',sources=null,mode='frequency',schematic=true,representedInMainServiceLayer=[]}=view;
