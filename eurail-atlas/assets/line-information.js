@@ -1,5 +1,5 @@
-import{approximateAlignment,inferredRailPath,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=adb4bb867aacfc42';
-import{replacementRailCorridor}from'./replacement-service.js?v=adb4bb867aacfc42';
+import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=1e666867170d77aa';
+import{replacementRailCorridor}from'./replacement-service.js?v=1e666867170d77aa';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];
@@ -37,6 +37,10 @@ export function lineInformation(edge,{uncertain=false}={}){
   else if(approximateAlignment(edge))notes.push({
     title:'Why this line is dashed',
     text:'These services are in the timetable, but the available data does not establish their exact railway route. The dashed line joins recorded stops and may cut across land or water. Its color still shows scheduled frequency; the line does not trace the tracks used.'
+  });
+  else if(inferredAlignment(edge))notes.push({
+    title:'Inferred railway corridor',
+    text:'This solid line follows a railway corridor inferred from the available rail geometry. It does not certify the exact operating tracks used by these services. To hide these paths, turn off “Inferred rail paths” in Filters.'
   });
   if(approximateAlignment(edge))notes.at(-1).text+=' To hide these lines, turn off “Approximate paths · dotted” in Filters.';
   if(uncertain)notes.push({

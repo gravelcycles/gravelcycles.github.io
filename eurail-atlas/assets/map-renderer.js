@@ -1,9 +1,9 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement}from'./atlas-core.js?v=adb4bb867aacfc42';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=adb4bb867aacfc42';
-import{RouteIndex}from'./rail-picking.js?v=adb4bb867aacfc42';
-import{renderWorld}from'./rail-lod.js?v=adb4bb867aacfc42';
-import{RasterClient}from'./raster-client.js?v=adb4bb867aacfc42';
-import{matchesFocus}from'./route-focus.js?v=adb4bb867aacfc42';
+import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement}from'./atlas-core.js?v=1e666867170d77aa';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=1e666867170d77aa';
+import{RouteIndex}from'./rail-picking.js?v=1e666867170d77aa';
+import{renderWorld}from'./rail-lod.js?v=1e666867170d77aa';
+import{RasterClient}from'./raster-client.js?v=1e666867170d77aa';
+import{matchesFocus}from'./route-focus.js?v=1e666867170d77aa';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -25,7 +25,7 @@ export function prepareStyles(edges,{state,dates,stations,focusIds},zoom){
     if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
     const value=edgeCount(edge,state,dates)/days,review=pass&&state.review?conditionalCount(edge,state,dates)/days:0;
     frequencies[i*2]=value;frequencies[i*2+1]=review;
-    const dashed=isTemporaryReplacement(edge)||(approximateAlignment(edge)&&edge.geometryStatus!=='train_ferry');
+    const dashed=isTemporaryReplacement(edge)||approximateAlignment(edge);
     if(value>0)put(i*16,colorFor(value),Math.min(4.4,.75+Math.log1p(value)*.48)*(zoom<5?.95:1)+zoomStrokeBoost(zoom),dashed,value);
     if(review>0)put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32)+zoomStrokeBoost(zoom),dashed,review);
     if(focusIds&&!matchesFocus(edge,focusIds)){
@@ -211,9 +211,9 @@ export class RailRenderer{
       }
       cached.push([...groups.values()].sort((a,b)=>a.priority-b.priority));
     }this.canvasGroups.set(key,cached);if(this.canvasGroups.size>4)this.canvasGroups.delete(this.canvasGroups.keys().next().value);}
-    for(const groups of cached)for(const group of groups){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/view.scale;ctx.setLineDash(group.dash?[4/view.scale,4/view.scale]:[]);ctx.stroke(group.path);}
+    for(const groups of cached)for(const group of groups){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/view.scale;ctx.lineCap=group.dash?'butt':'round';ctx.setLineDash(group.dash?[1/view.scale,5/view.scale]:[]);ctx.stroke(group.path);}
     for(const item of this.rasterHighlightItems(data)){
-      ctx.strokeStyle=item.color;ctx.lineWidth=item.width/view.scale;ctx.setLineDash(item.dash?[4/view.scale,4/view.scale]:[]);ctx.stroke(this.pathFor({_world:item.world},view.zoom));
+      ctx.strokeStyle=item.color;ctx.lineWidth=item.width/view.scale;ctx.lineCap=item.dash?'butt':'round';ctx.setLineDash(item.dash?[1/view.scale,5/view.scale]:[]);ctx.stroke(this.pathFor({_world:item.world},view.zoom));
     }
     ctx.setLineDash([]);
   }

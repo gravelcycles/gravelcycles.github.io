@@ -27,7 +27,7 @@ function groupsFor(message){
   if(message.styleKey)styleGroups.set(key,result);while(styleGroups.size>2)styleGroups.delete(styleGroups.keys().next().value);
   return result;
 }
-function stroke(path,color,width,dash,scale){context.strokeStyle=color;context.lineWidth=width/scale;context.setLineDash(dash?[4/scale,4/scale]:[]);context.stroke(path);}
+function stroke(path,color,width,dash,scale){context.strokeStyle=color;context.lineWidth=width/scale;context.lineCap=dash?'butt':'round';context.setLineDash(dash?[1/scale,5/scale]:[]);context.stroke(path);}
 globalThis.onmessage=event=>{
   const message=event.data;
   try{

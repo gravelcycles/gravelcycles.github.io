@@ -54,7 +54,9 @@ void main(){
   float cap=max(max(-v_local.x,v_local.x-v_length),0.0);
   float distance=length(vec2(cap,v_local.y));
   float alpha=1.0-smoothstep(v_radius-0.65,v_radius+0.65,distance);
-  if(v_dash>0.5&&mod(v_start+clamp(v_local.x,0.0,v_length),8.0)>4.0)discard;
+  // Short station-to-station links must not all start with a four-pixel solid
+  // dash; round caps also filled the gaps on busy approximate corridors.
+  if(v_dash>0.5&&(v_local.x<0.0||v_local.x>v_length||mod(v_start+v_local.x,6.0)>1.0))discard;
   if(alpha<=0.0)discard;
   outColor=vec4(v_color.rgb,v_color.a*alpha);
 }`;

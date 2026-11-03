@@ -1,4 +1,4 @@
-import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=adb4bb867aacfc42';
+import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=1e666867170d77aa';
 
 export const STATION_ZOOM=9;
 export function visibleStations(stations,bounds,state,zoom,selected=null){
@@ -13,9 +13,60 @@ export class StationMarkers{
     // stops above those canvases and mirror the map pane's pan translation;
     // a higher z-index inside the original pane cannot escape its stacking
     // context. Leaflet still handles path/tooltip layout and zoom transforms.
-    const pane=map.createPane('stationNodes',map.getContainer());pane.style.zIndex=490;
+    const pane=map.createPane('stationNodes',map.getContainer());pane.style.zIndex=490;pane.style.pointerEvents='none';
     const sync=()=>{pane.style.transform=map.getPane('mapPane').style.transform;};map.on('move zoomanim zoomend resize',sync);sync();
     this.renderer=L.canvas({pane:'stationNodes',tolerance:5,padding:.15});this.layer=L.layerGroup().addTo(map);
+    // A transparent Canvas still intercepts DOM events across its entire
+    // rectangle. Keep it out of DOM hit testing and forward only actual stop
+    // hits into Leaflet's existing Canvas event dispatcher. This also covers
+    // connection endpoints and train stops added to this renderer elsewhere.
+    const container=map.getContainer(),eligible=event=>!map._animatingZoom&&!map.dragging?.moving?.()&&!event.target?.closest?.('.leaflet-control,.leaflet-popup,a,button,input,select,textarea');
+    let lastTouch=null,pointerPinch=false,touchPinch=false;const touchPointers=new Set();
+    const rememberTouch=(point,target)=>{lastTouch={clientX:point.clientX,clientY:point.clientY,target,at:performance.now()};};
+    const pointer=event=>{
+      if(event.type==='pointerdown'){
+        lastTouch=null;if(event.pointerType!=='touch')return;
+        touchPointers.add(event.pointerId);if(touchPointers.size>1)pointerPinch=true;
+      }else if(event.pointerType==='touch'){
+        if(event.type==='pointerup'&&touchPointers.size===1&&!pointerPinch)rememberTouch(event,event.target);else lastTouch=null;
+        touchPointers.delete(event.pointerId);if(!touchPointers.size)pointerPinch=false;
+      }
+    };
+    const touch=event=>{
+      if(event.type==='touchstart'){lastTouch=null;if(event.touches.length>1)touchPinch=true;}
+      else if(event.type==='touchend'){
+        if(!event.touches.length&&!touchPinch&&event.changedTouches.length===1)rememberTouch(event.changedTouches[0],event.target);else lastTouch=null;
+        if(!event.touches.length)touchPinch=false;
+      }else{lastTouch=null;touchPinch=false;}
+    };
+    const hit=event=>{
+      if(!eligible(event))return null;
+      // Mobile browsers may shift a synthesized click toward a nearby SVG
+      // stroke. Use the original tap for station priority, so that adjustment
+      // cannot move an otherwise clear line tap inside a station dot.
+      const rawTouch=event.type==='click'&&lastTouch&&performance.now()-lastTouch.at<1000&&(event.pointerType==='touch'||event.sourceCapabilities?.firesTouchEvents||!('pointerType'in event)&&!event.sourceCapabilities)?lastTouch:null;
+      const point=map.mouseEventToLayerPoint(rawTouch||event),path=(rawTouch?.target||event.target)?.closest?.('path.leaflet-interactive');let found=null;
+      for(let order=this.renderer._drawFirst;order;order=order.next){
+        const layer=order.layer;if(!layer.options.interactive||!layer._containsPoint(point)||event.type==='click'&&map._draggableMoved(layer))continue;
+        // A visible context stroke under an unpainted station tolerance halo
+        // keeps its own click. Painted station pixels still take precedence.
+        // Background taps retain Leaflet's larger station hit target.
+        if(path&&Number.isFinite(layer._radius)&&layer._point){const radius=layer._radius+(layer.options.stroke===false?0:(Number(layer.options.weight)||0)/2);if(Math.hypot(point.x-layer._point.x,point.y-layer._point.y)>radius)continue;}
+        found=layer;
+      }
+      return found;
+    };
+    const click=event=>{const layer=hit(event);lastTouch=null;if(!layer)return;event.stopImmediatePropagation();this.renderer._fireEvent([layer],event);};
+    const move=event=>{
+      if(hit(event)){event.stopImmediatePropagation();this.renderer._onMouseMove(event);container.style.cursor='pointer';this.stationHover=true;}
+      else if(this.stationHover){this.renderer._handleMouseOut(event);container.style.cursor='';this.stationHover=false;}
+    };
+    const leave=event=>{if(this.stationHover){this.renderer._handleMouseOut(event);container.style.cursor='';this.stationHover=false;}};
+    for(const type of['click','dblclick','contextmenu'])container.addEventListener(type,click,true);
+    for(const type of['pointerdown','pointerup','pointercancel'])container.addEventListener(type,pointer,true);
+    for(const type of['touchstart','touchend','touchcancel'])container.addEventListener(type,touch,true);
+    container.addEventListener('mousemove',move,true);container.addEventListener('mouseleave',leave,true);
+    map.on('unload',()=>{for(const type of['click','dblclick','contextmenu'])container.removeEventListener(type,click,true);for(const type of['pointerdown','pointerup','pointercancel'])container.removeEventListener(type,pointer,true);for(const type of['touchstart','touchend','touchcancel'])container.removeEventListener(type,touch,true);container.removeEventListener('mousemove',move,true);container.removeEventListener('mouseleave',leave,true);});
   }
   render(){
     const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),rows=visibleStations(this.isFocused()?[]:this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected);

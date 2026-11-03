@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=adb4bb867aacfc42';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=1e666867170d77aa';
 
 export function contextVisible(state){return state.closedCorridors!==false;}
 
@@ -83,8 +83,8 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
     if(!layer){
       const L=globalThis.L;if(!L)return;
       if(!map.getPane('closedRailContext'))map.createPane('closedRailContext').style.zIndex=360;
-      // Leaflet's retained station-marker canvas occupies pane 400 even after
-      // its markers are cleared. Put click targets above it and the rail canvas.
+      // Keep a wide SVG target for thin context paths and their dash gaps.
+      // Station canvases route real marker hits without blocking this target.
       if(!map.getPane('closedRailContextHits'))map.createPane('closedRailContextHits').style.zIndex=450;
       const onEachFeature=(feature,path)=>{
         path.bindTooltip('Temporarily closed rail corridor · inferred infrastructure',{sticky:true});

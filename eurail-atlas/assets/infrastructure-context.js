@@ -1,7 +1,7 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=adb4bb867aacfc42';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=1e666867170d77aa';
 
-export function relevantInfrastructure(summary,{zoom,bounds,dates,day='all'}){
-  if(summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
+export function relevantInfrastructure(summary,{zoom,bounds,dates,day='all',physicalRailways=false}){
+  if(!physicalRailways||summary?.schemaVersion!==1||zoom<(summary.minimumZoom||7)||!Array.isArray(bounds)||bounds.length!==4)return[];
   const selected=selectedDays(day,dates).map(index=>dates[index]);
   return(summary.corridors||[]).filter(row=>{
     const b=row.bounds;
@@ -18,24 +18,24 @@ export function infrastructureHTML(row){
   return`<article class="service-notice"><h4>${esc(row.title)}</h4><p><strong>Physical railway · no verified passenger service</strong></p><p>${esc(row.explanation)}</p><p>${esc(row.geometryMeaning)}</p><p class="service-notice-dates">Observation covers ${esc(row.observedFrom)}–${esc(row.observedThrough)}.</p><div class="service-notice-links">${sources}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL ↗</a></div></article>`;
 }
 
-export function setupInfrastructureContext({getManifest,getState,getDates,getView,getMap,load}){
-  const host=document.querySelector('.map-notices');if(!host)return{refresh(){}};
-  const chip=document.createElement('button');chip.type='button';chip.id='infrastructureContextToggle';chip.className='service-context-chip';chip.hidden=true;
-  chip.setAttribute('aria-controls','infrastructureContextPanel');chip.setAttribute('aria-expanded','false');chip.innerHTML='<span>Physical railway context</span><b aria-hidden="true">i</b>';
+export function setupInfrastructureContext({getManifest,getState,getDates,getView,getMap,load,onOpen=()=>{}}){
+  const host=document.querySelector('.map-notices'),filters=document.getElementById('contextFilters');if(!host||!filters)return{refresh(){},visibleCount(){return 0;}};
+  const chip=document.createElement('button');chip.type='button';chip.id='infrastructureContextToggle';chip.className='inline-button';chip.hidden=true;
+  chip.setAttribute('aria-controls','infrastructureContextPanel');chip.setAttribute('aria-expanded','false');chip.textContent='Physical railway details ↗';
   const panel=document.createElement('section');panel.id='infrastructureContextPanel';panel.className='service-context-panel';panel.hidden=true;
-  panel.setAttribute('role','region');panel.setAttribute('aria-labelledby','infrastructureContextTitle');panel.innerHTML='<button class="close-button" aria-label="Close physical railway information">×</button><h3 id="infrastructureContextTitle">Physical railway context</h3><p>Grey dotted railway paths have no verified passenger timetable for these dates. They add no trains to this map.</p><label class="closed-corridor-toggle"><input id="showPhysicalRailways" type="checkbox" checked><span>Show these physical railway paths</span></label><div id="infrastructureContextContent" aria-live="polite"></div>';
-  host.append(chip,panel);
+  panel.setAttribute('role','region');panel.setAttribute('aria-labelledby','infrastructureContextTitle');panel.innerHTML='<button class="close-button" aria-label="Close physical railway information">×</button><h3 id="infrastructureContextTitle">Physical railway context</h3><p>Grey dotted railway paths have no verified passenger timetable for these dates. They add no trains to this map. Use Physical railways in Filters to show or hide them.</p><div id="infrastructureContextContent" aria-live="polite"></div>';
+  filters.append(chip);host.append(panel);
   const key=document.createElement('div');key.className='closure-key';key.id='physicalRailwayKey';key.hidden=true;key.innerHTML='<i style="border-top-style:dotted;border-top-color:#526979"></i>Grey dotted · physical rail, passenger service unverified';document.getElementById('mapLegend')?.appendChild(key);
-  const content=panel.querySelector('#infrastructureContextContent'),toggle=panel.querySelector('input'),close=panel.querySelector('button');
-  let active=[],path=null,revision=null,documentData=null,promise=null,layer=null,enabled=true,shown=null;
-  function hide(focus=false){panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus&&!chip.hidden)chip.focus();}
+  const content=panel.querySelector('#infrastructureContextContent'),close=panel.querySelector('button');
+  let active=[],path=null,revision=null,documentData=null,promise=null,layer=null,shown=null;
+  function hide(focus=false){panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus)(chip.getClientRects?.().length?chip:document.getElementById('controlsToggle'))?.focus();}
   function render(){
     if(!documentData)return;
     const ids=new Set(active.map(row=>row.id));content.innerHTML=documentData.corridors.filter(row=>ids.has(row.id)).map(infrastructureHTML).join('');panel.setAttribute('aria-busy','false');
   }
   function clearGeometry(){layer?.clearLayers();shown=null;key.hidden=true;}
   function updateGeometry(){
-    const map=getMap?.();if(!map||!enabled||!active.length||!documentData){clearGeometry();return;}
+    const map=getMap?.();if(!map||getState().physicalRailways!==true||!active.length||!documentData){clearGeometry();return;}
     const ids=new Set(active.map(row=>row.id)),next=[...ids].sort().join('|');if(next===shown)return;
     if(!layer){
       const L=globalThis.L;if(!L)return;
@@ -60,17 +60,17 @@ export function setupInfrastructureContext({getManifest,getState,getDates,getVie
     const manifest=getManifest(),next=manifest?.files?.infrastructureContext,
       nextRevision=manifest?.assets?.[manifest?.assetPaths?.[next]||next]?.sha256;
     if(path!==next||revision!==nextRevision){path=next;revision=nextRevision;documentData=null;promise=null;clearGeometry();hide();}
-    const view=getView();active=view?relevantInfrastructure(manifest?.infrastructureContext,{...view,dates:getDates(),day:getState().day}):[];
+    const view=getView(),state=getState();active=view?relevantInfrastructure(manifest?.infrastructureContext,{...view,dates:getDates(),day:state.day,physicalRailways:state.physicalRailways===true}):[];
     chip.hidden=!path||!active.length;
     if(chip.hidden){hide();clearGeometry();return;}
-    if(documentData){if(!panel.hidden)render();updateGeometry();}else if(enabled)ensureData().catch(()=>{});
+    if(documentData){if(!panel.hidden)render();updateGeometry();}else ensureData().catch(()=>{});
   }
   async function open(){
     refresh();if(chip.hidden)return;
-    panel.hidden=false;chip.setAttribute('aria-expanded','true');panel.setAttribute('aria-busy','true');content.textContent='Reading the evidence for this physical railway…';close.focus();
+    onOpen();document.getElementById('closeControls')?.click();panel.hidden=false;chip.setAttribute('aria-expanded','true');panel.setAttribute('aria-busy','true');content.textContent='Reading the evidence for this physical railway…';close.focus();
     try{await ensureData();if(!panel.hidden)render();}catch{if(!panel.hidden){panel.setAttribute('aria-busy','false');content.textContent='The evidence could not load. Close and reopen to retry. No passenger-service conclusion has been added.';}}
   }
-  chip.onclick=()=>panel.hidden?open():hide(true);close.onclick=()=>hide(true);toggle.onchange=()=>{enabled=toggle.checked;updateGeometry();if(enabled&&!documentData)ensureData().catch(()=>{});};
+  chip.onclick=()=>panel.hidden?open():hide(true);close.onclick=()=>hide(true);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden&&(panel.contains(document.activeElement)||chip===document.activeElement)){event.stopPropagation();event.preventDefault();hide(true);}},true);
-  return{refresh};
+  return{refresh,visibleCount:()=>getState().physicalRailways===true?active.length:0};
 }
