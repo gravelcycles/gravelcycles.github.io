@@ -1,5 +1,5 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=edad771a0eecf883';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=edad771a0eecf883';
+import{normalize,validMapLocation}from'./atlas-core.js?v=ea204004d9d6b20e';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=ea204004d9d6b20e';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
