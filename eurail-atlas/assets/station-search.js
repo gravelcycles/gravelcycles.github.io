@@ -1,12 +1,14 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
+import{normalize,validMapLocation}from'./atlas-core.js?v=edad771a0eecf883';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=edad771a0eecf883';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
-  return stations.filter(s=>terms.every(term=>((s._name||normalize(s.name))+' '+normalize(s.country)).includes(term))).map(s=>({s,rank:(s._name||normalize(s.name))===q?0:(s._name||normalize(s.name)).startsWith(q)?1:2,selected:!state.sources||state.sources.has(s.source)})).sort((a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id)).slice(0,limit).map(row=>row.s);
+  return stations.filter(s=>terms.every(term=>stationSearchText(s).includes(term))).map(s=>({s,rank:[s.name,...s.aliases||[]].some(name=>normalize(name)===q)?0:[s.name,...s.aliases||[]].some(name=>normalize(name).startsWith(q))?1:2,selected:stationSourceSelected(s,state)})).sort((a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id)).slice(0,limit).map(row=>row.s);
 }
 export function nearbyStationRecords(station,stations,limit=5){
   if(!validMapLocation(station.lon,station.lat))return[];
-  return stations.filter(s=>s.id!==station.id&&validMapLocation(s.lon,s.lat)).map(s=>({s,distance:111320*Math.hypot((s.lon-station.lon)*Math.cos(station.lat*Math.PI/180),s.lat-station.lat)})).filter(row=>row.distance<=150).sort((a,b)=>a.distance-b.distance||(a.s.name||'').localeCompare(b.s.name||'')).slice(0,limit).map(row=>row.s);
+  const members=new Set(stationMemberIds(station));
+  return stations.filter(s=>s.id!==station.id&&!stationMemberIds(s).some(id=>members.has(id))&&validMapLocation(s.lon,s.lat)).map(s=>({s,distance:111320*Math.hypot((s.lon-station.lon)*Math.cos(station.lat*Math.PI/180),s.lat-station.lat)})).filter(row=>row.distance<=150).sort((a,b)=>a.distance-b.distance||(a.s.name||'').localeCompare(b.s.name||'')).slice(0,limit).map(row=>row.s);
 }
 
 export function setupStationSearch({getStations,getState,ensureStations,onPick,sourceName,onOpen}){
@@ -20,11 +22,11 @@ export function setupStationSearch({getStations,getState,ensureStations,onPick,s
     for(const[sIndex,station]of choices.entries()){
       const option=document.createElement('li');option.id='station-search-option-'+sIndex;option.setAttribute('role','option');option.setAttribute('aria-selected','false');
       const name=document.createElement('strong');name.textContent=station.name;option.appendChild(name);
-      const details=document.createElement('small'),inactive=getState().sources&&!getState().sources.has(station.source);
-      details.textContent=[station.country,sourceName(station.source),inactive?'source not selected':'',validMapLocation(station.lon,station.lat)?'':'location unavailable'].filter(Boolean).join(' · ');option.appendChild(details);
+      const details=document.createElement('small'),inactive=!stationSourceSelected(station,getState());
+      details.textContent=[station.country,stationSourceLabel(station,sourceName),inactive?'sources not selected':'',validMapLocation(station.lon,station.lat)?'':'location unavailable'].filter(Boolean).join(' · ');option.appendChild(details);
       option.onmousedown=event=>event.preventDefault();option.onclick=()=>select(station);list.appendChild(option);
     }
-    list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));status.textContent=choices.length?choices.length+' station records found.':normalize(input.value).length<2?'Enter at least two characters.':'No station matches. Try another spelling or country.';
+    list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));status.textContent=choices.length?choices.length+' stations found.':normalize(input.value).length<2?'Enter at least two characters.':'No station matches. Try another spelling or country.';
   }
   async function search(){
     const ticket=++sequence;status.textContent='Loading station index…';

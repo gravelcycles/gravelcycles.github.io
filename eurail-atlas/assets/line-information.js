@@ -1,5 +1,5 @@
-import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
-import{replacementRailCorridor}from'./replacement-service.js?v=0c2f14c2bb7ee3cb';
+import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=edad771a0eecf883';
+import{replacementRailCorridor}from'./replacement-service.js?v=edad771a0eecf883';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   const rows=edge._directionEdges||[edge];

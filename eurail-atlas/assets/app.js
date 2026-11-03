@@ -1,24 +1,26 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,nearbyStationLocations,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=0c2f14c2bb7ee3cb';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=0c2f14c2bb7ee3cb';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=0c2f14c2bb7ee3cb';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=0c2f14c2bb7ee3cb';
-import{decodePassPolicies}from'./pass-policies.js?v=0c2f14c2bb7ee3cb';
-import{RailRenderer}from'./map-renderer.js?v=0c2f14c2bb7ee3cb';
-import{resolveAssetURL}from'./data-codec.js?v=0c2f14c2bb7ee3cb';
-import{AtlasDataLoader}from'./data-loader.js?v=0c2f14c2bb7ee3cb';
-import{setupCoverage}from'./coverage-panel.js?v=0c2f14c2bb7ee3cb';
-import{mergeCompletePairs}from'./network-view.js?v=0c2f14c2bb7ee3cb';
-import{setupServiceContext}from'./service-context.js?v=0c2f14c2bb7ee3cb';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=0c2f14c2bb7ee3cb';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=0c2f14c2bb7ee3cb';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=0c2f14c2bb7ee3cb';
-import{setupTrainInspector}from'./train-inspector.js?v=0c2f14c2bb7ee3cb';
-import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=0c2f14c2bb7ee3cb';
-import{matchesFocus}from'./route-focus.js?v=0c2f14c2bb7ee3cb';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=0c2f14c2bb7ee3cb';
-import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=0c2f14c2bb7ee3cb';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=edad771a0eecf883';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=edad771a0eecf883';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=edad771a0eecf883';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=edad771a0eecf883';
+import{decodePassPolicies}from'./pass-policies.js?v=edad771a0eecf883';
+import{RailRenderer}from'./map-renderer.js?v=edad771a0eecf883';
+import{resolveAssetURL}from'./data-codec.js?v=edad771a0eecf883';
+import{AtlasDataLoader}from'./data-loader.js?v=edad771a0eecf883';
+import{setupCoverage}from'./coverage-panel.js?v=edad771a0eecf883';
+import{mergeCompletePairs}from'./network-view.js?v=edad771a0eecf883';
+import{setupServiceContext}from'./service-context.js?v=edad771a0eecf883';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=edad771a0eecf883';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=edad771a0eecf883';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=edad771a0eecf883';
+import{setupTrainInspector}from'./train-inspector.js?v=edad771a0eecf883';
+import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=edad771a0eecf883';
+import{matchesFocus}from'./route-focus.js?v=edad771a0eecf883';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=edad771a0eecf883';
+import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=edad771a0eecf883';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=edad771a0eecf883';
 
-const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=new Map(),chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
+const stationCatalog=new StationCatalog();
+const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
 let feeCustom=state.charge!=='all'&&state.charge!=='free';
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
@@ -94,7 +96,9 @@ function json(url,{fresh=false,signal}={}){if(!cache.has(url)){const promise=dat
 function toast(message){clearTimeout(toastTimer);$('toast').textContent=message;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3500);}
 function status(message){$('screenReaderStatus').textContent=message;}
 function sourceById(id){return manifest?.sources?.find(s=>s.id===id)||{id,name:id};}
-function station(id){return stationMap.get(id)||hubMap.get(id)||{id,name:'Recorded station',country:''};}
+function station(id){return stationMap.get(id)||stationCatalog.resolve(id)||hubMap.get(id)||{id,name:'Recorded station',country:''};}
+function resolvedStation(id){return stationCatalog.resolve(id)||hubMap.get(id);}
+function stationSourceText(s){return stationSourceLabel(s,sourceName);}
 function shortName(s){return String(s?.name||'Recorded station').replace(/\s+(Hauptbahnhof|Central Station|railway station)$/i,'');}
 function sourceName(id){const s=sourceById(id);return s.name||s.publisher||id;}
 async function addEdges(rows){let count=0,started=performance.now();for(const row of rows||[]){const previous=edges.get(row.id),points=row._pointCount||row.coords?.length||0;if(!previous||points>(previous._pointCount||previous.coords?.length||0)){const edge=prepareEdge(row);if(edge){edges.set(edge.id,edge);mapPairIndex.set(edge);edgeVersion++;}}if(++count%24===0&&performance.now()-started>=4){await pauseWork();started=performance.now();}}}
@@ -356,12 +360,13 @@ async function loadVisibleChunks(){
   if(failed)toast('Some local lines could not load. Pan or zoom to retry.');
   if(state.edge&&!selected&&findDisplayedEdge(state.edge))pickEdge(findDisplayedEdge(state.edge),false);
 }
-async function loadHubsData(){if(hubEdges.length||!manifest?.files?.hubConnections){renderer.schedule();return;}try{const data=await json(dataURL(manifest.files.hubConnections));hubCities=(data.hubs||[]).map(h=>({...h,_name:normalize(h.name)}));for(const h of hubCities)hubMap.set(h.id,h);hubEdges=(data.edges||[]).map(prepareEdge).filter(Boolean);hubVersion++;searchList=[...hubCities,...stationList];renderer.schedule();renderHubs();if(state.mode==='leg'&&stationList.length&&(stationMap.has(state.from)||hubMap.has(state.from))&&(stationMap.has(state.to)||hubMap.has(state.to))){for(const field of ['from','to'])$(field==='from'?'fromStation':'toStation').value=station(state[field]).name;compareStations();}if(state.edge&&!selected){const edge=findDisplayedEdge(state.edge);if(edge)pickEdge(edge,false);}}catch(error){toast('City connections could not load. Please retry this view.');}}
+async function loadHubsData(){if(hubEdges.length||!manifest?.files?.hubConnections){renderer.schedule();return;}try{const data=await json(dataURL(manifest.files.hubConnections));hubCities=(data.hubs||[]).map(h=>({...h,_name:normalize(h.name)}));for(const h of hubCities)hubMap.set(h.id,h);hubEdges=(data.edges||[]).map(prepareEdge).filter(Boolean);hubVersion++;searchList=[...hubCities,...stationList];renderer.schedule();renderHubs();if(state.mode==='leg'&&stationList.length&&resolvedStation(state.from)&&resolvedStation(state.to)){for(const field of ['from','to'])$(field==='from'?'fromStation':'toStation').value=resolvedStation(state[field]).name;compareStations();}if(state.edge&&!selected){const edge=findDisplayedEdge(state.edge);if(edge)pickEdge(edge,false);}}catch(error){toast('City connections could not load. Please retry this view.');}}
 async function mergeStations(data,{full=false,paint=true}={}){
   let count=0;const hubs=new Set(data.hubs||[]);
-  for(const station of data.stations||data){station._name=station._name||normalize(station.name);if(hubs.has(station.id))station.hub=true;stationMap.set(station.id,station);if(++count%250===0)await pauseWork();}
-  stationList=[...stationMap.values()];searchList=[...hubCities,...stationList];if(full)fullStationsLoaded=true;
-  for(const field of ['from','to'])if(state[field]&&stationMap.has(state[field]))$(field==='from'?'fromStation':'toStation').value=stationMap.get(state[field]).name;
+  for(const station of data.stations||data){if(hubs.has(station.id))station.hub=true;stationCatalog.addSource(station);if(++count%250===0)await pauseWork();}
+  for(const station of data.canonicalStations||[]){stationCatalog.addCanonical(station);if(++count%250===0)await pauseWork();}
+  stationList=stationCatalog.values();searchList=[...hubCities,...stationList];if(full)fullStationsLoaded=true;
+  for(const field of ['from','to'])if(state[field]&&resolvedStation(state[field])){const s=resolvedStation(state[field]);state[field]=s.id;$(field==='from'?'fromStation':'toStation').value=s.name;}
   if(paint){renderHubs();renderer.schedule();}return stationList;
 }
 function loadBootstrapStations(){if(!bootstrapStationPromise){const path=manifest.files.overviewStations||manifest.files.stations;bootstrapStationPromise=json(dataURL(path)).then(data=>mergeStations(data,{full:!manifest.files.overviewStations})).catch(error=>{bootstrapStationPromise=null;throw error;});}return bootstrapStationPromise;}
@@ -373,13 +378,13 @@ function loadHubCities(){
   return hubCitiesPromise;
 }
 function cityConnections(id){const neighbors=new Set();for(const edge of hubEdges){if(edge.a!==id&&edge.b!==id)continue;if(state.sources&&!state.sources.has(edge.source))continue;if(edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))continue;if(edgeCount(edge,state,dates)>0)neighbors.add(edge.a===id?edge.b:edge.a);}return neighbors.size;}
-function renderHubs(){if(!map||!markers)return;renderStationMarkers();markers.clearLayers();if(trainFocusGroup){renderTrainStops();return;}if(selectedStation||!state.hubs)return;const bounds=map.getBounds(),zoom=map.getZoom();let candidates=hubCities.length?hubCities:stationList.filter(s=>s.hub);candidates=candidates.filter(s=>(!s.source||!state.sources||state.sources.has(s.source))&&(!effectivePass(state)||!Number.isFinite(s.eurailWeekly)||s.eurailWeekly>0)&&validMapLocation(s.lon,s.lat)&&bounds.contains([s.lat,s.lon])&&(state.mode!=='italy'||isItaly(s.country))).sort((a,b)=>(b.weekly||b.degree||0)-(a.weekly||a.degree||0));const positions=[];let shown=0;for(const s of candidates){const point=map.latLngToContainerPoint([s.lat,s.lon]);if(positions.some(p=>Math.hypot(p.x-point.x,p.y-point.y)<(zoom<5?80:zoom<6?65:50)))continue;positions.push(point);const count=s.memberStationCount?cityConnections(s.id):(effectivePass(state)?s.eurailWeekly:s.weekly);const radius=s.memberStationCount?Math.min(5.3,2.1+Math.sqrt(count)*.5):Math.min(5,2.2+Math.log1p(count||1)/8);L.circleMarker([s.lat,s.lon],{renderer:stationMarkers.renderer,radius,color:'#fbfaf6',weight:1.3,fillColor:'#006f92',fillOpacity:.9,interactive:true,bubblingMouseEvents:false}).addTo(markers).on('click',()=>pickStation(s));const name=shortName(s).replace(/\s*(Hbf|Centrale|Central|Termini|HB|Centraal|Centrální|Hlavní nádraží)$/i,'').trim();L.marker([s.lat,s.lon],{interactive:false,icon:L.divIcon({className:'city-label'+(shown<7?' strong':''),html:esc(name),iconSize:[120,20],iconAnchor:[0,-2]})}).addTo(markers);if(++shown>=(zoom<5?17:35))break;}}
+function renderHubs(){if(!map||!markers)return;renderStationMarkers();markers.clearLayers();if(trainFocusGroup){renderTrainStops();return;}if(selectedStation||!state.hubs)return;const bounds=map.getBounds(),zoom=map.getZoom();let candidates=hubCities.length?hubCities:stationList.filter(s=>s.hub);candidates=candidates.filter(s=>(!stationSources(s).length||stationSourceSelected(s,state))&&(!effectivePass(state)||!Number.isFinite(s.eurailWeekly)||s.eurailWeekly>0)&&validMapLocation(s.lon,s.lat)&&bounds.contains([s.lat,s.lon])&&(state.mode!=='italy'||isItaly(s.country))).sort((a,b)=>(b.weekly||b.degree||0)-(a.weekly||a.degree||0));const positions=[];let shown=0;for(const s of candidates){const point=map.latLngToContainerPoint([s.lat,s.lon]);if(positions.some(p=>Math.hypot(p.x-point.x,p.y-point.y)<(zoom<5?80:zoom<6?65:50)))continue;positions.push(point);const count=s.memberStationCount?cityConnections(s.id):(effectivePass(state)?s.eurailWeekly:s.weekly);const radius=s.memberStationCount?Math.min(5.3,2.1+Math.sqrt(count)*.5):Math.min(5,2.2+Math.log1p(count||1)/8);L.circleMarker([s.lat,s.lon],{renderer:stationMarkers.renderer,radius,color:'#fbfaf6',weight:1.3,fillColor:'#006f92',fillOpacity:.9,interactive:true,bubblingMouseEvents:false}).addTo(markers).on('click',()=>pickStation(s));const name=shortName(s).replace(/\s*(Hbf|Centrale|Central|Termini|HB|Centraal|Centrální|Hlavní nádraží)$/i,'').trim();L.marker([s.lat,s.lon],{interactive:false,icon:L.divIcon({className:'city-label'+(shown<7?' strong':''),html:esc(name),iconSize:[120,20],iconAnchor:[0,-2]})}).addTo(markers);if(++shown>=(zoom<5?17:35))break;}}
 function renderTrainStops(){
   const calls=trainFocusGroup.stops.map(call=>station(callId(call)));
   calls.forEach((s,i)=>{
     if(!validMapLocation(s.lon,s.lat))return;const end=i===0||i===calls.length-1;
-    if(s.id!==selectedStation?.id)L.circleMarker([s.lat,s.lon],{renderer:stationMarkers.renderer,radius:end?4.5:3.7,color:'#173f3b',weight:1.5,fillColor:'#fbfaf6',fillOpacity:1,interactive:true,bubblingMouseEvents:false}).addTo(markers).bindTooltip(esc(s.name),{pane:'stationNodes',direction:'top'}).on('click',()=>pickStation(s,{inspect:true}));
-    if(end&&s.id!==selectedStation?.id){
+    if(!stationMemberIds(selectedStation).includes(s.id))L.circleMarker([s.lat,s.lon],{renderer:stationMarkers.renderer,radius:end?4.5:3.7,color:'#173f3b',weight:1.5,fillColor:'#fbfaf6',fillOpacity:1,interactive:true,bubblingMouseEvents:false}).addTo(markers).bindTooltip(esc(s.name),{pane:'stationNodes',direction:'top'}).on('click',()=>pickStation(s,{inspect:true}));
+    if(end&&!stationMemberIds(selectedStation).includes(s.id)){
       const point=map.latLngToContainerPoint([s.lat,s.lon]);
       // Declutter labels near the selected pin without merging station IDs.
       if(selectedStation&&validMapLocation(selectedStation.lon,selectedStation.lat)&&point.distanceTo(map.latLngToContainerPoint([selectedStation.lat,selectedStation.lon]))<28)return;
@@ -395,17 +400,18 @@ function renderStationMarkers(){
     stationMarkerLoad=ensureStations().then(()=>stationMarkers.render()).catch(()=>{}).finally(()=>{stationMarkerLoad=null;});
   }
 }
-function stationReference(s){return{id:'station:'+s.id,_stationIds:[s.id],a:s.id,b:s.id,source:s.source};}
+function stationReference(s){return{id:'station:'+s.id,_stationIds:stationMemberIds(s),a:s.id,b:s.id,source:s.source};}
 async function ensureStationServices(s){
   const ref=stationReference(s);if(edgePublicNumbers.has(ref.id))return;
   if(publicNumberRequests.has(ref.id))return publicNumberRequests.get(ref.id);
   const promise=(async()=>{
-    await ensureManifest();const ids=new Set([s.id]),index=await json(dataURL(manifest.files.journeyLookup)),files=indexedJourneyFiles(index,ids,ids);
+    await ensureManifest();await ensureStations();const ids=new Set(stationMemberIds(s)),index=await json(dataURL(manifest.files.journeyLookup)),files=indexedJourneyFiles(index,ids,ids);
     const journeys=await dataLoader.findStationJourneys(files.map(file=>dataURL(file.url)),ids);
     edgePublicNumbers.set(ref.id,{journeys});stationErrors.delete(s.id);while(edgePublicNumbers.size>16)edgePublicNumbers.delete(edgePublicNumbers.keys().next().value);
   })().finally(()=>publicNumberRequests.delete(ref.id));publicNumberRequests.set(ref.id,promise);return promise;
 }
 function pickStation(s,{inspect=false,center=false,restore=false}={}){
+  s=resolvedStation(s.id)||s;
   detailSequence++;selectedStation=null;clearStationFocus();trainInspector.reset();clearTrainFocus(false);state.station='';document.body.classList.remove('station-inspector-open');
   if(s.memberStationCount)return pickHubStation(s);
   if(state.mode==='leg'&&!inspect&&!center){setStationField(state.from?'to':'from',s);return;}
@@ -425,13 +431,13 @@ function pickStation(s,{inspect=false,center=false,restore=false}={}){
 }
 function renderStationSelected(){
   const s=selectedStation;if(!s)return;
-  const ref=stationReference(s),journeys=edgePublicNumbers.get(ref.id)?.journeys,groups=groupStationRoutes(journeys,new Set([s.id]),state,dates),count=groups.reduce((n,g)=>n+g.count,0),daily=dates.map((_,i)=>groups.reduce((n,g)=>n+g.daily[i],0)),nearby=nearbyStationRecords(s,stationList),inactive=state.sources&&!state.sources.has(s.source);
+  const ref=stationReference(s),journeys=edgePublicNumbers.get(ref.id)?.journeys,groups=groupStationRoutes(journeys,new Set(stationMemberIds(s)),state,dates),count=groups.reduce((n,g)=>n+g.count,0),daily=dates.map((_,i)=>groups.reduce((n,g)=>n+g.daily[i],0)),nearby=nearbyStationRecords(s,stationList),inactive=!stationSourceSelected(s,state);
   focusStationRoutes(s,groups,!!journeys);
-  $('inspectorContent').innerHTML=`<p class="eyebrow">RECORDED STATION</p><h3>${esc(s.name)}</h3><p class="subline">${esc(s.country||'Country unresolved')} · ${esc(dateLabel(state.day,dates))}</p><p class="station-source">${esc(sourceName(s.source))}</p>${journeys?`<div class="detail-stat"><strong>${fmt(count/selectedDayCount())}</strong><span>scheduled services calling here / day</span></div>${weeklyChart({daily},false,daily)}`:`<p class="helper" role="status">${stationErrors.has(s.id)?'Station services could not load. Retry below.':'Loading services at this station…'}</p>`}${inactive?'<p class="helper">This source is outside your current selection. <button class="text-button" id="includeStationSource">Include this source →</button></p>':''}${validMapLocation(s.lon,s.lat)?'':'<p class="helper">This source has no usable map location. Its station, recorded dates and available timetables remain searchable.</p>'}<div class="station-actions"><button class="primary-button" id="stationFrom">Start here →</button><button class="primary-button" id="stationTo">Go here →</button></div><div id="segmentTrains"></div>${nearby.length?`<details class="nearby-stations"><summary>Nearby station records</summary><p class="helper">Separate source records or platforms. No interchange or duplicate-service merger is assumed.</p>${nearby.map(item=>`<button class="nearby-station" data-nearby-station="${esc(item.id)}"><strong>${esc(item.name)}</strong><small>${esc(sourceName(item.source))}</small></button>`).join('')}</details>`:''}<p class="detail-note">Counts use your selected date, sources and service/pass filters. Each recorded service is counted once here, even if it visits this station twice. Source feeds can overlap. Boarding restrictions are shown on the selected departure’s stop list.</p>`;
+  $('inspectorContent').innerHTML=`<p class="eyebrow">RECORDED STATION</p><h3>${esc(s.name)}</h3><p class="subline">${esc(s.country||'Country unresolved')} · ${esc(dateLabel(state.day,dates))}</p><p class="station-source">${esc(stationSourceText(s))}</p>${journeys?`<div class="detail-stat"><strong>${fmt(count/selectedDayCount())}</strong><span>scheduled services calling here / day</span></div>${weeklyChart({daily},false,daily)}`:`<p class="helper" role="status">${stationErrors.has(s.id)?'Station services could not load. Retry below.':'Loading services at this station…'}</p>`}${inactive?'<p class="helper">This station’s sources are outside your current selection. <button class="text-button" id="includeStationSource">Include station sources →</button></p>':''}${validMapLocation(s.lon,s.lat)?'':'<p class="helper">This source has no usable map location. Its station, recorded dates and available timetables remain searchable.</p>'}<div class="station-actions"><button class="primary-button" id="stationFrom">Start here →</button><button class="primary-button" id="stationTo">Go here →</button></div><div id="segmentTrains"></div>${nearby.length?`<details class="nearby-stations"><summary>Nearby station records</summary><p class="helper">Separate source records or platforms. No interchange or duplicate-service merger is assumed.</p>${nearby.map(item=>`<button class="nearby-station" data-nearby-station="${esc(item.id)}"><strong>${esc(item.name)}</strong><small>${esc(stationSourceText(item))}</small></button>`).join('')}</details>`:''}<p class="detail-note">Counts use your selected date, sources and service/pass filters. Each recorded service is counted once here, even if it visits this station twice. Source feeds can overlap. Boarding restrictions are shown on the selected departure’s stop list.</p>`;
   const journeyAction=field=>{setMode('leg');setStationField(field,s);$(field==='from'?'toStation':'fromStation').focus();};
   const focusNote=document.createElement('div');focusNote.className='route-focus-note station-focus-note';focusNote.innerHTML=`<span>${journeys?(groups.length?'Routes through this station highlighted':'No routes match the current filters'):stationErrors.has(s.id)?'Station routes unavailable':'Finding routes through this station…'}</span><button class="text-button" id="restoreStationMap">Restore map</button>`;$('segmentTrains').before(focusNote);$('restoreStationMap').onclick=closeInspector;
   $('stationFrom').onclick=()=>journeyAction('from');$('stationTo').onclick=()=>journeyAction('to');
-  $('includeStationSource')?.addEventListener('click',()=>{state.sources.add(s.source);alternativeSources();setupSources();refresh();});
+  $('includeStationSource')?.addEventListener('click',()=>{for(const source of stationSources(s))state.sources.add(source);alternativeSources();setupSources();refresh();});
   document.querySelectorAll('[data-nearby-station]').forEach(button=>button.onclick=()=>pickStation(station(button.dataset.nearbyStation),{inspect:true}));
   trainInspector.render(ref,stationErrors.has(s.id));bindChart();
 }
@@ -445,7 +451,7 @@ async function ensureEdgePublicNumbers(edge){
     await ensureManifest();if(!manifest.files.journeyLookup)return;
     const isHub=usesHubConnections(state),directions=(edge._directionEdges||[edge]).map(({id,source,a,b,primary})=>({id,source,a,b,primary,isHub}));
     if(isHub)await ensureStations();
-    const members=id=>isHub?stationList.filter(station=>station.hubId===id).map(station=>station.id):[id];
+    const members=id=>isHub?[...stationMap.values()].filter(station=>station.hubId===id).map(station=>station.id):[id];
     const index=await json(dataURL(manifest.files.journeyLookup)),choices=indexedJourneyFiles(index,new Set(directions.flatMap(e=>members(e.a))),new Set(directions.flatMap(e=>members(e.b))));
     const journeys=choices.length?await dataLoader.findEdgeJourneys(choices.map(choice=>dataURL(choice.url)),directions):[];
     await ensureStations();edgeServiceErrors.delete(edge.id);
@@ -488,17 +494,17 @@ function renderSelected(){
   $('compareDirectTrains')?.addEventListener('click',()=>{const pass=effectivePass(state);setStationField('from',a);setStationField('to',b);state.pass=pass;setMode('leg');});
 }
 
-function setStationField(field,s){state[field]=s.id;$(field==='from'?'fromStation':'toStation').value=s.name;if(!stationMapPoint(s))toast(s.name+': location unavailable; timetable calls are retained.');saveURL();}
+function setStationField(field,s){s=resolvedStation(s.id)||s;state[field]=s.id;$(field==='from'?'fromStation':'toStation').value=s.name;if(!stationMapPoint(s))toast(s.name+': location unavailable; timetable calls are retained.');saveURL();}
 function setupAutocomplete(field){
   const input=$(field==='from'?'fromStation':'toStation'),list=$(field==='from'?'fromSuggestions':'toSuggestions');let choices=[],active=-1,timer=0,sequence=0;
   function hide(){list.hidden=true;input.setAttribute('aria-expanded','false');active=-1;}
-  function show(){choices=searchStations(searchList,input.value);list.replaceChildren();choices.forEach((s,i)=>{const item=document.createElement('li');item.id=field+'-option-'+i;item.setAttribute('role','option');item.innerHTML=esc(s.name)+'<small>'+esc([s.country,s.memberStationCount?'city catchment · multiple terminals':sourceName(s.source),!stationMapPoint(s)?'location unavailable · timetable retained':''].filter(Boolean).join(' · '))+'</small>';item.onmousedown=event=>{event.preventDefault();setStationField(field,s);hide();};list.appendChild(item);});list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));active=-1;}
+  function show(){choices=searchStations(searchList,input.value);list.replaceChildren();choices.forEach((s,i)=>{const item=document.createElement('li');item.id=field+'-option-'+i;item.setAttribute('role','option');item.innerHTML=esc(s.name)+'<small>'+esc([s.country,s.memberStationCount?'city catchment · multiple terminals':stationSourceText(s),!stationMapPoint(s)?'location unavailable · timetable retained':''].filter(Boolean).join(' · '))+'</small>';item.onmousedown=event=>{event.preventDefault();setStationField(field,s);hide();};list.appendChild(item);});list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));active=-1;}
   async function search(){const ticket=++sequence;try{await ensureStations();if(ticket===sequence&&document.activeElement===input)show();}catch{if(ticket===sequence)toast('Station search could not load. Please retry.');}}
   input.oninput=()=>{state[field]='';choices=[];hide();clearTimeout(timer);timer=setTimeout(search,80);};input.onfocus=()=>{ensureStations().then(()=>{if(input.value.length>=2&&document.activeElement===input)show();}).catch(()=>{});};input.onblur=()=>setTimeout(hide,120);
   input.onkeydown=event=>{if(event.key==='Escape'){hide();return;}if(event.key==='ArrowDown'||event.key==='ArrowUp'){if(!choices.length)return;event.preventDefault();active=(active+(event.key==='ArrowDown'?1:-1)+choices.length)%choices.length;[...list.children].forEach((x,i)=>{x.classList.toggle('active',i===active);x.setAttribute('aria-selected',String(i===active));});input.setAttribute('aria-activedescendant',field+'-option-'+active);}if(event.key==='Enter'&&choices.length&&!list.hidden){event.preventDefault();setStationField(field,choices[Math.max(0,active)]);hide();}};
 }
-function equivalentStationIds(s){const result=new Set([s.id]);if(hubMap.has(s.id)||s.memberStationCount){for(const item of stationList)if(item.hubId===s.id)result.add(item.id);return result;}for(const item of stationList){if(item.id===s.id)continue;const sameName=item._name===s._name,close=nearbyStationLocations(item,s);if(sameName&&close)result.add(item.id);}return result;}
-async function compareStations(){const from=stationMap.get(state.from)||hubMap.get(state.from),to=stationMap.get(state.to)||hubMap.get(state.to);if(!from||!to){toast('Choose a departure and an arrival from the station suggestions.');return;}if(from.id===to.id){toast('Choose two different recorded stations.');return;}$('compareButton').disabled=true;$('legHelper').textContent='Reading the recorded calling patterns…';const ticket=++detailSequence;trainInspector.reset();clearTrainFocus(false);selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');try{const result=await findJourneyServices(from,to);if(ticket!==detailSequence)return;legResult=result;selected=null;state.edge='';showInspector();renderJourneyResult(result);const located=[from,to].filter(s=>validMapLocation(s.lon,s.lat));if(located.length)map.fitBounds(located.map(s=>[s.lat,s.lon]),{paddingTopLeft:[35,100],paddingBottomRight:[window.innerWidth>760?350:35,window.innerWidth>760?75:260],maxZoom:8});renderer.schedule();saveURL();}catch(error){toast('The journey data could not load. Please try again.');$('legHelper').textContent='The lookup failed; no service conclusion has been made.';console.warn('Rail Atlas journey lookup unavailable');}finally{$('compareButton').disabled=false;}}
+function equivalentStationIds(s){if(hubMap.has(s.id)||s.memberStationCount)return new Set([s.id,...[...stationMap.values()].filter(item=>item.hubId===s.id).map(item=>item.id)]);return new Set(stationMemberIds(s));}
+async function compareStations(){const from=resolvedStation(state.from),to=resolvedStation(state.to);if(!from||!to){toast('Choose a departure and an arrival from the station suggestions.');return;}if(from.id===to.id){toast('Choose two different recorded stations.');return;}$('compareButton').disabled=true;$('legHelper').textContent='Reading the recorded calling patterns…';const ticket=++detailSequence;trainInspector.reset();clearTrainFocus(false);selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');try{const result=await findJourneyServices(from,to);if(ticket!==detailSequence)return;legResult=result;selected=null;state.edge='';showInspector();renderJourneyResult(result);const located=[from,to].filter(s=>validMapLocation(s.lon,s.lat));if(located.length)map.fitBounds(located.map(s=>[s.lat,s.lon]),{paddingTopLeft:[35,100],paddingBottomRight:[window.innerWidth>760?350:35,window.innerWidth>760?75:260],maxZoom:8});renderer.schedule();saveURL();}catch(error){toast('The journey data could not load. Please try again.');$('legHelper').textContent='The lookup failed; no service conclusion has been made.';console.warn('Rail Atlas journey lookup unavailable');}finally{$('compareButton').disabled=false;}}
 async function findJourneyServices(from,to){await ensureManifest();const fromIds=equivalentStationIds(from),toIds=equivalentStationIds(to),countries=new Set([from.country,from.passCountry].filter(Boolean)),files=manifest.files?.journeysByCountry||[];let choices=Array.isArray(files)?files.filter(f=>countries.has(f.country)):Object.entries(files).filter(([k])=>countries.has(k)).map(([country,url])=>({country,url}));if(manifest.files.journeyLookup)choices=indexedJourneyFiles(await json(dataURL(manifest.files.journeyLookup)),fromIds,toIds);else if(!choices.length&&Array.isArray(files))choices=files.filter(f=>isItaly(from.country)&&isItaly(f.country));const {matches,loaded}=await dataLoader.findJourneys(choices.map(choice=>dataURL(choice.url)),fromIds,toIds);
     if(!choices.length||(!loaded&&edges.size)){const exact=[...edges.values()].filter(e=>fromIds.has(e.a)&&toIds.has(e.b)&&Array.isArray(e.boardableDaily));const lines=[];for(const edge of exact){const detail=await detailsFor(edge);for(const line of detail?.lines||[])lines.push({...line,source:edge.source});}return{from,to,journeys:[],fallbackEdges:exact,fallbackLines:lines,adjacentOnly:true};}return{from,to,journeys:matches,adjacentOnly:false};}
 function renderJourneyResult(result){
@@ -592,10 +598,10 @@ async function boot(){
     const overview=window.atlasDisplayPromise&&manifest.files.displayOverview?await dataLoader.decode(await window.atlasDisplayPromise):await json(dataURL(manifest.files.displayOverview||manifest.files.overview));if(overview.edges?.[0]?._displayOnly){displayPairs=overview.edges;edgeVersion++;}else await addEdges(overview.edges||overview);
     if(state.mode==='italy'){if(manifest.files.italyNetwork)await loadItalyNetwork().catch(()=>{});else await ensureStations();}
     $('mapLoading').hidden=true;renderer.schedule();ensurePassPolicies().catch(()=>{});
-    if(!manifest.files.displayOverview||state.mode==='leg')loadBootstrapStations().then(async()=>{if(state.mode==='leg'){await ensureStations();if((stationMap.has(state.from)||hubMap.has(state.from))&&(stationMap.has(state.to)||hubMap.has(state.to)))compareStations();}}).catch(()=>toast('Station search could not load. Reload to retry.'));
+    if(!manifest.files.displayOverview||state.mode==='leg')loadBootstrapStations().then(async()=>{if(state.mode==='leg'){await ensureStations();if(resolvedStation(state.from)&&resolvedStation(state.to))compareStations();}}).catch(()=>toast('Station search could not load. Reload to retry.'));
     if(usesHubConnections(state)||state.mode==='leg')loadHubs();else if(state.hubs)loadHubCities();scheduleChunks();
     if(state.edge&&findDisplayedEdge(state.edge))pickEdge(findDisplayedEdge(state.edge),false);
-    if(state.station){const id=state.station;ensureStations().then(()=>{if(state.station!==id||selected||selectedStation)return;const s=stationMap.get(id);if(s)pickStation(s,{inspect:true,center:!state.center,restore:!!state.center});else toast('This station is unavailable in the current release.');}).catch(()=>toast('Station details could not load. Please retry search.'));}
+    if(state.station){const id=state.station;ensureStations().then(()=>{if(state.station!==id||selected||selectedStation)return;const s=resolvedStation(id);if(s)pickStation(s,{inspect:true,center:!state.center,restore:!!state.center});else toast('This station is unavailable in the current release.');}).catch(()=>toast('Station details could not load. Please retry search.'));}
     status(manifest.files.displayNetwork?'Atlas ready. Loading the complete network at every zoom.':'Atlas loaded. Zoom in for local lines.');
   }catch(error){$('mapLoading').hidden=true;$('mapError').hidden=false;console.error('Rail Atlas data load failed:',error.message);}
   finally{booting=false;saveURL();}

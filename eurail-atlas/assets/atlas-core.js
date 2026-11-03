@@ -63,7 +63,7 @@ export const FREQUENCY_COLORS=Object.freeze(['#7053a6','#505da8','#3278a5','#168
 export const FREQUENCY_LABELS=Object.freeze(['<4','4','8','16','32','64','128','256','512+']);
 export function frequencyBand(value){const n=Number(value)||0;let index=0;while(index<FREQUENCY_BREAKS.length-1&&n>=FREQUENCY_BREAKS[index+1])index++;return index;}
 export function colorFor(value){return FREQUENCY_COLORS[frequencyBand(value)];}
-export function searchStations(stations,query,limit=8){const q=normalize(query);if(q.length<2||limit<1)return[];const terms=q.split(' '),best=[],rank=s=>s._name.startsWith(q)?0:1;for(const station of stations){if(!terms.every(term=>station._name.includes(term)))continue;let i=0;while(i<best.length&&(rank(best[i])<rank(station)||(rank(best[i])===rank(station)&&(best[i].weekly||0)>=(station.weekly||0))))i++;if(i<limit){best.splice(i,0,station);if(best.length>limit)best.pop();}}return best;}
+export function searchStations(stations,query,limit=8){const q=normalize(query);if(q.length<2||limit<1)return[];const terms=q.split(' '),best=[],names=s=>[s._name||normalize(s.name),...(s.aliases||[]).map(normalize)],rank=s=>names(s).some(name=>name.startsWith(q))?0:1;for(const station of stations){const text=names(station).join(' ')+' '+normalize(station.country);if(!terms.every(term=>text.includes(term)))continue;let i=0;while(i<best.length&&(rank(best[i])<rank(station)||(rank(best[i])===rank(station)&&(best[i].weekly||0)>=(station.weekly||0))))i++;if(i<limit){best.splice(i,0,station);if(best.length>limit)best.pop();}}return best;}
 export function publicTrainLabels(values,{day='all',dates,limit=8}={}){
   const unique=new Map();
   for(const value of values||[]){
