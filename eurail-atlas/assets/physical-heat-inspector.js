@@ -1,6 +1,6 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,dateLabel,effectivePass}from'./atlas-core.js?v=5908c601d2f8d54f';
-import{sectionCount,sectionDaily,sectionSourceBreakdown,sectionCohortBreakdown,sectionDateCoverage}from'./physical-heat.js?v=5908c601d2f8d54f';
-import{edgeInScope}from'./project-scope.js?v=5908c601d2f8d54f';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,dateLabel,effectivePass}from'./atlas-core.js?v=a8d1727da1380e07';
+import{sectionCount,sectionDaily,sectionSourceBreakdown,sectionCohortBreakdown,sectionDateCoverage}from'./physical-heat.js?v=a8d1727da1380e07';
+import{edgeInScope}from'./project-scope.js?v=a8d1727da1380e07';
 
 export function physicalSectionChart(section,state,dates){
   const filter={...state,pass:effectivePass(state)},daily=sectionDaily(section,filter),coverage=sectionDateCoverage(section,filter),max=Math.max(1,...daily),selected=selectedDays(state.day,dates);

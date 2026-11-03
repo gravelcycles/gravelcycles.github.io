@@ -1,5 +1,5 @@
 // Evidence labels are separate from train counts and pass/reservation decisions.
-import {escapeHTML} from './atlas-core.js?v=5908c601d2f8d54f';
+import {escapeHTML} from './atlas-core.js?v=a8d1727da1380e07';
 const kinds = new Set(['sleeper','night_train']);
 export function mergeSleepServices(...groups) {
   const merged = new Map();

@@ -1,29 +1,29 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=5908c601d2f8d54f';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=5908c601d2f8d54f';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=5908c601d2f8d54f';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=5908c601d2f8d54f';
-import{decodePassPolicies}from'./pass-policies.js?v=5908c601d2f8d54f';
-import{decodeThroughServices}from'./through-services.js?v=5908c601d2f8d54f';
-import{RailRenderer}from'./map-renderer.js?v=5908c601d2f8d54f';
-import{resolveAssetURL}from'./data-codec.js?v=5908c601d2f8d54f';
-import{AtlasDataLoader}from'./data-loader.js?v=5908c601d2f8d54f';
-import{setupCoverage}from'./coverage-panel.js?v=5908c601d2f8d54f';
-import{mergeCompletePairs}from'./network-view.js?v=5908c601d2f8d54f';
-import{setupServiceContext}from'./service-context.js?v=5908c601d2f8d54f';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=5908c601d2f8d54f';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=5908c601d2f8d54f';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=5908c601d2f8d54f';
-import{setupTrainInspector}from'./train-inspector.js?v=5908c601d2f8d54f';
-import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=5908c601d2f8d54f';
-import{matchesFocus}from'./route-focus.js?v=5908c601d2f8d54f';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=5908c601d2f8d54f';
-import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=5908c601d2f8d54f';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=5908c601d2f8d54f';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=5908c601d2f8d54f';
-import{physicalSectionInformation,physicalSectionChart}from'./physical-heat-inspector.js?v=5908c601d2f8d54f';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=5908c601d2f8d54f';
-import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=5908c601d2f8d54f';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=5908c601d2f8d54f';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=a8d1727da1380e07';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=a8d1727da1380e07';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=a8d1727da1380e07';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=a8d1727da1380e07';
+import{decodePassPolicies}from'./pass-policies.js?v=a8d1727da1380e07';
+import{decodeThroughServices}from'./through-services.js?v=a8d1727da1380e07';
+import{RailRenderer}from'./map-renderer.js?v=a8d1727da1380e07';
+import{resolveAssetURL}from'./data-codec.js?v=a8d1727da1380e07';
+import{AtlasDataLoader}from'./data-loader.js?v=a8d1727da1380e07';
+import{setupCoverage}from'./coverage-panel.js?v=a8d1727da1380e07';
+import{mergeCompletePairs}from'./network-view.js?v=a8d1727da1380e07';
+import{setupServiceContext}from'./service-context.js?v=a8d1727da1380e07';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=a8d1727da1380e07';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=a8d1727da1380e07';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=a8d1727da1380e07';
+import{setupTrainInspector}from'./train-inspector.js?v=a8d1727da1380e07';
+import{routeFocusIds,callId,groupStationRoutes}from'./train-services.js?v=a8d1727da1380e07';
+import{matchesFocus}from'./route-focus.js?v=a8d1727da1380e07';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=a8d1727da1380e07';
+import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=a8d1727da1380e07';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=a8d1727da1380e07';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=a8d1727da1380e07';
+import{physicalSectionInformation,physicalSectionChart}from'./physical-heat-inspector.js?v=a8d1727da1380e07';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=a8d1727da1380e07';
+import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=a8d1727da1380e07';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=a8d1727da1380e07';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -447,7 +447,7 @@ function applyControls(){
   document.querySelector('.geometry-filter').hidden=state.mode==='hubs';
   for(const id of ['showAligned','showSchematic'])$(id).closest('label').hidden=state.mode==='traffic';document.querySelector('.geometry-filter .filter-actions').hidden=state.mode==='traffic';document.querySelector('.geometry-filter .helper').textContent=state.mode==='traffic'?'Physical traffic sections use inferred shared railway alignments. Exact track assignment is unverified. Context overlays have separate switches below.':'Applies to selected services. Dotted links have unresolved geometry; they can be very short or densely clustered. Context overlays have separate switches below.';
   $('passToggleRow').hidden=PASS_MODES.has(state.mode);$('eurailOnly').checked=pass;$('eurailOnly').disabled=false;
-  $('passCoverageGroup').hidden=!pass;$('includedToggleRow').hidden=state.mode!=='eurail';
+  $('passCoverageGroup').hidden=!pass||state.mode==='hubs';$('includedToggleRow').hidden=state.mode!=='eurail';
   $('showIncluded').checked=state.included!==false;$('showReview').checked=state.review;$('showReview').disabled=filtered;
   $('reviewKey').hidden=!(services&&pass&&state.review&&!filtered);
   $('uncertaintyHelp').textContent=state.mode==='eurail'?(filtered?'Choose All fee conditions to include uncertain coverage. Fees filter confirmed included services only.':'Uncertain inclusion is shown in amber, separately from confirmed inclusion. Known exclusions stay excluded.'):'Conditional pass coverage is shown separately from confirmed included services.';
@@ -469,7 +469,7 @@ function applyControls(){
 function updateFilterSummary(){
   const chips=[];
   if(state.mode==='traffic'){if(!state.trains)chips.push(['services','Rail traffic hidden']);}else if(!state.trains||!state.replacements)chips.push(['services',!hasServices()?'Services hidden':state.trains?'Trains only':'Replacement buses only']);
-  if(state.mode==='traffic'){if(state.inferred===false)chips.push(['geometry','Railway sections hidden']);}else if(state.aligned===false||!state.schematic||state.inferred===false){const choices=[state.aligned!==false,state.inferred!==false,state.schematic!==false];chips.push(['geometry',choices.every(value=>!value)?'Service paths hidden':choices[1]&&!choices[0]&&!choices[2]?'Inferred rail paths only':choices[2]&&!choices[0]&&!choices[1]?'Dotted paths only':!choices[2]?'Railway alignments only':!choices[1]?'Inferred rail paths hidden':'Retained alignments hidden']);}
+  if(state.mode==='traffic'){if(state.inferred===false)chips.push(['geometry','Railway sections hidden']);}else if(state.mode!=='hubs'&&(state.aligned===false||!state.schematic||state.inferred===false)){const choices=[state.aligned!==false,state.inferred!==false,state.schematic!==false];chips.push(['geometry',choices.every(value=>!value)?'Service paths hidden':choices[1]&&!choices[0]&&!choices[2]?'Inferred rail paths only':choices[2]&&!choices[0]&&!choices[1]?'Dotted paths only':!choices[2]?'Railway alignments only':!choices[1]?'Inferred rail paths hidden':'Retained alignments hidden']);}
   if(state.closedCorridors===false)chips.push(['context','Affected railways hidden']);
   if(state.physicalRailways)chips.push(['physical','Physical railway context']);
   if(!state.hubs)chips.push(['stations','City labels hidden']);if(state.stations===false)chips.push(['localStations','Local stops hidden']);

@@ -1,7 +1,7 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=5908c601d2f8d54f';
-import{serviceSleepHTML}from'./sleep-service.js?v=5908c601d2f8d54f';
-import{replacementHTML}from'./replacement-service.js?v=5908c601d2f8d54f';
-import{callId,groupSegmentRoutes,formatClock,routeRuns,serviceDates}from'./train-services.js?v=5908c601d2f8d54f';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=a8d1727da1380e07';
+import{serviceSleepHTML}from'./sleep-service.js?v=a8d1727da1380e07';
+import{replacementHTML}from'./replacement-service.js?v=a8d1727da1380e07';
+import{callId,groupSegmentRoutes,formatClock,routeRuns,serviceDates}from'./train-services.js?v=a8d1727da1380e07';
 
 const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
 

@@ -1,7 +1,7 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=5908c601d2f8d54f';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=5908c601d2f8d54f';
-import{stationInScope}from'./project-scope.js?v=5908c601d2f8d54f';
-import{countryMatches}from'./explorer-core.js?v=5908c601d2f8d54f';
+import{normalize,validMapLocation}from'./atlas-core.js?v=a8d1727da1380e07';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=a8d1727da1380e07';
+import{stationInScope}from'./project-scope.js?v=a8d1727da1380e07';
+import{countryMatches}from'./explorer-core.js?v=a8d1727da1380e07';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
