@@ -1,12 +1,16 @@
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=399d5d2188699f63';
+import{edgeInScope}from'./project-scope.js?v=399d5d2188699f63';
+
 export const MODES = {
-  frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Trains and temporary replacement buses between recorded station calls.'},
+  frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
+  traffic:{title:'Physical rail traffic',kicker:'RAIL TRAFFIC',subtitle:'Estimated scheduled train traversals over shared sections of railway.'},
   leg:{title:'Compare a journey leg',kicker:'JOURNEY',subtitle:'Choose two stations to compare recorded through services.'},
   eurail:{title:'Eurail network',kicker:'EURAIL',subtitle:'Included services; reservations and supplements are shown separately.'},
   hubs:{title:'Major hub connections',kicker:'HUBS',subtitle:'Through recorded services between major city catchments.'},
   italy:{title:'Eurail in Italy',kicker:'ITALY',subtitle:'Included Italian station pairs in the available public sources.'}
 };
 export const PASS_MODES=new Set(['eurail','hubs','italy']);
-export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,33.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
+export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
 export function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
 export function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));}
 const daySelections=new WeakMap();
@@ -42,9 +46,9 @@ function serviceLayerSelected(state,key){
 }
 export function serviceLayers(state){return{trains:serviceLayerSelected(state,'trains'),replacements:serviceLayerSelected(state,'replacements')};}
 export function serviceVisible(row,state){return row?.serviceMode!=='coach'&&serviceLayerSelected(state,isTemporaryReplacement(row)?'replacements':'trains');}
-export function reviewedCount(edge,state,dates,boarding=usesHubConnections(state)){if(!serviceVisible(edge,state))return 0;return boarding?sumDays(edge,state.day,dates,'reviewedEurailBoardableDaily','reviewedEurailBoardableWeekly'):sumDays(edge,state.day,dates,'reviewedEurailDaily','reviewedEurailWeekly');}
-export function conditionalCount(edge,state,dates){if(!serviceVisible(edge,state)||chargeFiltered(state))return 0;const unknown=state.mode==='eurail'?sumDays(edge._passPolicy||{},state.day,dates,'unknownDaily'):0;const boarding=usesHubConnections(state),raw=boarding?sumDays(edge,state.day,dates,'conditionalBoardableDaily','conditionalBoardableWeekly'):sumDays(edge,state.day,dates,'conditionalDaily','conditionalWeekly'),reviewedIntersection=boarding?sumDays(edge,state.day,dates,'reviewedConditionalBoardableDaily','reviewedConditionalBoardableWeekly'):sumDays(edge,state.day,dates,'reviewedConditionalDaily','reviewedConditionalWeekly');return Math.max(0,raw-reviewedIntersection)+unknown;}
-export function edgeCount(edge,state,dates){if(!serviceVisible(edge,state)||state.mode==='eurail'&&state.included===false)return 0;if(chargeFiltered(state))return chargeCount(edge._passPolicy,state,dates);const boarding=usesHubConnections(state);return effectivePass(state)?sumDays(edge,state.day,dates,boarding?'eurailBoardableDaily':'eurailDaily',boarding?'eurailBoardableWeekly':'eurailWeekly')+reviewedCount(edge,state,dates):sumDays(edge,state.day,dates,boarding?'boardableDaily':'daily',boarding?'boardableWeekly':'weekly');}
+export function reviewedCount(edge,state,dates,boarding=usesHubConnections(state)){if(!serviceVisible(edge,state))return 0;const metric=edge._throughServices||edge;return boarding?sumDays(metric,state.day,dates,'reviewedEurailBoardableDaily','reviewedEurailBoardableWeekly'):sumDays(metric,state.day,dates,'reviewedEurailDaily','reviewedEurailWeekly');}
+export function conditionalCount(edge,state,dates){if(!serviceVisible(edge,state)||chargeFiltered(state))return 0;if(isPhysicalSection(edge))return sectionCount(edge,{...state,pass:true},selectedDays(state.day,dates),{conditional:true});if(edge._throughServices)return sumDays(edge._throughServices,state.day,dates,'uncertainDaily');const unknown=state.mode==='eurail'?sumDays(edge._passPolicy||{},state.day,dates,'unknownDaily'):0;const boarding=usesHubConnections(state),raw=boarding?sumDays(edge,state.day,dates,'conditionalBoardableDaily','conditionalBoardableWeekly'):sumDays(edge,state.day,dates,'conditionalDaily','conditionalWeekly'),reviewedIntersection=boarding?sumDays(edge,state.day,dates,'reviewedConditionalBoardableDaily','reviewedConditionalBoardableWeekly'):sumDays(edge,state.day,dates,'reviewedConditionalDaily','reviewedConditionalWeekly');return Math.max(0,raw-reviewedIntersection)+unknown;}
+export function edgeCount(edge,state,dates){if(!serviceVisible(edge,state)||state.mode==='eurail'&&state.included===false)return 0;if(isPhysicalSection(edge))return state.mode==='traffic'?sectionCount(edge,{...state,pass:effectivePass(state)},selectedDays(state.day,dates)):0;if(state.mode==='traffic')return 0;const metric=edge._throughServices||edge;if(chargeFiltered(state))return chargeCount(edge._throughServices||edge._passPolicy,state,dates);const boarding=usesHubConnections(state);return effectivePass(state)?sumDays(metric,state.day,dates,boarding?'eurailBoardableDaily':'eurailDaily',boarding?'eurailBoardableWeekly':'eurailWeekly')+reviewedCount(edge,state,dates):sumDays(metric,state.day,dates,boarding?'boardableDaily':'daily',boarding?'boardableWeekly':'weekly');}
 export function perDay(edge,state,dates){return edgeCount(edge,state,dates)/Math.max(1,selectedDays(state.day,dates).length);}
 export function threshold(value){return Math.round(Math.exp(Number(value)/100*Math.log(151))-1);}
 export function isItaly(country){return ['it','italy','italia'].includes(String(country||'').toLowerCase());}
@@ -75,7 +79,22 @@ export function publicTrainLabels(values,{day='all',dates,limit=8}={}){
   // These vectors describe identifier presence, never additional train counts.
   return[...unique.values()].filter(value=>!dates||!Array.isArray(value.daily)||sumDays(value,day,dates)>0).slice(0,Math.max(0,limit));
 }
+export function journeyThroughMatch(journey,edge){
+  if(edge?.a===edge?.b)return null;
+  if(!journey?.id||journey.source!==edge?.source||(journey.agencyPrimary!==false)!==(edge.primary!==false))return null;
+  const mode=row=>['rail','train',undefined,null].includes(row.serviceMode)?'rail':row.serviceMode;
+  if(mode(journey)!==mode(edge))return null;
+  const calls=journey.stops||[];let from=-1;
+  for(let i=0;i<calls.length;i++){
+    const call=calls[i],identity=edge.isHub?journey.hubIds?.[i]:Array.isArray(call)?call[0]:call?.id,
+      pickup=String((Array.isArray(call)?call[1]:call?.pickup)??'0'),dropoff=String((Array.isArray(call)?call[2]:call?.dropoff)??'0');
+    if(from>=0&&identity===edge.b&&dropoff!=='1')return{from,to:i,conditional:String((Array.isArray(calls[from])?calls[from][1]:calls[from]?.pickup)??'0')!=='0'||dropoff!=='0'};
+    if(from<0&&identity===edge.a&&pickup!=='1')from=i;
+  }
+  return null;
+}
 export function journeyMatchesEdge(journey,edge){
+  if(edge?.throughConnection)return!!journeyThroughMatch(journey,edge);
   if(!journey?.id||journey.source!==edge?.source||(journey.agencyPrimary!==false)!==(edge.primary!==false))return false;
   const calls=journey.stops||[],id=call=>Array.isArray(call)?call[0]:call?.id;
   if(edge.isHub){
@@ -94,9 +113,9 @@ export function journeyMatchesEdge(journey,edge){
   return(journey.edgeIds||[]).some((identity,i)=>identity===edge.id&&id(calls[i])===edge.a&&id(calls[i+1])===edge.b);
 }
 export function journeyPublicTrainLines(journeys,edge,{fields=['daily']}={}){
-  const directions=edge?._directionEdges||[edge],groups=new Map(),seen=new Set();
+  const directions=(edge?._directionEdges||[edge]).map(direction=>edge?.throughConnection?{...direction,throughConnection:true}:direction),groups=new Map(),seen=new Set();
   for(const journey of journeys||[]){
-    const identity=JSON.stringify([journey.source,journey.id,journey.agencyPrimary!==false]);
+    const identity=JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
     if(seen.has(identity)||!directions.some(direction=>journeyMatchesEdge(journey,direction)))continue;seen.add(identity);
     const key=JSON.stringify([journey.source,journey.operator||'',journey.line||'']);
     if(!groups.has(key))groups.set(key,{source:journey.source,operator:journey.operator||'',label:journey.line||'',publicTrains:[]});
@@ -118,7 +137,7 @@ export function approximateAlignment(edge){return /schematic|unresolved|train_fe
 export function edgePointCount(edge){return Number.isInteger(edge?._pointCount)?edge._pointCount:edge?.coords?.length||0;}
 export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2||edge.coords.some(p=>!Array.isArray(p)||!validMapLocation(p[0],p[1])))return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY]};}
 export function segmentDistanceSquared(x,y,ax,ay,bx,by){let dx=bx-ax,dy=by-ay;if(dx||dy){const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));ax+=t*dx;ay+=t*dy;}return(x-ax)**2+(y-ay)**2;}
-export function qualifiesEdge(edge,state,dates,stations){if(state.sources&&!state.sources.has(edge.source))return false;if(edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))return false;if(!serviceVisible(edge,state)||!matchesGeometry(edge,state))return false;if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b){if(!isItaly(a.country)||!isItaly(b.country))return false;}else if(!isItaly(edge.country))return false;}const normal=edgeCount(edge,state,dates),review=effectivePass(state)&&state.review?conditionalCount(edge,state,dates):0;return(normal>0&&normal/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min))||(review>0&&review/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min));}
+export function qualifiesEdge(edge,state,dates,stations){if(!edgeInScope(edge,state))return false;const physical=isPhysicalSection(edge);if((state.mode==='traffic')!==physical)return false;if(!physical&&state.sources&&!state.sources.has(edge.source))return false;if(!physical&&edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))return false;if(!serviceVisible(edge,state)||!matchesGeometry(edge,state))return false;if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b){if(!isItaly(a.country)||!isItaly(b.country))return false;}else if(!isItaly(edge.country))return false;}const normal=edgeCount(edge,state,dates),review=effectivePass(state)&&state.review?conditionalCount(edge,state,dates):0;return(normal>0&&normal/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min))||(review>0&&review/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min));}
 export function aggregateMapPairs(input){
   const groups=new Map(),fields=['daily','eurailDaily','boardableDaily','eurailBoardableDaily','conditionalDaily','conditionalBoardableDaily','reviewedEurailDaily','reviewedEurailBoardableDaily','reviewedConditionalDaily','reviewedConditionalBoardableDaily'],weeks=['weekly','eurailWeekly','boardableWeekly','eurailBoardableWeekly','conditionalWeekly','conditionalBoardableWeekly','reviewedEurailWeekly','reviewedEurailBoardableWeekly','reviewedConditionalWeekly','reviewedConditionalBoardableWeekly'];
   for(const edge of input){

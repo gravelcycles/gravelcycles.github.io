@@ -1,4 +1,4 @@
-import{normalize}from'./atlas-core.js?v=ea204004d9d6b20e';
+import{normalize}from'./atlas-core.js?v=399d5d2188699f63';
 
 // Canonical places are a display/lookup layer. Journey calls and rail geometry
 // continue to use the original source station IDs and boarding locations.

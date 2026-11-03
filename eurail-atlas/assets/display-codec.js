@@ -1,4 +1,4 @@
-import{worldPoint,validMapLocation}from'./atlas-core.js?v=ea204004d9d6b20e';
+import{worldPoint,validMapLocation}from'./atlas-core.js?v=399d5d2188699f63';
 
 export const DISPLAY_FORMAT='rail-atlas-display-v1';
 const metrics=['daily','eurailDaily','reviewedEurailDaily','conditionalDaily','reviewedConditionalDaily'];
@@ -45,6 +45,7 @@ export function decodeDisplay(data){
       coords:[[coordinates[start*2],coordinates[start*2+1]],[coordinates[(end-1)*2],coordinates[(end-1)*2+1]]]};
     if(modes.has(index))edge.serviceMode=modes.get(index);
     for(let field=0;field<metrics.length;field++)edge[metrics[field]]=at(daily,row[field+4]);
+    if(data.throughServiceCounts){edge.throughConnection=true;edge._throughServices={daily:edge.daily,eurailDaily:edge.eurailDaily,reviewedEurailDaily:edge.reviewedEurailDaily,uncertainDaily:edge.conditionalDaily,boardableDaily:edge.daily,eurailBoardableDaily:edge.eurailDaily,reviewedEurailBoardableDaily:edge.reviewedEurailDaily};}
     // Preserve original row indexes: metadata pages use _startupIndex.
     if(!missingLocation)edges.push(edge);
   }

@@ -1,7 +1,11 @@
-import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=ea204004d9d6b20e';
-import{replacementRailCorridor}from'./replacement-service.js?v=ea204004d9d6b20e';
+import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=399d5d2188699f63';
+import{replacementRailCorridor}from'./replacement-service.js?v=399d5d2188699f63';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
+  if(edge.throughConnection)return{
+    scope:'Each recorded service counts once if it calls at both endpoints in order and permits boarding here and alighting there. Intermediate stops are included; changing trains is not. Counts retain this source, direction, service mode and date selection. The drawn alignment represents this station pair, not every train’s exact track path. Use Rail traffic for shared physical-section estimates.',
+    boardingRestricted:false,boardingNote:''
+  };
   const rows=edge._directionEdges||[edge];
   const movement=rows.reduce((n,row)=>n+sumDays(row,day,dates),0);
   const hasBoarding=row=>Array.isArray(row.boardableDaily)||(day==='all'&&Number.isFinite(row.boardableWeekly));

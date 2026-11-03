@@ -1,6 +1,6 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=ea204004d9d6b20e';
-import{mergeSleepServices}from'./sleep-service.js?v=ea204004d9d6b20e';
-import{mapPairFocusId}from'./route-focus.js?v=ea204004d9d6b20e';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=399d5d2188699f63';
+import{mergeSleepServices}from'./sleep-service.js?v=399d5d2188699f63';
+import{mapPairFocusId}from'./route-focus.js?v=399d5d2188699f63';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -33,7 +33,7 @@ export function journeyDaily(journey,state,dates){
   });
 }
 export function groupSegmentRoutes(journeys,edge,state,dates){
-  const directions=(edge._directionEdges||[edge]).map(direction=>usesHubConnections(state)?{...direction,isHub:true}:direction),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
+  const directions=(edge._directionEdges||[edge]).map(direction=>({...direction,...(usesHubConnections(state)?{isHub:true}:{}),...(edge.throughConnection?{throughConnection:true}:{})})),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   const stationIds=edge._stationIds?new Set(edge._stationIds):null;
   for(const journey of journeys||[]){
     const identity=journeyIdentity(journey);if(seen.has(identity)||(stationIds?!(journey.stops||[]).some(call=>stationIds.has(callId(call))):!directions.some(direction=>journeyMatchesEdge(journey,direction))))continue;seen.add(identity);

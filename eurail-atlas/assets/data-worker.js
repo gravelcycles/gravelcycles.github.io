@@ -1,10 +1,13 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=ea204004d9d6b20e';
-import{decodeDisplay}from'./display-codec.js?v=ea204004d9d6b20e';
-import{prepareEdge,normalize,journeyMatchesEdge}from'./atlas-core.js?v=ea204004d9d6b20e';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=399d5d2188699f63';
+import{decodeDisplay}from'./display-codec.js?v=399d5d2188699f63';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=399d5d2188699f63';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=399d5d2188699f63';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
 export function prepareLoadedData(data){
+  const physical=data?.format===PHYSICAL_HEAT_FORMAT;
+  if(physical)data=decodePhysicalHeat(data);
   data=decodeDisplay(data);
   const transfer=[],transferred=new Set();
   const prepare=rows=>rows.map(row=>{
@@ -13,8 +16,34 @@ export function prepareLoadedData(data){
     edge.coords=[edge.coords[0],edge.coords[edge.coords.length-1]];
     if(!transferred.has(edge._world.buffer)){transferred.add(edge._world.buffer);transfer.push(edge._world.buffer);}return edge;
   }).filter(Boolean);
-  if(Array.isArray(data?.edges))data.edges=prepare(data.edges);
+  if(physical){
+    // Continent-scale sections must not allocate and transfer hundreds of
+    // thousands of independent ArrayBuffers. Share one projected buffer,
+    // as the compact station-pair display already does.
+    if(data.edges.every(row=>row._world instanceof Float64Array)){
+      // The lossless packed decoder already projected the complete geometry.
+      // Reprojecting its endpoint-only coords would erase intermediate bends.
+      for(const row of data.edges)if(!transferred.has(row._world.buffer)){transferred.add(row._world.buffer);transfer.push(row._world.buffer);}
+    }else{
+    const projected=new Float64Array(data.edges.reduce((n,row)=>n+row.coords.length*2,0));let offset=0;
+    data.edges=data.edges.map(row=>{
+      const start=offset;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+      for(const[lon,lat]of row.coords){const[x,y]=worldPoint(lon,lat);projected[offset++]=x;projected[offset++]=y;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+      return{...row,_world:projected.subarray(start,offset),_pointCount:row.coords.length,_bbox:[minX,minY,maxX,maxY],coords:[row.coords[0],row.coords.at(-1)]};
+    });
+    if(projected.length)transfer.push(projected.buffer);
+    }
+  }
+  else if(Array.isArray(data?.edges))data.edges=prepare(data.edges);
   else if(Array.isArray(data)&&data[0]?.coords)data=prepare(data);
+  // Keep one prepared collection: retaining the original section coordinates
+  // as well would copy the large nested geometry back to the UI thread.
+  if(data?.format===PHYSICAL_HEAT_FORMAT){
+    // Preserve the renderer's existing weekly paint order, while moving its
+    // expensive continent-sized sort off the interaction thread. Filtering a
+    // globally sorted list preserves the same stable subset order.
+    data.edges.sort((a,b)=>(a.weekly||0)-(b.weekly||0));data.sections=data.edges;
+  }
   for(const rows of[data?.stations,data?.hubs])if(Array.isArray(rows))for(const row of rows)if(row&&typeof row==='object'&&typeof row.name==='string')row._name=normalize(row.name);
   return{data,transfer};
 }
@@ -88,7 +117,7 @@ export async function queryJourneys(urls,from,to,{signal}={}){
 export function findEdgeJourneys(parts,directions){
   const matches=new Map();
   for(const part of parts)for(const journey of part.journeys||[]){
-    if(directions.some(edge=>journeyMatchesEdge(journey,edge)))matches.set(JSON.stringify([journey.source,journey.id,journey.agencyPrimary!==false]),journey);
+    if(directions.some(edge=>journeyMatchesEdge(journey,edge)))matches.set(JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]),journey);
   }
   return[...matches.values()];
 }

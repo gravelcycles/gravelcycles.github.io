@@ -1,9 +1,10 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=ea204004d9d6b20e';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=ea204004d9d6b20e';
+import{normalize,validMapLocation}from'./atlas-core.js?v=399d5d2188699f63';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=399d5d2188699f63';
+import{stationInScope}from'./project-scope.js?v=399d5d2188699f63';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
-  return stations.filter(s=>terms.every(term=>stationSearchText(s).includes(term))).map(s=>({s,rank:[s.name,...s.aliases||[]].some(name=>normalize(name)===q)?0:[s.name,...s.aliases||[]].some(name=>normalize(name).startsWith(q))?1:2,selected:stationSourceSelected(s,state)})).sort((a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id)).slice(0,limit).map(row=>row.s);
+  return stations.filter(s=>stationInScope(s,state)&&terms.every(term=>stationSearchText(s).includes(term))).map(s=>({s,rank:[s.name,...s.aliases||[]].some(name=>normalize(name)===q)?0:[s.name,...s.aliases||[]].some(name=>normalize(name).startsWith(q))?1:2,selected:stationSourceSelected(s,state)})).sort((a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id)).slice(0,limit).map(row=>row.s);
 }
 export function nearbyStationRecords(station,stations,limit=5){
   if(!validMapLocation(station.lon,station.lat))return[];

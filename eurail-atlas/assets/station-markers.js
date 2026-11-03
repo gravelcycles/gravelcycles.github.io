@@ -1,10 +1,11 @@
-import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=ea204004d9d6b20e';
-import{stationSourceSelected}from'./station-identity.js?v=ea204004d9d6b20e';
+import{validMapLocation,isItaly,escapeHTML as esc}from'./atlas-core.js?v=399d5d2188699f63';
+import{stationSourceSelected}from'./station-identity.js?v=399d5d2188699f63';
+import{stationInScope}from'./project-scope.js?v=399d5d2188699f63';
 
 export const STATION_ZOOM=9;
 export function visibleStations(stations,bounds,state,zoom,selected=null){
-  const rows=state.stations!==false&&zoom>=STATION_ZOOM?stations.filter(s=>stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))):[];
-  if(selected&&validMapLocation(selected.lon,selected.lat)&&!rows.some(s=>s.id===selected.id))rows.push(selected);
+  const rows=state.stations!==false&&zoom>=STATION_ZOOM?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))):[];
+  if(stationInScope(selected,state)&&validMapLocation(selected.lon,selected.lat)&&!rows.some(s=>s.id===selected.id))rows.push(selected);
   return rows.sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id)||(a.weekly||0)-(b.weekly||0)||a.id.localeCompare(b.id));
 }
 export class StationMarkers{

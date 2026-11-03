@@ -3,7 +3,7 @@
 export class RasterClient{
   constructor(canvas,{onFrame=()=>{},onError=()=>{},canPresent=()=>true,allowIntermediate=()=>false,workerFactory}={}){
     this.canvas=canvas;this.onFrame=onFrame;this.onError=onError;this.canPresent=canPresent;this.allowIntermediate=allowIntermediate;this.pending=null;this.active=null;this.sequence=0;this.ready=false;this.destroyed=false;this.sentEpoch=null;
-    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=ea204004d9d6b20e',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
+    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=399d5d2188699f63',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
     this.worker=create();
     try{this.context=canvas.getContext('bitmaprenderer');}catch{}
     if(!this.context){this.context=canvas.getContext('2d');this.drawImage=true;}
@@ -12,12 +12,12 @@ export class RasterClient{
     this.worker.onerror=event=>{event.preventDefault?.();this.fail(new Error('Raster worker unavailable'));};
     this.readyTimer=setTimeout(()=>this.fail(new Error('Raster worker initialization timed out')),5000);
   }
-  geometry(epoch,worlds){if(this.destroyed)return;this.scene={epoch,worlds};}
-  paint(view,pixels,{styleKey='',reviewOn=false,highlights=[],metadata=null}={}){
+  geometry(epoch,worlds,{compactPrimitives=false}={}){if(this.destroyed)return;this.scene={epoch,worlds,compactPrimitives};}
+  paint(view,pixels,{styleKey='',baseKey='',basePixels=null,baseFrequencies=null,localThreshold=false,minimum=0,reviewOn=false,highlights=[],metadata=null}={}){
     if(this.destroyed||!this.scene)return null;
     if(!(view.width>0&&view.height>0&&Number.isFinite(view.width)&&Number.isFinite(view.height)))return null;
     const id=++this.sequence,dpr=Math.min(view.dpr||1,Math.sqrt(6000000/(view.width*view.height)),8192/view.width,8192/view.height);
-    this.pending={id,view:{...view,dpr},pixels,styleKey,reviewOn,highlights,metadata,scene:this.scene,requestedAt:performance.now()};
+    this.pending={id,view:{...view,dpr},pixels,styleKey,baseKey,basePixels,baseFrequencies,localThreshold,minimum,reviewOn,highlights,metadata,scene:this.scene,requestedAt:performance.now()};
     this.pump();return id;
   }
   pump(){
@@ -33,11 +33,14 @@ export class RasterClient{
         for(let i=0;i<job.scene.worlds.length;i++)coordinates.set(job.scene.worlds[i],offsets[i]);
         // Thousands of separately transferred buffers create a long main-thread
         // serialization task. Two packed buffers retain every original vertex.
-        this.worker.postMessage({op:'geometry',epoch:job.scene.epoch,coordinates,offsets},[coordinates.buffer,offsets.buffer]);
-        this.lastGeometryUploadMs=performance.now()-uploadStarted;this.sentEpoch=job.scene.epoch;
+        this.worker.postMessage({op:'geometry',epoch:job.scene.epoch,coordinates,offsets,...(job.scene.compactPrimitives?{compactPrimitives:true}:{})},[coordinates.buffer,offsets.buffer]);
+        this.lastGeometryUploadMs=performance.now()-uploadStarted;this.sentEpoch=job.scene.epoch;this.sentBaseKey=null;
       }
-      const pixels=job.pixels.slice(),highlights=job.highlights.map(h=>({...h,world:new Float64Array(h.world)}));
-      this.worker.postMessage({op:'paint',id:job.id,epoch:job.scene.epoch,view:job.view,pixels,styleKey:job.styleKey,reviewOn:job.reviewOn,highlights},[pixels.buffer,...highlights.map(h=>h.world.buffer)]);
+      const pixels=job.localThreshold?null:job.pixels.slice(),highlights=job.highlights.map(h=>({...h,world:new Float64Array(h.world)}));
+      const baseline=job.scene.compactPrimitives&&job.basePixels&&this.sentBaseKey!==job.baseKey?job.basePixels.slice():null;
+      const frequencies=baseline&&job.baseFrequencies?job.baseFrequencies.slice():null;
+      this.worker.postMessage({op:'paint',id:job.id,epoch:job.scene.epoch,view:job.view,...(pixels?{pixels}:{}),styleKey:job.styleKey,baseKey:job.baseKey,...(baseline?{basePixels:baseline}:{}),...(frequencies?{baseFrequencies:frequencies}:{}),...(job.localThreshold?{localThreshold:true,minimum:job.minimum}:{}),reviewOn:job.reviewOn,highlights},[...(pixels?[pixels.buffer]:[]),...(baseline?[baseline.buffer]:[]),...(frequencies?[frequencies.buffer]:[]),...highlights.map(h=>h.world.buffer)]);
+      if(baseline)this.sentBaseKey=job.baseKey;
     }catch(error){this.fail(error);}
   }
   receive(message){
@@ -59,7 +62,7 @@ export class RasterClient{
         this.canvas.style.width=job.view.width+'px';this.canvas.style.height=job.view.height+'px';
         if(this.drawImage){this.context.clearRect(0,0,width,height);this.context.drawImage(message.bitmap,0,0);message.bitmap.close();}
         else this.context.transferFromImageBitmap(message.bitmap);
-        this.onFrame({id:job.id,view:job.view,metadata:job.metadata,geometryEpoch:job.scene.epoch,geometryUploadMainMs:this.lastGeometryUploadMs||0,workerPaintMs:message.paintMs,latencyMs:performance.now()-job.requestedAt});
+        this.onFrame({id:job.id,view:job.view,metadata:job.metadata,geometryEpoch:job.scene.epoch,geometryUploadMainMs:this.lastGeometryUploadMs||0,workerPaintMs:message.paintMs,latencyMs:performance.now()-job.requestedAt,profile:message.profile});
       }catch(error){message.bitmap?.close();this.fail(error);return;}
     }else message.bitmap?.close();
     this.pump();
