@@ -1,17 +1,42 @@
-import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=e1213d59e9553b08';
-import{journeyDaily,selectCityJourneyContexts}from'./train-services.js?v=e1213d59e9553b08';
-import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=e1213d59e9553b08';
+import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=3c45b1968a85795d';
+import{journeyDaily,selectCityJourneyContexts}from'./train-services.js?v=3c45b1968a85795d';
+import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=3c45b1968a85795d';
 
-export const countryMatches=(a,b)=>normalize(a)===normalize(b);
+const countryKeys=new Map();
+function countryKey(country){if(!countryKeys.has(country))countryKeys.set(country,normalize(country));return countryKeys.get(country);}
+export const countryMatches=(a,b)=>countryKey(a)===countryKey(b);
 export function countryEdge(edge,country,stations){
   if(!country)return true;
-  const names=[edge.country,...edge.countries||[],stations.get(edge.a)?.country,stations.get(edge.b)?.country];
-  return names.some(name=>name&&countryMatches(name,country));
+  if(edge.country&&countryMatches(edge.country,country))return true;
+  if(edge.countries?.some(name=>name&&countryMatches(name,country)))return true;
+  return[stations.get(edge.a)?.country,stations.get(edge.b)?.country].some(name=>name&&countryMatches(name,country));
 }
 export function countryBounds(country,stations){
-  const rows=stations.filter(s=>countryMatches(s.country,country)&&Number.isFinite(s.lon)&&Number.isFinite(s.lat)&&s.lon>=-25&&s.lon<=60&&s.lat>=33&&s.lat<=73);
-  if(!rows.length)return null;
-  return[[Math.min(...rows.map(s=>s.lat)),Math.min(...rows.map(s=>s.lon))],[Math.max(...rows.map(s=>s.lat)),Math.max(...rows.map(s=>s.lon))]];
+  let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+  for(const s of stations){if(!countryMatches(s.country,country)||!Number.isFinite(s.lon)||!Number.isFinite(s.lat)||s.lon< -25||s.lon>60||s.lat<33||s.lat>73)continue;west=Math.min(west,s.lon);south=Math.min(south,s.lat);east=Math.max(east,s.lon);north=Math.max(north,s.lat);}
+  return Number.isFinite(west)?[[south,west],[north,east]]:null;
+}
+const contextCountryAliases=new Map([
+  ['great britain',['united kingdom','uk','britain']],['turkiye',['turkey']],
+  ['bosnia herzegovina',['bosnia and herzegovina','bosnia and herz']],
+  ['north macedonia',['macedonia']],['czechia',['czech republic']]
+]);
+// The small immutable basemap frames a country without downloading the full
+// station catalogue. Ignore overseas land outside the atlas' retained extent.
+export function countryContextBounds(country,document){
+  const key=countryKey(country),names=new Set([key,...contextCountryAliases.get(key)||[]]);
+  const feature=document?.features?.find(row=>['NAME','NAME_LONG','ADMIN','GEOUNIT','NAME_EN'].some(field=>names.has(countryKey(row.properties?.[field]))));
+  if(!feature)return null;
+  let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
+  function visit(value){
+    if(!Array.isArray(value))return;
+    if(typeof value[0]==='number'&&typeof value[1]==='number'){
+      const[lon,lat]=value;if(!Number.isFinite(lon)||!Number.isFinite(lat)||lon< -25||lon>60||lat<33||lat>73)return;
+      west=Math.min(west,lon);south=Math.min(south,lat);east=Math.max(east,lon);north=Math.max(north,lat);
+    }else for(const child of value)visit(child);
+  }
+  visit(feature.geometry?.coordinates);
+  return Number.isFinite(west)?[[south,west],[north,east]]:null;
 }
 // A city is a service selector, never a geometric endpoint. Draw retained
 // source rail legs and preserve gaps instead of joining them with city chords.

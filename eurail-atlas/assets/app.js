@@ -1,36 +1,36 @@
-import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=e1213d59e9553b08';
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode}from'./atlas-core.js?v=e1213d59e9553b08';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=e1213d59e9553b08';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=e1213d59e9553b08';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=e1213d59e9553b08';
-import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=e1213d59e9553b08';
-import{decodeThroughServices}from'./through-services.js?v=e1213d59e9553b08';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=e1213d59e9553b08';
-import{RailRenderer}from'./map-renderer.js?v=e1213d59e9553b08';
-import{resolveAssetURL}from'./data-codec.js?v=e1213d59e9553b08';
-import{AtlasDataLoader,createPageHydrator}from'./data-loader.js?v=e1213d59e9553b08';
-import{setupViewportRefresh}from'./viewport-refresh.js?v=e1213d59e9553b08';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=e1213d59e9553b08';
-import{setupCoverage}from'./coverage-panel.js?v=e1213d59e9553b08';
-import{createCompletePairMerger}from'./network-view.js?v=e1213d59e9553b08';
-import{setupServiceContext}from'./service-context.js?v=e1213d59e9553b08';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=e1213d59e9553b08';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=e1213d59e9553b08';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=e1213d59e9553b08';
-import{setupTrainInspector}from'./train-inspector.js?v=e1213d59e9553b08';
-import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus}from'./train-services.js?v=e1213d59e9553b08';
-import{matchesFocus}from'./route-focus.js?v=e1213d59e9553b08';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=e1213d59e9553b08';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=e1213d59e9553b08';
-import{mainHubStations}from'./hub-stations.js?v=e1213d59e9553b08';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=e1213d59e9553b08';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=e1213d59e9553b08';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=e1213d59e9553b08';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=e1213d59e9553b08';
-import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=e1213d59e9553b08';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=e1213d59e9553b08';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=e1213d59e9553b08';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=e1213d59e9553b08';
+import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=3c45b1968a85795d';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode}from'./atlas-core.js?v=3c45b1968a85795d';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=3c45b1968a85795d';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=3c45b1968a85795d';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=3c45b1968a85795d';
+import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=3c45b1968a85795d';
+import{decodeThroughServices}from'./through-services.js?v=3c45b1968a85795d';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=3c45b1968a85795d';
+import{RailRenderer}from'./map-renderer.js?v=3c45b1968a85795d';
+import{resolveAssetURL}from'./data-codec.js?v=3c45b1968a85795d';
+import{AtlasDataLoader,createPageHydrator}from'./data-loader.js?v=3c45b1968a85795d';
+import{setupViewportRefresh}from'./viewport-refresh.js?v=3c45b1968a85795d';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=3c45b1968a85795d';
+import{setupCoverage}from'./coverage-panel.js?v=3c45b1968a85795d';
+import{createCompletePairMerger}from'./network-view.js?v=3c45b1968a85795d';
+import{setupServiceContext}from'./service-context.js?v=3c45b1968a85795d';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=3c45b1968a85795d';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=3c45b1968a85795d';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=3c45b1968a85795d';
+import{setupTrainInspector}from'./train-inspector.js?v=3c45b1968a85795d';
+import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus}from'./train-services.js?v=3c45b1968a85795d';
+import{matchesFocus}from'./route-focus.js?v=3c45b1968a85795d';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=3c45b1968a85795d';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=3c45b1968a85795d';
+import{mainHubStations}from'./hub-stations.js?v=3c45b1968a85795d';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=3c45b1968a85795d';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=3c45b1968a85795d';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=3c45b1968a85795d';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=3c45b1968a85795d';
+import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges}from'./explorer-core.js?v=3c45b1968a85795d';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=3c45b1968a85795d';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=3c45b1968a85795d';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=3c45b1968a85795d';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -41,6 +41,8 @@ const mergeCompletePairs=createCompletePairMerger();
 let chunkPaintTimer=0;
 let selectedStation=null,stationMarkers=null,stationMarkerLoad=null,stationSearch=null,stationFocus=null,stationFocusGeneration=0;
 let mobileSheets=null,cityDocument=null,cityEdges=[],cityEdgesKey='',countryPairs=[],countryPairsKey='',countrySummaryKey='';
+let countryContextPromise=null,countryChoiceSequence=0,countryPickerSequence=0;
+let countryViewportCleanup=null,countryContextStationPromise=null;
 if(matchMedia(MOBILE_LAYOUT).matches&&!new URLSearchParams(location.search).has('key'))state.legend=false;
 const stationErrors=new Set();
 let italyNetworkPromise=null;
@@ -336,29 +338,77 @@ function refreshViewTools(){
     if(countrySummaryKey!==key){countrySummaryKey=key;$('countrySummary').textContent='Loading country coverage…';coverage.getCountrySummary(state.country).then(summary=>{if(countrySummaryKey===key)$('countrySummary').textContent=summary.shortText||summary.label;});}
   }
 }
-async function chooseCountry(country){
-  await ensureStations();
-  const bounds=countryBounds(country,stationList);if(!bounds){toast('No mapped stations are available for this country in the current snapshot.');return;}
-  state.country=country;state.mode='countries';closeInspector();$('countryDialog').close();
-  refresh();map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10,animate:false});
-  $('countryPickerToggle').focus({preventScroll:true});saveURL();
+function loadCountryContext(){
+  if(!countryContextPromise){const url=manifest?.files?.context?dataURL(manifest.files.context):new URL('assets/countries.geojson',location.href).href;countryContextPromise=json(url).catch(error=>{countryContextPromise=null;throw error;});}
+  return countryContextPromise;
+}
+function ensureCountryContextStations(){
+  const needed=()=>state.mode==='countries'&&(state.closedCorridors===true||state.physicalRailways===true);
+  if(!needed()||fullStationsLoaded||countryContextStationPromise)return;
+  // Notice geography is resolved from recorded stations, independently of the
+  // fast basemap frame. Load that catalogue only when its overlays are enabled.
+  countryContextStationPromise=ensureStations().then(()=>{if(needed()){serviceContext.refresh();infrastructureContext.refresh();}}).catch(()=>{if(needed())toast('Railway context geography could not load. Toggle the overlay to retry.');}).finally(()=>{countryContextStationPromise=null;});
+}
+function cancelCountryViewportFrame(){countryViewportCleanup?.();countryViewportCleanup=null;}
+function watchCountryViewport(country,sequence){
+  cancelCountryViewportFrame();
+  if(!matchMedia(MOBILE_LAYOUT).matches||!$('countryDialog').open)return;
+  const height=()=>visualViewport?.height||innerHeight,initialHeight=height();
+  const current=()=>sequence===countryChoiceSequence&&state.mode==='countries'&&state.country===country;
+  let timer=0;
+  const mapElement=map.getContainer();
+  function cleanup(){visualViewport?.removeEventListener('resize',resize);window.removeEventListener('resize',resize);mapElement.removeEventListener('pointerdown',cleanup);mapElement.removeEventListener('wheel',cleanup);clearTimeout(timer);if(countryViewportCleanup===cleanup)countryViewportCleanup=null;}
+  function resize(){
+    if(!current()){cleanup();return;}
+    if(height()<=initialHeight+40)return;
+    cleanup();
+    // The keyboard closes after Enter/tap has selected the country. Wait for
+    // the new sheet/map layout before calculating its final country padding.
+    requestAnimationFrame(()=>{if(!current())return;map.invalidateSize({pan:false});requestAnimationFrame(()=>{if(current())frameCountry(country,sequence).catch(()=>toast('Country data could not load. Please retry.'));});});
+  }
+  countryViewportCleanup=cleanup;visualViewport?.addEventListener('resize',resize);window.addEventListener('resize',resize);mapElement.addEventListener('pointerdown',cleanup,{once:true});mapElement.addEventListener('wheel',cleanup,{once:true,passive:true});timer=setTimeout(cleanup,5000);
+}
+async function frameCountry(country,sequence){
+  const current=()=>sequence===countryChoiceSequence&&state.mode==='countries'&&state.country===country;
+  try{
+  let bounds=null;
+  try{bounds=countryContextBounds(country,await loadCountryContext());}catch{}
+  if(!current())return;
+  if(!bounds)bounds=countryBounds(country,stationList);
+  if(!bounds){await loadBootstrapStations();if(!current())return;bounds=countryBounds(country,stationList);}
+  if(!bounds){await ensureStations();if(!current())return;bounds=countryBounds(country,stationList);}
+  if(bounds){map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10,animate:false});saveURL();status('Exploring '+country+'.');}
+  else toast('No mapped stations are available for this country in the current snapshot.');
+  }catch(error){if(current())throw error;}
+}
+function chooseCountry(country){
+  const sequence=++countryChoiceSequence;countryPickerSequence++;
+  state.country=country;state.mode='countries';watchCountryViewport(country,sequence);closeInspector();$('countryDialog').close();
+  // A tap acknowledges the selection before any catalogue or framing request.
+  refresh();$('countryPickerToggle').focus({preventScroll:true});saveURL();
+  return frameCountry(country,sequence);
 }
 async function openCountryPicker(){
-  closeOtherContextPanels();await ensureManifest();
+  const sequence=++countryPickerSequence;closeOtherContextPanels();setControlsOpen(false);stationSearch?.close();
+  if(!manifest?.countryNames?.length){await ensureManifest();if(sequence!==countryPickerSequence||state.mode!=='countries')return;}
   const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryCurrentDetails').hidden=false;refreshViewTools();$('countryDialogTitle').textContent='Explore a country';input.placeholder='Find a country';input.setAttribute('aria-label','Find a country');
   const countries=(manifest.countryNames||[]).filter(country=>!['Russia','Ukraine'].includes(country));
   function paint(){
-    const query=normalize(input.value);$('countryChoices').replaceChildren();
-    for(const country of countries.filter(name=>normalize(name).includes(query))){
+    const query=normalize(input.value),matches=countries.filter(name=>normalize(name).includes(query));$('countryChoices').replaceChildren();
+    for(const country of matches){
       const button=document.createElement('button');button.className='country-choice';button.type='button';button.setAttribute('aria-pressed',String(country===state.country));
       const name=document.createElement('span');name.textContent=country;const action=document.createElement('small');action.textContent='Explore network →';button.append(name,action);
       button.onclick=()=>chooseCountry(country).catch(()=>toast('Country data could not load. Please retry.'));$('countryChoices').appendChild(button);
     }
+    if(!matches.length){const message=document.createElement('p');message.className='country-search-status';message.setAttribute('role','status');message.textContent='No country matches “'+input.value+'”. Try another spelling.';$('countryChoices').appendChild(message);}
   }
-  input.value='';input.oninput=paint;paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
+  input.value='';input.oninput=paint;input.onkeydown=event=>{if(event.key!=='Enter'||event.isComposing)return;const query=normalize(input.value);if(!query)return;const match=countries.find(country=>normalize(country)===query)||countries.find(country=>normalize(country).includes(query));if(match){event.preventDefault();chooseCountry(match).catch(()=>toast('Country data could not load. Please retry.'));}};
+  paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
+  loadCountryContext().catch(()=>{});
+  if(manifest._bootstrap)ensureManifest().catch(()=>{});
 }
 async function openCityPicker(){
-  closeOtherContextPanels();await loadCityHubs({connections:false});setControlsOpen(false);
+  countryPickerSequence++;closeOtherContextPanels();await loadCityHubs({connections:false});setControlsOpen(false);
   const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryCurrentDetails').hidden=true;$('countryDialogTitle').textContent='Explore a city';input.placeholder='Find a city';input.setAttribute('aria-label','Find a city');
   const cities=cityDocument.cities.filter(city=>city.rank<=state.hubCount);
   function paint(){
@@ -369,13 +419,13 @@ async function openCityPicker(){
       button.onclick=()=>{$('hubCity').value=city.id;$('hubCity').dispatchEvent(new Event('change'));dialog.close();};$('countryChoices').appendChild(button);
     }
   }
-  input.value='';input.oninput=paint;paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
+  input.value='';input.oninput=paint;input.onkeydown=null;$('countryChoices').removeAttribute('aria-live');paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
 }
 function setupExplorerControls(){
   $('hubOptionsToggle').onclick=()=>setControlsOpen(true);
   $('hubCityPickerToggle').onclick=()=>openCityPicker().catch(()=>toast('City choices could not load. Please retry.'));
   $('countryPickerToggle').onclick=()=>openCountryPicker().catch(()=>toast('Country choices could not load. Please retry.'));
-  $('closeCountryDialog').onclick=()=>$('countryDialog').close();
+  $('closeCountryDialog').onclick=()=>{countryPickerSequence++;$('countryDialog').close();};
   $('viewCoverageLink').onclick=()=>{$('countryDialog').close();coverage.open(state.country);};
   for(const id of['hubCount','hubExamples','hubCity'])$(id).onchange=()=>{
     state.hubCount=Number($('hubCount').value);state.hubExamples=$('hubExamples').value;state.hubCity=$('hubCity').value;
@@ -435,8 +485,8 @@ function initMap(){
   $('zoomIn').onclick=()=>map.zoomIn();$('zoomOut').onclick=()=>map.zoomOut();$('fitMap').onclick=()=>fitRegion();
 }
 function drawCountries(geo){if(baseLayer)map.removeLayer(baseLayer);baseLayer=L.geoJSON(geo,{pane:'countryFallback',interactive:false,style:{fillColor:'#f3f3ed',fillOpacity:1,color:'#bdcbc5',weight:.8,opacity:.9}}).addTo(map);}
-function loadCountryFallback(){if(manifest&&!baseLayer)json(manifest.files.context?dataURL(manifest.files.context):new URL('assets/countries.geojson',location.href).href).then(drawCountries).catch(()=>{});}
-function fitRegion(){const bounds=state.mode==='countries'&&state.country?countryBounds(state.country,stationList):null;map.fitBounds(bounds||EUROPE_BOUNDS,{...mapFramePadding(),animate:true});}
+function loadCountryFallback(){if(manifest&&!baseLayer)loadCountryContext().then(drawCountries).catch(()=>{});}
+function fitRegion(){cancelCountryViewportFrame();if(state.mode==='countries'&&state.country){frameCountry(state.country,++countryChoiceSequence).catch(()=>toast('Country data could not load. Please retry.'));return;}map.fitBounds(EUROPE_BOUNDS,{...mapFramePadding(),animate:true});}
 function closeOtherContextPanels(id){for(const panel of document.querySelectorAll('.service-context-panel'))if(panel.id!==id&&!panel.hidden)panel.querySelector('.close-button')?.click();}
 function openContextPanel(id){closeOtherContextPanels(id);stationSearch?.close();setControlsOpen(false);if(selected||selectedStation)closeInspector();}
 function hasServices(){return ['traffic','hubs'].includes(state.mode)?state.trains:state.trains||state.replacements;}
@@ -550,10 +600,11 @@ function updateCharges(){
   refresh();ensurePassPolicies().catch(()=>{});
 }
 
-function refresh({details=true}={}){if(selected?._cityConnection){const updated=cityConnectionEdges(cityDocument,state,dates).find(edge=>edge.id===selected.id);if(updated)selected=updated;else closeInspector();}if(selectedStation&&!stationInScope(selectedStation,state))closeInspector();if(selected&&!qualifiesEdge(selected,state,dates,stationMap))closeInspector();applyControls();renderer.schedule();renderHubs();coverage.refreshViewport();saveURL();if(details&&selected&&!$('inspector').hidden){if(isPhysicalSection(selected))renderTrafficSection();else renderSelected();}if(details&&selectedStation&&!$('inspector').hidden)renderStationSelected();if(legResult&&state.mode==='leg'&&details)renderJourneyResult(legResult);}
+function refresh({details=true}={}){if(selected?._cityConnection){const updated=cityConnectionEdges(cityDocument,state,dates).find(edge=>edge.id===selected.id);if(updated)selected=updated;else closeInspector();}if(selectedStation&&!stationInScope(selectedStation,state))closeInspector();if(selected&&!qualifiesEdge(selected,state,dates,stationMap))closeInspector();applyControls();renderer.schedule();renderHubs();coverage.refreshViewport();saveURL();if(details&&selected&&!$('inspector').hidden){if(isPhysicalSection(selected))renderTrafficSection();else renderSelected();}if(details&&selectedStation&&!$('inspector').hidden)renderStationSelected();if(legResult&&state.mode==='leg'&&details)renderJourneyResult(legResult);ensureCountryContextStations();}
 function setMode(mode){
   if(mode==='leg')mode='frequency';if(mode==='italy'){mode='countries';state.country='Italy';}
   if(!MODES[mode])return;
+  countryChoiceSequence++;countryPickerSequence++;cancelCountryViewportFrame();
   closeOtherContextPanels();state.mode=mode;setControlsOpen(false);stationSearch?.close();closeInspector();refresh();
   if(mode==='hubs')loadCityHubs().catch(()=>{});
   if(mode==='countries'){if(state.country)chooseCountry(state.country).catch(()=>toast('Country data could not load.'));else openCountryPicker().catch(()=>toast('Country choices could not load.'));}
@@ -905,7 +956,7 @@ async function boot(){
     dates=manifest.dates;if(manifest.files.throughServices&&!manifest.files.displayOverview)await ensureThroughServices();reconcileSources();setupDates();setupSources();applyControls();coverage.refresh();
     if(map.getContainer().dataset.basemap==='fallback')loadCountryFallback();
     if(state.mode==='traffic')await ensurePhysicalHeat();else{const overview=window.atlasDisplayPromise&&manifest.files.displayOverview?await dataLoader.decode(await window.atlasDisplayPromise):await json(dataURL(manifest.files.displayOverview||manifest.files.overview));if(overview.edges?.[0]?._displayOnly){displayPairs=overview.edges;rememberThroughDisplay(displayPairs);edgeVersion++;}else await addEdges(overview.edges||overview);}
-    if(state.mode==='countries'){await ensureStations();if(state.country&&!state.center){const bounds=countryBounds(state.country,stationList);if(bounds)map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10,animate:false});}}
+    if(state.mode==='countries'){if(state.country&&!state.center)frameCountry(state.country,++countryChoiceSequence).catch(()=>toast('Country data could not load. Please retry.'));ensureCountryContextStations();}
     $('mapLoading').hidden=true;renderer.schedule();ensurePassPolicies().catch(()=>{});ensureContinuationGeometry().catch(()=>toast('Some reviewed international services could not load. Reopen this map to retry.'));
     if(!manifest.files.displayOverview||state.mode==='leg')loadBootstrapStations().then(async()=>{if(state.mode==='leg'){await ensureStations();if(resolvedStation(state.from)&&resolvedStation(state.to))compareStations();}}).catch(()=>toast('Station search could not load. Reload to retry.'));
     if(usesHubConnections(state))loadCityHubs().catch(()=>{});else if(state.hubs)loadHubCities();if(state.mode==='countries'&&!state.country)openCountryPicker().catch(()=>{});scheduleChunks();

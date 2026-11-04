@@ -68,3 +68,14 @@
  .country-dialog:has(.country-current-details:not([hidden])) .country-choices{max-height:calc(var(--sheet-viewport-height,100dvh) - 270px - env(safe-area-inset-top,0px))}
 }
 @media(max-width:360px){.brand-mark{display:none}.site-header,.map-focus .site-header{gap:8px}.site-header>.map-heading,.map-focus .site-header>.map-heading{padding-left:8px}.site-header>.map-heading h2{font-size:12px}}
+/* Keep the search field and results inside the visible keyboard viewport. */
+.country-dialog[open]{display:flex;flex-direction:column;overflow:hidden;max-height:min(85dvh,var(--sheet-viewport-height,85dvh))}
+.country-dialog h2,.country-dialog>input{flex:none}
+.country-dialog .country-current-details{flex:0 1 auto;min-height:0;overflow:auto}
+.country-dialog .country-choices,.country-dialog:has(.country-current-details:not([hidden])) .country-choices{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;touch-action:pan-y;align-content:start}
+.country-search-status{padding:12px 4px;color:var(--muted);font-size:14px;line-height:1.5}
+@media(max-width:700px),(max-height:500px) and (pointer:coarse){
+ .country-dialog[open]{height:var(--sheet-viewport-height,100dvh);max-height:var(--sheet-viewport-height,100dvh)}
+ .country-dialog .country-current-details{max-height:25%}
+ .country-dialog .country-choices{min-height:60px;overscroll-behavior:contain}
+}
