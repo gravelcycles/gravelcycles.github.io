@@ -1,39 +1,43 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=ba3c88c61a4e74aa';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=ba3c88c61a4e74aa';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=ba3c88c61a4e74aa';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=ba3c88c61a4e74aa';
-import{decodePassPolicies}from'./pass-policies.js?v=ba3c88c61a4e74aa';
-import{decodeThroughServices}from'./through-services.js?v=ba3c88c61a4e74aa';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=ba3c88c61a4e74aa';
-import{RailRenderer}from'./map-renderer.js?v=ba3c88c61a4e74aa';
-import{resolveAssetURL}from'./data-codec.js?v=ba3c88c61a4e74aa';
-import{AtlasDataLoader}from'./data-loader.js?v=ba3c88c61a4e74aa';
-import{setupCoverage}from'./coverage-panel.js?v=ba3c88c61a4e74aa';
-import{mergeCompletePairs}from'./network-view.js?v=ba3c88c61a4e74aa';
-import{setupServiceContext}from'./service-context.js?v=ba3c88c61a4e74aa';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=ba3c88c61a4e74aa';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=ba3c88c61a4e74aa';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=ba3c88c61a4e74aa';
-import{setupTrainInspector}from'./train-inspector.js?v=ba3c88c61a4e74aa';
-import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=ba3c88c61a4e74aa';
-import{matchesFocus}from'./route-focus.js?v=ba3c88c61a4e74aa';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=ba3c88c61a4e74aa';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=ba3c88c61a4e74aa';
-import{mainHubStations}from'./hub-stations.js?v=ba3c88c61a4e74aa';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=ba3c88c61a4e74aa';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=ba3c88c61a4e74aa';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=ba3c88c61a4e74aa';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=ba3c88c61a4e74aa';
-import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=ba3c88c61a4e74aa';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=ba3c88c61a4e74aa';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=ba3c88c61a4e74aa';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=ba3c88c61a4e74aa';
+import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=3b98ad05f89f72bf';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=3b98ad05f89f72bf';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=3b98ad05f89f72bf';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=3b98ad05f89f72bf';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=3b98ad05f89f72bf';
+import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=3b98ad05f89f72bf';
+import{decodeThroughServices}from'./through-services.js?v=3b98ad05f89f72bf';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=3b98ad05f89f72bf';
+import{RailRenderer}from'./map-renderer.js?v=3b98ad05f89f72bf';
+import{resolveAssetURL}from'./data-codec.js?v=3b98ad05f89f72bf';
+import{AtlasDataLoader,createPageHydrator}from'./data-loader.js?v=3b98ad05f89f72bf';
+import{setupViewportRefresh}from'./viewport-refresh.js?v=3b98ad05f89f72bf';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=3b98ad05f89f72bf';
+import{setupCoverage}from'./coverage-panel.js?v=3b98ad05f89f72bf';
+import{createCompletePairMerger}from'./network-view.js?v=3b98ad05f89f72bf';
+import{setupServiceContext}from'./service-context.js?v=3b98ad05f89f72bf';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=3b98ad05f89f72bf';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=3b98ad05f89f72bf';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=3b98ad05f89f72bf';
+import{setupTrainInspector}from'./train-inspector.js?v=3b98ad05f89f72bf';
+import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=3b98ad05f89f72bf';
+import{matchesFocus}from'./route-focus.js?v=3b98ad05f89f72bf';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=3b98ad05f89f72bf';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=3b98ad05f89f72bf';
+import{mainHubStations}from'./hub-stations.js?v=3b98ad05f89f72bf';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=3b98ad05f89f72bf';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=3b98ad05f89f72bf';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=3b98ad05f89f72bf';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=3b98ad05f89f72bf';
+import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=3b98ad05f89f72bf';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=3b98ad05f89f72bf';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=3b98ad05f89f72bf';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=3b98ad05f89f72bf';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
 let feeCustom=state.charge!=='all'&&state.charge!=='free';
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
+const mergeCompletePairs=createCompletePairMerger();
 let chunkPaintTimer=0;
 let selectedStation=null,stationMarkers=null,stationMarkerLoad=null,stationSearch=null,stationFocus=null,stationFocusGeneration=0;
 let mobileSheets=null,cityDocument=null,cityEdges=[],cityEdgesKey='',countryPairs=[],countryPairsKey='',countrySummaryKey='';
@@ -60,21 +64,18 @@ async function ensureContinuationGeometry(){
   return continuationGeometryPromise;
 }
 const throughDisplayMetrics=new Map();
-function rememberThroughDisplay(rows){for(const edge of rows||[])if(edge._throughServices)throughDisplayMetrics.set(edge.id,edge._throughServices);}
+function rememberThroughDisplay(rows){let changed=false;for(const edge of rows||[])if(edge._throughServices&&throughDisplayMetrics.get(edge.id)!==edge._throughServices){throughDisplayMetrics.set(edge.id,edge._throughServices);changed=true;}if(changed)resetPassPolicyAttachments();}
 const physicalDetailStates=new Map();
 let physicalHeatDocument=null,physicalHeatEdges=[],physicalHeatPromise=null,physicalHeatError=null,physicalHeatGeneration=0;
-function attachPassPolicy(edge){
-  const through=throughServices?.get(edge.id)||throughDisplayMetrics.get(edge.id)||edge._throughServices,
-    policy=throughServices?.get(edge.id)||passPolicies?.get(edge.id)||edge._passPolicy;
-  if(!through&&!policy&&!edge._directionEdges)return edge;
-  return{...edge,...(through?{_throughServices:through,throughConnection:true}:{}),...(policy?{_passPolicy:policy}:{}),
-    ...(edge._directionEdges?{_directionEdges:edge._directionEdges.map(attachPassPolicy)}:{})};
-}
+const policyAttacher=createPassPolicyAttacher(),attachPassPolicy=policyAttacher.attach;
+function resetPassPolicyAttachments(){policyAttacher.update(throughServices,passPolicies,throughDisplayMetrics);}
+resetPassPolicyAttachments();
 async function ensureThroughServices(){
   if(throughServices)return throughServices;
   if(!throughServicesPromise)throughServicesPromise=(async()=>{
     await ensureManifest();if(!manifest.files.throughServices)return null;
     throughServices=decodeThroughServices(await json(dataURL(manifest.files.throughServices)),dates);
+    resetPassPolicyAttachments();
     edgeVersion++;pairVersion=-1;hubPairVersion=-1;if(selected&&!isPhysicalSection(selected))selected=attachPassPolicy(selected);
     return throughServices;
   })().catch(error=>{throughServicesPromise=null;throw error;});
@@ -83,11 +84,19 @@ async function ensureThroughServices(){
 async function ensurePassPolicies(){
   if(state.mode!=='eurail'||!hasServices())return;
   if(manifest?.files?.throughServices){if(chargeFiltered(state)){try{await ensureThroughServices();passPoliciesFailed=false;refresh();}catch(error){passPoliciesFailed=true;applyControls();toast('Pass conditions could not load. Re-select the filter to retry.');throw error;}}return;}
-  if(!passPoliciesPromise)passPoliciesPromise=(async()=>{await ensureManifest();if(!manifest.files.passPolicies)throw new Error('Pass conditions unavailable');passPolicies=decodePassPolicies(await json(dataURL(manifest.files.passPolicies)));passPoliciesFailed=false;edgeVersion++;pairVersion=-1;if(selected)selected=attachPassPolicy(selected);refresh();})().catch(error=>{passPoliciesPromise=null;passPoliciesFailed=true;applyControls();toast('Pass conditions could not load. Re-select the filter to retry.');throw error;});
+  if(!passPoliciesPromise)passPoliciesPromise=(async()=>{await ensureManifest();if(!manifest.files.passPolicies)throw new Error('Pass conditions unavailable');passPolicies=decodePassPolicies(await json(dataURL(manifest.files.passPolicies)));resetPassPolicyAttachments();passPoliciesFailed=false;edgeVersion++;pairVersion=-1;if(selected)selected=attachPassPolicy(selected);refresh();})().catch(error=>{passPoliciesPromise=null;passPoliciesFailed=true;applyControls();toast('Pass conditions could not load. Re-select the filter to retry.');throw error;});
   return passPoliciesPromise;
 }
 const hydratedNetworkPairs=new Set();
 const edgePublicNumbers=new Map(),publicNumberRequests=new Map();
+let inspectorLookupController=null;
+function cancelInspectorLookup(){inspectorLookupController?.abort();inspectorLookupController=null;}
+function beginInspectorLookup(){cancelInspectorLookup();inspectorLookupController=new AbortController();return inspectorLookupController.signal;}
+function sharedPublicNumberRequest(id,signal,load){
+  const known=publicNumberRequests.get(id);if(known&&!known.signal?.aborted)return known.promise;
+  const request={signal,promise:null};request.promise=load().finally(()=>{if(publicNumberRequests.get(id)===request)publicNumberRequests.delete(id);});
+  publicNumberRequests.set(id,request);return request.promise;
+}
 const edgeServiceErrors=new Set();
 let trainFocus=null,trainFocusGroup=null,trainFocusView=null,trainFocusGeneration=0;
 const coverage=setupCoverage({getManifest:()=>manifest,getState:()=>state,getView:()=>map?{bounds:[map.getBounds().getWest(),map.getBounds().getSouth(),map.getBounds().getEast(),map.getBounds().getNorth()]}:null,load:path=>json(dataURL(path)),onShowSources:ids=>{state.sources=new Set([...(state.sources||[]),...ids]);alternativeSources();setupSources();refresh();}});
@@ -206,12 +215,17 @@ async function hydrateDisplayEdge(edge){
   if(!edge?._displayOnly)return edge;
   await ensureManifest();
   const network=edge._displayCatalog==='network',catalog=network?manifest.files.displayNetworkMetadata:manifest.files.displayMetadata,page=catalog?.files?.[Math.floor(edge._startupIndex/(catalog?.pairsPerPage||128))];
-  if(page){const data=await json(dataURL(page));if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||[]);if(network){for(const pair of aggregateMapPairs(data.edges||[]))hydratedNetworkPairs.add(pair.id);edgeVersion++;}}
+  if(page)await hydrateMetadataPage(dataURL(page),network);
   else await ensureOverviewMetadata();
   const upgraded=findDisplayedEdge(edge.id)||edge;
   if(!network&&completeNetworkLoaded&&upgraded._displayCatalog==='network')return hydrateDisplayEdge(upgraded);
   return upgraded;
 }
+const hydrateMetadataPage=createPageHydrator(url=>json(url),async(data,network,url)=>{
+  if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||[]);
+  if(network){for(const pair of aggregateMapPairs(data.edges||[]))hydratedNetworkPairs.add(pair.id);edgeVersion++;}
+  cache.delete(url);
+});
 async function loadCompleteNetwork({forRoute=false}={}){
   ensureContinuationGeometry().catch(()=>{});
   if(completeNetworkLoaded||!manifest?.files?.displayNetwork||!forRoute&&(state.mode==='traffic'||usesHubConnections(state)||state.mode==='italy'&&!busesOnly()))return;
@@ -243,6 +257,7 @@ async function ensurePhysicalHeat(){
 }
 function pickTrafficSection(section,animate=true){
   if(!qualifiesEdge(section,state,dates,stationMap))return;
+  cancelInspectorLookup();
   detailSequence++;selectedStation=null;state.station='';clearStationFocus();trainInspector.reset();clearTrainFocus(false);document.body.classList.remove('station-inspector-open');
   selected=section;state.edge=section.id;legResult=null;journeyHighlights.clear();showInspector();renderTrafficSection();ensurePhysicalSectionDetails(section).catch(()=>{});renderer.schedule();saveURL();
   ensureStations().then(()=>{if(state.mode==='traffic'&&selected?.id===section.id)renderTrafficSection();}).catch(()=>{});
@@ -414,7 +429,7 @@ function initMap(){
     .on('tileerror',event=>{event.tile.style.visibility='hidden';})
     .on('load',()=>{$('basemapStatus').hidden=loadedTiles>0;if(!loadedTiles){map.getContainer().dataset.basemap='fallback';loadCountryFallback();}}).addTo(map);
   markers=L.layerGroup().addTo(map);stationMarkers=new StationMarkers(map,{getStations:()=>stationList,getState:()=>state.mode==='hubs'?{...state,stations:false}:state.mode==='countries'&&activeFocusIds()!==null?{...state,mode:'frequency'}:state,getSelected:()=>selectedStation,getFocus:activeFocusStations,onPick:s=>pickStation(s,{inspect:true})});renderer=new RailRenderer(map,()=>{const focusIds=activeFocusIds();return{edges:currentEdges(),state,dates,stations:stationMap,selected:trainFocus?null:selected,highlightIds:focusIds||journeyHighlights,focusIds};},pickEdge);
-  renderer.canvas.addEventListener('atlasdraw',event=>updateMapSummary(event.detail.visible));map.on('moveend zoomend resize',()=>{saveURL();scheduleChunks();renderHubs();coverage.refreshViewport();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();});
+  renderer.canvas.addEventListener('atlasdraw',event=>updateMapSummary(event.detail.visible));setupViewportRefresh(map,()=>{saveURL();scheduleChunks();renderHubs();coverage.refreshViewport();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();});installSmoothWheelZoom(map);
 
   $('zoomIn').onclick=()=>map.zoomIn();$('zoomOut').onclick=()=>map.zoomOut();$('fitMap').onclick=()=>fitRegion();
 }
@@ -545,7 +560,8 @@ function setupDates(){const select=$('dateSelect'),first=new Date(dates[0]+'T12:
 function updateSourceCount(){if(!manifest)return;$('sourceCount').textContent=(state.sources?.size||0)+' / '+manifest.sources.length;$('swissCredit').hidden=!state.sources?.has('ch_gtfs_2026');}
 function setupSources(){const list=$('sourceList');list.replaceChildren();for(const source of manifest.sources||[]){const label=document.createElement('label'),input=document.createElement('input'),span=document.createElement('span');input.type='checkbox';input.checked=state.sources.has(source.id);input.value=source.id;span.textContent=source.name||source.id;const small=document.createElement('small');small.textContent=[source.country,source.defaultVisible===false?'alternative / overlapping feed':'recommended coverage'].filter(Boolean).join(' · ');span.appendChild(small);label.append(input,span);list.appendChild(label);input.onchange=()=>{input.checked?state.sources.add(source.id):state.sources.delete(source.id);alternativeSources();refresh();};}updateSourceCount();}
 function chooseSources(all){state.sources=new Set(manifest.sources.filter(s=>all||s.defaultVisible!==false).map(s=>s.id));state.alternatives=all;alternativeSources();setupSources();refresh();}
-function detailZoomThreshold(){return !busesOnly()&&state.mode==='italy'&&manifest?.files?.italyNetwork?7:5.5;}
+function localDetailPolicy(){return detailLoadingPolicy(manifest,{legacyItaly:!busesOnly()&&state.mode==='italy'&&!!manifest?.files?.italyNetwork});}
+function detailZoomThreshold(){return localDetailPolicy().minZoom;}
 function scheduleChunks(){clearTimeout(chunkTimer);chunkRun++;if(state.mode==='traffic'){for(const request of chunkRequests.values())request.controller.abort();if(hasServices())ensurePhysicalHeat().catch(()=>{});return;}if(!hasServices()){for(const request of chunkRequests.values())request.controller.abort();return;}if(busesOnly()||state.mode!=='italy'&&!usesHubConnections(state))loadCompleteNetwork().catch(()=>{});if(state.mode==='italy')loadItalyNetwork().catch(()=>{});if(map){const view=map.getBounds().pad(.15);for(const request of chunkRequests.values())if(map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!boundsIntersect(request.chunk.bounds,view))request.controller.abort();}chunkTimer=setTimeout(loadVisibleChunks,100);}
 async function loadItalyNetwork(){
   if(!manifest?.files?.italyNetwork)return;
@@ -561,7 +577,7 @@ async function loadVisibleChunks(){
   if(state.mode==='traffic'||!manifest||map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!hasServices())return;
   await ensureManifest();await ensureOverviewMetadata();await ensureThroughServices();
   if(state.mode==='traffic'||map.getZoom()<detailZoomThreshold()||usesHubConnections(state)||!hasServices())return;
-  const run=++chunkRun,view=map.getBounds().pad(.15),queue=(manifest.chunks||[]).filter(chunk=>(!busesOnly()||chunk.serviceMode==='temporary_replacement_bus')&&boundsIntersect(chunk.bounds,view)&&!chunkLoaded.has(chunk.id));
+  const run=++chunkRun,view=map.getBounds().pad(.15),candidates=(manifest.chunks||[]).filter(chunk=>(!busesOnly()||chunk.serviceMode==='temporary_replacement_bus')&&boundsIntersect(chunk.bounds,view)),queue=boundedDetailQueue(candidates,chunkLoaded,localDetailPolicy());
   if(!queue.length)return;
   if(!manifest.provenance?.spatialProjection)ensureStations().catch(()=>{});let failed=false;
   async function worker(){while(queue.length){if(run!==chunkRun)return;const chunk=queue.shift(),request={chunk,controller:new AbortController()};chunkLoaded.add(chunk.id);chunkRequests.set(chunk.id,request);try{const url=dataURL(chunk.url),data=await json(url,{signal:request.controller.signal});if(request.controller.signal.aborted)throw new DOMException('Data request cancelled','AbortError');if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||data);cache.delete(url);paintChunks();}catch(error){if(chunkRequests.get(chunk.id)===request)chunkLoaded.delete(chunk.id);if(error.name!=='AbortError'){failed=true;console.warn('Euro Rail chunk unavailable:',chunk.id);}}finally{if(chunkRequests.get(chunk.id)===request)chunkRequests.delete(chunk.id);}}}
@@ -645,22 +661,22 @@ function renderStationMarkers(){
   }
 }
 function stationReference(s){return{id:'station:'+s.id,_stationIds:stationMemberIds(s),a:s.id,b:s.id,source:s.source};}
-async function ensureStationServices(s){
+async function ensureStationServices(s,{signal}={}){
   const ref=stationReference(s);if(edgePublicNumbers.has(ref.id))return;
-  if(publicNumberRequests.has(ref.id))return publicNumberRequests.get(ref.id);
-  const promise=(async()=>{
+  return sharedPublicNumberRequest(ref.id,signal,async()=>{
     await ensureManifest();await ensureStations();const ids=new Set(stationMemberIds(s)),index=await json(dataURL(manifest.files.journeyLookup)),files=indexedJourneyFiles(index,ids,ids);
-    const journeys=await dataLoader.findStationJourneys(files.map(file=>dataURL(file.url)),ids);
+    const journeys=await dataLoader.findStationJourneys(files.map(file=>dataURL(file.url)),ids,{signal});
     edgePublicNumbers.set(ref.id,{journeys});stationErrors.delete(s.id);while(edgePublicNumbers.size>16)edgePublicNumbers.delete(edgePublicNumbers.keys().next().value);
-  })().finally(()=>publicNumberRequests.delete(ref.id));publicNumberRequests.set(ref.id,promise);return promise;
+  });
 }
 function pickStation(s,{inspect=false,center=false,restore=false}={}){
   s=resolvedStation(s.id)||s;
   if(!stationInScope(s,state))return;
   if(state.mode==='traffic')setMode('frequency');
-  detailSequence++;selectedStation=null;clearStationFocus();trainInspector.reset();clearTrainFocus(false);state.station='';document.body.classList.remove('station-inspector-open');
+  cancelInspectorLookup();detailSequence++;selectedStation=null;clearStationFocus();trainInspector.reset();clearTrainFocus(false);state.station='';document.body.classList.remove('station-inspector-open');
   if(s.memberStationCount)return pickHubStation(s);
   if(state.mode==='leg'&&!inspect&&!center){setStationField(state.from?'to':'from',s);return;}
+  const signal=beginInspectorLookup();
   selected=null;legResult=null;selectedStation=s;stationErrors.delete(s.id);state.edge='';state.station=s.id;document.body.classList.add('station-inspector-open');showInspector();
   const phone=matchMedia(MOBILE_LAYOUT).matches;
   if(validMapLocation(s.lon,s.lat)&&(center||phone&&!restore)){
@@ -668,7 +684,7 @@ function pickStation(s,{inspect=false,center=false,restore=false}={}){
   }
   renderStationSelected();$('inspector').scrollTop=0;
   renderHubs();renderer.schedule();saveURL();const ticket=detailSequence;
-  ensureStationServices(s).then(()=>{if(ticket===detailSequence&&selectedStation?.id===s.id)renderStationSelected();}).catch(()=>{stationErrors.add(s.id);if(ticket===detailSequence&&selectedStation?.id===s.id)renderStationSelected();});
+  ensureStationServices(s,{signal}).then(()=>{if(ticket===detailSequence&&selectedStation?.id===s.id)renderStationSelected();}).catch(error=>{if(error.name==='AbortError')return;stationErrors.add(s.id);if(ticket===detailSequence&&selectedStation?.id===s.id)renderStationSelected();});
   status('Selected '+s.name);
 }
 function renderStationSelected(){
@@ -691,17 +707,16 @@ function renderStationSelected(){
   trainInspector.render(ref,stationErrors.has(s.id));bindChart();
 }
 function showInspector(){closeOtherContextPanels();if(mobileSheets?.mobile)setControlsOpen(false);$('inspector').hidden=false;$('inspector').scrollTop=0;$('inspectorScroll').scrollTop=0;if(mobileSheets?.mobile)mobileSheets.expand();}
-function closeInspector(){selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');trainInspector.reset();clearTrainFocus(true);detailSequence++;selected=null;legResult=null;journeyHighlights.clear();state.edge='';$('inspector').hidden=true;renderer?.schedule();saveURL();}
+function closeInspector(){cancelInspectorLookup();selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');trainInspector.reset();clearTrainFocus(true);detailSequence++;selected=null;legResult=null;journeyHighlights.clear();state.edge='';$('inspector').hidden=true;renderer?.schedule();saveURL();}
 function policyStatuses(rows,field){const values=new Set();for(const row of rows){const raw=row?.[field];if(typeof raw==='string')values.add(raw);else if(raw&&typeof raw==='object')for(const [key,count]of Object.entries(raw))if(Number(count)>0)values.add(key);}return[...values].join(' · ').replaceAll('_',' ');}
-async function ensureEdgePublicNumbers(edge){
+async function ensureEdgePublicNumbers(edge,{signal}={}){
   if(edgePublicNumbers.has(edge.id))return;
-  if(publicNumberRequests.has(edge.id))return publicNumberRequests.get(edge.id);
-  const pending=(async()=>{
+  return sharedPublicNumberRequest(edge.id,signal,async()=>{
     await ensureManifest();if(!manifest.files.journeyLookup)return;
     if(edge._cityConnection){
       await ensureStations();const ids=new Set(edge._stationIds),wanted=new Set((edge._directionEdges||[edge]).flatMap(row=>(row.journeyIds||[]).map(id=>JSON.stringify([row.source,row.snapshot,id,row.primary!==false]))));
       const index=await json(dataURL(manifest.files.journeyLookup)),choices=indexedJourneyFiles(index,ids,ids);
-      const rows=await dataLoader.findStationJourneys(choices.map(choice=>dataURL(choice.url)),ids);
+      const rows=await dataLoader.findStationJourneys(choices.map(choice=>dataURL(choice.url)),ids,{signal});
       const journeys=rows.filter(journey=>wanted.has(JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false])));
       edgeServiceErrors.delete(edge.id);edgePublicNumbers.set(edge.id,{journeys,all:[],included:[],conditional:[]});return;
     }
@@ -709,16 +724,16 @@ async function ensureEdgePublicNumbers(edge){
     if(isHub)await ensureStations();
     const members=id=>isHub?[...stationMap.values()].filter(station=>station.hubId===id).map(station=>station.id):[id];
     const index=await json(dataURL(manifest.files.journeyLookup)),choices=indexedJourneyFiles(index,new Set(directions.flatMap(e=>members(e.a))),new Set(directions.flatMap(e=>members(e.b))));
-    const journeys=choices.length?await dataLoader.findEdgeJourneys(choices.map(choice=>dataURL(choice.url)),directions):[];
+    const journeys=choices.length?await dataLoader.findEdgeJourneys(choices.map(choice=>dataURL(choice.url)),directions,{signal}):[];
     await ensureStations();edgeServiceErrors.delete(edge.id);
     edgePublicNumbers.set(edge.id,{journeys,all:journeyPublicTrainLines(journeys,edge),
       included:journeyPublicTrainLines(journeys,edge,{fields:['eurailDaily','reviewedEurailDaily']}),
       conditional:journeyPublicTrainLines(journeys,edge,{fields:['conditionalDaily']})});
     while(edgePublicNumbers.size>16)edgePublicNumbers.delete(edgePublicNumbers.keys().next().value);
-  })().finally(()=>publicNumberRequests.delete(edge.id));publicNumberRequests.set(edge.id,pending);return pending;
+  });
 }
 async function detailsFor(edge){if(edge._cityConnection)return null;await ensureManifest();if(edge._directionEdges){const details=await Promise.all(edge._directionEdges.map(detailsFor));const grouped=new Map();for(let i=0;i<details.length;i++){for(const line of details[i]?.lines||[]){const key=JSON.stringify([line.label,line.operator,line.source||edge.source,line.serviceMode||'rail']);if(!grouped.has(key)){const row={...line,source:line.source||edge.source,publicTrains:[],sleepServices:[]};for(const f of ['daily','eurailDaily','boardableDaily','eurailBoardableDaily','conditionalDaily','conditionalBoardableDaily','reviewedEurailDaily','reviewedEurailBoardableDaily','reviewedConditionalDaily','reviewedConditionalBoardableDaily'])row[f]=Array(7).fill(0);for(const f of ['weekly','eurailWeekly','boardableWeekly','eurailBoardableWeekly','conditionalWeekly','conditionalBoardableWeekly','reviewedEurailWeekly','reviewedEurailBoardableWeekly','reviewedConditionalWeekly','reviewedConditionalBoardableWeekly'])row[f]=0;grouped.set(key,row);}const row=grouped.get(key);for(const f of ['daily','eurailDaily','boardableDaily','eurailBoardableDaily','conditionalDaily','conditionalBoardableDaily','reviewedEurailDaily','reviewedEurailBoardableDaily','reviewedConditionalDaily','reviewedConditionalBoardableDaily'])for(let d=0;d<7;d++)row[f][d]+=Number(line[f]?.[d])||0;for(const f of ['weekly','eurailWeekly','boardableWeekly','eurailBoardableWeekly','conditionalWeekly','conditionalBoardableWeekly','reviewedEurailWeekly','reviewedEurailBoardableWeekly','reviewedConditionalWeekly','reviewedConditionalBoardableWeekly'])row[f]+=Number(line[f])||0;row.publicTrains.push(...(line.publicTrains||[]));row.sleepServices=mergeSleepServices(row.sleepServices,line.sleepServices);}}const result={lines:[...grouped.values()],otherLines:details.reduce((sum,row)=>sum+(Number(row?.otherLines)||0),0),reviewedRuleIds:[...new Set(details.flatMap(row=>row?.reviewedRuleIds||[]))],reservation:policyStatuses(details,'reservation'),supplement:policyStatuses(details,'supplement'),directions:edge._directionEdges.map((e,i)=>({from:e.a,to:e.b,count:edgeCount(e,state,dates),calledFromStation:details[i]?.calledFromStation||e.calledFromStation,calledToStation:details[i]?.calledToStation||e.calledToStation}))};detailData.set(edge.id,result);return result;}if(detailData.has(edge.id))return detailData.get(edge.id);const chunk=edge.detailChunk;if(!chunk)return null;let path=typeof chunk==='string'?chunk:chunk.url;if(manifest.detailChunks&&typeof chunk==='string'){const found=manifest.detailChunks.find(c=>c.id===chunk);if(found)path=found.url;}const data=await json(dataURL(path));const rows=data.legs||data.edges||data.details||data;if(Array.isArray(rows)){for(const r of rows)if(r.id)detailData.set(r.id,r);}else if(rows&&typeof rows==='object'){for(const[id,row]of Object.entries(rows))detailData.set(id,{id,...row});}return detailData.get(edge.id)||null;}
-async function pickEdge(edge,animate=true){if(isPhysicalSection(edge))return pickTrafficSection(edge,animate);selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');trainInspector.reset();clearTrainFocus(false);const selection=++detailSequence;if(manifest.files.throughServices){try{await ensureThroughServices();}catch{toast('Connection availability could not load. Please retry.');return;}}if(edge?._displayOnly){status('Loading this connection’s stops and services.');try{edge=await hydrateDisplayEdge(edge);}catch{toast('Connection details could not load. Please retry.');return;}}if(selection!==detailSequence)return;edge=attachPassPolicy(edge);if(!qualifiesEdge(edge,state,dates,stationMap))return;selected=edge;legResult=null;journeyHighlights.clear();state.edge=edge.id;showInspector();renderSelected();renderer.schedule();saveURL();if(animate&&map.getZoom()<6){const point=stationMapPoint(station(edge.a))||edge.coords?.find(p=>validMapLocation(p[0],p[1]))?.slice().reverse();if(point)map.panTo(point,{animate:true});}const ticket=++detailSequence;ensureEdgePublicNumbers(edge).then(()=>{if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();}).catch(()=>{edgeServiceErrors.add(edge.id);if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();});try{await detailsFor(edge);if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();}catch(error){if(ticket===detailSequence)$('inspectorContent').insertAdjacentHTML('beforeend','<p class="detail-note">Detailed service mix could not load. The route and recorded frequency remain available.</p>');}}
+async function pickEdge(edge,animate=true){if(isPhysicalSection(edge))return pickTrafficSection(edge,animate);const signal=beginInspectorLookup();selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');trainInspector.reset();clearTrainFocus(false);const selection=++detailSequence;if(manifest.files.throughServices){try{await ensureThroughServices();}catch{toast('Connection availability could not load. Please retry.');return;}}if(edge?._displayOnly){status('Loading this connection’s stops and services.');try{edge=await hydrateDisplayEdge(edge);}catch{toast('Connection details could not load. Please retry.');return;}}if(selection!==detailSequence)return;edge=attachPassPolicy(edge);if(!qualifiesEdge(edge,state,dates,stationMap))return;selected=edge;legResult=null;journeyHighlights.clear();state.edge=edge.id;showInspector();renderSelected();renderer.schedule();saveURL();if(animate&&map.getZoom()<6){const point=stationMapPoint(station(edge.a))||edge.coords?.find(p=>validMapLocation(p[0],p[1]))?.slice().reverse();if(point)map.panTo(point,{animate:true});}const ticket=++detailSequence;ensureEdgePublicNumbers(edge,{signal}).then(()=>{if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();}).catch(error=>{if(error.name==='AbortError')return;edgeServiceErrors.add(edge.id);if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();});try{await detailsFor(edge);if(ticket===detailSequence&&selected?.id===edge.id)renderSelected();}catch(error){if(ticket===detailSequence)$('inspectorContent').insertAdjacentHTML('beforeend','<p class="detail-note">Detailed service mix could not load. The route and recorded frequency remain available.</p>');}}
 function weeklyChart(row,pass=effectivePass(state),override=null){const counts=row;row=edgeMetrics(row,state,dates);const boarding=usesHubConnections(state),base=boarding?'eurailBoardableDaily':'eurailDaily',reviewed=boarding?'reviewedEurailBoardableDaily':'reviewedEurailDaily',daily=override||(chargeFiltered(state)?dates.map((_,i)=>edgeCount(counts,{...state,day:'day-'+i},dates)):pass?dates.map((_,i)=>(Number(row[base]?.[i])||0)+(Number(row[reviewed]?.[i])||0)):(row.daily||[])),max=Math.max(1,...daily);return`<div class="weekly-chart" aria-label="Scheduled services by service date">${dates.map((date,i)=>`<button data-chart-day="day-${i}" class="${selectedDays(state.day,dates).includes(i)?'active':''}" style="height:${Math.max(3,((daily[i]||0)/max)*42)}px" title="${esc(date)}: ${fmt(daily[i]||0)} services" aria-label="Show ${esc(date)}, ${fmt(daily[i]||0)} services"><span>${['S','M','T','W','T','F','S'][i]}</span></button>`).join('')}</div>`;}
 function bindChart(){document.querySelectorAll('[data-chart-day]').forEach(button=>button.onclick=()=>setDay(button.dataset.chartDay));}
 function servicePublicNumbers(line,review){

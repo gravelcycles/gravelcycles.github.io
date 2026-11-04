@@ -11,10 +11,12 @@ export function decodeThroughServices(document,dates){
   for(const index of Object.values(document.rows))if(!Number.isSafeInteger(index)||index<0||index>=profiles.length)throw new Error('Invalid through-service profile reference');
   const cache=new Map();
   return{size:Object.keys(document.rows).length,get(identity){
-    if(cache.has(identity))return cache.get(identity);
-    const index=document.rows[identity];if(index===undefined)return undefined;const encoded=profiles[index];
+    const index=document.rows[identity];if(index===undefined)return undefined;
+    // Profiles are shared immutable counter vectors. Materializing the same
+    // profile per edge wastes continent-scale objects without adding evidence.
+    if(cache.has(index))return cache.get(index);const encoded=profiles[index];
     const row=Object.fromEntries(fields.map((field,i)=>[field,values[encoded[i]]]));
     row.boardableDaily=row.daily;row.eurailBoardableDaily=row.eurailDaily;row.reviewedEurailBoardableDaily=row.reviewedEurailDaily;
-    cache.set(identity,row);return row;
+    cache.set(index,row);return row;
   }};
 }

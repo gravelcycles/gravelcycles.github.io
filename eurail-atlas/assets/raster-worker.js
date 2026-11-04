@@ -1,7 +1,7 @@
 // Native Canvas paint and rasterization may take hundreds of milliseconds on
 // software graphics. Keeping those operations here leaves input/rAF responsive.
-import{quantizedRailPrimitives}from'./rail-primitives.js?v=ba3c88c61a4e74aa';
-import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=ba3c88c61a4e74aa';
+import{quantizedRailPrimitives}from'./rail-primitives.js?v=3b98ad05f89f72bf';
+import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=3b98ad05f89f72bf';
 let canvas,context,paths=[],epoch=null,geometry=null,routeCount=0,basePixels=null,baseFrequencies=null,baseKey=null,baselineGroups=null,scratch,scratchContext;
 const styleGroups=new Map(),groupPaths=new Map(),bitmapCache=new RasterBitmapCache();
 function pathFor(world){const path=new Path2D();path.moveTo(world[0],world[1]);for(let i=2;i<world.length;i+=2)path.lineTo(world[i],world[i+1]);return path;}

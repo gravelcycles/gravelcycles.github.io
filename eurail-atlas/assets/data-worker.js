@@ -1,7 +1,8 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=ba3c88c61a4e74aa';
-import{decodeDisplay}from'./display-codec.js?v=ba3c88c61a4e74aa';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=ba3c88c61a4e74aa';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=ba3c88c61a4e74aa';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=3b98ad05f89f72bf';
+import{decodeDisplay}from'./display-codec.js?v=3b98ad05f89f72bf';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=3b98ad05f89f72bf';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=3b98ad05f89f72bf';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=3b98ad05f89f72bf';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -93,22 +94,47 @@ export function readJSON(url,{fresh=false,signal}={}){
   });
 }
 async function journeyPart(url,signal){
-  if(journeyParts.has(url)){const cached=journeyParts.get(url);journeyParts.delete(url);journeyParts.set(url,cached);return cached.promise;}
-  const cached={cost:0,promise:null};
-  cached.promise=readJSON(url,{signal}).then(data=>{
+  if(signal?.aborted)throw abortError();
+  if(journeyParts.has(url)){const cached=journeyParts.get(url);journeyParts.delete(url);journeyParts.set(url,cached);return shareJourneyPart(url,cached,signal);}
+  // A station/edge change may cancel one lookup while another is reading the
+  // same country part. Give the shared download its own lifetime; one caller
+  // must not abort another caller's request or poison its cached promise.
+  const cached={cost:0,promise:null,controller:new AbortController(),readers:0,settled:false};
+  cached.promise=readJSON(url,{signal:cached.controller.signal}).then(data=>{
+    cached.settled=true;
     // A conservative estimate covers text plus parsed arrays/objects. Large
     // parts still answer this lookup but are not retained after it completes.
     cached.cost=(decodedSizes.get(data)||0)*3;
     if(journeyParts.get(url)===cached){journeyCacheBytes+=cached.cost;trimJourneyCache();}
     return data;
-  }).catch(error=>{removeJourneyPart(url,cached);throw error;});
+  }).catch(error=>{cached.settled=true;removeJourneyPart(url,cached);throw error;});
   journeyParts.set(url,cached);
   // Two decoded country parts are enough for an ordinary cross-border lookup.
   // Other files can be fetched again; visited regions must not accumulate forever.
-  trimJourneyCache();return cached.promise;
+  trimJourneyCache();return shareJourneyPart(url,cached,signal);
+}
+function shareJourneyPart(url,cached,signal){
+  return new Promise((resolve,reject)=>{
+    let finished=false;cached.readers++;
+    const finish=(settle,value)=>{
+      if(finished)return;finished=true;signal?.removeEventListener('abort',cancel);cached.readers--;
+      if(!cached.readers&&!cached.settled){removeJourneyPart(url,cached);cached.controller.abort();}
+      settle(value);
+    };
+    const cancel=()=>finish(reject,abortError());
+    signal?.addEventListener('abort',cancel,{once:true});
+    cached.promise.then(value=>finish(resolve,value),error=>finish(reject,error));
+    if(signal?.aborted)cancel();
+  });
 }
 function removeJourneyPart(url,expected){const found=journeyParts.get(url);if(found&&(!expected||found===expected)){journeyParts.delete(url);journeyCacheBytes-=found.cost;}}
-function trimJourneyCache(){while(journeyParts.size>2||journeyCacheBytes>JOURNEY_CACHE_BYTES)removeJourneyPart(journeyParts.keys().next().value);}
+function trimJourneyCache(){
+  // Pending parts occupy the bounded fetch queue, not the decoded cache. Do
+  // not evict them just because a cross-border lookup needs >2 files: that
+  // would start duplicate requests while the original files are still loading.
+  const completed=[...journeyParts].filter(([,part])=>part.settled);
+  while(completed.length>2||journeyCacheBytes>JOURNEY_CACHE_BYTES){const oldest=completed.shift();if(!oldest)break;removeJourneyPart(oldest[0],oldest[1]);}
+}
 export async function queryJourneys(urls,from,to,{signal}={}){
   const parts=await Promise.all(urls.map(url=>journeyPart(url,signal)));
   if(signal?.aborted)throw abortError();
@@ -149,7 +175,7 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
     try{
       if(message.op==='load'||message.op==='decode'){
         const result=prepareLoadedData(message.op==='decode'?await decodeJSONBytes(message.bytes):await readJSON(message.url,{fresh:message.fresh,signal:controller.signal}));
-        if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result:result.data},result.transfer);
+        if(!controller.signal.aborted){const transport=packPhysicalTransfer(result.data)||result;globalThis.postMessage({id:message.id,result:transport.data},transport.transfer);}
       }else if(message.op==='journeys'){
         const result=await queryJourneys(message.urls,message.from,message.to,{signal:controller.signal});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});

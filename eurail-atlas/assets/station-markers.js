@@ -1,7 +1,7 @@
-import{validMapLocation,isItaly,worldPoint}from'./atlas-core.js?v=ba3c88c61a4e74aa';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=ba3c88c61a4e74aa';
-import{stationInScope}from'./project-scope.js?v=ba3c88c61a4e74aa';
-import{countryMatches}from'./explorer-core.js?v=ba3c88c61a4e74aa';
+import{validMapLocation,isItaly,worldPoint}from'./atlas-core.js?v=3b98ad05f89f72bf';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=3b98ad05f89f72bf';
+import{stationInScope}from'./project-scope.js?v=3b98ad05f89f72bf';
+import{countryMatches}from'./explorer-core.js?v=3b98ad05f89f72bf';
 
 export const STATION_ZOOM=9;
 function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}
@@ -44,7 +44,7 @@ export class StationMarkers{
     // rectangle. Keep it out of DOM hit testing and forward only actual stop
     // hits into Leaflet's existing Canvas event dispatcher. This also covers
     // connection endpoints and train stops added to this renderer elsewhere.
-    const container=map.getContainer(),eligible=event=>!map._animatingZoom&&!map.dragging?.moving?.()&&!event.target?.closest?.('.leaflet-control,.leaflet-popup,a,button,input,select,textarea');
+    const container=map.getContainer(),eligible=event=>!map._animatingZoom&&!map._atlasWheelZooming&&!map.dragging?.moving?.()&&!event.target?.closest?.('.leaflet-control,.leaflet-popup,a,button,input,select,textarea');
     let lastTouch=null,pointerPinch=false,touchPinch=false;const touchPointers=new Set();
     const rememberTouch=(point,target)=>{lastTouch={clientX:point.clientX,clientY:point.clientY,target,at:performance.now()};};
     const pointer=event=>{
@@ -92,14 +92,32 @@ export class StationMarkers{
     container.addEventListener('mousemove',move,true);container.addEventListener('mouseleave',leave,true);
     map.on('unload',()=>{for(const type of['click','dblclick','contextmenu'])container.removeEventListener(type,click,true);for(const type of['pointerdown','pointerup','pointercancel'])container.removeEventListener(type,pointer,true);for(const type of['touchstart','touchend','touchcancel'])container.removeEventListener(type,touch,true);container.removeEventListener('mousemove',move,true);container.removeEventListener('mouseleave',leave,true);});
   }
-  render(){
-    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected,this.map.getSize(),focus);
-    const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;this.layer.clearLayers();this.selectedHalo=null;this.selectedMarker=null;
-    for(const station of rows){const active=station.id===selected?.id,dimmed=!active&&focus!==null&&!stationMemberIds(station).some(id=>focus.has(id));
-      if(active)this.selectedHalo=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:9,weight:5,color:'#fbfaf6',fill:false,interactive:false}).addTo(this.layer);
-      const marker=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':dimmed?'#a6b0a9':'#3d615d',opacity:dimmed?.6:1,fillColor:dimmed?'#d3d9d3':'#fbfaf6',fillOpacity:dimmed?.7:1,interactive:true,bubblingMouseEvents:false}).addTo(this.layer).on('click',()=>this.onPick(station));
-      if(active)this.selectedMarker=marker;
+  candidates(bounds){
+    const stations=this.getStations();
+    if(this.stationReference!==stations||this.stationCount!==stations.length){
+      this.stationReference=stations;this.stationCount=stations.length;
+      this.longitudeStations=stations.filter(s=>validMapLocation(s.lon,s.lat)).sort((a,b)=>a.lon-b.lon);
     }
+    const rows=this.longitudeStations,west=bounds.getWest(),east=bounds.getEast(),south=bounds.getSouth(),north=bounds.getNorth();
+    let low=0,high=rows.length;while(low<high){const mid=(low+high)>>>1;if(rows[mid].lon<west)low=mid+1;else high=mid;}
+    const result=[];for(let i=low;i<rows.length&&rows[i].lon<=east;i++)if(rows[i].lat>=south&&rows[i].lat<=north)result.push(rows[i]);return result;
+  }
+  render(){
+    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.candidates(bounds),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected,this.map.getSize(),focus);
+    const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;
+    if(!this.nodes)this.nodes=new Map();
+    const ids=new Set(rows.map(s=>s.id));for(const[id,node]of this.nodes)if(!ids.has(id)){this.layer.removeLayer(node.marker);this.nodes.delete(id);}
+    if(this.haloStation!==selected?.id){if(this.selectedHalo)this.layer.removeLayer(this.selectedHalo);this.selectedHalo=null;this.haloStation=selected?.id;}
+    this.selectedMarker=null;
+    for(const station of rows){const active=station.id===selected?.id,dimmed=!active&&focus!==null&&!stationMemberIds(station).some(id=>focus.has(id));
+      if(active&&!this.selectedHalo)this.selectedHalo=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:9,weight:5,color:'#fbfaf6',fill:false,interactive:false}).addTo(this.layer);
+      const signature=active?'selected':dimmed?'dimmed':'ordinary',style={radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':dimmed?'#a6b0a9':'#3d615d',opacity:dimmed?.6:1,fillColor:dimmed?'#d3d9d3':'#fbfaf6',fillOpacity:dimmed?.7:1};
+      let node=this.nodes.get(station.id);
+      if(!node){node={station,signature,marker:L.circleMarker([station.lat,station.lon],{renderer:this.renderer,...style,interactive:true,bubblingMouseEvents:false}).addTo(this.layer)};node.marker.on('click',()=>this.onPick(node.station));this.nodes.set(station.id,node);}
+      else{if(node.station.lat!==station.lat||node.station.lon!==station.lon)node.marker.setLatLng([station.lat,station.lon]);if(node.signature!==signature)node.marker.setStyle(style);node.station=station;node.signature=signature;}
+      node.marker.bringToFront();if(active)this.selectedMarker=node.marker;
+    }
+    this.bringSelectedToFront();
     this.map.getContainer().dataset.stationMarkers=String(rows.length);
   }
   bringSelectedToFront(){this.selectedHalo?.bringToFront();this.selectedMarker?.bringToFront();}

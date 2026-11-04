@@ -1,16 +1,42 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=ba3c88c61a4e74aa';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=ba3c88c61a4e74aa';
-import{stationInScope}from'./project-scope.js?v=ba3c88c61a4e74aa';
-import{countryMatches}from'./explorer-core.js?v=ba3c88c61a4e74aa';
+import{normalize,validMapLocation}from'./atlas-core.js?v=3b98ad05f89f72bf';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=3b98ad05f89f72bf';
+import{stationInScope}from'./project-scope.js?v=3b98ad05f89f72bf';
+import{countryMatches}from'./explorer-core.js?v=3b98ad05f89f72bf';
 
+const searchNameCache=new WeakMap();
+function searchNames(station){
+  let cached=searchNameCache.get(station);
+  if(!cached||cached.name!==station.name||cached.aliases!==station.aliases||cached.foldedName!==station._name){
+    cached={name:station.name,aliases:station.aliases,foldedName:station._name,names:[station._name||normalize(station.name),...(station.aliases||[]).map(normalize)]};searchNameCache.set(station,cached);
+  }
+  return cached.names;
+}
+function insertBest(best,row,limit,compare){
+  let low=0,high=best.length;
+  while(low<high){const middle=(low+high)>>>1;if(compare(row,best[middle])<0)high=middle;else low=middle+1;}
+  if(low<limit){best.splice(low,0,row);if(best.length>limit)best.pop();}
+}
 export function stationOptions(stations,query,state={},limit=10){
-  const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
-  return stations.filter(s=>stationInScope(s,state)&&(state.mode!=='countries'||!state.country||countryMatches(s.country,state.country))&&terms.every(term=>stationSearchText(s).includes(term))).map(s=>({s,rank:[s.name,...s.aliases||[]].some(name=>normalize(name)===q)?0:[s.name,...s.aliases||[]].some(name=>normalize(name).startsWith(q))?1:2,selected:stationSourceSelected(s,state)})).sort((a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id)).slice(0,limit).map(row=>row.s);
+  const q=normalize(query),terms=q.split(' '),best=[];if(q.length<2||limit<1)return[];
+  const compare=(a,b)=>a.rank-b.rank||Number(b.selected)-Number(a.selected)||(b.s.weekly||0)-(a.s.weekly||0)||(a.s.name||'').localeCompare(b.s.name||'')||a.s.id.localeCompare(b.s.id);
+  for(const s of stations){
+    if(!stationInScope(s,state)||state.mode==='countries'&&state.country&&!countryMatches(s.country,state.country))continue;
+    const text=stationSearchText(s);if(!terms.every(term=>text.includes(term)))continue;
+    const names=searchNames(s),rank=names.includes(q)?0:names.some(name=>name.startsWith(q))?1:2;
+    insertBest(best,{s,rank,selected:stationSourceSelected(s,state)},limit,compare);
+  }
+  return best.map(row=>row.s);
 }
 export function nearbyStationRecords(station,stations,limit=5){
   if(!validMapLocation(station.lon,station.lat))return[];
-  const members=new Set(stationMemberIds(station));
-  return stations.filter(s=>s.id!==station.id&&!stationMemberIds(s).some(id=>members.has(id))&&validMapLocation(s.lon,s.lat)).map(s=>({s,distance:111320*Math.hypot((s.lon-station.lon)*Math.cos(station.lat*Math.PI/180),s.lat-station.lat)})).filter(row=>row.distance<=150).sort((a,b)=>a.distance-b.distance||(a.s.name||'').localeCompare(b.s.name||'')).slice(0,limit).map(row=>row.s);
+  const members=new Set(stationMemberIds(station)),best=[],latitudeLimit=150/111320,longitudeScale=Math.cos(station.lat*Math.PI/180),compare=(a,b)=>a.distance-b.distance||(a.s.name||'').localeCompare(b.s.name||'');
+  for(const s of stations){
+    if(s.id===station.id||!validMapLocation(s.lon,s.lat)||Math.abs(s.lat-station.lat)>latitudeLimit||Math.abs((s.lon-station.lon)*longitudeScale)>latitudeLimit)continue;
+    if(stationMemberIds(s).some(id=>members.has(id)))continue;
+    const distance=111320*Math.hypot((s.lon-station.lon)*longitudeScale,s.lat-station.lat);
+    if(distance<=150)insertBest(best,{s,distance},limit,compare);
+  }
+  return best.map(row=>row.s);
 }
 
 export function setupStationSearch({getStations,getState,ensureStations,onPick,sourceName,onOpen}){

@@ -1,17 +1,37 @@
 // Index individual visible segments, rather than a long route's entire box.
 // Segment-cell traversal is linear in the screen distance, not its box area.
-import{segmentDistanceSquared}from'./atlas-core.js?v=ba3c88c61a4e74aa';
+import{segmentDistanceSquared}from'./atlas-core.js?v=3b98ad05f89f72bf';
 
 // Building a vertex grid on every arriving geometry chunk creates millions of
 // allocations. Bboxes are already prepared in the data worker. Hover first
 // rejects distant routes, then checks the full vertices of nearby candidates.
 export class RouteIndex{
-  constructor(edges){this.edges=edges;}
+  constructor(edges){
+    this.edges=edges;if(edges.length<500)return;
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for(const edge of edges){const b=edge._bbox;minX=Math.min(minX,b[0]);minY=Math.min(minY,b[1]);maxX=Math.max(maxX,b[2]);maxY=Math.max(maxY,b[3]);}
+    const size=Math.max(maxX-minX,maxY-minY)/Math.min(256,Math.max(1,Math.ceil(Math.sqrt(edges.length/12))));
+    if(!(size>0&&Number.isFinite(size)))return;
+    this.grid={size,minX,minY,cells:new Map(),wide:[]};
+    for(let index=0;index<edges.length;index++){
+      const b=edges[index]._bbox,x0=Math.floor((b[0]-minX)/size),x1=Math.floor((b[2]-minX)/size),y0=Math.floor((b[1]-minY)/size),y1=Math.floor((b[3]-minY)/size);
+      // Long corridors remain in one overflow list; never index every vertex
+      // or allocate an unbounded grid for a continent-spanning route box.
+      if((x1-x0+1)*(y1-y0+1)>64){this.grid.wide.push(index);continue;}
+      for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const key=x+','+y;let rows=this.grid.cells.get(key);if(!rows)this.grid.cells.set(key,rows=[]);rows.push(index);}
+    }
+  }
+  candidates(wx,wy,padding){
+    if(!this.grid)return this.edges;
+    const{size,minX,minY,cells,wide}=this.grid,indices=new Set(wide);
+    for(let x=Math.floor((wx-padding-minX)/size),endX=Math.floor((wx+padding-minX)/size);x<=endX;x++)for(let y=Math.floor((wy-padding-minY)/size),endY=Math.floor((wy+padding-minY)/size);y<=endY;y++)for(const index of cells.get(x+','+y)||[])indices.add(index);
+    return [...indices].sort((a,b)=>a-b).map(index=>this.edges[index]);
+  }
   pick(x,y,view,radius=7.5,qualifies=()=>true,paintOrder=null){
     const wx=(x-view.width/2)/view.scale+view.centerX,wy=(y-view.height/2)/view.scale+view.centerY,padding=radius/view.scale;
     let winner=null,best=padding*padding,winnerPaint=null,winnerHit=false;
     const above=(a,b)=>a&&(!b||a.pass>b.pass||a.pass===b.pass&&(a.priority>b.priority||a.priority===b.priority&&a.order>b.order));
-    for(const edge of this.edges){
+    for(const edge of this.candidates(wx,wy,padding)){
       const b=edge._bbox;if(wx<b[0]-padding||wx>b[2]+padding||wy<b[1]-padding||wy>b[3]+padding||!qualifies(edge))continue;
       const p=edge._world;let distance=padding*padding;
       for(let i=2;i<p.length;i+=2){if(p[i]===p[i-2]&&p[i+1]===p[i-1])continue;distance=Math.min(distance,segmentDistanceSquared(wx,wy,p[i-2],p[i-1],p[i],p[i+1]));}

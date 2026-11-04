@@ -1,15 +1,30 @@
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=ba3c88c61a4e74aa';
-import{decodeJSONBytes}from'./data-codec.js?v=ba3c88c61a4e74aa';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=3b98ad05f89f72bf';
+import{decodeJSONBytes}from'./data-codec.js?v=3b98ad05f89f72bf';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=3b98ad05f89f72bf';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
+let loaderSequence=0;
+function transportWork(id,active){if(typeof globalThis.document?.dispatchEvent==='function'&&typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('atlasdatawork',{detail:{id,active}}));}
+// Display edges share metadata pages. Process a page once, even when a full
+// route requests many of its edges at the same time; failed pages remain retryable.
+export function createPageHydrator(load,process){
+  const pages=new Map();
+  return(url,context)=>{
+    if(!pages.has(url)){
+      const pending=Promise.resolve().then(()=>load(url)).then(data=>process(data,context,url)).catch(error=>{if(pages.get(url)===pending)pages.delete(url);throw error;});
+      pages.set(url,pending);
+    }
+    return pages.get(url);
+  };
+}
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=ba3c88c61a4e74aa',import.meta.url);
+      const url=new URL('./data-worker.js?v=3b98ad05f89f72bf',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
-    this.pending=new Map();this.sequence=0;this.started=false;this.worker=null;
+    this.pending=new Map();this.sequence=0;this.loaderId=++loaderSequence;this.started=false;this.worker=null;
   }
   start(){
     if(this.started)return;this.started=true;
@@ -17,9 +32,17 @@ export class AtlasDataLoader{
       this.worker=this.workerFactory();
       this.worker.onmessage=event=>{
         const response=event.data,job=this.pending.get(response?.id);if(!job)return;
-        this.pending.delete(response.id);job.cleanup();
-        if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';job.reject(error);}
-        else job.resolve(response.result);
+        const settle=(method,value)=>{if(this.pending.get(response.id)!==job)return;this.pending.delete(response.id);job.transportWorkEnd?.();job.cleanup();job[method](value);};
+        if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';settle('reject',error);}
+        else if(isPhysicalTransfer(response.result)){
+          // Receiving the buffers is cheap. Reconstruct the large object graph
+          // in bounded tasks, retaining cancellation until the final row exists.
+          if(job.transportController)return;
+          const workId=this.loaderId+':'+response.id;let active=true;transportWork(workId,true);
+          job.transportWorkEnd=()=>{if(active){active=false;transportWork(workId,false);}};
+          job.transportController=new AbortController();
+          unpackPhysicalTransfer(response.result,{signal:job.transportController.signal}).then(data=>settle('resolve',data),error=>settle('reject',error));
+        }else settle('resolve',response.result);
       };
       // Unsupported/blocked module workers retain the same functional loader.
       this.worker.onerror=event=>{event.preventDefault?.();this.failWorker();};
@@ -28,7 +51,7 @@ export class AtlasDataLoader{
   failWorker(){
     this.worker?.terminate();this.worker=null;
     const jobs=[...this.pending.values()];this.pending.clear();
-    for(const job of jobs){job.cleanup();this.fallback(job.message,job.signal).then(job.resolve,job.reject);}
+    for(const job of jobs){job.transportController?.abort();job.transportWorkEnd?.();job.cleanup();this.fallback(job.message,job.signal).then(job.resolve,job.reject);}
   }
   fallback(message,signal){
     if(signal?.aborted)return Promise.reject(aborted());
@@ -43,7 +66,7 @@ export class AtlasDataLoader{
     this.start();if(!this.worker)return this.fallback(message,signal);
     return new Promise((resolve,reject)=>{
       const id=++this.sequence;
-      const abort=()=>{if(!this.pending.delete(id))return;this.worker?.postMessage({op:'cancel',id});cleanup();reject(aborted());};
+      const abort=()=>{const job=this.pending.get(id);if(!job)return;this.pending.delete(id);job.transportController?.abort();job.transportWorkEnd?.();this.worker?.postMessage({op:'cancel',id});cleanup();reject(aborted());};
       const cleanup=()=>signal?.removeEventListener('abort',abort);
       this.pending.set(id,{message,signal,resolve,reject,cleanup});signal?.addEventListener('abort',abort,{once:true});
       try{this.worker.postMessage({...message,id});}catch{this.failWorker();}
