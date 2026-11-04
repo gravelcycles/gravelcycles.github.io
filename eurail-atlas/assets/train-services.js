@@ -1,13 +1,21 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=3c45b1968a85795d';
-import{mergeSleepServices}from'./sleep-service.js?v=3c45b1968a85795d';
-import{mapPairFocusId}from'./route-focus.js?v=3c45b1968a85795d';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=3c45b1968a85795d';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=0c0a84033e50767c';
+import{mergeSleepServices}from'./sleep-service.js?v=0c0a84033e50767c';
+import{mapPairFocusId}from'./route-focus.js?v=0c0a84033e50767c';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=0c0a84033e50767c';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
 // A public number identifies a run, not a route. Preserve source, provider,
 // direction, repeated calls and every intermediate station in route identity.
 export const routeIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,(journey.operator||'').trim()||['unknown-provider',journey.id],journey.agencyPrimary!==false,journey.serviceMode||'rail',(journey.stops||[]).map(callId)]);
+
+// A marketed line (R7, S1, Z7) is separate from a public train number. Keep
+// source wording without promoting it to route identity or another service.
+export function sourceServiceDesignations(journeys){
+  const text=value=>typeof value==='string'||typeof value==='number'?String(value).trim():'';
+  const labels=new Set(journeys.flatMap(journey=>(journey.publicTrains||[]).map(row=>text(row.label))).filter(Boolean));
+  return[...new Set(journeys.flatMap(journey=>[journey.line,journey.lineName]).map(text).filter(value=>value&&!labels.has(value)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+}
 
 function chargeMatches(journey,charge,match='any'){
   let reservation=journey.reservation,supplement=journey.supplement;
@@ -87,7 +95,7 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
     group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));
     group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);
   }
-  return[...groups.values()].map(group=>({...group,labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))})).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
+  return[...groups.values()].map(group=>({...group,lineDesignations:sourceServiceDesignations(group.journeys),labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))})).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
 }
 export function groupStationRoutes(journeys,stationIds,state,dates){return groupSegmentRoutes(journeys,{_stationIds:[...stationIds],_directionEdges:[]},state,dates);}
 

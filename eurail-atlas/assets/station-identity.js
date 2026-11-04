@@ -1,4 +1,4 @@
-import{normalize}from'./atlas-core.js?v=3c45b1968a85795d';
+import{normalize}from'./atlas-core.js?v=0c0a84033e50767c';
 
 // Canonical places are a display/lookup layer. Journey calls and rail geometry
 // continue to use the original source station IDs and boarding locations.
@@ -7,6 +7,19 @@ export function stationSources(station){return station?.sources?.length?[...new 
 export function stationSourceSelected(station,state={}){return !state.sources||stationSources(station).some(source=>state.sources.has(source));}
 export function stationSourceLabel(station,sourceName){return stationSources(station).map(sourceName).join(' · ');}
 export function stationSearchText(station){return station._search||[station._name||normalize(station.name),...(station.aliases||[]).map(normalize),normalize(station.country)].join(' ');}
+
+// Boarding modes come from explicit source evidence. Identical stop names can
+// still describe different places to board, especially a replacement bus.
+export function stationBoardingAreas(station){
+  const categories={rail:'Rail platforms',temporary_replacement_bus:'Replacement bus stops'},seen=new Set(),areas=[];
+  for(const area of station?.boardingAreas||[]){
+    const name=typeof area==='string'?area.trim():typeof area?.name==='string'?area.name.trim():'';
+    if(!name)continue;
+    const category=Object.hasOwn(categories,area?.serviceMode)?categories[area.serviceMode]:'',key=JSON.stringify([name,category]);
+    if(seen.has(key))continue;seen.add(key);areas.push({name,category});
+  }
+  return areas;
+}
 
 export class StationCatalog{
   constructor(){this.sourceStations=new Map();this.canonicalStations=new Map();this.memberStations=new Map();}
