@@ -69,10 +69,21 @@ export function setupCoverage(options){
   function paragraph(parent,text,className){parent.appendChild(node('p',className,text));}
   function section(parent,title,text){const area=node('section','coverage-section');area.appendChild(node('h3','',title));if(text)paragraph(area,text);parent.appendChild(area);return area;}
   function refreshViewport(){
+    // Historical observations belong in About and remain discoverable after
+    // panning away from their source country or hiding that source on the map.
     const warning=$('timetableObservationWarning');if(!warning)return;
-    const rows=historicalTimetableWarnings(hooks.getManifest?.(),hooks.getState?.(),hooks.getView?.()?.bounds),first=rows[0];
-    warning.hidden=!first;if(!first)return;
-    warning.textContent=first.label+(rows.length>1?' +'+(rows.length-1):'');warning.title=rows.map(row=>row.detail).join(' ');warning.setAttribute('aria-label',warning.textContent+'. '+first.detail+' Open coverage details.');warning.onclick=()=>open(first.country);
+    const manifest=hooks.getManifest?.(),state=hooks.getState?.(),rows=historicalTimetableWarnings(manifest,{},[-180,-90,180,90]);
+    const key=JSON.stringify(rows.map(row=>[row.id,row.label,row.detail,state?.sources instanceof Set&&!state.sources.has(row.id)]));
+    if(warning.dataset.observations===key)return;warning.dataset.observations=key;
+    warning.hidden=!rows.length;warning.replaceChildren();if(!rows.length)return;
+    warning.appendChild(node('h3','detail-heading','TIMETABLE OBSERVATIONS'));
+    for(const row of rows){
+      const area=node('section','timetable-observation'),button=node('button','timetable-observation-warning',row.label+' · source details ↗');
+      button.type='button';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','coverageDialog');button.onclick=()=>open(row.country);button.title=row.detail;
+      area.append(button,node('p','',row.detail));
+      if(state?.sources instanceof Set&&!state.sources.has(row.id))area.appendChild(node('small','','This source is currently hidden by map filters.'));
+      warning.appendChild(area);
+    }
   }
   function renderCountry(row){
     const body=$('coverageBody'),privateEdition=audience()==='private',summary=countryCoverageSummary(row,audience());body.replaceChildren();

@@ -1,7 +1,7 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=e50a46fa12bae65b';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=e50a46fa12bae65b';
-import{stationInScope}from'./project-scope.js?v=e50a46fa12bae65b';
-import{countryMatches}from'./explorer-core.js?v=e50a46fa12bae65b';
+import{normalize,validMapLocation}from'./atlas-core.js?v=e3061365956aef38';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=e3061365956aef38';
+import{stationInScope}from'./project-scope.js?v=e3061365956aef38';
+import{countryMatches}from'./explorer-core.js?v=e3061365956aef38';
 
 export function stationOptions(stations,query,state={},limit=10){
   const q=normalize(query),terms=q.split(' ');if(q.length<2)return[];
@@ -40,7 +40,7 @@ export function setupStationSearch({getStations,getState,ensureStations,onPick,s
   input.oninput=()=>{hide();clearTimeout(timer);timer=setTimeout(search,80);};
   input.onkeydown=event=>{
     if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();toggle.focus();return;}
-    if(event.key==='Tab'){close();return;}
+    if(event.key==='Tab'&&root.getAttribute('aria-modal')!=='true'){close();return;}
     if(event.key==='ArrowDown'||event.key==='ArrowUp'){
       if(!choices.length||list.hidden)return;event.preventDefault();active=(active+(event.key==='ArrowDown'?1:-1)+choices.length)%choices.length;
       [...list.children].forEach((option,i)=>{option.classList.toggle('active',i===active);option.setAttribute('aria-selected',String(i===active));});input.setAttribute('aria-activedescendant',list.children[active].id);list.children[active].scrollIntoView({block:'nearest'});

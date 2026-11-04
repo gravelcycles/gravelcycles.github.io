@@ -1,7 +1,7 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=e50a46fa12bae65b';
-import{mergeSleepServices}from'./sleep-service.js?v=e50a46fa12bae65b';
-import{mapPairFocusId}from'./route-focus.js?v=e50a46fa12bae65b';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=e50a46fa12bae65b';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=e3061365956aef38';
+import{mergeSleepServices}from'./sleep-service.js?v=e3061365956aef38';
+import{mapPairFocusId}from'./route-focus.js?v=e3061365956aef38';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=e3061365956aef38';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -69,7 +69,7 @@ export function selectCityJourneyContexts(journey,state,dates){
   return{...journey,_contextSpan:selected[0],_contextSpansByDate:selected};
 }
 export function groupSegmentRoutes(journeys,edge,state,dates){
-  if(edge._cityConnection)journeys=(journeys||[]).flatMap(journey=>{const members=(edge._directionEdges||[edge]).filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot);if(!members.length)return[journey];return members.map(member=>{const row={...journey,_availabilityCityDirection:[member.fromCity,member.toCity],_contextSpan:member._contextSpan,_contextSpansByDate:member._contextSpansByDate,availabilityCallSpans:member.availabilityCallSpans,_match:member._match};if(member._logicalAvailabilityDeduplicated){for(const[key,value]of Object.entries(member))if(key==='daily'||key==='weekly'||key.endsWith('Daily')||key.endsWith('Weekly')||['publicTrains','sleepServices','_logicalAvailabilityDeduplicated'].includes(key))row[key]=value;}return row;});});
+  if(edge._cityConnection)journeys=(journeys||[]).flatMap(journey=>{const members=(edge._directionEdges||[edge]).filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot);if(!members.length)return[journey];return members.map(member=>{const row={...journey,_availabilityCityDirection:[member.fromCity,member.toCity],_contextSpan:member._contextSpan,_contextSpansByDate:member._contextSpansByDate,availabilityCallSpans:member.availabilityCallSpans,_match:member._match};if(member._logicalAvailabilityDeduplicated||member._cityGeometryDates){for(const[key,value]of Object.entries(member))if(key==='daily'||key==='weekly'||key.endsWith('Daily')||key.endsWith('Weekly')||['publicTrains','sleepServices','_logicalAvailabilityDeduplicated'].includes(key))row[key]=value;}return row;});});
   const directions=(edge._directionEdges||[edge]).map(direction=>({...direction,...(usesHubConnections(state)&&!edge.availabilityOnly?{isHub:true}:{}),...(edge.throughConnection?{throughConnection:true}:{})})),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   const stationIds=edge._stationIds?new Set(edge._stationIds):null;
   const matching=(journeys||[]).filter(journey=>stationIds?(journey.stops||[]).some(call=>stationIds.has(callId(call))):directions.some(direction=>journeyMatchesEdge(journey,direction)));

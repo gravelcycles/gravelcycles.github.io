@@ -6,12 +6,14 @@ export function setupMobileSheets({closeControls,closeSearch,closeInspector,getM
   let detent='full',modal=null,drag=null,suppressClick=false;
   const contexts=[...document.querySelectorAll('.service-context-panel')],panels=[controls,search,inspector,...contexts];
   const previous=new Map(panels.map(panel=>[panel,panel.hidden])),parents=new Map(panels.map(panel=>[panel,panel.parentElement]));
+  const heading=document.querySelector('.map-heading'),headingParent=heading.parentElement,headingNext=heading.nextElementSibling;
   const background=[...document.querySelectorAll('.site-header,#map,.map-tools,.view-tools,.controls-toggle,.map-key,.map-footer')];
   function viewport(){document.documentElement.style.setProperty('--sheet-viewport-height',(visualViewport?.height||innerHeight)+'px');}
   function responsiveTools(){
     // Workspace/map stacking contexts sit below the header. Modal phone
     // sheets live at body level; returning to desktop restores their parents.
     for(const panel of panels){const parent=query.matches?document.body:parents.get(panel);if(panel.parentElement!==parent)parent.appendChild(panel);}
+    if(query.matches)document.querySelector('.site-header').insertBefore(heading,document.getElementById('viewButtons'));else if(heading.parentElement!==headingParent)headingParent.insertBefore(heading,headingNext);
     const hubs=document.getElementById('hubsTools'),target=document.getElementById(query.matches?'mobileHubsControls':'viewTools');
     if(hubs.parentElement!==target){if(query.matches)target.appendChild(hubs);else target.insertBefore(hubs,document.getElementById('viewToolsNote'));}
   }

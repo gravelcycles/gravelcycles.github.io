@@ -1,30 +1,31 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=e50a46fa12bae65b';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=e50a46fa12bae65b';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=e50a46fa12bae65b';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=e50a46fa12bae65b';
-import{decodePassPolicies}from'./pass-policies.js?v=e50a46fa12bae65b';
-import{decodeThroughServices}from'./through-services.js?v=e50a46fa12bae65b';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=e50a46fa12bae65b';
-import{RailRenderer}from'./map-renderer.js?v=e50a46fa12bae65b';
-import{resolveAssetURL}from'./data-codec.js?v=e50a46fa12bae65b';
-import{AtlasDataLoader}from'./data-loader.js?v=e50a46fa12bae65b';
-import{setupCoverage}from'./coverage-panel.js?v=e50a46fa12bae65b';
-import{mergeCompletePairs}from'./network-view.js?v=e50a46fa12bae65b';
-import{setupServiceContext}from'./service-context.js?v=e50a46fa12bae65b';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=e50a46fa12bae65b';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=e50a46fa12bae65b';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=e50a46fa12bae65b';
-import{setupTrainInspector}from'./train-inspector.js?v=e50a46fa12bae65b';
-import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=e50a46fa12bae65b';
-import{matchesFocus}from'./route-focus.js?v=e50a46fa12bae65b';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=e50a46fa12bae65b';
-import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=e50a46fa12bae65b';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=e50a46fa12bae65b';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=e50a46fa12bae65b';
-import{physicalSectionInformation,physicalSectionChart}from'./physical-heat-inspector.js?v=e50a46fa12bae65b';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=e50a46fa12bae65b';
-import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=e50a46fa12bae65b';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=e50a46fa12bae65b';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,FREQUENCY_COLORS,FREQUENCY_LABELS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=e3061365956aef38';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=e3061365956aef38';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=e3061365956aef38';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=e3061365956aef38';
+import{decodePassPolicies}from'./pass-policies.js?v=e3061365956aef38';
+import{decodeThroughServices}from'./through-services.js?v=e3061365956aef38';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=e3061365956aef38';
+import{RailRenderer}from'./map-renderer.js?v=e3061365956aef38';
+import{resolveAssetURL}from'./data-codec.js?v=e3061365956aef38';
+import{AtlasDataLoader}from'./data-loader.js?v=e3061365956aef38';
+import{setupCoverage}from'./coverage-panel.js?v=e3061365956aef38';
+import{mergeCompletePairs}from'./network-view.js?v=e3061365956aef38';
+import{setupServiceContext}from'./service-context.js?v=e3061365956aef38';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=e3061365956aef38';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=e3061365956aef38';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=e3061365956aef38';
+import{setupTrainInspector}from'./train-inspector.js?v=e3061365956aef38';
+import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=e3061365956aef38';
+import{matchesFocus}from'./route-focus.js?v=e3061365956aef38';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=e3061365956aef38';
+import{StationMarkers,STATION_ZOOM}from'./station-markers.js?v=e3061365956aef38';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=e3061365956aef38';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=e3061365956aef38';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=e3061365956aef38';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=e3061365956aef38';
+import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=e3061365956aef38';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=e3061365956aef38';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=e3061365956aef38';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -33,7 +34,7 @@ let feeCustom=state.charge!=='all'&&state.charge!=='free';
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
 let chunkPaintTimer=0;
 let selectedStation=null,stationMarkers=null,stationMarkerLoad=null,stationSearch=null,stationFocus=null,stationFocusGeneration=0;
-let mobileSheets=null,cityDocument=null,cityDocumentPromise=null,cityEdges=[],cityEdgesKey='',countryPairs=[],countryPairsKey='',countrySummaryKey='';
+let mobileSheets=null,cityDocument=null,cityEdges=[],cityEdgesKey='',countryPairs=[],countryPairsKey='',countrySummaryKey='';
 if(matchMedia(MOBILE_LAYOUT).matches&&!new URLSearchParams(location.search).has('key'))state.legend=false;
 const stationErrors=new Set();
 let italyNetworkPromise=null;
@@ -241,6 +242,7 @@ function pickTrafficSection(section,animate=true){
   if(!qualifiesEdge(section,state,dates,stationMap))return;
   detailSequence++;selectedStation=null;state.station='';clearStationFocus();trainInspector.reset();clearTrainFocus(false);document.body.classList.remove('station-inspector-open');
   selected=section;state.edge=section.id;legResult=null;journeyHighlights.clear();showInspector();renderTrafficSection();ensurePhysicalSectionDetails(section).catch(()=>{});renderer.schedule();saveURL();
+  ensureStations().then(()=>{if(state.mode==='traffic'&&selected?.id===section.id)renderTrafficSection();}).catch(()=>{});
   if(animate&&map.getZoom()<6){const point=section.coords?.[0];if(point)map.panTo([point[1],point[0]],{animate:true});}
 }
 async function ensurePhysicalSectionDetails(section){
@@ -252,7 +254,7 @@ async function ensurePhysicalSectionDetails(section){
 }
 function renderTrafficSection(){
   if(!isPhysicalSection(selected))return;
-  $('inspectorContent').innerHTML=physicalSectionInformation(selected,state,dates,sourceName,{chart:physicalSectionChart(selected,state,dates),supportingStatus:physicalDetailStates.get(selected.id)||(!selected.supportingLegs&&physicalDetailsPath(manifest?.files?.physicalRailHeatDetails,selected.id)?'loading':null)});bindChart();
+  $('inspectorContent').innerHTML=physicalSectionInformation(selected,state,dates,sourceName,{chart:physicalSectionChart(selected,state,dates),nearbyStations:physicalSectionLocation(selected,stationList),supportingStatus:physicalDetailStates.get(selected.id)||(!selected.supportingLegs&&physicalDetailsPath(manifest?.files?.physicalRailHeatDetails,selected.id)?'loading':null)});bindChart();
   $('retrySectionDetails')?.addEventListener('click',()=>{physicalDetailStates.delete(selected.id);ensurePhysicalSectionDetails(selected).catch(()=>{});renderTrafficSection();});
   document.querySelectorAll('[data-section-leg]').forEach(button=>button.onclick=async()=>{
     const id=button.dataset.sectionLeg,support=selected?.supportingLegs?.find(row=>row.edgeId===id);setMode('frequency');
@@ -273,21 +275,20 @@ function closeMethod(){$('methodDialog').close();}
 
 function setControlsOpen(open){
   if(open)stationSearch?.close();
-  $('mapControls').hidden=!open;$('controlsToggle').setAttribute('aria-expanded',String(open));
+  const controls=$('mapControls');controls.hidden=!open;$('controlsToggle').setAttribute('aria-expanded',String(open));
+  if(open){controls.scrollTop=0;controls.querySelector('.sidebar-scroll').scrollTop=0;requestAnimationFrame(()=>{if(!controls.hidden){controls.querySelector('.sidebar-scroll').scrollTop=0;$('controlsTitle').focus({preventScroll:true});}});}
 }
-async function loadCityHubs(){
-  if(cityDocument)return cityDocument;
-  if(!cityDocumentPromise)cityDocumentPromise=(async()=>{
-    await ensureManifest();
-    if(!manifest.files.cityHubs)throw new Error('City connections are unavailable in this release');
-    cityDocument=await json(dataURL(manifest.files.cityHubs));
-    if(cityDocument.schemaVersion!==1||!Array.isArray(cityDocument.cities)||!Array.isArray(cityDocument.connections))throw new Error('Unsupported city connections');
-    for(const city of cityDocument.cities)hubMap.set(city.id,city);
-    cityEdgesKey='';renderCityOptions();renderHubs();renderer.schedule();refreshViewTools();
-    if(state.mode==='hubs'&&state.edge&&!selected){const edge=findDisplayedEdge(state.edge);if(edge)pickEdge(edge,false);}
-    return cityDocument;
-  })().catch(error=>{cityDocumentPromise=null;toast('City connections could not load. Select Hubs to retry.');throw error;});
-  return cityDocumentPromise;
+const cityLoader=createCityHubsLoader({
+  loadIndex:async()=>{await ensureManifest();if(!manifest.files.cityHubs)throw new Error('City connections are unavailable in this release');return json(dataURL(manifest.files.cityHubs));},
+  loadPart:path=>json(dataURL(path)),
+  onChange:document=>{cityDocument=document;for(const city of document.cities)hubMap.set(city.id,city);cityEdgesKey='';renderCityOptions();renderHubs();renderer?.schedule();refreshViewTools();}
+});
+async function loadCityHubs({connections=true}={}){
+  try{
+    const document=await(connections?cityLoader.through(state.hubCount):cityLoader.index());
+    if(state.mode==='hubs'){applyControls();if(state.edge&&!selected){const edge=findDisplayedEdge(state.edge);if(edge)pickEdge(edge,false);}}
+    return document;
+  }catch(error){toast('City connections could not load. Select Hubs to retry.');throw error;}
 }
 function renderCityOptions(){
   if(!cityDocument)return;
@@ -299,23 +300,21 @@ function renderCityOptions(){
   $('hubCityPickerToggle').textContent=(cities.find(city=>city.id===state.hubCity)?.name||'All cities')+' ⌄';
 }
 function refreshViewTools(){
-  $('stationRoutesSearch').hidden=state.mode!=='frequency';
-  $('stationRoutesLabel').textContent=selectedStation?.name||'Routes through a station';
   $('hubsTools').hidden=state.mode!=='hubs';$('hubCount').value=String(state.hubCount);$('hubExamples').value=state.hubExamples;
   $('hubOptionsToggle').hidden=state.mode!=='hubs';$('hubOptionsLabel').textContent='Top '+state.hubCount+' cities';
   $('countryPickerToggle').hidden=state.mode!=='countries';$('countryPickerLabel').textContent=state.country||'Choose a country';
-  $('viewTools').hidden=state.mode==='traffic'||state.mode==='eurail';
-  $('viewToolsNote').hidden=!['hubs','countries'].includes(state.mode);
+  $('viewTools').hidden=!['hubs','countries'].includes(state.mode);
+  $('viewToolsNote').hidden=state.mode!=='hubs';
   $('viewCoverageLink').hidden=state.mode!=='countries'||!state.country;
   if(state.mode==='hubs'){
     const city=hubMap.get(state.hubCity);
-    $('viewToolsNote').textContent=!cityDocument?'Loading direct city connections…':
-      `${city?'Direct trains to/from '+city.name+'. ':''}${Math.min(state.hubCount,cityDocument.cities.length)} population-ranked cities. ${state.hubExamples==='all'?'Colors count direct services on each connection.':'Examples select links; colors count all direct services on them.'} Schematic links; coverage varies.`;
-    if(matchMedia(MOBILE_LAYOUT).matches&&cityDocument)$('viewToolsNote').textContent=state.hubExamples==='all'?'Direct city services. Schematic links; coverage varies.':'Links with '+(state.hubExamples==='fast'?'fast / intercity':'overnight')+' examples. Colors count all direct services.';
+    $('viewToolsNote').textContent=!cityLoader.has(state.hubCount)?'Loading railway paths for the selected cities…':
+      `${city?'Direct trains to/from '+city.name+'. ':''}${Math.min(state.hubCount,cityDocument.cities.length)} population-ranked cities. ${state.hubExamples==='all'?'Colors count direct services on each retained railway path.':'Examples select connections; colors count direct services on each retained railway path.'} Inferred tracks; gaps and coverage vary.`;
+    if(matchMedia(MOBILE_LAYOUT).matches&&cityLoader.has(state.hubCount))$('viewToolsNote').textContent=state.hubExamples==='all'?'Direct services on railway paths; coverage varies.':'Connections with '+(state.hubExamples==='fast'?'fast / intercity':'overnight')+' examples. Railway paths; coverage varies.';
   }else if(state.mode==='countries'){
-    if(!state.country){$('viewToolsNote').textContent='Select a country to frame its available network.';return;}
+    if(!state.country){$('countrySummary').textContent='Choose a country to frame its available network and inspect its data.';return;}
     const key=state.country+'|'+(manifest?.releaseId||'');
-    if(countrySummaryKey!==key){countrySummaryKey=key;$('viewToolsNote').textContent='Loading country coverage…';coverage.getCountrySummary(state.country).then(summary=>{if(countrySummaryKey===key&&state.mode==='countries')$('viewToolsNote').textContent=summary.shortText||summary.label;});}
+    if(countrySummaryKey!==key){countrySummaryKey=key;$('countrySummary').textContent='Loading country coverage…';coverage.getCountrySummary(state.country).then(summary=>{if(countrySummaryKey===key)$('countrySummary').textContent=summary.shortText||summary.label;});}
   }
 }
 async function chooseCountry(country){
@@ -327,7 +326,7 @@ async function chooseCountry(country){
 }
 async function openCountryPicker(){
   await ensureManifest();
-  const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryDialogTitle').textContent='Explore a country';input.placeholder='Find a country';input.setAttribute('aria-label','Find a country');
+  const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryCurrentDetails').hidden=false;refreshViewTools();$('countryDialogTitle').textContent='Explore a country';input.placeholder='Find a country';input.setAttribute('aria-label','Find a country');
   const countries=(manifest.countryNames||[]).filter(country=>!['Russia','Ukraine'].includes(country));
   function paint(){
     const query=normalize(input.value);$('countryChoices').replaceChildren();
@@ -340,8 +339,8 @@ async function openCountryPicker(){
   input.value='';input.oninput=paint;paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
 }
 async function openCityPicker(){
-  await loadCityHubs();setControlsOpen(false);
-  const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryDialogTitle').textContent='Explore a city';input.placeholder='Find a city';input.setAttribute('aria-label','Find a city');
+  await loadCityHubs({connections:false});setControlsOpen(false);
+  const dialog=$('countryDialog'),input=$('countrySearchInput');$('countryCurrentDetails').hidden=true;$('countryDialogTitle').textContent='Explore a city';input.placeholder='Find a city';input.setAttribute('aria-label','Find a city');
   const cities=cityDocument.cities.filter(city=>city.rank<=state.hubCount);
   function paint(){
     const query=normalize(input.value);$('countryChoices').replaceChildren();
@@ -354,16 +353,16 @@ async function openCityPicker(){
   input.value='';input.oninput=paint;paint();if(!dialog.open)dialog.showModal();if(!matchMedia(MOBILE_LAYOUT).matches)input.focus();
 }
 function setupExplorerControls(){
-  $('stationRoutesSearch').onclick=()=>stationSearch.open();
   $('hubOptionsToggle').onclick=()=>setControlsOpen(true);
   $('hubCityPickerToggle').onclick=()=>openCityPicker().catch(()=>toast('City choices could not load. Please retry.'));
   $('countryPickerToggle').onclick=()=>openCountryPicker().catch(()=>toast('Country choices could not load. Please retry.'));
   $('closeCountryDialog').onclick=()=>$('countryDialog').close();
-  $('viewCoverageLink').onclick=()=>coverage.open(state.country);
+  $('viewCoverageLink').onclick=()=>{$('countryDialog').close();coverage.open(state.country);};
   for(const id of['hubCount','hubExamples','hubCity'])$(id).onchange=()=>{
     state.hubCount=Number($('hubCount').value);state.hubExamples=$('hubExamples').value;state.hubCity=$('hubCity').value;
     closeInspector();renderCityOptions();refresh();saveURL();
-    if(state.hubCity){const rows=currentEdges().filter(edge=>qualifiesEdge(edge,state,dates,stationMap));const points=rows.flatMap(edge=>edge.coords).map(([lon,lat])=>[lat,lon]);if(points.length)map.fitBounds(points,{...mapFramePadding(),maxZoom:9,animate:false});}
+    const city=state.hubCity,rank=state.hubCount;
+    loadCityHubs().then(()=>{if(state.mode!=='hubs'||state.hubCity!==city||state.hubCount!==rank)return;refresh();if(city){const rows=currentEdges().filter(edge=>qualifiesEdge(edge,state,dates,stationMap));const points=rows.flatMap(edge=>edge.coords).map(([lon,lat])=>[lat,lon]);if(points.length)map.fitBounds(points,{...mapFramePadding(),maxZoom:9,animate:false});}}).catch(()=>{});
   };
 }
 function mapFramePadding(){
@@ -432,7 +431,7 @@ function updateMapSummary(visible){
     summary.title=context.length?'Still enabled: '+context.join(', ')+'. Use Context overlays or Hide all overlays in Filters.':'No service paths or railway context enabled.';$('overviewNote').hidden=true;return;
   }
   if(state.mode==='traffic'){summary.lastElementChild.textContent=physicalHeatError?'Rail traffic unavailable · select Traffic to retry':!physicalHeatDocument?'Loading estimated rail traffic…':`${fmt(visible||0)} railway sections · ${date}`;summary.title='Estimated scheduled source traversals over shared physical railway sections. Both directions; replacement buses excluded; coverage and source overlap vary.';$('overviewNote').hidden=true;return;}
-  const label=usesHubConnections(state)?'city links':'connections',loading=manifest?.files?.displayNetwork&&!completeNetworkLoaded&&!usesHubConnections(state)&&state.mode!=='italy';
+  const label=usesHubConnections(state)?'city railway paths':'connections',loading=manifest?.files?.displayNetwork&&!completeNetworkLoaded&&!usesHubConnections(state)&&state.mode!=='italy';
   summary.lastElementChild.textContent=`${fmt(visible||0)} ${label} · ${date}${loading?' · loading…':''}`;
   summary.title=`${fmt(visible||0)} source-defined ${label} in view · ${dateLabel(state.day,dates)}`;
   $('overviewNote').hidden=usesHubConnections(state)||state.mode==='italy'||completeNetworkLoaded;
@@ -481,7 +480,7 @@ function applyControls(){
   for(const id of ['legendGradient','legendLabels'])$(id).hidden=!services;
   for(const selector of ['.legend-heading','.frequency-scope','.alignment-key'])document.querySelector(selector).hidden=!services;
   document.querySelector('.frequency-scope').textContent=state.mode==='traffic'?'Estimated · both directions · coverage varies':'Doubling bands · coverage varies';if(state.mode==='traffic')document.querySelector('.alignment-key').hidden=true;
-  $('legendNote').textContent=state.mode==='traffic'?'Representative inferred railway paths. Feeds can overlap; buses excluded. Tap a section for contribution evidence.':!services||!hasServicePaths()?(remaining.length?'Grey context paths remain enabled, independently of service geometry.':'Service paths and railway context are hidden.'):usesHubConnections(state)?(pass?'Same-service city connections with confirmed inclusion. Schematic links; feeds may overlap.':'All direct train services on each city connection. Schematic links; feeds may overlap.'):pass?'Confirmed inclusion and uncertainty are counted separately; conditions apply.':'Frequencies in available data; coverage varies. Dashed paths carry an alignment explanation.';
+  $('legendNote').textContent=state.mode==='traffic'?'Representative inferred railway paths. Feeds can overlap; buses excluded. Tap a section for contribution evidence.':!services||!hasServicePaths()?(remaining.length?'Grey context paths remain enabled, independently of service geometry.':'Service paths and railway context are hidden.'):usesHubConnections(state)?(pass?'Included direct services on retained railway paths. Inferred tracks; gaps and feed overlap remain.':'Direct train services on each retained railway path. Inferred tracks; gaps and feed overlap remain.'):pass?'Confirmed inclusion and uncertainty are counted separately; conditions apply.':'Frequencies in available data; coverage varies. Dashed paths carry an alignment explanation.';
   updateSourceCount();updateFilterSummary();
 }
 function updateFilterSummary(){
@@ -561,7 +560,7 @@ async function loadVisibleChunks(){
   const run=++chunkRun,view=map.getBounds().pad(.15),queue=(manifest.chunks||[]).filter(chunk=>(!busesOnly()||chunk.serviceMode==='temporary_replacement_bus')&&boundsIntersect(chunk.bounds,view)&&!chunkLoaded.has(chunk.id));
   if(!queue.length)return;
   if(!manifest.provenance?.spatialProjection)ensureStations().catch(()=>{});let failed=false;
-  async function worker(){while(queue.length){if(run!==chunkRun)return;const chunk=queue.shift(),request={chunk,controller:new AbortController()};chunkLoaded.add(chunk.id);chunkRequests.set(chunk.id,request);try{const url=dataURL(chunk.url),data=await json(url,{signal:request.controller.signal});if(request.controller.signal.aborted)throw new DOMException('Data request cancelled','AbortError');if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||data);cache.delete(url);paintChunks();}catch(error){if(chunkRequests.get(chunk.id)===request)chunkLoaded.delete(chunk.id);if(error.name!=='AbortError'){failed=true;console.warn('Rail Atlas chunk unavailable:',chunk.id);}}finally{if(chunkRequests.get(chunk.id)===request)chunkRequests.delete(chunk.id);}}}
+  async function worker(){while(queue.length){if(run!==chunkRun)return;const chunk=queue.shift(),request={chunk,controller:new AbortController()};chunkLoaded.add(chunk.id);chunkRequests.set(chunk.id,request);try{const url=dataURL(chunk.url),data=await json(url,{signal:request.controller.signal});if(request.controller.signal.aborted)throw new DOMException('Data request cancelled','AbortError');if(data.stations)await mergeStations(data,{paint:false});await addEdges(data.edges||data);cache.delete(url);paintChunks();}catch(error){if(chunkRequests.get(chunk.id)===request)chunkLoaded.delete(chunk.id);if(error.name!=='AbortError'){failed=true;console.warn('Euro Rail chunk unavailable:',chunk.id);}}finally{if(chunkRequests.get(chunk.id)===request)chunkRequests.delete(chunk.id);}}}
   await Promise.all(Array.from({length:Math.min(3,queue.length)},worker));
   if(run===chunkRun)paintChunks(true);
   if(failed)toast('Some local lines could not load. Pan or zoom to retry.');
@@ -624,7 +623,7 @@ async function pickHubStation(s){
   // Migrate an old city-catchment link into the current city explorer.
   try{await loadCityHubs();const city=cityDocument.cities.find(city=>normalize(city.name)===normalize(s.name)&&city.country===s.country);
     setMode('hubs');state.hubCity=city?.id||'';if(city&&city.rank>state.hubCount)state.hubCount=[50,100,250,500].find(n=>n>=city.rank);
-    renderCityOptions();refresh();if(validMapLocation(s.lon,s.lat))map.setView([s.lat,s.lon],7,{animate:false});
+    renderCityOptions();refresh();await loadCityHubs();if(validMapLocation(s.lon,s.lat))map.setView([s.lat,s.lon],7,{animate:false});
   }catch{toast('City connections could not load. Please retry.');}
 }
 function renderStationMarkers(){
@@ -725,7 +724,7 @@ function reviewedPolicyHTML(row){
 }
 function renderCitySelected(){
   const edge=selected,a=station(edge.a),b=station(edge.b),pass=effectivePass(state),count=edgeCount(edge,state,dates);
-  $('inspectorContent').innerHTML=`<p class="eyebrow">DIRECT CITY CONNECTION</p><h3>${esc(a.name)} <span class="connection-arrow">${bothDirections(edge)?'↔':'→'}</span> ${esc(b.name)}</h3><p class="subline">${esc(dateLabel(state.day,dates))} · ${esc(directionLabel(edge))}</p><div class="detail-stat"><strong>${fmt(count/selectedDayCount())}</strong><span>${pass?'included ':''}direct train services / day</span></div>${weeklyChart(edge,pass)}${continuationAvailabilityNote(edge)?'<p class="helper">'+esc(continuationAvailabilityNote(edge))+'</p>':''}<p class="helper">One recorded train calls in both cities; it may stop in other cities in between. The line is a schematic connection, not a railway alignment.</p><div class="station-actions"><button class="primary-button" id="cityFrom">More from ${esc(a.name)}</button><button class="primary-button" id="cityTo">More from ${esc(b.name)}</button></div><div id="segmentTrains"></div><p class="detail-note">${esc(sourceName(edge.source))}. Source feeds can overlap. Counts retain boarding and alighting restrictions. City catchments group geographic areas for this view; they do not merge station identities or promise a transfer.</p>`;
+  $('inspectorContent').innerHTML=`<p class="eyebrow">DIRECT CITY CONNECTION</p><h3>${esc(a.name)} <span class="connection-arrow">${bothDirections(edge)?'↔':'→'}</span> ${esc(b.name)}</h3><p class="subline">${esc(dateLabel(state.day,dates))} · ${esc(directionLabel(edge))}</p><div class="detail-stat"><strong>${fmt(count/selectedDayCount())}</strong><span>${pass?'included ':''}direct train services / day</span></div>${weeklyChart(edge,pass)}${continuationAvailabilityNote(edge)?'<p class="helper">'+esc(continuationAvailabilityNote(edge))+'</p>':''}<p class="helper">One recorded train calls in both cities; it may stop in other cities in between. Colors count services using this retained railway path. Routes can differ between the same cities; exact operating tracks remain unverified.${edge.railGeometryMissingLegs?' '+fmt(edge.railGeometryMissingLegs)+' unsupported rail leg'+(edge.railGeometryMissingLegs===1?' is':'s are')+' left as gaps.':''}</p><div class="station-actions"><button class="primary-button" id="cityFrom">More from ${esc(a.name)}</button><button class="primary-button" id="cityTo">More from ${esc(b.name)}</button></div><div id="segmentTrains"></div><p class="detail-note">${esc(sourceName(edge.source))}. Source feeds can overlap. Counts retain boarding and alighting restrictions. City catchments group geographic areas for this view; they do not merge station identities or promise a transfer.</p>`;
   for(const[id,city]of[['cityFrom',a],['cityTo',b]])$(id).onclick=()=>{state.hubCity=city.id;renderCityOptions();closeInspector();refresh();};
   trainInspector.render(edge,edgeServiceErrors.has(edge.id));bindChart();
 }
@@ -755,7 +754,7 @@ function setupAutocomplete(field){
   input.onkeydown=event=>{if(event.key==='Escape'){hide();return;}if(event.key==='ArrowDown'||event.key==='ArrowUp'){if(!choices.length)return;event.preventDefault();active=(active+(event.key==='ArrowDown'?1:-1)+choices.length)%choices.length;[...list.children].forEach((x,i)=>{x.classList.toggle('active',i===active);x.setAttribute('aria-selected',String(i===active));});input.setAttribute('aria-activedescendant',field+'-option-'+active);}if(event.key==='Enter'&&choices.length&&!list.hidden){event.preventDefault();setStationField(field,choices[Math.max(0,active)]);hide();}};
 }
 function equivalentStationIds(s){if(hubMap.has(s.id)||s.memberStationCount)return new Set([s.id,...[...stationMap.values()].filter(item=>item.hubId===s.id).map(item=>item.id)]);return new Set(stationMemberIds(s).filter(id=>stationInScope({id},state)));}
-async function compareStations(){const from=resolvedStation(state.from),to=resolvedStation(state.to);if(!stationInScope(from,state)||!stationInScope(to,state)){toast('Choose a departure and an arrival from the station suggestions.');return;}if(from.id===to.id){toast('Choose two different recorded stations.');return;}$('compareButton').disabled=true;$('legHelper').textContent='Reading the recorded calling patterns…';const ticket=++detailSequence;trainInspector.reset();clearTrainFocus(false);selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');try{const result=await findJourneyServices(from,to);if(ticket!==detailSequence)return;legResult=result;selected=null;state.edge='';showInspector();renderJourneyResult(result);const located=[from,to].filter(s=>validMapLocation(s.lon,s.lat));if(located.length)map.fitBounds(located.map(s=>[s.lat,s.lon]),{paddingTopLeft:[35,100],paddingBottomRight:[window.innerWidth>760?350:35,window.innerWidth>760?75:260],maxZoom:8});renderer.schedule();saveURL();}catch(error){toast('The journey data could not load. Please try again.');$('legHelper').textContent='The lookup failed; no service conclusion has been made.';console.warn('Rail Atlas journey lookup unavailable');}finally{$('compareButton').disabled=false;}}
+async function compareStations(){const from=resolvedStation(state.from),to=resolvedStation(state.to);if(!stationInScope(from,state)||!stationInScope(to,state)){toast('Choose a departure and an arrival from the station suggestions.');return;}if(from.id===to.id){toast('Choose two different recorded stations.');return;}$('compareButton').disabled=true;$('legHelper').textContent='Reading the recorded calling patterns…';const ticket=++detailSequence;trainInspector.reset();clearTrainFocus(false);selectedStation=null;clearStationFocus();state.station='';document.body.classList.remove('station-inspector-open');try{const result=await findJourneyServices(from,to);if(ticket!==detailSequence)return;legResult=result;selected=null;state.edge='';showInspector();renderJourneyResult(result);const located=[from,to].filter(s=>validMapLocation(s.lon,s.lat));if(located.length)map.fitBounds(located.map(s=>[s.lat,s.lon]),{paddingTopLeft:[35,100],paddingBottomRight:[window.innerWidth>760?350:35,window.innerWidth>760?75:260],maxZoom:8});renderer.schedule();saveURL();}catch(error){toast('The journey data could not load. Please try again.');$('legHelper').textContent='The lookup failed; no service conclusion has been made.';console.warn('Euro Rail journey lookup unavailable');}finally{$('compareButton').disabled=false;}}
 async function findJourneyServices(from,to){await ensureManifest();const fromIds=equivalentStationIds(from),toIds=equivalentStationIds(to),countries=new Set([from.country,from.passCountry].filter(Boolean)),files=manifest.files?.journeysByCountry||[];let choices=Array.isArray(files)?files.filter(f=>countries.has(f.country)):Object.entries(files).filter(([k])=>countries.has(k)).map(([country,url])=>({country,url}));if(manifest.files.journeyLookup)choices=indexedJourneyFiles(await json(dataURL(manifest.files.journeyLookup)),fromIds,toIds);else if(!choices.length&&Array.isArray(files))choices=files.filter(f=>isItaly(from.country)&&isItaly(f.country));const {matches,loaded}=await dataLoader.findJourneys(choices.map(choice=>dataURL(choice.url)),fromIds,toIds);
     if(!choices.length||(!loaded&&edges.size)){const exact=[...edges.values()].filter(e=>fromIds.has(e.a)&&toIds.has(e.b)&&Array.isArray(e.boardableDaily));const lines=[];for(const edge of exact){const detail=await detailsFor(edge);for(const line of detail?.lines||[])lines.push({...line,source:edge.source});}return{from,to,journeys:[],fallbackEdges:exact,fallbackLines:lines,adjacentOnly:true};}return{from,to,journeys:matches,adjacentOnly:false};}
 function renderJourneyResult(result){
@@ -871,7 +870,7 @@ async function boot(){
     if(state.edge&&findDisplayedEdge(state.edge))pickEdge(findDisplayedEdge(state.edge),false);
     if(state.station){const id=state.station;ensureStations().then(()=>{if(state.station!==id||selected||selectedStation)return;const s=resolvedStation(id);if(s)pickStation(s,{inspect:true,center:!state.center,restore:!!state.center});else toast('This station is unavailable in the current release.');}).catch(()=>toast('Station details could not load. Please retry search.'));}
     status(state.mode==='traffic'?'Estimated physical rail traffic loaded. Both directions; buses excluded.':manifest.files.displayNetwork?'Atlas ready. Loading the complete network at every zoom.':'Atlas loaded. Zoom in for local lines.');
-  }catch(error){$('mapLoading').hidden=true;$('mapError').hidden=false;console.error('Rail Atlas data load failed:',error.message);}
+  }catch(error){$('mapLoading').hidden=true;$('mapError').hidden=false;console.error('Euro Rail data load failed:',error.message);}
   finally{booting=false;saveURL();}
 }
 

@@ -1,6 +1,6 @@
-import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=e50a46fa12bae65b';
-import{journeyDaily,selectCityJourneyContexts}from'./train-services.js?v=e50a46fa12bae65b';
-import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=e50a46fa12bae65b';
+import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=e3061365956aef38';
+import{journeyDaily,selectCityJourneyContexts}from'./train-services.js?v=e3061365956aef38';
+import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=e3061365956aef38';
 
 export const countryMatches=(a,b)=>normalize(a)===normalize(b);
 export function countryEdge(edge,country,stations){
@@ -12,6 +12,42 @@ export function countryBounds(country,stations){
   const rows=stations.filter(s=>countryMatches(s.country,country)&&Number.isFinite(s.lon)&&Number.isFinite(s.lat)&&s.lon>=-25&&s.lon<=60&&s.lat>=33&&s.lat<=73);
   if(!rows.length)return null;
   return[[Math.min(...rows.map(s=>s.lat)),Math.min(...rows.map(s=>s.lon))],[Math.max(...rows.map(s=>s.lat)),Math.max(...rows.map(s=>s.lon))]];
+}
+// A city is a service selector, never a geometric endpoint. Draw retained
+// source rail legs and preserve gaps instead of joining them with city chords.
+export function cityRailGeometryParts(document,path){
+  const parts=[];let coords=[],ids=[],statuses=new Set();
+  const finish=()=>{if(coords.length>1)parts.push({coords,ids,statuses:[...statuses]});coords=[];ids=[];statuses=new Set();};
+  for(const ref of path?.legs||[]){
+    const rail=ref&&document.railGeometry?.[ref[0]];
+    if(!rail||!['provider','inferred','inferred_shortest_rail_path'].includes(rail.geometryStatus)||!Array.isArray(rail.coords)||rail.coords.length<2){finish();continue;}
+    const points=ref[1]?[...rail.coords].reverse():rail.coords;
+    if(coords.length&&(coords.at(-1)[0]!==points[0][0]||coords.at(-1)[1]!==points[0][1]))finish();
+    coords.push(...points.slice(coords.length?1:0));ids.push([rail.shapeId||ref[0],Number(!!ref[1]!==!rail.shapeForward)]);statuses.add(rail.geometryStatus);
+  }
+  finish();return parts;
+}
+function cityPathRows(row,dates){
+  const paths=row.railPaths||[];if(!paths.length)return[];
+  if(!row.availabilityJourneyId)return[{row,path:paths[0]}];
+  const bySpan=new Map(paths.map(path=>[JSON.stringify(path.callSpan),{path,days:new Set()}]));
+  dates.forEach((_,day)=>bySpan.get(JSON.stringify(row._contextSpansByDate?.[day]||row._contextSpan))?.days.add(day));
+  return[...bySpan.values()].filter(item=>item.days.size).map(({path,days})=>{
+    const masked={...row,_cityGeometryDates:[...days]};
+    for(const[key,value]of Object.entries(row))if((key==='daily'||key.endsWith('Daily'))&&Array.isArray(value)){
+      masked[key]=value.map((n,i)=>days.has(i)?n:0);const week=key==='daily'?'weekly':key.slice(0,-5)+'Weekly';
+      if(week in row)masked[week]=masked[key].reduce((a,b)=>a+b,0);
+    }
+    if(row._cityChargeMetrics)masked._cityChargeMetrics=Object.fromEntries(Object.entries(row._cityChargeMetrics).map(([key,value])=>[key,value.map((n,i)=>days.has(i)?n:0)]));
+    return{row:masked,path};
+  });
+}
+function displayShapeKey(text){
+  // A compact display/cache identity; publication integrity uses the producer's
+  // SHA256 shape IDs. Keep selected-edge URLs independent of route length.
+  let a=2166136261,b=2246822507;
+  for(let i=0;i<text.length;i++){const n=text.charCodeAt(i);a=Math.imul(a^n,16777619);b=Math.imul(b^n,3266489909);}
+  return(a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');
 }
 export function cityConnectionEdges(document,state,dates){
   if(!document)return[];
@@ -49,14 +85,26 @@ export function cityConnectionEdges(document,state,dates){
     const a=cities.get(row.fromCity),b=cities.get(row.toCity);if(!a||!b)continue;
     if(state.hubCity&&a.id!==state.hubCity&&b.id!==state.hubCity)continue;
     if(field&&!examples.has(pair(row)))continue;
-    const edge=prepareEdge({...row,a:a.id,b:b.id,_cityConnection:true,_stationIds:row.sourceStations,
-      country:a.country,countries:[...new Set([a.country,b.country])],
-      geometryStatus:'schematic_city_connection',coords:[[a.lon,a.lat],[b.lon,b.lat]],
-      boardableDaily:row.daily,boardableWeekly:row.weekly,
-      eurailBoardableDaily:row.eurailDaily,eurailBoardableWeekly:row.eurailWeekly});
-    if(edge)rows.push(edge);
+    for(const{row:route,path}of cityPathRows(row,dates)){
+      const parts=cityRailGeometryParts(document,path);
+      for(const part of parts){
+        const signature=JSON.stringify(part.ids),reversed=JSON.stringify([...part.ids].reverse().map(([id,direction])=>[id,1-direction]));
+        const geometryKey=displayShapeKey(signature<reversed?signature:reversed);
+        const edge=prepareEdge({...route,a:a.id,b:b.id,_cityConnection:true,_stationIds:route.sourceStations,
+          country:a.country,countries:[...new Set([a.country,b.country])],
+          mapPairId:JSON.stringify([[a.id,b.id].sort(),geometryKey]),
+          railGeometryMissingLegs:path.missingLegs||0,railGeometryPartCount:parts.length,
+          railGeometryStatuses:part.statuses,geometryStatus:path.missingLegs?'retained_city_railway_partial':'retained_city_railway',coords:part.coords,
+          boardableDaily:route.daily,boardableWeekly:route.weekly,
+          eurailBoardableDaily:route.eurailDaily,eurailBoardableWeekly:route.eurailWeekly});
+        if(edge)rows.push(edge);
+      }
+    }
   }
   return aggregateMapPairs(rows).map(edge=>({...edge,
+    railGeometryMissingLegs:Math.max(...edge._directionEdges.map(row=>row.railGeometryMissingLegs)),
+    railGeometryPartCount:Math.max(...edge._directionEdges.map(row=>row.railGeometryPartCount)),
+    railGeometryStatuses:[...new Set(edge._directionEdges.flatMap(row=>row.railGeometryStatuses))],
     callValidationReview:edge._directionEdges.find(row=>row.callValidationReview)?.callValidationReview,
     _passPolicy:Object.fromEntries(CHARGE_MASKS.map(mask=>['chargeMask'+mask+'Daily',dates.map((_,i)=>edge._directionEdges.reduce((sum,row)=>sum+(row._cityChargeMetrics?.['chargeMask'+mask+'Daily']?.[i]??(mask===8?row.eurailDaily?.[i]||0:0)),0))])),
     _stationIds:[...new Set(edge._directionEdges.flatMap(row=>row.sourceStations||[]))],
