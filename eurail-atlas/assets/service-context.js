@@ -1,4 +1,4 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=a8d1727da1380e07';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=e50a46fa12bae65b';
 
 export function contextVisible(state){return state.closedCorridors!==false;}
 
