@@ -1,33 +1,33 @@
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=da630a89c45d980d';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=da630a89c45d980d';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=da630a89c45d980d';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=da630a89c45d980d';
-import{decodePassPolicies}from'./pass-policies.js?v=da630a89c45d980d';
-import{decodeThroughServices}from'./through-services.js?v=da630a89c45d980d';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=da630a89c45d980d';
-import{RailRenderer}from'./map-renderer.js?v=da630a89c45d980d';
-import{resolveAssetURL}from'./data-codec.js?v=da630a89c45d980d';
-import{AtlasDataLoader}from'./data-loader.js?v=da630a89c45d980d';
-import{setupCoverage}from'./coverage-panel.js?v=da630a89c45d980d';
-import{mergeCompletePairs}from'./network-view.js?v=da630a89c45d980d';
-import{setupServiceContext}from'./service-context.js?v=da630a89c45d980d';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=da630a89c45d980d';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=da630a89c45d980d';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=da630a89c45d980d';
-import{setupTrainInspector}from'./train-inspector.js?v=da630a89c45d980d';
-import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=da630a89c45d980d';
-import{matchesFocus}from'./route-focus.js?v=da630a89c45d980d';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=da630a89c45d980d';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=da630a89c45d980d';
-import{mainHubStations}from'./hub-stations.js?v=da630a89c45d980d';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=da630a89c45d980d';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=da630a89c45d980d';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=da630a89c45d980d';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=da630a89c45d980d';
-import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=da630a89c45d980d';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=da630a89c45d980d';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=da630a89c45d980d';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=da630a89c45d980d';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment}from'./atlas-core.js?v=40f0f017e18fdd82';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=40f0f017e18fdd82';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=40f0f017e18fdd82';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=40f0f017e18fdd82';
+import{decodePassPolicies}from'./pass-policies.js?v=40f0f017e18fdd82';
+import{decodeThroughServices}from'./through-services.js?v=40f0f017e18fdd82';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=40f0f017e18fdd82';
+import{RailRenderer}from'./map-renderer.js?v=40f0f017e18fdd82';
+import{resolveAssetURL}from'./data-codec.js?v=40f0f017e18fdd82';
+import{AtlasDataLoader}from'./data-loader.js?v=40f0f017e18fdd82';
+import{setupCoverage}from'./coverage-panel.js?v=40f0f017e18fdd82';
+import{mergeCompletePairs}from'./network-view.js?v=40f0f017e18fdd82';
+import{setupServiceContext}from'./service-context.js?v=40f0f017e18fdd82';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=40f0f017e18fdd82';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=40f0f017e18fdd82';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=40f0f017e18fdd82';
+import{setupTrainInspector}from'./train-inspector.js?v=40f0f017e18fdd82';
+import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata}from'./train-services.js?v=40f0f017e18fdd82';
+import{matchesFocus}from'./route-focus.js?v=40f0f017e18fdd82';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=40f0f017e18fdd82';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=40f0f017e18fdd82';
+import{mainHubStations}from'./hub-stations.js?v=40f0f017e18fdd82';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel}from'./station-identity.js?v=40f0f017e18fdd82';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=40f0f017e18fdd82';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=40f0f017e18fdd82';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=40f0f017e18fdd82';
+import{countryMatches,countryEdge,countryBounds,cityConnectionEdges}from'./explorer-core.js?v=40f0f017e18fdd82';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=40f0f017e18fdd82';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=40f0f017e18fdd82';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=40f0f017e18fdd82';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -834,7 +834,18 @@ function updateMethod(){
     for(const[field,label,kind]of[['sourceUrl','Original station reference ↗','source'],['licenceUrl','ODbL licence ↗','license']]){try{const url=new URL(stationReference[field]);if(url.protocol!=='https:'&&url.protocol!=='http:')continue;const link=document.createElement('a');link.className='station-reference-'+kind;link.href=url.href;link.textContent=label;link.target='_blank';link.rel='noopener noreferrer';links.appendChild(link);}catch{}}
     const download=stationReference.modifiedDatabaseDownload||manifest.files.stationNameReference;
     if(typeof download==='string'&&download===manifest.files.stationNameReference){const link=document.createElement('a');link.className='station-reference-download';link.href=dataURL(download);link.download=new URL(link.href).pathname.split('/').at(-1);link.textContent='Download modified station database ↗';links.appendChild(link);}
-    section.appendChild(links);extra.appendChild(section);
+    section.appendChild(links);
+    for(const source of stationReference.supplementalSources||[]){
+      if(typeof source?.dataset!=='string'||!source.dataset.trim())continue;
+      const supplement=document.createElement('div');supplement.className='station-reference-supplement';
+      const credit=document.createElement('p'),title=document.createElement('strong');title.textContent=source.dataset;credit.appendChild(title);
+      const attribution=(Array.isArray(source.attribution)?source.attribution:[source.attribution]).filter(value=>typeof value==='string'&&value.trim()).join(' · ');
+      if(attribution)credit.appendChild(document.createTextNode('. '+attribution));supplement.appendChild(credit);
+      const sourceLinks=document.createElement('div');sourceLinks.className='evidence-links';
+      for(const[field,label,kind]of[['url','Dataset source ↗','source'],['licenceUrl','Licence terms ↗','license']]){try{const url=new URL(source[field]);if(url.protocol!=='https:'&&url.protocol!=='http:'||url.username||url.password)continue;const link=document.createElement('a');link.className='station-reference-supplement-'+kind;link.href=url.href;link.textContent=label;link.target='_blank';link.rel='noopener noreferrer';sourceLinks.appendChild(link);}catch{}}
+      supplement.appendChild(sourceLinks);section.appendChild(supplement);
+    }
+    extra.appendChild(section);
   }
   if(typeof manifest.attribution?.countryEvidence==='string'&&manifest.attribution.countryEvidence.trim()){
     const section=document.createElement('section');section.id='countryEvidence';const heading=document.createElement('h3');heading.className='detail-heading';heading.textContent='COUNTRY EVIDENCE';section.appendChild(heading);
