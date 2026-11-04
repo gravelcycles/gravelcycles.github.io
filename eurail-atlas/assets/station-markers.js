@@ -1,11 +1,32 @@
-import{validMapLocation,isItaly}from'./atlas-core.js?v=09f755e415986467';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=09f755e415986467';
-import{stationInScope}from'./project-scope.js?v=09f755e415986467';
-import{countryMatches}from'./explorer-core.js?v=09f755e415986467';
+import{validMapLocation,isItaly,worldPoint}from'./atlas-core.js?v=da630a89c45d980d';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=da630a89c45d980d';
+import{stationInScope}from'./project-scope.js?v=da630a89c45d980d';
+import{countryMatches}from'./explorer-core.js?v=da630a89c45d980d';
 
 export const STATION_ZOOM=9;
-export function visibleStations(stations,bounds,state,zoom,selected=null){
-  const rows=state.stations!==false&&zoom>=STATION_ZOOM?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))&&(state.mode!=='countries'||countryMatches(s.country,state.country))):[];
+function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}
+export function stationZoomForViewport(viewport){
+  const{width,height}=viewportSize(viewport),area=width*height;
+  return width>=1100&&area>=1100000?7:width>=700&&area>=500000?8:STATION_ZOOM;
+}
+function earlyStationDensity(rows,viewport,zoom,focus){
+  const{width,height}=viewportSize(viewport);
+  if(zoom>=STATION_ZOOM||!width||!height)return rows;
+  const limit=Math.max(300,Math.min(2500,Math.floor(width*height/800))),cells=new Set(),result=[];
+  const focused=station=>focus!==null&&stationMemberIds(station).some(id=>focus.has(id));
+  const candidates=[...rows].sort((a,b)=>Number(focused(b))-Number(focused(a))||(b.weekly||0)-(a.weekly||0)||a.id.localeCompare(b.id));
+  for(const station of candidates){
+    const[x,y]=worldPoint(station.lon,station.lat),cell=Math.floor(x*2**zoom/14)+','+Math.floor(y*2**zoom/14),active=focused(station);
+    // Earlier wide-screen dots use a stable world grid. Focused actual calls
+    // bypass decluttering, preserving the complete highlighted stop pattern.
+    if(!active&&(result.length>=limit||cells.has(cell)))continue;
+    cells.add(cell);result.push(station);
+  }
+  return result;
+}
+export function visibleStations(stations,bounds,state,zoom,selected=null,viewport=null,focus=null){
+  const candidates=state.stations!==false&&zoom>=stationZoomForViewport(viewport)?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))&&(state.mode!=='countries'||countryMatches(s.country,state.country))):[];
+  const rows=earlyStationDensity(candidates,viewport,zoom,focus);
   if(stationInScope(selected,state)&&validMapLocation(selected.lon,selected.lat)&&!rows.some(s=>s.id===selected.id))rows.push(selected);
   return rows.sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id)||(a.weekly||0)-(b.weekly||0)||a.id.localeCompare(b.id));
 }
@@ -72,7 +93,7 @@ export class StationMarkers{
     map.on('unload',()=>{for(const type of['click','dblclick','contextmenu'])container.removeEventListener(type,click,true);for(const type of['pointerdown','pointerup','pointercancel'])container.removeEventListener(type,pointer,true);for(const type of['touchstart','touchend','touchcancel'])container.removeEventListener(type,touch,true);container.removeEventListener('mousemove',move,true);container.removeEventListener('mouseleave',leave,true);});
   }
   render(){
-    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected);
+    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.getStations(),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected,this.map.getSize(),focus);
     const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;this.layer.clearLayers();this.selectedHalo=null;this.selectedMarker=null;
     for(const station of rows){const active=station.id===selected?.id,dimmed=!active&&focus!==null&&!stationMemberIds(station).some(id=>focus.has(id));
       if(active)this.selectedHalo=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:9,weight:5,color:'#fbfaf6',fill:false,interactive:false}).addTo(this.layer);

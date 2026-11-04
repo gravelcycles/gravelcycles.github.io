@@ -1,12 +1,12 @@
-import{colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=09f755e415986467';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=09f755e415986467';
-import{RouteIndex}from'./rail-picking.js?v=09f755e415986467';
-import{renderWorld}from'./rail-lod.js?v=09f755e415986467';
-import{RasterClient}from'./raster-client.js?v=09f755e415986467';
-import{matchesFocus}from'./route-focus.js?v=09f755e415986467';
-import{isPhysicalSection}from'./physical-heat.js?v=09f755e415986467';
-import{edgeInScope}from'./project-scope.js?v=09f755e415986467';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=09f755e415986467';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=da630a89c45d980d';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=da630a89c45d980d';
+import{RouteIndex}from'./rail-picking.js?v=da630a89c45d980d';
+import{renderWorld}from'./rail-lod.js?v=da630a89c45d980d';
+import{RasterClient}from'./raster-client.js?v=da630a89c45d980d';
+import{matchesFocus}from'./route-focus.js?v=da630a89c45d980d';
+import{isPhysicalSection}from'./physical-heat.js?v=da630a89c45d980d';
+import{edgeInScope}from'./project-scope.js?v=da630a89c45d980d';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=da630a89c45d980d';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -53,12 +53,12 @@ export function thresholdStyles(base,minimum){
 }
 export function renderStyles(edges,data,zoom){return thresholdStyles(prepareStyles(edges,data,zoom),threshold(data.state.min));}
 export function visibleFrequencyHistogram(edges,base,view){
-  const counts=new Uint32Array(152);
+  const maximum=FREQUENCY_BREAKS.at(-1),counts=new Uint32Array(maximum+2);
   for(let i=0;i<edges.length;i++){
     const value=Math.max(base.pixels[i*16+4]?base.frequencies[i*2]:0,base.pixels[i*16+12]?base.frequencies[i*2+1]:0);
-    if(value>0&&(base.pixels[i*16+4]||base.pixels[i*16+12])&&intersects(edges[i]._bbox,view))counts[Math.min(151,Math.floor(value))]++;
+    if(value>0&&(base.pixels[i*16+4]||base.pixels[i*16+12])&&intersects(edges[i]._bbox,view))counts[Math.min(maximum+1,Math.floor(value))]++;
   }
-  for(let i=150;i>=0;i--)counts[i]+=counts[i+1];return counts;
+  for(let i=maximum;i>=0;i--)counts[i]+=counts[i+1];return counts;
 }
 const fullRouteState=state=>({...state,mode:['italy','hubs'].includes(state.mode)?'frequency':state.mode,pass:effectivePass(state),...(state.mode==='hubs'?{replacements:false}:{}),min:0});
 
@@ -197,7 +197,7 @@ export class RailRenderer{
     if(localThreshold){
       const cached=this.visibleFrequencyCache;
       if(!cached||cached.base!==this.lastStyleBase||cached.edges!==this.meshEdges||!sameCamera(cached.view,view))this.visibleFrequencyCache={base:this.lastStyleBase,edges:this.meshEdges,view:{...view},counts:visibleFrequencyHistogram(this.meshEdges,this.lastStyleBase,view)};
-      visible=this.visibleFrequencyCache.counts[Math.min(151,Math.max(0,Math.ceil(this.minimum)))];
+      visible=this.visibleFrequencyCache.counts[Math.min(this.visibleFrequencyCache.counts.length-1,Math.max(0,Math.ceil(this.minimum)))];
     }else for(let i=0;i<this.meshEdges.length;i++)if((this.lastPixels[i*16+4]||this.lastPixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
     this.canvas.setAttribute('aria-busy','true');this.map.getContainer().setAttribute('aria-busy','true');
     this.raster.paint({...view,dpr:this.dpr},this.lastPixels,{styleKey:this.currentStyleKey+':lod:'+this.lodBucket,baseKey:this.currentBaseKey,basePixels:this.lastStyleBase?.pixels,baseFrequencies:this.lastStyleBase?.frequencies,localThreshold,minimum:this.minimum,reviewOn:this.reviewOn,highlights:this.rasterHighlights||[],metadata:{intent:this.intent,thresholdPreview:!!this.thresholdPreview,baseKey:this.currentBaseKey,detail:{...detail,visible,minimum:this.minimum}}});

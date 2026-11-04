@@ -1,0 +1,12 @@
+/* Context details share the inspector side of the desktop map and leave its
+   search/zoom controls available. Phone sheets keep their full-screen layout. */
+@media(min-width:701px) and (min-height:501px),(min-width:701px) and (pointer:fine){
+ .map-area>.map-heading{left:180px;max-width:calc(100% - 260px)}
+ .service-context-panel{position:fixed;top:calc(var(--toolbar-height) + 18px);right:72px;bottom:18px;left:auto;width:min(400px,calc(100vw - 104px));max-width:none;max-height:none;margin:0;padding:25px 23px 22px;z-index:720;overscroll-behavior:contain;scroll-padding-top:20px}
+ .service-context-panel>.close-button{position:sticky;display:block;float:right;right:0;top:0;margin:-14px -13px 0 0;width:44px;height:44px;border-radius:50%;background:#e7eeea;z-index:2}
+ .service-context-panel>h3{font-size:25px;line-height:1.15;margin-right:35px}
+ .service-context-panel p{font-size:12px;line-height:1.6}.service-notice h4{font-size:14px}.service-notice-links a{font-size:12px;min-height:32px;display:flex;align-items:center}
+}
+@media(min-width:701px) and (max-width:1100px) and (min-height:501px),(min-width:701px) and (max-width:1100px) and (pointer:fine){
+ body:has(.service-context-panel:not([hidden])) #viewTools,body:has(.service-context-panel:not([hidden])) .map-area>.map-heading{visibility:hidden}
+}

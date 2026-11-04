@@ -1,4 +1,5 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=09f755e415986467';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=da630a89c45d980d';
+import{contextSelectionKey,contextCountryVisible,restoreContextFocus}from'./context-scope.js?v=da630a89c45d980d';
 
 export function relevantTransfers(summary,view){
   const{zoom,bounds,dates,day='all',sources=null,mode='frequency',schematic=true,representedInMainServiceLayer=[]}=view;
@@ -8,7 +9,7 @@ export function relevantTransfers(summary,view){
   if(effectivePass(view)||summary?.schemaVersion!==1||zoom<(summary.minimumZoom||4)||!Array.isArray(bounds)||bounds.length!==4||!serviceVisible({serviceMode:'temporary_replacement_bus'},view)||schematic===false)return[];
   const selected=selectedDays(day,dates),represented=new Set(representedInMainServiceLayer);
   return(summary.transfers||[]).filter(row=>{
-    const b=row.bounds;return row.representedInMainServiceLayer!==true&&!represented.has(row.id)&&row.temporary!==false&&(mode!=='italy'||row.countries?.includes('Italy'))&&(!sources||!row.source||sources.has(row.source))&&Array.isArray(b)&&b.length===4&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3]&&
+    const b=row.bounds;return contextCountryVisible(row,view)&&row.representedInMainServiceLayer!==true&&!represented.has(row.id)&&row.temporary!==false&&(mode!=='italy'||row.countries?.includes('Italy'))&&(!sources||!row.source||sources.has(row.source))&&Array.isArray(b)&&b.length===4&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3]&&
       selected.some(index=>dates[index]>=row.startDate&&dates[index]<=row.endDate&&(row.frequencyKnown===false?row.activeDates?.includes(dates[index]):(Number(row.daily?.[index])||0)>0));
   });
 }
@@ -45,14 +46,14 @@ export function transferHTML(row,day='all',dates=row.dates||[]){
 }
 
 export function setupOperatingTransfers({getManifest,getState,getDates,getView,getMap,load,onOpen=()=>{},isFocused=()=>false}){
-  const host=document.querySelector('.map-notices'),filters=document.querySelector('.inspection-filter');if(!host||!filters)return{refresh(){}};
+  const host=document.querySelector('.map-notices'),filters=document.querySelector('.inspection-filter');if(!host||!filters)return{refresh(){},hide(){}};
   const chip=document.createElement('button');chip.type='button';chip.id='operatingTransfersToggle';chip.className='inline-button operating-transfers-trigger';chip.hidden=true;chip.setAttribute('aria-controls','operatingTransfersPanel');chip.setAttribute('aria-expanded','false');chip.textContent='Replacement connection details ↗';
   const panel=document.createElement('section');panel.id='operatingTransfersPanel';panel.className='service-context-panel';panel.hidden=true;panel.setAttribute('role','region');panel.setAttribute('aria-labelledby','operatingTransfersTitle');panel.innerHTML='<button class="close-button" aria-label="Close connecting bus information">×</button><h3 id="operatingTransfersTitle">Connecting replacement buses</h3><p>Dashed lines retain temporary replacement-bus connections between documented calling points. They are schematic; the road route is unknown. No bus is counted as a train. These additional connections have no recorded pass or fee eligibility and are hidden when Eurail inclusion is selected. Check boarding locations, pass acceptance and ticket or reservation requirements with the operator.</p><label for="operatingTransfersFilter">Filter stops, line or operator</label><input id="operatingTransfersFilter" type="search" placeholder="Find a replacement connection" style="width:100%;margin:6px 0;padding:8px"><button id="operatingTransfersAll" type="button" hidden>Show all connections in view</button><p id="operatingTransfersSummary"></p><div id="operatingTransfersContent" aria-live="polite"></div>';
   filters.append(chip);host.append(panel);const close=panel.querySelector('button'),content=panel.querySelector('#operatingTransfersContent'),filter=panel.querySelector('#operatingTransfersFilter'),all=panel.querySelector('#operatingTransfersAll'),summary=panel.querySelector('#operatingTransfersSummary');
   const key=document.createElement('div');key.className='closure-key';key.id='temporaryReplacementBusKey';key.hidden=true;key.innerHTML='<i style="border-top:3px dashed #276b88"></i>Temporary replacement bus · approximate connection';document.getElementById('mapLegend')?.appendChild(key);
-  let path=null,revision=null,documentData=null,promise=null,active=[],layer=null,busRenderer=null,rendererKind=null,shown=null,selectedTransferIds=null,filterTimer=null;
+  let path=null,revision=null,documentData=null,promise=null,active=[],layer=null,busRenderer=null,rendererKind=null,shown=null,selectedTransferIds=null,filterTimer=null,selectionKey=null,activeKey='',request=0;
   const lineLayers=new Map(),searchText=new WeakMap();
-  function hide(focus=false){panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus)(chip.getClientRects().length?chip:document.getElementById('controlsToggle'))?.focus();}
+  function hide(focus=false){request++;panel.hidden=true;chip.setAttribute('aria-expanded','false');if(focus)restoreContextFocus(chip);}
   function activate(path,label,ids=()=>null){
     path.on('click',event=>{if(event.originalEvent)globalThis.L.DomEvent.stopPropagation(event.originalEvent);open(ids());});
     path.on('add',()=>{const element=path.getElement?.();if(!element)return;element.setAttribute('role','button');element.setAttribute('tabindex','0');element.setAttribute('aria-label',label);element.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();open(ids());}});});
@@ -99,17 +100,18 @@ export function setupOperatingTransfers({getManifest,getState,getDates,getView,g
     }).catch(error=>{if(expected===revision){promise=null;clearMarkers();}throw error;});}return promise;
   }
   function refresh(){
+    const currentSelection=contextSelectionKey(getState(),getDates());if(selectionKey!==null&&selectionKey!==currentSelection)hide();selectionKey=currentSelection;
     const manifest=getManifest(),next=manifest?.files?.operatingTransfers,nextRevision=manifest?.assets?.[manifest?.assetPaths?.[next]||next]?.sha256;
     if(path!==next||revision!==nextRevision){path=next;revision=nextRevision;documentData=null;promise=null;clearMarkers();hide();}
-    const view=getView(),state=getState();active=view?relevantTransfers(manifest?.operatingTransfers,{...view,dates:getDates(),day:state.day,sources:state.sources,mode:state.mode,pass:state.pass,trains:state.trains,replacements:state.replacements,schematic:state.schematic,representedInMainServiceLayer:manifest?.temporaryReplacementServices?.representedInMainServiceLayer||[]}):[];chip.hidden=!path||!active.length;
+    const view=getView(),state=getState();active=view?relevantTransfers(manifest?.operatingTransfers,{...view,dates:getDates(),day:state.day,sources:state.sources,mode:state.mode,country:state.country,pass:state.pass,trains:state.trains,replacements:state.replacements,schematic:state.schematic,representedInMainServiceLayer:manifest?.temporaryReplacementServices?.representedInMainServiceLayer||[]}):[];const nextActive=active.map(row=>row.id).sort().join('|');if(nextActive!==activeKey)hide();activeKey=nextActive;chip.hidden=!path||!active.length;
     if(chip.hidden){hide();clearMarkers();return;}if(documentData){if(!panel.hidden)render();updateMarkers();}else ensureData().catch(()=>{});
   }
   async function open(ids=null){
-    selectedTransferIds=ids?new Set(ids):null;refresh();if(chip.hidden)return;onOpen();document.getElementById('closeControls')?.click();panel.hidden=false;panel.setAttribute('aria-busy','true');chip.setAttribute('aria-expanded','true');content.textContent='Reading the connecting bus evidence…';close.focus();
-    try{await ensureData();if(!panel.hidden)render();}catch{if(!panel.hidden){panel.setAttribute('aria-busy','false');content.textContent='The connecting bus information could not load. Close and reopen to retry.';}}
+    selectedTransferIds=ids?new Set(ids):null;refresh();if(chip.hidden)return;onOpen();document.getElementById('closeControls')?.click();const ticket=++request;panel.hidden=false;panel.setAttribute('aria-busy','true');chip.setAttribute('aria-expanded','true');content.textContent='Reading the connecting bus evidence…';close.focus();
+    try{await ensureData();if(ticket===request&&!panel.hidden)render();}catch{if(ticket===request&&!panel.hidden){panel.setAttribute('aria-busy','false');content.textContent='The connecting bus information could not load. Close and reopen to retry.';}}
   }
   chip.onclick=()=>panel.hidden?open():hide(true);close.onclick=()=>hide(true);
   filter.oninput=()=>{selectedTransferIds=null;clearTimeout(filterTimer);filterTimer=setTimeout(render,100);};all.onclick=()=>{selectedTransferIds=null;render();};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden&&(panel.contains(document.activeElement)||chip===document.activeElement)){event.stopPropagation();event.preventDefault();hide(true);}},true);
-  return{refresh};
+  return{refresh,hide};
 }
