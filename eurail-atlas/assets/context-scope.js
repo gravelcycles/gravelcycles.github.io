@@ -1,4 +1,4 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=3b98ad05f89f72bf';
+import{normalize,validMapLocation}from'./atlas-core.js?v=e1213d59e9553b08';
 
 export function restoreContextFocus(chip){
   // Phone sheets clear background inertness in their hidden-state observer.

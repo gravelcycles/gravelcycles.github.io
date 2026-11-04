@@ -92,3 +92,7 @@
 
 .section-cohort{overflow-wrap:anywhere}.section-cohorts summary{min-height:40px}
 .operator-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;padding:7px 0}.operator-row>span{overflow-wrap:anywhere}.operator-row>strong{white-space:nowrap}.section-location{margin:12px 0}.section-location summary{min-height:44px;cursor:pointer;color:var(--route)}
+
+.filter-group #stationDisplay{min-width:105px;min-height:44px;padding-right:26px}
+
+.advanced-controls{border-top:1px solid var(--line);margin-top:20px;padding-top:4px}.advanced-controls>summary{min-height:44px;padding:12px 0;cursor:pointer;font-size:12px;font-weight:650;color:var(--ink-soft)}.advanced-controls>summary::marker{color:var(--route)}.advanced-count{float:right;min-height:20px;padding:2px 7px;border-radius:10px;background:var(--ink);color:var(--panel);font-size:10px;font-weight:600}.advanced-controls>summary small{display:block;margin:6px 0 0 14px;font-size:11px;line-height:1.5;font-weight:450;color:var(--muted);overflow-wrap:anywhere}.advanced-controls>summary:focus-visible{outline:3px solid #718f94;outline-offset:3px;border-radius:4px}.advanced-controls>.sources-control{margin:10px 0 18px;padding-top:12px}.advanced-controls .advanced-intro{margin:0 0 12px}.display-group{margin-top:0;padding-top:4px}.display-group #stationDisplayControl .select-label{margin-top:0}

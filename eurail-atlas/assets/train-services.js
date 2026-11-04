@@ -1,7 +1,7 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=3b98ad05f89f72bf';
-import{mergeSleepServices}from'./sleep-service.js?v=3b98ad05f89f72bf';
-import{mapPairFocusId}from'./route-focus.js?v=3b98ad05f89f72bf';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=3b98ad05f89f72bf';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=e1213d59e9553b08';
+import{mergeSleepServices}from'./sleep-service.js?v=e1213d59e9553b08';
+import{mapPairFocusId}from'./route-focus.js?v=e1213d59e9553b08';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=e1213d59e9553b08';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
@@ -90,6 +90,21 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
   return[...groups.values()].map(group=>({...group,labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))})).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
 }
 export function groupStationRoutes(journeys,stationIds,state,dates){return groupSegmentRoutes(journeys,{_stationIds:[...stationIds],_directionEdges:[]},state,dates);}
+
+// Callers pass the already filtered route groups. Derive markers from their
+// ordered passenger calls, never from geometry vertices or infrastructure ends.
+export function routeStationFocus(groups){
+  const stations=new Set(),endpoints=new Set();
+  for(const group of groups){
+    const calls=(group.stops||[]).filter(call=>{
+      const pickup=Array.isArray(call)?call[1]:call?.pickup,dropoff=Array.isArray(call)?call[2]:call?.dropoff;
+      return String(pickup??'0')!=='1'||String(dropoff??'0')!=='1';
+    }).map(callId).filter(Boolean);
+    for(const id of calls)stations.add(id);
+    if(calls.length){endpoints.add(calls[0]);endpoints.add(calls.at(-1));}
+  }
+  return{stations,endpoints};
+}
 
 export const runDisplayClockTimes=run=>Array.isArray(run?.localCallTimes)&&run.localCallTimes.length===run.callTimes?.length?run.localCallTimes:run?.callTimes||[];
 export const runUsesStationTimezones=run=>Array.isArray(run?.callTimezones)&&new Set(run.callTimezones).size>1;

@@ -1,7 +1,7 @@
-import{validMapLocation,isItaly,worldPoint}from'./atlas-core.js?v=3b98ad05f89f72bf';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=3b98ad05f89f72bf';
-import{stationInScope}from'./project-scope.js?v=3b98ad05f89f72bf';
-import{countryMatches}from'./explorer-core.js?v=3b98ad05f89f72bf';
+import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=e1213d59e9553b08';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=e1213d59e9553b08';
+import{stationInScope}from'./project-scope.js?v=e1213d59e9553b08';
+import{countryMatches}from'./explorer-core.js?v=e1213d59e9553b08';
 
 export const STATION_ZOOM=9;
 function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}
@@ -24,15 +24,19 @@ function earlyStationDensity(rows,viewport,zoom,focus){
   }
   return result;
 }
-export function visibleStations(stations,bounds,state,zoom,selected=null,viewport=null,focus=null){
-  const candidates=state.stations!==false&&zoom>=stationZoomForViewport(viewport)?stations.filter(s=>stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))&&(state.mode!=='countries'||countryMatches(s.country,state.country))):[];
-  const rows=earlyStationDensity(candidates,viewport,zoom,focus);
+export function visibleStations(stations,bounds,state,zoom,selected=null,viewport=null,focus=null,endpoints=null){
+  const display=stationDisplayMode(state),normalZoom=zoom>=stationZoomForViewport(viewport),background=display!=='hidden'&&(display==='always'||normalZoom);
+  const isEndpoint=s=>endpoints!==null&&stationMemberIds(s).some(id=>endpoints.has(id));
+  const candidates=stations.filter(s=>(background||isEndpoint(s))&&stationInScope(s,state)&&stationSourceSelected(s,state)&&validMapLocation(s.lon,s.lat)&&s.lon>=bounds[0]&&s.lat>=bounds[1]&&s.lon<=bounds[2]&&s.lat<=bounds[3]&&(state.mode!=='italy'||isItaly(s.country))&&(state.mode!=='countries'||countryMatches(s.country,state.country)));
+  // Endpoints remain legible at overview zoom and with background dots hidden.
+  // Once automatic local dots begin, all actual focused calls keep priority.
+  const rows=earlyStationDensity(candidates,viewport,zoom,normalZoom&&display!=='hidden'?focus:endpoints);
   if(stationInScope(selected,state)&&validMapLocation(selected.lon,selected.lat)&&!rows.some(s=>s.id===selected.id))rows.push(selected);
   return rows.sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id)||(a.weekly||0)-(b.weekly||0)||a.id.localeCompare(b.id));
 }
 export class StationMarkers{
-  constructor(map,{getStations,getState,getSelected,getFocus=()=>null,onPick}){
-    this.map=map;this.getStations=getStations;this.getState=getState;this.getSelected=getSelected;this.getFocus=getFocus;this.onPick=onPick;this.key='';
+  constructor(map,{getStations,getState,getSelected,getFocus=()=>null,getFocusEndpoints=()=>null,onPick}){
+    this.map=map;this.getStations=getStations;this.getState=getState;this.getSelected=getSelected;this.getFocus=getFocus;this.getFocusEndpoints=getFocusEndpoints;this.onPick=onPick;this.key='';
     // Rail canvases are siblings of Leaflet's transformed map pane. Put the
     // stops above those canvases and mirror the map pane's pan translation;
     // a higher z-index inside the original pane cannot escape its stacking
@@ -103,7 +107,8 @@ export class StationMarkers{
     const result=[];for(let i=low;i<rows.length&&rows[i].lon<=east;i++)if(rows[i].lat>=south&&rows[i].lat<=north)result.push(rows[i]);return result;
   }
   render(){
-    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),rows=visibleStations(this.candidates(bounds),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],this.getState(),this.map.getZoom(),selected,this.map.getSize(),focus);
+    const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),endpoints=this.getFocusEndpoints?.()||null,state=this.getState(),rows=visibleStations(this.candidates(bounds),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],state,this.map.getZoom(),selected,this.map.getSize(),focus,endpoints);
+    const diagnostics=this.map.getContainer().dataset;diagnostics.stationDotDisplay=stationDisplayMode(state);diagnostics.routeEndpointMarkers=String(endpoints?rows.filter(station=>stationMemberIds(station).some(id=>endpoints.has(id))).length:0);
     const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;
     if(!this.nodes)this.nodes=new Map();
     const ids=new Set(rows.map(s=>s.id));for(const[id,node]of this.nodes)if(!ids.has(id)){this.layer.removeLayer(node.marker);this.nodes.delete(id);}
