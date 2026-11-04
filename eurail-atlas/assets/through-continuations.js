@@ -30,7 +30,10 @@ export function decodeContinuationGeometry(document,dates){
 
 export const continuationAvailabilityNote=row=>{
   const rows=Array.isArray(row)?row:[row],logical=rows.filter(item=>item?.availabilityOnly===true);
-  return logical.length?'Reviewed dated through-service observations. Coverage is partial; counts are a lower bound for the selected dates.'+(logical.some(item=>item.callValidationReview||item.continuation?.callValidationReview)?' Recorded source pattern; intermediate-call changes unresolved. Clocks describe the retained source plan.':''):'';
+  if(!logical.length)return'';
+  const reviews=logical.map(item=>item.callValidationReview||item.continuation?.callValidationReview).filter(Boolean);
+  const warnings=[...new Set(reviews.map(review=>typeof review.publicWarning==='string'?review.publicWarning.trim():'').filter(Boolean))];
+  return'Reviewed dated through-service observations. Coverage is partial; counts are a lower bound for the selected dates.'+(reviews.length?' Recorded source pattern; intermediate-call changes unresolved. Clocks describe the retained source plan.':'')+(warnings.length?' '+warnings.join(' '):'');
 };
 
 export function continuationFocusEdgeIds(journey){return[...new Set([...(journey?.edgeIds||[]),...(journey?.additionalFocusEdgeIds||[])].filter(id=>typeof id==='string'&&id))];}
@@ -197,7 +200,7 @@ export function continuationMetrics(row,state,dates,span=continuationQuerySpan(r
 export function continuationPolicyText(rows,state,dates){
   rows=Array.isArray(rows)?rows:[rows];const products=new Map();
   const selected=dates.map((date,index)=>[date,index]).filter(([date,index])=>/^day-\d$/.test(state.day)?index===Number(state.day.slice(4)):state.day==='weekdays'?[1,2,3,4,5].includes(new Date(date+'T12:00:00Z').getUTCDay()):state.day==='weekend'?[0,6].includes(new Date(date+'T12:00:00Z').getUTCDay()):true).map(([,index])=>index);
-  for(const row of rows){const metrics=continuationMetrics(row,state,dates);if(!metrics)continue;for(const index of selected){const policy=metrics.policyByDate[index];if(!metrics.daily[index]||!policy)continue;
+  for(const row of rows){const metrics=continuationMetrics(row,state,dates);if(!metrics)continue;for(const index of selected){const policy=metrics.policyByDate[index]||{inclusion:row.inclusion||'unknown',reservation:row.reservation||'unknown',supplement:row.supplement||'unknown'};if(!metrics.daily[index])continue;
     if(!products.has(metrics.accommodation))products.set(metrics.accommodation,new Set());
     products.get(metrics.accommodation).add(`${policy.inclusion==='included'?'Eurail included':policy.inclusion==='excluded'?'Eurail excluded':'Eurail eligibility unverified'}; reservation ${String(policy.reservation).replaceAll('_',' ')}; supplement ${String(policy.supplement).replaceAll('_',' ')}`);
   }}
