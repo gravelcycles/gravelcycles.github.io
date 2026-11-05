@@ -1,17 +1,17 @@
-import{BUS_LIMITS}from'./bus-core.js?v=b9b3fd287d8ce04b';
-import{BusDataService}from'./bus-data-worker.js?v=b9b3fd287d8ce04b';
+import{BUS_LIMITS}from'./bus-core.js?v=7cc2de32b432a06f';
+import{BusDataService}from'./bus-data-worker.js?v=7cc2de32b432a06f';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 let sequence=0;
 function work(id,active){if(typeof globalThis.document?.dispatchEvent==='function'&&typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('atlasdatawork',{detail:{id:'bus:'+id,active}}));}
 
 export class BusDataClient{
-  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes}={}){
-    this.base=new URL(base).href;this.options={maximumBytes,...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=b9b3fd287d8ce04b',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;
+  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,overview=null}={}){
+    this.base=new URL(base).href;this.options={maximumBytes,overview,...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=7cc2de32b432a06f',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;
   }
   start(){
     if(this.started)return;this.started=true;
-    try{this.worker=this.workerFactory();this.worker.onmessage=event=>{const response=event.data,job=this.pending.get(response?.id);if(!job)return;if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';this.settle(response.id,error);}else this.settle(response.id,null,response.result);};this.worker.onerror=event=>{event.preventDefault?.();this.failWorker();};this.worker.postMessage({op:'init',base:this.base,maximumBytes:this.options.maximumBytes});}
+    try{this.worker=this.workerFactory();this.worker.onmessage=event=>{const response=event.data,job=this.pending.get(response?.id);if(!job)return;if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';this.settle(response.id,error);}else this.settle(response.id,null,response.result);};this.worker.onerror=event=>{event.preventDefault?.();this.failWorker();};this.worker.postMessage({op:'init',base:this.base,maximumBytes:this.options.maximumBytes,overview:this.options.overview});}
     catch{this.worker?.terminate();this.worker=null;}
   }
   service(){return this.fallback??=new BusDataService(this.base,this.options);}

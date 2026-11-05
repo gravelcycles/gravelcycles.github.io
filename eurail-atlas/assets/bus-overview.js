@@ -1,0 +1,1 @@
+export const BUS_OVERVIEW={"path":"bus-overview.json.gz","sha256":"f6902999a6c3378833363bc546f283bcab6e3cbeb3c6b7bab3e999c8ed368e34","bytes":1969907,"uncompressedBytes":8096003,"encoding":"gzip","busManifestSha256":"22fac3a3962bf43ce1c47a410d7a464148e8a96517dc3c30ee884c237edeb462","maximumZoom":7,"routeCount":8376,"vertexCount":110134};

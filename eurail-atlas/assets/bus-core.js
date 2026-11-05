@@ -1,5 +1,8 @@
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
+// The complete, audited display derivative has its own admission budget. Never
+// apply the regional packet cap to it: that silently hides most of the network.
+export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
 export function intersects(a,b){return Array.isArray(a)&&a.length===4&&a.every(Number.isFinite)&&a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];}
 export function busCount(route,day,dates){const i=dates.indexOf(day);return day==='all'?(route.dates||[]).reduce((n,v)=>n+(Number(v)||0),0):i<0?0:Number(route.dates?.[i])||0;}
 export function busEstimate(route,day,dates){return busCount({dates:route.estimatedDates},day,dates);}
@@ -36,6 +39,7 @@ export class BusRequests{
   constructor(base,{fetcher=globalThis.fetch,maximumBytes=BUS_LIMITS.cacheBytes,concurrency=3}={}){this.base=new URL(base);this.fetcher=fetcher.bind(globalThis);this.maximumBytes=maximumBytes;this.concurrency=Math.max(1,concurrency);this.cache=new Map();this.cacheBytes=0;this.flights=new Map();this.readers=new Map();this.queue=[];this.active=0;}
   cancel(reader){for(const call of [...this.readers.get(reader)||[]]){this.detach(call);call.reject(aborted());}}
   cancelAll(){for(const reader of [...this.readers.keys()])this.cancel(reader);this.cache.clear();this.cacheBytes=0;this.queue=[];}
+  identity(descriptor){const path=typeof descriptor==='string'?descriptor:descriptor?.path;return this.cache.get(new URL(path,this.base).href+':'+(descriptor?.sha256||''))?.sha256;}
   detach(call){const{flight,reader}=call;flight.calls.delete(call);const readers=this.readers.get(reader);readers?.delete(call);if(!readers?.size)this.readers.delete(reader);if(!flight.calls.size){if(this.flights.get(flight.flightKey)===flight)this.flights.delete(flight.flightKey);flight.controller.abort();}}
   validateSize(descriptor,wireBytes,bytes){if(Number.isInteger(descriptor?.bytes)&&descriptor.bytes!==wireBytes)throw new Error('Bus asset byte count mismatch');if(Number.isInteger(descriptor?.uncompressedBytes)&&descriptor.uncompressedBytes!==bytes)throw new Error('Bus decoded byte count mismatch');}
   pump(){while(this.active<this.concurrency&&this.queue.length){const flight=this.queue.shift();if(!flight.calls.size)continue;this.active++;this.read(flight).then(value=>this.settle(flight,null,value),error=>this.settle(flight,error)).finally(()=>{this.active--;this.pump();});}}
@@ -61,7 +65,7 @@ export class BusRequests{
     check();
     if(Number.isInteger(descriptor?.bytes)&&descriptor.bytes!==buffer.byteLength)throw new Error('Bus asset byte count mismatch');
     const wireBytes=buffer.byteLength;
-    if(descriptor?.sha256){const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join('');if(hash!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');}
+    const sha256=descriptor?.sha256||url.pathname.endsWith('/manifest.json')?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):undefined;if(descriptor?.sha256&&sha256!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');
     check();
     if(descriptor?.encoding==='gzip'||url.pathname.endsWith('.gz')){
       if(typeof DecompressionStream!=='function')throw new Error('This browser cannot decompress bus data');
@@ -71,7 +75,7 @@ export class BusRequests{
     }
     check();
     if(Number.isInteger(descriptor?.uncompressedBytes)&&descriptor.uncompressedBytes!==buffer.byteLength)throw new Error('Bus decoded byte count mismatch');
-    const value=JSON.parse(new TextDecoder().decode(buffer));check();if(buffer.byteLength<=this.maximumBytes){this.cacheBytes-=this.cache.get(key)?.bytes||0;this.cache.delete(key);this.cache.set(key,{value,bytes:buffer.byteLength,wireBytes});this.cacheBytes+=buffer.byteLength;while(this.cacheBytes>this.maximumBytes){const first=this.cache.keys().next().value;this.cacheBytes-=this.cache.get(first).bytes;this.cache.delete(first);}}
+    const value=JSON.parse(new TextDecoder().decode(buffer));check();if(buffer.byteLength<=this.maximumBytes){this.cacheBytes-=this.cache.get(key)?.bytes||0;this.cache.delete(key);this.cache.set(key,{value,bytes:buffer.byteLength,wireBytes,sha256});this.cacheBytes+=buffer.byteLength;while(this.cacheBytes>this.maximumBytes){const first=this.cache.keys().next().value;this.cacheBytes-=this.cache.get(first).bytes;this.cache.delete(first);}}
     return value;
   }
 }

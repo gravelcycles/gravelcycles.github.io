@@ -1,7 +1,7 @@
-import{BUS_LIMITS}from'./bus-core.js?v=b9b3fd287d8ce04b';
-import{worldPoint}from'./atlas-core.js?v=b9b3fd287d8ce04b';
-import{renderWorld}from'./rail-lod.js?v=b9b3fd287d8ce04b';
-import{RouteIndex}from'./rail-picking.js?v=b9b3fd287d8ce04b';
+import{BUS_LIMITS,BUS_OVERVIEW_LIMITS}from'./bus-core.js?v=7cc2de32b432a06f';
+import{worldPoint}from'./atlas-core.js?v=7cc2de32b432a06f';
+import{renderWorld}from'./rail-lod.js?v=7cc2de32b432a06f';
+import{RouteIndex}from'./rail-picking.js?v=7cc2de32b432a06f';
 
 // Reuse the train renderer's world coordinates, half-pixel display LOD and
 // geographic route index. Original vertices remain the picking authority.
@@ -10,14 +10,14 @@ export class BusGeometryCache{
   get(row){
     const coordinates=row.coordinates||[],key=row.geometryKey||coordinates,old=this.entries.get(key);
     if(old){this.entries.delete(key);this.entries.set(key,old);return old;}
-    const world=new Float64Array(coordinates.length*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,valid=true;
-    for(let i=0;i<coordinates.length;i++){
+    const packed=row._world instanceof Float64Array,world=packed?row._world.slice():new Float64Array(coordinates.length*2);let minX=packed?row._bbox[0]:Infinity,minY=packed?row._bbox[1]:Infinity,maxX=packed?row._bbox[2]:-Infinity,maxY=packed?row._bbox[3]:-Infinity,valid=true;
+    for(let i=0;!packed&&i<coordinates.length;i++){
       const[lon,lat]=coordinates[i];
       if(!Number.isFinite(lon)||!Number.isFinite(lat)){world[i*2]=world[i*2+1]=NaN;valid=false;continue;}
       const[x,y]=worldPoint(lon,lat);world[i*2]=x;world[i*2+1]=y;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);
     }
     const entry={_world:world,_bbox:[minX,minY,maxX,maxY],valid,paths:new Map()};
-    if(coordinates.length<=this.maximumVertices){this.entries.set(key,entry);this.vertices+=coordinates.length;while(this.vertices>this.maximumVertices){const first=this.entries.keys().next().value;this.vertices-=this.entries.get(first)._world.length/2;this.entries.delete(first);}}
+    if(world.length/2<=this.maximumVertices){this.entries.set(key,entry);this.vertices+=world.length/2;while(this.vertices>this.maximumVertices){const first=this.entries.keys().next().value;this.vertices-=this.entries.get(first)._world.length/2;this.entries.delete(first);}}
     return entry;
   }
   clear(){this.entries.clear();this.vertices=0;}
@@ -45,11 +45,11 @@ export function busPickEdges(rows,view,limit=BUS_LIMITS.pickSegments){
   }return{edges,segments};
 }
 
-export const busPaintOrder=edge=>({pass:edge.selectedPaint?1:0,priority:0,width:edge.selectedPaint?5:2.8,order:edge.paintOrder||0});
+export const busPaintOrder=edge=>({pass:edge.selectedPaint?1:0,priority:edge.paintGroup||0,width:edge.selectedPaint?5:edge.strokeWidth||2.8,order:edge.paintOrder||0});
 
 export class BusCanvas{
   constructor(map,onPick){
-    this.map=map;this.onPick=onPick;this.rows=[];this.stops=[];this.selected=null;this.frame=0;this.moving=false;this.geometry=new BusGeometryCache();this.groups=null;
+    this.map=map;this.onPick=onPick;this.rows=[];this.stops=[];this.selected=null;this.overview=false;this.frame=0;this.moving=false;this.geometry=new BusGeometryCache(BUS_OVERVIEW_LIMITS.vertices*2);this.groups=null;
     this.canvas=document.createElement('canvas');this.canvas.className='bus-map-canvas leaflet-zoom-animated';this.canvas.setAttribute('aria-hidden','true');this.ctx=this.canvas.getContext('2d');map.getContainer().append(this.canvas);
     this.move=()=>{if(!this.zoomAnimating)this.align();};this.end=()=>{this.moving=false;this.zoomAnimating=false;this.canvas.style.transition='none';this.schedule();};this.start=()=>{this.moving=true;};
     this.zoom=event=>{if(!this.camera)return;this.zoomAnimating=true;this.canvas.style.transition='transform 250ms cubic-bezier(0.25,0.1,0.25,1)';this.align(this.view(event.center,event.zoom));};
@@ -57,7 +57,7 @@ export class BusCanvas{
     map.on('move',this.move);map.on('moveend zoomend resize wheelzoomend',this.end);map.on('zoomstart dragstart wheelzoomstart',this.start);map.on('zoomanim',this.zoom);map.on('click',this.click);
   }
   view(center=this.map.getCenter(),zoom=this.map.getZoom()){const size=this.map.getSize(),p=this.map.project(center,0);return{center,zoom,width:size.x,height:size.y,scale:2**zoom,centerX:p.x,centerY:p.y};}
-  set(rows,stops,selected){this.rows=rows;this.stops=stops;this.selected=selected;this.groups=null;this.schedule();}
+  set(rows,stops,selected,options={}){this.rows=rows;this.stops=stops;this.selected=selected;if('overview'in options)this.overview=options.overview;this.groups=null;this.schedule();}
   schedule(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.draw();});}
   align(view=this.view()){
     if(!this.camera)return;const old=this.camera,scale=view.scale/old.scale,x=(old.centerX-view.centerX)*view.scale+(view.width-old.width*scale)/2,y=(old.centerY-view.centerY)*view.scale+(view.height-old.height*scale)/2;
@@ -65,6 +65,7 @@ export class BusCanvas{
   }
   prepare(zoom){
     const bucket=Math.ceil(zoom);if(this.groups&&this.bucket===bucket)return;
+    if(this.overview){this.prepareOverview(zoom);return;}
     const rows=this.selected?[...this.rows.filter(r=>r.id!==this.selected.id).slice(0,BUS_LIMITS.routes-1),this.selected]:this.rows.slice(0,BUS_LIMITS.routes),groups=[];let remaining=BUS_LIMITS.vertices,rendered=0;
     const reserve=this.selected?Math.min(BUS_LIMITS.vertices,this.selected.coordinates?.length||0):0;this.painted=[];
     for(const row of rows){let coords=row.coordinates||[];const selected=row.id===this.selected?.id,allowed=selected?remaining:remaining-reserve;if(allowed<2||coords.length<2)continue;
@@ -75,18 +76,33 @@ export class BusCanvas{
     }
     this.vertexCount=BUS_LIMITS.vertices-remaining;this.renderedVertices=rendered;this.groups=groups;this.bucket=bucket;
   }
+  prepareOverview(zoom){
+    // Admission rejects an oversized derivative before this point. Paint every
+    // matching native pattern; regional caps must never truncate this view.
+    const rows=this.rows.filter(row=>row.id!==this.selected?.id),groups=new Map();let vertices=0,rendered=0;this.painted=[];
+    if(rows.length>BUS_OVERVIEW_LIMITS.routes||rows.reduce((n,row)=>n+(row._pointCount||row.coordinates?.length||0),0)>BUS_OVERVIEW_LIMITS.vertices)throw new Error('Bus overview exceeds display budget');
+    if(this.selected)rows.push(this.selected);
+    for(const row of rows){
+      const selected=row.id===this.selected?.id;let record=row;
+      if(selected&&row.coordinates?.length>BUS_LIMITS.vertices){const stride=Math.ceil((row.coordinates.length-1)/(BUS_LIMITS.vertices-1)),coordinates=row.coordinates.filter((_,i)=>i%stride===0);if(coordinates.at(-1)!==row.coordinates.at(-1))coordinates.push(row.coordinates.at(-1));record={...row,coordinates,geometryKey:undefined};}
+      const entry=this.geometry.get(record);if(entry._world.length<4)continue;const result=busPath(entry,zoom),style=(selected?'selected:':'normal:')+(row.geometry==='provider_shape'?'solid':'dash');let group=groups.get(style);
+      if(!group){group={style,path:new Path2D(),selected,dash:row.geometry!=='provider_shape',order:groups.size};groups.set(style,group);}group.path.addPath(result.path);vertices+=entry._world.length/2;rendered+=result.vertices;
+      this.painted.push({...entry,row,id:row.id,selectedPaint:selected,paintGroup:group.order,strokeWidth:1.5,paintOrder:this.painted.length});
+    }
+    this.vertexCount=vertices;this.renderedVertices=rendered;this.groups=[...groups.values()];this.bucket=Math.ceil(zoom);
+  }
   draw(){
     if(this.moving||this.zoomAnimating)return;const started=performance.now(),view=this.view(),ratio=Math.min(globalThis.devicePixelRatio||1,2),ctx=this.ctx;if(!ctx)return;
     const width=Math.ceil(view.width*ratio),height=Math.ceil(view.height*ratio);if(this.canvas.width!==width||this.canvas.height!==height){this.canvas.width=width;this.canvas.height=height;this.canvas.style.width=view.width+'px';this.canvas.style.height=view.height+'px';}
     this.camera=view;this.canvas.style.transform='';ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,width,height);this.prepare(view.zoom);
     ctx.setTransform(ratio*view.scale,0,0,ratio*view.scale,ratio*(view.width/2-view.centerX*view.scale),ratio*(view.height/2-view.centerY*view.scale));ctx.lineJoin='round';
-    for(const group of this.groups){ctx.strokeStyle=group.selected?'#8a3f0d':'#b26918';ctx.lineWidth=(group.selected?5:2.8)/view.scale;ctx.globalAlpha=group.selected?1:.8;ctx.setLineDash(group.dash?[5/view.scale,5/view.scale]:[]);ctx.stroke(group.path);}
+    for(const group of this.groups){ctx.strokeStyle=group.selected?'#8a3f0d':'#b26918';ctx.lineWidth=(group.selected?5:this.overview?1.5:2.8)/view.scale;ctx.globalAlpha=group.selected?1:.8;ctx.setLineDash(group.dash?[5/view.scale,5/view.scale]:[]);ctx.stroke(group.path);}
     ctx.setTransform(ratio,0,0,ratio,0,0);ctx.globalAlpha=1;ctx.setLineDash([]);
-    const selectedIds=new Set(this.selected?.stopIds||this.selected?.calls?.map(c=>c.id)||[]),calls=this.selected?.calls||[],boarding=calls.filter(c=>c.passengerCall!==false&&(c.pickupType!==1||c.dropOffType!==1)&&Number.isFinite(c.lat)&&Number.isFinite(c.lon)),ends=boarding.length?[boarding[0],boarding.at(-1)]:[],candidates=calls.length?[...ends,...calls,...this.stops]:this.stops,seen=new Set(),dots=[new Path2D(),new Path2D()];let stopCount=0;
+    const selectedIds=new Set(this.selected?.stopIds||this.selected?.calls?.map(c=>c.id)||[]),calls=this.selected?.calls||[],boarding=calls.filter(c=>c.passengerCall!==false&&(c.pickupType!==1||c.dropOffType!==1)&&Number.isFinite(c.lat)&&Number.isFinite(c.lon)),ends=boarding.length?[boarding[0],boarding.at(-1)]:[],candidates=this.overview?ends:calls.length?[...ends,...calls,...this.stops]:this.stops,seen=new Set(),dots=[new Path2D(),new Path2D()];let stopCount=0;
     for(const stop of candidates){if(seen.has(stop.id)||(view.zoom<9&&!selectedIds.has(stop.id)))continue;seen.add(stop.id);if(!Number.isFinite(stop.lat)||!Number.isFinite(stop.lon))continue;const[wx,wy]=worldPoint(stop.lon,stop.lat),x=(wx-view.centerX)*view.scale+view.width/2,y=(wy-view.centerY)*view.scale+view.height/2;if(x<0||y<0||x>view.width||y>view.height)continue;if(stopCount>=BUS_LIMITS.stops)break;const chosen=selectedIds.has(stop.id),r=chosen?3.5:2.2,path=dots[+chosen];path.moveTo(x+r,y);path.arc(x,y,r,0,Math.PI*2);stopCount++;}
     ctx.fillStyle='#fff8e9';ctx.strokeStyle='#925012';ctx.lineWidth=1.3;for(const path of dots){ctx.fill(path);ctx.stroke(path);}
-    const picking=busPickEdges([...this.painted].reverse(),view);this.index=new RouteIndex(picking.edges);
-    Object.assign(this.canvas.dataset,{vertices:String(this.vertexCount),renderedVertices:String(this.renderedVertices),routes:String(this.painted.length),stops:String(stopCount),pickSegments:String(picking.segments),pending:'false',frame:String((Number(this.canvas.dataset.frame)||0)+1)});
+    const picking=this.overview?{edges:this.painted,segments:this.painted.reduce((n,row)=>n+row._world.length/2-1,0)}:busPickEdges([...this.painted].reverse(),view);this.index=new RouteIndex(picking.edges);
+    Object.assign(this.canvas.dataset,{mode:this.overview?'overview':'local',vertices:String(this.vertexCount),renderedVertices:String(this.renderedVertices),routes:String(this.painted.length),stops:String(stopCount),pickSegments:String(picking.segments),pending:'false',frame:String((Number(this.canvas.dataset.frame)||0)+1)});
     this.canvas.dispatchEvent(new CustomEvent('busdraw',{detail:{routes:this.painted.length,vertices:this.vertexCount,renderedVertices:this.renderedVertices,stops:stopCount,pickSegments:picking.segments,renderMs:performance.now()-started}}));
   }
   pick(x,y){if(this.moving||this.zoomAnimating||!this.camera||!this.index)return null;return this.index.pick(x,y,this.view(),8,()=>true,busPaintOrder)?.row||null;}
