@@ -1,40 +1,56 @@
-import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=e8dabfd5eb2702db';
-import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode}from'./atlas-core.js?v=e8dabfd5eb2702db';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=e8dabfd5eb2702db';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=e8dabfd5eb2702db';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=e8dabfd5eb2702db';
-import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=e8dabfd5eb2702db';
-import{decodeThroughServices}from'./through-services.js?v=e8dabfd5eb2702db';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=e8dabfd5eb2702db';
-import{RailRenderer}from'./map-renderer.js?v=e8dabfd5eb2702db';
-import{resolveAssetURL}from'./data-codec.js?v=e8dabfd5eb2702db';
-import{AtlasDataLoader,createPageHydrator}from'./data-loader.js?v=e8dabfd5eb2702db';
-import{setupViewportRefresh}from'./viewport-refresh.js?v=e8dabfd5eb2702db';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=e8dabfd5eb2702db';
-import{setupCoverage}from'./coverage-panel.js?v=e8dabfd5eb2702db';
-import{createCompletePairMerger}from'./network-view.js?v=e8dabfd5eb2702db';
-import{setupServiceContext}from'./service-context.js?v=e8dabfd5eb2702db';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=e8dabfd5eb2702db';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=e8dabfd5eb2702db';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=e8dabfd5eb2702db';
-import{setupTrainInspector}from'./train-inspector.js?v=e8dabfd5eb2702db';
-import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=e8dabfd5eb2702db';
-import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus}from'./train-services.js?v=e8dabfd5eb2702db';
-import{matchesFocus}from'./route-focus.js?v=e8dabfd5eb2702db';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=e8dabfd5eb2702db';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=e8dabfd5eb2702db';
-import{mainHubStations}from'./hub-stations.js?v=e8dabfd5eb2702db';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=e8dabfd5eb2702db';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=e8dabfd5eb2702db';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=e8dabfd5eb2702db';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=e8dabfd5eb2702db';
-import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges}from'./explorer-core.js?v=e8dabfd5eb2702db';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=e8dabfd5eb2702db';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=e8dabfd5eb2702db';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=e8dabfd5eb2702db';
+import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=78cd4ddea0382b77';
+import{MODES,PASS_MODES,EUROPE_BOUNDS,ITALY_BOUNDS,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode}from'./atlas-core.js?v=78cd4ddea0382b77';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=78cd4ddea0382b77';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=78cd4ddea0382b77';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=78cd4ddea0382b77';
+import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=78cd4ddea0382b77';
+import{decodeThroughServices}from'./through-services.js?v=78cd4ddea0382b77';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=78cd4ddea0382b77';
+import{RailRenderer}from'./map-renderer.js?v=78cd4ddea0382b77';
+import{resolveAssetURL}from'./data-codec.js?v=78cd4ddea0382b77';
+import{AtlasDataLoader,createPageHydrator}from'./data-loader.js?v=78cd4ddea0382b77';
+import{setupViewportRefresh}from'./viewport-refresh.js?v=78cd4ddea0382b77';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=78cd4ddea0382b77';
+import{setupCoverage}from'./coverage-panel.js?v=78cd4ddea0382b77';
+import{createCompletePairMerger}from'./network-view.js?v=78cd4ddea0382b77';
+import{setupServiceContext}from'./service-context.js?v=78cd4ddea0382b77';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=78cd4ddea0382b77';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=78cd4ddea0382b77';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=78cd4ddea0382b77';
+import{setupTrainInspector}from'./train-inspector.js?v=78cd4ddea0382b77';
+import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=78cd4ddea0382b77';
+import{routeFocusIds,callId,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus}from'./train-services.js?v=78cd4ddea0382b77';
+import{matchesFocus}from'./route-focus.js?v=78cd4ddea0382b77';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=78cd4ddea0382b77';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=78cd4ddea0382b77';
+import{mainHubStations}from'./hub-stations.js?v=78cd4ddea0382b77';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=78cd4ddea0382b77';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=78cd4ddea0382b77';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=78cd4ddea0382b77';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=78cd4ddea0382b77';
+import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges}from'./explorer-core.js?v=78cd4ddea0382b77';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=78cd4ddea0382b77';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=78cd4ddea0382b77';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=78cd4ddea0382b77';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
+// Bus code, metadata and local packets are all deferred until explicit activation.
+const busSaved=Object.fromEntries([...new URLSearchParams(location.search)].filter(([key])=>['bus','busDay','busSource','busOperator','busRoute'].includes(key)));
+let busEnabled=busSaved.bus==='1',busLayer=null,busModule=null,busIntent=0,busPicked=false;
+function busViewURL(railURL){const url=new URL(railURL,location.href);if(busEnabled)for(const[key,value]of Object.entries(busLayer?.state()||busSaved)){if(value)url.searchParams.set(key,value);}if(busEnabled)url.searchParams.set('bus','1');return url.pathname+url.search;}
+async function setBusEnabled(enabled,{open=true,reset=false}={}){
+  busEnabled=enabled;const intent=++busIntent;$('showBuses').checked=enabled;$('openBusExplorer').disabled=!enabled;
+  if(!enabled){if(reset)for(const key of Object.keys(busSaved))delete busSaved[key];busLayer?.disable({reset});saveURL();return;}
+  saveURL();
+  try{
+    if(!busModule)busModule=import('./bus-layer.js?v=78cd4ddea0382b77').catch(error=>{busModule=null;throw error;});
+    const module=await busModule;if(!busEnabled||intent!==busIntent)return;
+    if(!$('busStylesheet')){const link=document.createElement('link');link.id='busStylesheet';link.rel='stylesheet';link.href=new URL('./bus-layer.css?v=78cd4ddea0382b77',import.meta.url).href;document.head.append(link);}
+    if(!busLayer)busLayer=module.createBusLayer({map,initial:busSaved,onOpen:()=>{setControlsOpen(false);stationSearch?.close();closeInspector();},onChange:()=>{busEnabled=busLayer.enabled();$('showBuses').checked=busEnabled;$('openBusExplorer').disabled=!busEnabled;saveURL();}});
+    await busLayer.enable({open});
+  }catch{if(intent===busIntent){busEnabled=false;$('showBuses').checked=false;$('openBusExplorer').disabled=true;saveURL();toast('The bus explorer could not load. Turn it on to retry.');}}
+}
 let manifest=null,dates=['2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07'],stationList=[],hubEdges=[],hubCities=[],selected=null,map,renderer,markers,baseLayer,chunkTimer=0,toastTimer=0,detailSequence=0,legResult=null,booting=false,edgeVersion=0,hubVersion=0,pairVersion=-1,hubPairVersion=-1,pairEdges=[],hubPairEdges=[],journeyHighlights=new Set(),stationLoadPromise=null,bootstrapStationPromise=null,fullStationsLoaded=false,hubLoadPromise=null,searchList=[],chunkRun=0;
 let feeCustom=state.charge!=='all'&&state.charge!=='free';
 const mapPairIndex=new MapPairIndex(),dataLoader=new AtlasDataLoader(),chunkRequests=new Map(),pauseWork=()=>globalThis.scheduler?.yield?globalThis.scheduler.yield():new Promise(resolve=>setTimeout(resolve,0));
@@ -188,7 +204,7 @@ function currentEdges(){
 }
 function findDisplayedEdge(id){return currentEdges().find(edge=>edge.id===id)||edges.get(id);}
 function alternativeSources(){state.altSourceIds=new Set([...state.sources||[]].filter(id=>sourceById(id).defaultVisible===false));}
-function saveURL(){if(map&&!booting)history.replaceState(null,'',serializeState(state,map));}
+function saveURL(){if(map&&!booting)history.replaceState(null,'',busViewURL(serializeState(state,map)));}
 function method(){const d=$('methodDialog');if(!d.open)d.showModal();ensureManifest().then(()=>{updateMethod();loadPublicDownloads().catch(()=>{});}).catch(()=>toast('Source details could not load. Please retry.'));}
 function reconcileSources(){
   const selection=reconcileSourceSelection(manifest.sources,state.sources,{previousDefaults:state.defaultSources,authoritative:!manifest._bootstrap});
@@ -470,6 +486,7 @@ function setupMapControls(){
 
 function initMap(){
   map=L.map('map',{zoomControl:false,attributionControl:false,zoomSnap:.25,zoomDelta:1,minZoom:3,maxZoom:19,touchZoom:true,maxBounds:[[-5,-55],[85,90]],maxBoundsViscosity:.6,preferCanvas:true});
+  map.on('click',event=>{busPicked=Boolean(busLayer?.pick(event.containerPoint.x,event.containerPoint.y));});
   // The compact country layer is an offline fallback beneath the detailed map.
   map.createPane('countryFallback').style.zIndex=150;
   if(state.center)map.setView(state.center.slice(0,2),state.center[2]);else map.fitBounds(state.mode==='italy'?ITALY_BOUNDS:EUROPE_BOUNDS,mapFramePadding());
@@ -481,7 +498,7 @@ function initMap(){
   }).on('loading',()=>{loadedTiles=0;}).on('tileload',()=>{loadedTiles++;$('basemapStatus').hidden=true;map.getContainer().dataset.basemap='available';})
     .on('tileerror',event=>{event.tile.style.visibility='hidden';})
     .on('load',()=>{$('basemapStatus').hidden=loadedTiles>0;if(!loadedTiles){map.getContainer().dataset.basemap='fallback';loadCountryFallback();}}).addTo(map);
-  markers=L.layerGroup().addTo(map);stationMarkers=new StationMarkers(map,{getStations:()=>stationList,getState:()=>state.mode==='hubs'?{...state,stations:false}:state.mode==='countries'&&activeFocusIds()!==null?{...state,mode:'frequency'}:state,getSelected:()=>selectedStation,getFocus:activeFocusStations,getFocusEndpoints:activeFocusEndpoints,onPick:s=>pickStation(s,{inspect:true})});renderer=new RailRenderer(map,()=>{const focusIds=activeFocusIds();return{edges:currentEdges(),state,dates,stations:stationMap,selected:trainFocus?null:selected,highlightIds:focusIds||journeyHighlights,focusIds,supplementalFocusGroup:trainFocusGroup?.supplementalAvailability?trainFocusGroup:null};},pickEdge);
+  markers=L.layerGroup().addTo(map);stationMarkers=new StationMarkers(map,{getStations:()=>stationList,getState:()=>state.mode==='hubs'?{...state,stations:false}:state.mode==='countries'&&activeFocusIds()!==null?{...state,mode:'frequency'}:state,getSelected:()=>selectedStation,getFocus:activeFocusStations,getFocusEndpoints:activeFocusEndpoints,onPick:s=>pickStation(s,{inspect:true})});renderer=new RailRenderer(map,()=>{const focusIds=activeFocusIds();return{edges:currentEdges(),state,dates,stations:stationMap,selected:trainFocus?null:selected,highlightIds:focusIds||journeyHighlights,focusIds,supplementalFocusGroup:trainFocusGroup?.supplementalAvailability?trainFocusGroup:null};},edge=>{if(!busPicked)pickEdge(edge);});
   renderer.canvas.addEventListener('atlasdraw',event=>updateMapSummary(event.detail.visible));setupViewportRefresh(map,()=>{saveURL();scheduleChunks();renderHubs();coverage.refreshViewport();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();});installSmoothWheelZoom(map);
 
   $('zoomIn').onclick=()=>map.zoomIn();$('zoomOut').onclick=()=>map.zoomOut();$('fitMap').onclick=()=>fitRegion();
@@ -878,12 +895,12 @@ function renderJourneyResult(result){
 
 function setupEvents(){setupMapControls();setupLegend();stationSearch=setupStationSearch({getStations:()=>stationList,getState:()=>state,ensureStations,sourceName,onPick:s=>{if(state.mode==='hubs')setMode('frequency');pickStation(s,{inspect:true,center:true});},onOpen:()=>{closeOtherContextPanels();setControlsOpen(false);}});mobileSheets=setupMobileSheets({closeControls:()=>setControlsOpen(false),closeSearch:()=>stationSearch.close(),closeInspector,getMap:()=>map});setupExplorerControls();$('stationDisplay').onchange=event=>{state.stationDisplay=event.target.value;state.stations=state.stationDisplay!=='hidden';renderHubs();refresh({details:false});};$('emptySourceSelection')?.addEventListener('click',()=>chooseSources(false));document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>setDay(b.dataset.day));$('showHubs').onchange=event=>{state.hubs=event.target.checked;if(state.hubs)loadHubCities();refresh({details:false});};
 $('showTrains').onchange=event=>{state.trains=event.target.checked;layersChanged();};$('showReplacements').onchange=event=>{state.replacements=event.target.checked;layersChanged();};
-document.querySelectorAll('[data-service-only]').forEach(button=>button.onclick=()=>{state.trains=button.dataset.serviceOnly==='trains';state.replacements=button.dataset.serviceOnly==='replacements';layersChanged();});
-document.querySelectorAll('[data-service-preset]').forEach(button=>button.onclick=()=>{state.trains=button.dataset.servicePreset==='all';if(state.mode!=='traffic')state.replacements=button.dataset.servicePreset==='all';layersChanged();});
-document.querySelector('[data-context-only]').onclick=()=>{state.trains=false;state.replacements=false;state.closedCorridors=true;state.physicalRailways=false;layersChanged();};
+document.querySelectorAll('[data-service-only]').forEach(button=>button.onclick=()=>{setBusEnabled(false);state.trains=button.dataset.serviceOnly==='trains';state.replacements=button.dataset.serviceOnly==='replacements';layersChanged();});
+document.querySelectorAll('[data-service-preset]').forEach(button=>button.onclick=()=>{if(button.dataset.servicePreset==='none')setBusEnabled(false);state.trains=button.dataset.servicePreset==='all';if(state.mode!=='traffic')state.replacements=button.dataset.servicePreset==='all';layersChanged();});
+document.querySelector('[data-context-only]').onclick=()=>{setBusEnabled(false);state.trains=false;state.replacements=false;state.closedCorridors=true;state.physicalRailways=false;layersChanged();};
 $('showPhysicalRailways').onchange=event=>{state.physicalRailways=event.target.checked;refresh();};
 document.querySelectorAll('[data-context-preset]').forEach(button=>button.onclick=()=>{const enabled=button.dataset.contextPreset==='all';state.closedCorridors=enabled;state.physicalRailways=enabled;state.hubs=enabled;state.stations=enabled;state.stationDisplay=enabled?'auto':'hidden';if(enabled)loadHubCities();refresh();});
-$('hideMapOverlays').onclick=()=>{closeInspector();state.trains=false;state.replacements=false;state.closedCorridors=false;state.physicalRailways=false;state.hubs=false;state.stations=false;state.stationDisplay='hidden';layersChanged();};
+$('hideMapOverlays').onclick=()=>{setBusEnabled(false);closeInspector();state.trains=false;state.replacements=false;state.closedCorridors=false;state.physicalRailways=false;state.hubs=false;state.stations=false;state.stationDisplay='hidden';layersChanged();};
 $('fitReplacementSections').onclick=()=>ensureManifest().then(()=>{if(!serviceContext.fitAll())toast('No affected railway sections are recorded for these dates.');}).catch(()=>toast('Recorded notices could not load. Please retry.'));
 $('findReplacementServices').onclick=()=>ensureManifest().then(async()=>{await loadCompleteNetwork({forRoute:true});const bounds=currentEdges().filter(edge=>isTemporaryReplacement(edge)&&qualifiesEdge(edge,state,dates,stationMap)).flatMap(edge=>edge.coords.map(([lon,lat])=>[lat,lon]));if(bounds.length)map.fitBounds(bounds,{...mapFramePadding(),maxZoom:10});else toast('No recorded replacement buses match these filters.');}).catch(()=>toast('Replacement services could not load. Please retry.'));
 $('eurailOnly').onchange=event=>{state.pass=event.target.checked;refresh();};
@@ -893,7 +910,7 @@ document.querySelectorAll('[data-charge-preset]').forEach(button=>button.onclick
 $('showIncluded').onchange=event=>{state.included=event.target.checked;refresh();};$('showReview').onchange=event=>{state.review=event.target.checked;refresh();};
 $('showInferred').onchange=event=>{state.inferred=event.target.checked;refresh();};$('showAligned').onchange=event=>{state.aligned=event.target.checked;refresh();};$('showSchematic').onchange=event=>{state.schematic=event.target.checked;refresh();};
 document.querySelectorAll('[data-geometry-preset]').forEach(button=>button.onclick=()=>{state.aligned=button.dataset.geometryPreset==='all';state.inferred=['all','inferred'].includes(button.dataset.geometryPreset);state.schematic=['all','approximate'].includes(button.dataset.geometryPreset);refresh();});
-$('resetFilters').onclick=()=>{state.day='all';state.pass=false;state.stations=true;state.stationDisplay='auto';state.min=0;state.hubs=true;state.schematic=true;state.aligned=true;state.inferred=true;state.trains=true;state.replacements=true;feeCustom=false;state.closedCorridors=false;state.physicalRailways=false;state.included=true;state.review=false;state.charge='all';state.chargeMatch='any';state.hubCount=100;state.hubExamples='all';state.hubCity='';renderCityOptions();chooseSources(false);scheduleChunks();ensurePassPolicies().catch(()=>{});toast('Recommended sources and default filters restored.');};$('recommendedSources').onclick=()=>chooseSources(false);$('allSources').onclick=()=>chooseSources(true);$('closeInspector').onclick=closeInspector;$('methodButton').onclick=method;$('closeMethod').onclick=closeMethod;$('backToMap').onclick=closeMethod;$('methodDialog').onclick=event=>{if(event.target===$('methodDialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeMethod();}};document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!document.querySelector('dialog[open]')){if(!trainInspector.back())closeInspector();}});$('retryButton').onclick=boot;$('compareButton').onclick=compareStations;$('swapStations').onclick=()=>{const from=state.from;state.from=state.to;state.to=from;$('fromStation').value=state.from?(resolvedStation(state.from)||station(state.from)).name:'';$('toStation').value=state.to?(resolvedStation(state.to)||station(state.to)).name:'';saveURL();};$('shareButton').onclick=async()=>{saveURL();try{await navigator.clipboard.writeText(location.href);toast('View link copied. Site access is unchanged.');}catch(error){const input=document.createElement('input');input.value=location.href;document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'View link copied. Site access is unchanged.':'The current view link is ready in your address bar.');}};setupAutocomplete('from');setupAutocomplete('to');}
+$('resetFilters').onclick=()=>{setBusEnabled(false,{reset:true});state.day='all';state.pass=false;state.stations=true;state.stationDisplay='auto';state.min=0;state.hubs=true;state.schematic=true;state.aligned=true;state.inferred=true;state.trains=true;state.replacements=true;feeCustom=false;state.closedCorridors=false;state.physicalRailways=false;state.included=true;state.review=false;state.charge='all';state.chargeMatch='any';state.hubCount=100;state.hubExamples='all';state.hubCity='';renderCityOptions();chooseSources(false);scheduleChunks();ensurePassPolicies().catch(()=>{});toast('Recommended sources and default filters restored.');};$('recommendedSources').onclick=()=>chooseSources(false);$('allSources').onclick=()=>chooseSources(true);$('closeInspector').onclick=closeInspector;$('methodButton').onclick=method;$('closeMethod').onclick=closeMethod;$('backToMap').onclick=closeMethod;$('methodDialog').onclick=event=>{if(event.target===$('methodDialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeMethod();}};document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!document.querySelector('dialog[open]')){if(!trainInspector.back())closeInspector();}});$('retryButton').onclick=boot;$('compareButton').onclick=compareStations;$('swapStations').onclick=()=>{const from=state.from;state.from=state.to;state.to=from;$('fromStation').value=state.from?(resolvedStation(state.from)||station(state.from)).name:'';$('toStation').value=state.to?(resolvedStation(state.to)||station(state.to)).name:'';saveURL();};$('shareButton').onclick=async()=>{saveURL();try{await navigator.clipboard.writeText(location.href);toast('View link copied. Site access is unchanged.');}catch(error){const input=document.createElement('input');input.value=location.href;document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'View link copied. Site access is unchanged.':'The current view link is ready in your address bar.');}};setupAutocomplete('from');setupAutocomplete('to');}
 function updateMethod(){
   if(!manifest)return;
   document.getElementById('generatedMethods')?.remove();const extra=document.createElement('div');extra.id='generatedMethods';
@@ -972,4 +989,4 @@ async function boot(){
   finally{booting=false;saveURL();}
 }
 
-initMap();setupEvents();applyControls();boot();
+initMap();setupEvents();$('showBuses').onchange=event=>setBusEnabled(event.target.checked);$('openBusExplorer').onclick=()=>busLayer?.open();applyControls();boot();if(busEnabled)setBusEnabled(true,{open:false});
