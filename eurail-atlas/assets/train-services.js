@@ -1,9 +1,10 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=0c0a84033e50767c';
-import{mergeSleepServices}from'./sleep-service.js?v=0c0a84033e50767c';
-import{mapPairFocusId}from'./route-focus.js?v=0c0a84033e50767c';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=0c0a84033e50767c';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=e8dabfd5eb2702db';
+import{mergeSleepServices}from'./sleep-service.js?v=e8dabfd5eb2702db';
+import{mapPairFocusId}from'./route-focus.js?v=e8dabfd5eb2702db';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=e8dabfd5eb2702db';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
+export function sourceTrainLabelKey(value){const text=String(value||'').replace(/\s+/g,'').toUpperCase(),match=text.match(/^(?:RJX|RJ|RAILJET|EC|ECE|IC|ICE|EN|NJ)?(\d{1,6})$/);return match?match[1]:text;}
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
 // A public number identifies a run, not a route. Preserve source, provider,
 // direction, repeated calls and every intermediate station in route identity.
@@ -161,7 +162,7 @@ export function routeRuns(group,pages,state,dates){
     if(!entry||entry.source!==journey.source||entry.snapshot!==journey.snapshot)continue;
     for(const run of entry.runs||[]){
       const consumed=journey._logicalAvailabilityDeduplicated?.runs?.find(row=>row.runId===run.id)?.daily;
-      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]);if(!active.length)continue;
+      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]&&(!journey._supplementalLabelDaily||journey._supplementalLabelDaily[sourceTrainLabelKey(run.label)]?.[dates.indexOf(date)]>0));if(!active.length)continue;
       if(!Array.isArray(run.callTimes)||run.callTimes.length!==journey.stops.length)continue;
       const key=JSON.stringify([journeyIdentity(journey),run.id]);if(seen.has(key))continue;seen.add(key);
       result.push({...run,journey,dates:active});

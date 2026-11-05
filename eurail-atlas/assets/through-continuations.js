@@ -32,7 +32,8 @@ export const continuationAvailabilityNote=row=>{
   const rows=Array.isArray(row)?row:[row],logical=rows.filter(item=>item?.availabilityOnly===true);
   if(!logical.length)return'';
   const reviews=logical.map(item=>item.callValidationReview||item.continuation?.callValidationReview).filter(Boolean);
-  const warnings=[...new Set(reviews.map(review=>typeof review.publicWarning==='string'?review.publicWarning.trim():'').filter(Boolean))];
+  const clockReviews=logical.map(item=>item.clockValidationReview||item.continuation?.clockValidationReview).filter(Boolean);
+  const warnings=[...new Set([...reviews,...clockReviews].map(review=>typeof review.publicWarning==='string'?review.publicWarning.trim():'').filter(Boolean))];
   return'Reviewed dated through-service observations. Coverage is partial; counts are a lower bound for the selected dates.'+(reviews.length?' Recorded source pattern; intermediate-call changes unresolved. Clocks describe the retained source plan.':'')+(warnings.length?' '+warnings.join(' '):'');
 };
 

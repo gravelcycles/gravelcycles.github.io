@@ -1,12 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=0c0a84033e50767c';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=0c0a84033e50767c';
-import{RouteIndex}from'./rail-picking.js?v=0c0a84033e50767c';
-import{renderWorld}from'./rail-lod.js?v=0c0a84033e50767c';
-import{RasterClient}from'./raster-client.js?v=0c0a84033e50767c';
-import{matchesFocus}from'./route-focus.js?v=0c0a84033e50767c';
-import{isPhysicalSection}from'./physical-heat.js?v=0c0a84033e50767c';
-import{edgeInScope}from'./project-scope.js?v=0c0a84033e50767c';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=0c0a84033e50767c';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=e8dabfd5eb2702db';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=e8dabfd5eb2702db';
+import{RouteIndex}from'./rail-picking.js?v=e8dabfd5eb2702db';
+import{renderWorld}from'./rail-lod.js?v=e8dabfd5eb2702db';
+import{RasterClient}from'./raster-client.js?v=e8dabfd5eb2702db';
+import{matchesFocus}from'./route-focus.js?v=e8dabfd5eb2702db';
+import{isPhysicalSection}from'./physical-heat.js?v=e8dabfd5eb2702db';
+import{edgeInScope}from'./project-scope.js?v=e8dabfd5eb2702db';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=e8dabfd5eb2702db';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=e8dabfd5eb2702db';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -189,10 +190,11 @@ export class RailRenderer{
   }
   rasterHighlightItems(data){
     if(!data.highlightIds?.size&&!data.selected)return[];
-    const zoom=this.map.getZoom(),key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,zoom)+'|'+threshold(data.state.min);
+    const zoom=this.map.getZoom(),key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,zoom)+'|'+threshold(data.state.min)+'|'+(data.supplementalFocusGroup?.key||'');
     if(this.rasterHighlightKey===key&&this.rasterHighlightEdges===data.edges)return this.rasterHighlights;
     const selected=data.highlightIds?.size?data.edges.filter(edge=>matchesFocus(edge,data.highlightIds)):[],items=highlightItems(selected,data,zoom,2.5);
     if(data.selected?._world)items.push(...highlightItems([data.selected],data,zoom));
+    items.push(...supplementalFocusItems(data.edges,data.supplementalFocusGroup,data.state,data.dates,data.highlightIds,zoom));
     this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;this.rasterHighlights=items;return items;
   }
   queueRaster(view,detail){
@@ -215,7 +217,7 @@ export class RailRenderer{
     this.canvas.hidden=true;this.surface=canvas();this.surface.dataset.renderer='canvas';this.ctx=this.surface.getContext('2d');this.map.getContainer().appendChild(this.surface);this.canvas.dataset.renderer='canvas-fallback';this.canvas.setAttribute('aria-busy','false');this.map.getContainer().setAttribute('aria-busy','false');this.schedule();
   }
   updateHighlights(data){
-    const key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,this.map.getZoom())+'|'+threshold(data.state.min);
+    const key=(data.selected?.id||'')+'|'+[...data.highlightIds||[]].join(',')+'|'+this.filterKey(data,this.map.getZoom())+'|'+threshold(data.state.min)+'|'+(data.supplementalFocusGroup?.key||'');
     if(this.highlightKey===key&&this.highlightEdgesReference===data.edges)return;
     const items=this.rasterHighlightItems(data),edges=items.map(item=>({_world:item.world})),styles=items.map(({world,...style})=>({normal:style}));
     const view=this.view();this.gpu.upload(edges,true,[view.centerX,view.centerY]);this.gpu.styles(styles,true);this.highlightKey=key;this.highlightEdgesReference=data.edges;
