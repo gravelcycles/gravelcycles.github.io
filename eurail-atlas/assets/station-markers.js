@@ -1,7 +1,7 @@
-import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=7cc2de32b432a06f';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=7cc2de32b432a06f';
-import{stationInScope}from'./project-scope.js?v=7cc2de32b432a06f';
-import{countryMatches}from'./explorer-core.js?v=7cc2de32b432a06f';
+import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=e61b3507f1459898';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=e61b3507f1459898';
+import{stationInScope}from'./project-scope.js?v=e61b3507f1459898';
+import{countryMatches}from'./explorer-core.js?v=e61b3507f1459898';
 
 export const STATION_ZOOM=9;
 function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}
@@ -109,17 +109,18 @@ export class StationMarkers{
   render(){
     const bounds=this.map.getBounds().pad(.05),selected=this.getSelected(),focus=this.getFocus(),endpoints=this.getFocusEndpoints?.()||null,state=this.getState(),rows=visibleStations(this.candidates(bounds),[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],state,this.map.getZoom(),selected,this.map.getSize(),focus,endpoints);
     const diagnostics=this.map.getContainer().dataset;diagnostics.stationDotDisplay=stationDisplayMode(state);diagnostics.routeEndpointMarkers=String(endpoints?rows.filter(station=>stationMemberIds(station).some(id=>endpoints.has(id))).length:0);
-    const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>s.id).join(',');if(key===this.key)return;this.key=key;
+    const key=(selected?.id||'')+'|'+(focus?[...focus].sort().join(','):'all')+'|'+rows.map(s=>[s.id,s.lon,s.lat].join(':')).join(',');if(key===this.key)return;this.key=key;
     if(!this.nodes)this.nodes=new Map();
     const ids=new Set(rows.map(s=>s.id));for(const[id,node]of this.nodes)if(!ids.has(id)){this.layer.removeLayer(node.marker);this.nodes.delete(id);}
     if(this.haloStation!==selected?.id){if(this.selectedHalo)this.layer.removeLayer(this.selectedHalo);this.selectedHalo=null;this.haloStation=selected?.id;}
     this.selectedMarker=null;
     for(const station of rows){const active=station.id===selected?.id,dimmed=!active&&focus!==null&&!stationMemberIds(station).some(id=>focus.has(id));
       if(active&&!this.selectedHalo)this.selectedHalo=L.circleMarker([station.lat,station.lon],{renderer:this.renderer,radius:9,weight:5,color:'#fbfaf6',fill:false,interactive:false}).addTo(this.layer);
+      if(active)this.selectedHalo.setLatLng([station.lat,station.lon]);
       const signature=active?'selected':dimmed?'dimmed':'ordinary',style={radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':dimmed?'#a6b0a9':'#3d615d',opacity:dimmed?.6:1,fillColor:dimmed?'#d3d9d3':'#fbfaf6',fillOpacity:dimmed?.7:1};
       let node=this.nodes.get(station.id);
-      if(!node){node={station,signature,marker:L.circleMarker([station.lat,station.lon],{renderer:this.renderer,...style,interactive:true,bubblingMouseEvents:false}).addTo(this.layer)};node.marker.on('click',()=>this.onPick(node.station));this.nodes.set(station.id,node);}
-      else{if(node.station.lat!==station.lat||node.station.lon!==station.lon)node.marker.setLatLng([station.lat,station.lon]);if(node.signature!==signature)node.marker.setStyle(style);node.station=station;node.signature=signature;}
+      if(!node){node={station,signature,lon:station.lon,lat:station.lat,marker:L.circleMarker([station.lat,station.lon],{renderer:this.renderer,...style,interactive:true,bubblingMouseEvents:false}).addTo(this.layer)};node.marker.on('click',()=>this.onPick(node.station));this.nodes.set(station.id,node);}
+      else{if(node.lat!==station.lat||node.lon!==station.lon)node.marker.setLatLng([station.lat,station.lon]);if(node.signature!==signature)node.marker.setStyle(style);node.station=station;node.signature=signature;node.lon=station.lon;node.lat=station.lat;}
       node.marker.bringToFront();if(active)this.selectedMarker=node.marker;
     }
     this.bringSelectedToFront();

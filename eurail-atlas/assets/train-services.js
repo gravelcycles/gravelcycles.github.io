@@ -1,7 +1,9 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=7cc2de32b432a06f';
-import{mergeSleepServices}from'./sleep-service.js?v=7cc2de32b432a06f';
-import{mapPairFocusId}from'./route-focus.js?v=7cc2de32b432a06f';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics}from'./through-continuations.js?v=7cc2de32b432a06f';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=e61b3507f1459898';
+import{mergeSleepServices}from'./sleep-service.js?v=e61b3507f1459898';
+import{mapPairFocusId}from'./route-focus.js?v=e61b3507f1459898';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=e61b3507f1459898';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=e61b3507f1459898';
+import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=e61b3507f1459898';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export function sourceTrainLabelKey(value){const text=String(value||'').replace(/\s+/g,'').toUpperCase(),match=text.match(/^(?:RJX|RJ|RAILJET|EC|ECE|IC|ICE|EN|NJ)?(\d{1,6})$/);return match?match[1]:text;}
@@ -14,7 +16,7 @@ export const routeIdentity=journey=>JSON.stringify([journey.source,journey.snaps
 // source wording without promoting it to route identity or another service.
 export function sourceServiceDesignations(journeys){
   const text=value=>typeof value==='string'||typeof value==='number'?String(value).trim():'';
-  const labels=new Set(journeys.flatMap(journey=>(journey.publicTrains||[]).map(row=>text(row.label))).filter(Boolean));
+  const labels=new Set(journeys.flatMap(journey=>nativePublicTrainLabels(journey).map(row=>text(row.label))).filter(Boolean));
   return[...new Set(journeys.flatMap(journey=>[journey.line,journey.lineName]).map(text).filter(value=>value&&!labels.has(value)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 }
 
@@ -61,11 +63,11 @@ export function filteredServiceMetadata(journey,daily){
     if(Array.isArray(row.sleepServices))result.sleepServices=row.sleepServices.map(trim);
     return result;
   };
-  return{publicTrains:(journey.publicTrains||[]).map(trim),sleepServices:(journey.sleepServices||[]).map(trim)};
+  return{publicTrains:nativePublicTrainLabels(journey).map(trim),sleepServices:(journey.sleepServices||[]).map(trim)};
 }
 export function policyJourneysForSelection(journeys,{trainLabel='',run=null,dates}={}){
   return(run?[run.journey]:journeys).flatMap(journey=>{
-    const labels=trainLabel?(journey.publicTrains||[]).filter(row=>row.label===trainLabel):null;
+    const labels=trainLabel?nativePublicTrainLabels(journey).filter(row=>row.label===trainLabel):null;
     if(labels&&!labels.length)return[];
     return[{...journey,daily:(journey.daily||[]).map((n,i)=>
       (!run||run.dates.includes(dates[i]))&&(!labels||labels.some(row=>!Array.isArray(row.daily)||row.daily[i]>0))?n:0)}];
@@ -78,7 +80,27 @@ export function selectCityJourneyContexts(journey,state,dates){
   return{...journey,_contextSpan:selected[0],_contextSpansByDate:selected};
 }
 export function groupSegmentRoutes(journeys,edge,state,dates){
-  if(edge._cityConnection)journeys=(journeys||[]).flatMap(journey=>{const members=(edge._directionEdges||[edge]).filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot);if(!members.length)return[journey];return members.map(member=>{const row={...journey,_availabilityCityDirection:[member.fromCity,member.toCity],_contextSpan:member._contextSpan,_contextSpansByDate:member._contextSpansByDate,availabilityCallSpans:member.availabilityCallSpans,_match:member._match};if(member._logicalAvailabilityDeduplicated||member._cityGeometryDates){for(const[key,value]of Object.entries(member))if(key==='daily'||key==='weekly'||key.endsWith('Daily')||key.endsWith('Weekly')||['publicTrains','sleepServices','_logicalAvailabilityDeduplicated'].includes(key))row[key]=value;}return row;});});
+  if(edge._cityConnection)journeys=(journeys||[]).flatMap(journey=>{
+    const members=(edge._directionEdges||[edge]).filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot);
+    if(!members.length)return[journey];
+    return members.map(member=>{
+      const row={...journey,_availabilityCityDirection:[member.fromCity,member.toCity],_contextSpan:member._contextSpan,_contextSpansByDate:member._contextSpansByDate,availabilityCallSpans:member.availabilityCallSpans,_match:member._match};
+      if(member._logicalAvailabilityDeduplicated||member._logicalAvailabilityAlternative||member._cityGeometryDates){
+        for(const[key,value]of Object.entries(member))if(key==='daily'||key==='weekly'||key.endsWith('Daily')||key.endsWith('Weekly')||['publicTrains','sleepServices','_logicalAvailabilityDeduplicated'].includes(key))row[key]=value;
+      }
+      if(member._logicalAvailabilityAlternative){
+        // The city row omits native continuation/clock/permission metadata.
+        // Restore only its query counts onto the actual immutable full journey.
+        const original=member._logicalAvailabilityAlternative.originalJourney,inspection={...journey,
+          _availabilityCityDirection:row._availabilityCityDirection,_contextSpan:row._contextSpan,
+          _contextSpansByDate:row._contextSpansByDate,availabilityCallSpans:row.availabilityCallSpans,_match:row._match};
+        for(const[key,value]of Object.entries(original))if(key==='daily'||key==='weekly'||key.endsWith('Daily')||key.endsWith('Weekly'))inspection[key]=value;
+        if(member._cityGeometryDates){const selected=new Set(member._cityGeometryDates);for(const[key,value]of Object.entries(inspection))if((key==='daily'||key.endsWith('Daily'))&&Array.isArray(value)){inspection[key]=value.map((n,i)=>selected.has(i)?n:0);const week=key==='daily'?'weekly':key.slice(0,-5)+'Weekly';if(week in inspection)inspection[week]=inspection[key].reduce((a,b)=>a+b,0);}}
+        row._logicalAvailabilityAlternative={...member._logicalAvailabilityAlternative,originalJourney:inspection};
+      }
+      return row;
+    });
+  });
   const directions=(edge._directionEdges||[edge]).map(direction=>({...direction,...(usesHubConnections(state)&&!edge.availabilityOnly?{isHub:true}:{}),...(edge.throughConnection?{throughConnection:true}:{})})),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   const stationIds=edge._stationIds?new Set(edge._stationIds):null;
   const matching=(journeys||[]).filter(journey=>stationIds?(journey.stops||[]).some(call=>stationIds.has(callId(call))):directions.some(direction=>journeyMatchesEdge(journey,direction)));
@@ -87,16 +109,28 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
   const available=edge._cityConnection?contextual:deduplicateContinuationAvailability(contextual,{dates,selectedDayIndices:days,dailyFor:journey=>journeyDaily(journey,state,dates),spanFor});
   for(const journey of available){
     const identity=journeyIdentity(journey)+(edge._cityConnection?JSON.stringify(journey._availabilityCityDirection):'');if(seen.has(identity)||(stationIds?!(journey.stops||[]).some(call=>stationIds.has(callId(call))):!directions.some(direction=>journeyMatchesEdge(journey,direction))))continue;seen.add(identity);
-    const daily=journeyDaily(journey,state,dates),count=days.reduce((sum,i)=>sum+daily[i],0);if(!count)continue;
+    const daily=journeyDaily(journey,state,dates),count=days.reduce((sum,i)=>sum+daily[i],0),inspection=journey._logicalAvailabilityAlternative?.originalJourney||journey,routeDaily=journeyDaily(inspection,state,dates),routeCount=days.reduce((sum,i)=>sum+routeDaily[i],0);if(!count&&!routeCount)continue;
     const key=routeIdentity(journey);
-    if(!groups.has(key))groups.set(key,{key,source:journey.source,operator:journey.operator||'Recorded operator',serviceMode:journey.serviceMode||'rail',availabilityOnly:journey.availabilityOnly===true,callValidationReview:journey.continuation?.callValidationReview,sourceStopNames:journey.sourceStopNames,stops:journey.stops,daily:dates.map(()=>0),count:0,journeys:[],labels:[],sleepServices:[],edgeIds:new Set()});
-    const group=groups.get(key);group.count+=count;group.journeys.push(journey);daily.forEach((n,i)=>group.daily[i]+=n);
+    if(!groups.has(key))groups.set(key,{key,source:journey.source,operator:journey.operator||'Recorded operator',serviceMode:journey.serviceMode||'rail',availabilityOnly:journey.availabilityOnly===true,callValidationReview:journey.continuation?.callValidationReview,sourceStopNames:journey.sourceStopNames,stops:journey.stops,daily:dates.map(()=>0),count:0,routeCount:0,journeys:[],labels:[],sleepServices:[],edgeIds:new Set()});
+    const group=groups.get(key);group.count+=count;group.routeCount+=routeCount;group.logicalOverlapAlternative||=!!journey._logicalAvailabilityAlternative;group.journeys.push(inspection);daily.forEach((n,i)=>group.daily[i]+=n);
     for(const id of continuationFocusEdgeIds(journey))group.edgeIds.add(id);
-    const metadata=filteredServiceMetadata(journey,daily);
+    const metadata=filteredServiceMetadata(inspection,routeDaily);
     group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));
     group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);
   }
-  return[...groups.values()].map(group=>({...group,lineDesignations:sourceServiceDesignations(group.journeys),labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))})).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
+  return[...groups.values()].map(group=>{
+    // Distinct branch routes retain their original availability, but duplicate
+    // views of the same complete native route must not reappear in route cards
+    // or clock lists merely because their logical wrapper IDs differ.
+    const duplicates=logicalCommonOdDeductions(group.journeys,{dates,selectedDayIndices:days,
+      dailyFor:row=>journeyDaily(row,state,dates),spanFor:row=>[0,row.stops.length-1]});
+    if(duplicates.size){
+      group.journeys=group.journeys.map((row,index)=>duplicates.has(index)?scopeAvailabilityCounts(row,duplicates.get(index).daily):row);
+      group.routeCount=0;group.labels=[];group.sleepServices=[];
+      for(const row of group.journeys){const daily=journeyDaily(row,state,dates),metadata=filteredServiceMetadata(row,daily);group.routeCount+=days.reduce((sum,i)=>sum+daily[i],0);group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);}
+    }
+    return{...group,lineDesignations:sourceServiceDesignations(group.journeys),labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))};
+  }).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
 }
 export function groupStationRoutes(journeys,stationIds,state,dates){return groupSegmentRoutes(journeys,{_stationIds:[...stationIds],_directionEdges:[]},state,dates);}
 
@@ -162,10 +196,13 @@ export function routeRuns(group,pages,state,dates){
     if(!entry||entry.source!==journey.source||entry.snapshot!==journey.snapshot)continue;
     for(const run of entry.runs||[]){
       const consumed=journey._logicalAvailabilityDeduplicated?.runs?.find(row=>row.runId===run.id)?.daily;
-      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]&&(!journey._supplementalLabelDaily||journey._supplementalLabelDaily[sourceTrainLabelKey(run.label)]?.[dates.indexOf(date)]>0));if(!active.length)continue;
+      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]);if(!active.length)continue;
       if(!Array.isArray(run.callTimes)||run.callTimes.length!==journey.stops.length)continue;
       const key=JSON.stringify([journeyIdentity(journey),run.id]);if(seen.has(key))continue;seen.add(key);
-      result.push({...run,journey,dates:active});
+      for(const view of numberedRunViews(journey,entry,run,active)){
+        const activeDates=view.dates.filter(date=>!journey._supplementalLabelDaily||(journey._supplementalLabelDaily[sourceTrainLabelKey(view.label)]||journey._supplementalLabelDaily[sourceTrainLabelKey(view._nativePublicLabel)])?.[dates.indexOf(date)]>0);
+        if(activeDates.length)result.push({...view,journey,dates:activeDates});
+      }
     }
   }
   return result.sort((a,b)=>(a.callTimes[0]?.[1]??a.callTimes[0]?.[0]??Infinity)-(b.callTimes[0]?.[1]??b.callTimes[0]?.[0]??Infinity)||String(a.label||'').localeCompare(String(b.label||''),undefined,{numeric:true}));

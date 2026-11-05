@@ -1,5 +1,6 @@
 // Logical through availability is independent of source-frequency and physical
 // traffic assets. This module never joins neighbouring services or public IDs.
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=e61b3507f1459898';
 const callId=call=>Array.isArray(call)?call[0]:call?.id;
 const validVector=(value,days,binary=false)=>Array.isArray(value)&&value.length===days&&value.every(n=>Number.isSafeInteger(n)&&n>=0&&(!binary||n<=1));
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
@@ -34,7 +35,7 @@ export const continuationAvailabilityNote=row=>{
   const reviews=logical.map(item=>item.callValidationReview||item.continuation?.callValidationReview).filter(Boolean);
   const clockReviews=logical.map(item=>item.clockValidationReview||item.continuation?.clockValidationReview).filter(Boolean);
   const warnings=[...new Set([...reviews,...clockReviews].map(review=>typeof review.publicWarning==='string'?review.publicWarning.trim():'').filter(Boolean))];
-  return'Reviewed dated through-service observations. Coverage is partial; counts are a lower bound for the selected dates.'+(reviews.length?' Recorded source pattern; intermediate-call changes unresolved. Clocks describe the retained source plan.':'')+(warnings.length?' '+warnings.join(' '):'');
+  return'Dated through-service observations supported by native timetable evidence. Coverage is partial; counts are a lower bound for the selected dates.'+(reviews.length?' Recorded source pattern; intermediate-call changes unresolved. Clocks describe the retained source plan.':'')+(warnings.length?' '+warnings.join(' '):'');
 };
 
 export function continuationFocusEdgeIds(journey){return[...new Set([...(journey?.edgeIds||[]),...(journey?.additionalFocusEdgeIds||[])].filter(id=>typeof id==='string'&&id))];}
@@ -61,6 +62,15 @@ const availabilityCountFields=['daily',...[
   ...['reservation','supplement','free','chargeUnknown',...[1,2,3,4,8,9,10].map(mask=>'chargeMask'+mask)]
     .flatMap(field=>[field,field+'Boardable'])
 ].map(field=>field+'Daily')];
+export function scopeAvailabilityCounts(row,weights,raw=row.daily){
+  const result={...row},days=raw?.length;
+  if(!validVector(raw,days)||!validVector(weights,days))throw new Error('Invalid scoped service-count vectors');
+  for(const key of availabilityCountFields){const value=row[key];if(validVector(value,days)){
+    result[key]=value.map((n,i)=>n===raw[i]?Math.max(0,n-weights[i]):n);
+    const weekly=key==='daily'?'weekly':key.slice(0,-5)+'Weekly';if(weekly in row)result[weekly]=result[key].reduce((a,b)=>a+b,0);
+  }}
+  return result;
+}
 // Deduplication is scoped to this query and current filters. A full pattern with
 // no exact source-run proof cannot suppress any original source availability.
 // ``spanFor`` returns the exact queried call span, never a city-name match.
@@ -92,16 +102,16 @@ export function deduplicateContinuationAvailability(journeys,{dates,dailyFor,sel
       }
     }
   }
-  return journeys.map(parent=>{
-    const deductionsFor=deductions.get(parent.id);if(!deductionsFor)return parent;
-    const trim=(row,weights,raw)=>{
-      const result={...row};
-      for(const key of availabilityCountFields){const value=row[key];if(validVector(value,dates.length)){
-        result[key]=value.map((n,i)=>n===raw[i]?Math.max(0,n-weights[i]):n);
-        const weekly=key==='daily'?'weekly':key.slice(0,-5)+'Weekly';if(weekly in row)result[weekly]=result[key].reduce((a,b)=>a+b,0);
-      }}
+  const trim=scopeAvailabilityCounts;
+  const logicalDeductions=logicalCommonOdDeductions(journeys,{dates,dailyFor,selectedDayIndices,spanFor});
+  return journeys.map((parent,index)=>{
+    const logical=logicalDeductions.get(index);
+    if(logical){
+      const result=trim(parent,logical.daily,parent.daily);
+      result._logicalAvailabilityAlternative={daily:logical.daily,journeyIds:[...logical.journeyIds].sort(),originalJourney:parent};
       return result;
-    };
+    }
+    const deductionsFor=deductions.get(parent.id);if(!deductionsFor)return parent;
     const result=trim(parent,deductionsFor.daily,parent.daily);
     result.publicTrains=(parent.publicTrains||[]).map(label=>{
       const weights=deductionsFor.labels.get(label.label);if(!weights)return label;

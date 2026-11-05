@@ -1,5 +1,5 @@
-import{BUS_LIMITS}from'./bus-core.js?v=7cc2de32b432a06f';
-import{BusDataService}from'./bus-data-worker.js?v=7cc2de32b432a06f';
+import{BUS_LIMITS}from'./bus-core.js?v=e61b3507f1459898';
+import{BusDataService}from'./bus-data-worker.js?v=e61b3507f1459898';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 let sequence=0;
@@ -7,7 +7,7 @@ function work(id,active){if(typeof globalThis.document?.dispatchEvent==='functio
 
 export class BusDataClient{
   constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,overview=null}={}){
-    this.base=new URL(base).href;this.options={maximumBytes,overview,...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=7cc2de32b432a06f',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;
+    this.base=new URL(base).href;this.options={maximumBytes,overview,...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=e61b3507f1459898',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;
   }
   start(){
     if(this.started)return;this.started=true;

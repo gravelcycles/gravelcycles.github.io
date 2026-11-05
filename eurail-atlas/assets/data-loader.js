@@ -1,6 +1,6 @@
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=7cc2de32b432a06f';
-import{decodeJSONBytes}from'./data-codec.js?v=7cc2de32b432a06f';
-import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=7cc2de32b432a06f';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=e61b3507f1459898';
+import{decodeJSONBytes}from'./data-codec.js?v=e61b3507f1459898';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=e61b3507f1459898';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 let loaderSequence=0;
@@ -20,7 +20,7 @@ export function createPageHydrator(load,process){
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=7cc2de32b432a06f',import.meta.url);
+      const url=new URL('./data-worker.js?v=e61b3507f1459898',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
