@@ -1,30 +1,32 @@
-import{BUS_LIMITS}from'./bus-core.js?v=e61b3507f1459898';
-import{BusDataService}from'./bus-data-worker.js?v=e61b3507f1459898';
+import{BUS_LIMITS}from'./bus-core.js?v=1feafcec58b2ffae';
+import{BusDataService}from'./bus-data-worker.js?v=1feafcec58b2ffae';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 let sequence=0;
 function work(id,active){if(typeof globalThis.document?.dispatchEvent==='function'&&typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('atlasdatawork',{detail:{id:'bus:'+id,active}}));}
 
 export class BusDataClient{
-  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,overview=null}={}){
-    this.base=new URL(base).href;this.options={maximumBytes,overview,...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=e61b3507f1459898',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;
+  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,requireHashes=false,overview=null,detailsBaseUrl=null,overviewBaseUrl=null,busAtlasOverview=null,busGeometry=null}={}){
+    this.base=new URL(base).href;this.options={maximumBytes,requireHashes:requireHashes||detailsBaseUrl!==null,overview,busAtlasOverview,busGeometry,detailsBaseUrl:detailsBaseUrl===null?null:String(detailsBaseUrl),overviewBaseUrl:overviewBaseUrl===null?null:String(overviewBaseUrl),...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=1feafcec58b2ffae',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;this.manifestDescriptor=null;
   }
   start(){
     if(this.started)return;this.started=true;
-    try{this.worker=this.workerFactory();this.worker.onmessage=event=>{const response=event.data,job=this.pending.get(response?.id);if(!job)return;if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';this.settle(response.id,error);}else this.settle(response.id,null,response.result);};this.worker.onerror=event=>{event.preventDefault?.();this.failWorker();};this.worker.postMessage({op:'init',base:this.base,maximumBytes:this.options.maximumBytes,overview:this.options.overview});}
+    try{this.worker=this.workerFactory();this.worker.onmessage=event=>{const response=event.data,job=this.pending.get(response?.id);if(!job){response?.result?.bitmap?.close();return;}if(response.error){const error=new Error(response.error.message);error.name=response.error.name||'Error';this.settle(response.id,error);}else this.settle(response.id,null,response.result);};this.worker.onerror=event=>{event.preventDefault?.();this.failWorker();};this.worker.postMessage({op:'init',base:this.base,maximumBytes:this.options.maximumBytes,requireHashes:this.options.requireHashes,overview:this.options.overview,busAtlasOverview:this.options.busAtlasOverview,busGeometry:this.options.busGeometry,detailsBaseUrl:this.options.detailsBaseUrl,overviewBaseUrl:this.options.overviewBaseUrl});}
     catch{this.worker?.terminate();this.worker=null;}
   }
-  service(){return this.fallback??=new BusDataService(this.base,this.options);}
-  settle(id,error,result){const job=this.pending.get(id);if(!job)return;this.pending.delete(id);work(id,false);if(error)job.reject(error);else job.resolve(result);}
+  service(){if(!this.fallback){this.fallback=new BusDataService(this.base,this.options);if(this.manifestDescriptor)this.fallback.manifestDescriptor=this.manifestDescriptor;}return this.fallback;}
+  settle(id,error,result){const job=this.pending.get(id);if(!job){result?.bitmap?.close();return;}this.pending.delete(id);work(id,false);if(error)job.reject(error);else{if(job.message.op==='load'&&result?.kind==='bus_atlas_manifest'){const descriptor=job.message.descriptor;this.manifestDescriptor=typeof descriptor==='string'?descriptor:{...descriptor};if(this.fallback)this.fallback.manifestDescriptor=this.manifestDescriptor;}job.resolve(result);}}
   local(id,job){this.service().run(job.message).then(result=>this.settle(id,null,result),error=>this.settle(id,error));}
   failWorker(){if(!this.worker)return;this.worker.terminate();this.worker=null;for(const[id,job]of this.pending)this.local(id,job);}
   request(message){
     this.start();return new Promise((resolve,reject)=>{const id=++sequence,job={message,resolve,reject};this.pending.set(id,job);work(id,true);if(!this.worker){this.local(id,job);return;}try{this.worker.postMessage({...message,id});}catch{this.failWorker();}});
   }
-  load(descriptor,options={}){return this.request({op:'load',descriptor,options:{reader:'viewport',...options}});}
-  search(descriptor,query,filters,dates,options={}){return this.request({op:'search',descriptor,query,filters:{...filters},dates,options:{reader:'search',...options}});}
-  findRoute(descriptor,routeId,options={}){return this.request({op:'findRoute',descriptor,routeId,options:{reader:'search',...options}});}
+  load(descriptor,options={}){return this.request({op:'load',descriptor:typeof descriptor==='string'?descriptor:{...descriptor},options:{reader:'viewport',...options}});}
+  search(input,query,filters,dates,options={}){return this.request({op:'search',...(input?.search?{manifest:input}:{descriptor:input}),query,filters:{...filters},dates,options:{reader:'search',...options}});}
+  findRoute(input,routeId,options={}){return this.request({op:'findRoute',...(input?.search?{manifest:input}:{descriptor:input}),routeId,options:{reader:'detail-index',...options}});}
   viewport(manifest,bounds,zoom,filters,options={}){return this.request({op:'viewport',manifest,bounds,zoom,filters:{...filters},options:{reader:'viewport',...options}});}
+  geometryReference(manifest,detail,options={}){return this.request({op:'geometryReference',manifest,detail,options:{reader:'geometry',includeFine:false,...options}});}
+  aggregateHit(sceneId,x,y){return this.request({op:'aggregateHit',sceneId,x,y,options:{reader:'aggregate-hit'}});}
   cancel(reader){for(const[id,job]of [...this.pending])if(job.message.options.reader===reader)this.settle(id,aborted());this.worker?.postMessage({op:'cancel',reader});this.fallback?.cancel(reader);}
-  cancelAll(){for(const id of [...this.pending.keys()])this.settle(id,aborted());this.worker?.terminate();this.worker=null;this.started=false;this.fallback?.cancelAll();this.fallback=null;}
+  cancelAll(){for(const id of [...this.pending.keys()])this.settle(id,aborted());this.worker?.terminate();this.worker=null;this.started=false;this.fallback?.cancelAll();this.fallback=null;this.manifestDescriptor=null;}
 }
