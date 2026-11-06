@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#153238">
+  <meta name="description" content="Explore scheduled European bus and coach routes by country, international service and city area.">
+  <title>Euro Bus — Europe, by bus</title>
+  <link rel="stylesheet" href="assets/leaflet.css?v=2b8acad8c5d626c4">
+  <link rel="stylesheet" href="assets/app.css?v=2b8acad8c5d626c4">
+  <link rel="stylesheet" href="assets/bus-layer.css?v=2b8acad8c5d626c4">
+  <link rel="stylesheet" href="assets/bus-page.css?v=2b8acad8c5d626c4">
+  <script defer src="assets/leaflet.js?v=2b8acad8c5d626c4"></script>
+  <script type="module" src="assets/bus-app.js?v=2b8acad8c5d626c4"></script>
+</head>
+<body class="bus-page">
+  <header class="site-header">
+    <a class="brand" href="assets/buses.html"><span class="brand-copy"><strong>Euro Bus</strong><small>Europe by bus &amp; coach</small></span></a>
+    <nav class="bus-page-nav" aria-label="Transport map"><a href="./">Rail atlas</a><a href="assets/buses.html" aria-current="page">Bus atlas</a></nav>
+    <button type="button" id="controlsToggle" class="primary-button">Bus filters</button>
+  </header>
+  <main class="atlas-layout">
+    <section class="map-area" aria-label="Bus map">
+      <div id="map" tabindex="0" role="region" aria-label="Bus map. Drag to explore; pinch or use plus and minus to zoom."></div>
+      <div class="map-heading"><div class="map-kicker"><span class="small-line"></span>BUSES &amp; COACHES</div><h1 id="busMapTitle">Explore by bus</h1><p id="busMapSummary">Partial scheduled coverage · pass inclusion unknown</p></div>
+      <div class="bus-map-actions"><button type="button" id="busResetView" aria-label="Reset map to Europe">Europe</button><button type="button" id="busShare">Share view</button><button type="button" id="busFullscreen">Fullscreen</button></div>
+      <p id="busPageStatus" role="status" aria-live="polite" hidden></p>
+    </section>
+  </main>
+</body>
+</html>

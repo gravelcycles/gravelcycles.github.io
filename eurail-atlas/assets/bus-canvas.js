@@ -1,7 +1,7 @@
-import{BUS_LIMITS,BUS_OVERVIEW_LIMITS}from'./bus-core.js?v=1feafcec58b2ffae';
-import{worldPoint}from'./atlas-core.js?v=1feafcec58b2ffae';
-import{renderWorld}from'./rail-lod.js?v=1feafcec58b2ffae';
-import{RouteIndex}from'./rail-picking.js?v=1feafcec58b2ffae';
+import{BUS_LIMITS,BUS_OVERVIEW_LIMITS}from'./bus-core.js?v=2b8acad8c5d626c4';
+import{worldPoint}from'./atlas-core.js?v=2b8acad8c5d626c4';
+import{renderWorld}from'./rail-lod.js?v=2b8acad8c5d626c4';
+import{RouteIndex}from'./rail-picking.js?v=2b8acad8c5d626c4';
 
 // Reuse the train renderer's world coordinates, half-pixel display LOD and
 // geographic route index. Original vertices remain the picking authority.

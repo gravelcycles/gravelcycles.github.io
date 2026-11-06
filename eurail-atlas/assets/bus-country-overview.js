@@ -1,0 +1,2 @@
+export const BUS_COUNTRY_OVERVIEW={"busManifestSha256":"b5fd8f46481680ca781defc35f52cf181217ac5caa78677ac5196390f3ebf25b","catalogue":{"path":"bus-countries/catalogue.json.gz","sha256":"87eb6074991f0fabdf95b62acf6de1619e4f8d78e8ca65feadf766dcef71bc02","bytes":2079,"uncompressedBytes":4383,"encoding":"gzip"}};
+export const BUS_PLACES={"path":"bus-countries/places.json.gz","sha256":"eb193c6d69f18592f30fac982547f4580b02593ec479a94088f9f02de91562c8","bytes":585068,"uncompressedBytes":1407377,"encoding":"gzip"};

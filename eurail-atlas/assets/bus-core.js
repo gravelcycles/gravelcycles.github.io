@@ -1,11 +1,24 @@
-import{safeBusBase}from'./bus-delivery.js?v=1feafcec58b2ffae';
+import{safeBusBase}from'./bus-delivery.js?v=2b8acad8c5d626c4';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
 export function intersects(a,b){return Array.isArray(a)&&a.length===4&&a.every(Number.isFinite)&&a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];}
+// Geographic city-area focus uses retained display paths, not invented calls.
+export function busRouteInArea(route,box){
+  if(!intersects(route.bbox,box))return false;
+  const coords=route.coordinates;if(!Array.isArray(coords)||coords.length<2)return true;
+  for(let i=1;i<coords.length;i++){
+    const a=coords[i-1],b=coords[i],dx=b[0]-a[0],dy=b[1]-a[1];let low=0,high=1,hit=true;
+    for(const[p,q]of[[-dx,a[0]-box[0]],[dx,box[2]-a[0]],[-dy,a[1]-box[1]],[dy,box[3]-a[1]]]){
+      if(p===0){if(q<0){hit=false;break;}}else{const t=q/p;if(p<0)low=Math.max(low,t);else high=Math.min(high,t);if(low>high){hit=false;break;}}
+    }
+    if(hit)return true;
+  }
+  return false;
+}
 export function busCount(route,day,dates){const i=dates.indexOf(day);return day==='all'?(route.dates||[]).reduce((n,v)=>n+(Number(v)||0),0):i<0?0:Number(route.dates?.[i])||0;}
 export function busEstimate(route,day,dates){return busCount({dates:route.estimatedDates},day,dates);}
-export function busMatches(route,filters,dates){return(!filters.source||route.sourceId===filters.source)&&(!filters.operator||route.operator===filters.operator)&&(busCount(route,filters.day,dates)>0||busEstimate(route,filters.day,dates)>0);}
+export function busMatches(route,filters,dates){return(!filters.source||route.sourceId===filters.source)&&(!filters.operator||route.operator===filters.operator)&&(!filters.country||route.countries?.includes(filters.country))&&(!filters.international||route.countries?.length>1)&&(!filters.cityBounds||busRouteInArea(route,filters.cityBounds))&&(busCount(route,filters.day,dates)>0||busEstimate(route,filters.day,dates)>0);}
 export function viewportTiles(manifest,bounds,zoom,limits=BUS_LIMITS,filters={}){
   if(zoom<Math.max(manifest.minimumZoom||0,limits.minimumZoom))return{entries:[],limited:false};
   const center=[(bounds[0]+bounds[2])/2,(bounds[1]+bounds[3])/2],distance=e=>{const b=e.bbox;return((b[0]+b[2])/2-center[0])**2+((b[1]+b[3])/2-center[1])**2;};

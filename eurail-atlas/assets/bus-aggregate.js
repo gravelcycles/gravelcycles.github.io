@@ -1,6 +1,6 @@
-import{validBusDocument}from'./bus-core.js?v=1feafcec58b2ffae';
-import{safeBusBase}from'./bus-delivery.js?v=1feafcec58b2ffae';
-import{worldPoint}from'./atlas-core.js?v=1feafcec58b2ffae';
+import{validBusDocument}from'./bus-core.js?v=2b8acad8c5d626c4';
+import{safeBusBase}from'./bus-delivery.js?v=2b8acad8c5d626c4';
+import{worldPoint}from'./atlas-core.js?v=2b8acad8c5d626c4';
 
 export const BUS_AGGREGATE_LIMITS=Object.freeze({wireBytes:3*1024*1024,decodedBytes:16*1024*1024,vertices:250000,segments:1000000,profiles:65536,pixels:8*1024*1024});
 const hash=/^[a-f0-9]{64}$/;
@@ -17,7 +17,7 @@ export function decodeAggregate(value,manifest,referenceZoom){
   const scale=256*2**referenceZoom*4,profiles=value.profiles,counts=value.profilePatternCounts,n=value.segmentCount;
   if(value.referenceZoom!==referenceZoom||value.coordinateScale!==scale||value.segmentEncoding!=='u16le-columns-profile-ax-ay-bx-by'||!Array.isArray(profiles)||profiles.length>limits.profiles||!Array.isArray(counts)||counts.length!==profiles.length||!integer(n,0,limits.segments)||typeof value.segmentsB64!=='string'||value.segmentsB64.length>Math.ceil(n*10/3)*4)throw new Error('Invalid aggregate overview packet');
   const sources=new Set(manifest.sources.map(source=>source.id)),mask=2**manifest.dates.length-1;
-  if(manifest.dates.length>16||!profiles.every((row,i)=>Array.isArray(row)&&row.length===6&&sources.has(row[0])&&typeof row[1]==='string'&&['bus','coach','trolleybus','rail_replacement_bus'].includes(row[2])&&['provider_shape','schematic','inferred_road'].includes(row[3])&&integer(row[4],0,mask)&&integer(row[5],0,mask)&&integer(counts[i],1,manifest.totals.patterns))||counts.reduce((a,b)=>a+b,0)!==manifest.totals.patterns)throw new Error('Aggregate profile/source/count mismatch');
+  if(manifest.dates.length>16||!profiles.every((row,i)=>Array.isArray(row)&&row.length===(value.countryFilters===true?7:6)&&(!value.countryFilters||Array.isArray(row[6])&&row[6].every(c=>typeof c==='string'&&c.length>0&&c.length<100)&&new Set(row[6]).size===row[6].length)&&sources.has(row[0])&&typeof row[1]==='string'&&['bus','coach','trolleybus','rail_replacement_bus'].includes(row[2])&&['provider_shape','schematic','inferred_road'].includes(row[3])&&integer(row[4],0,mask)&&integer(row[5],0,mask)&&integer(counts[i],1,manifest.totals.patterns))||counts.reduce((a,b)=>a+b,0)!==manifest.totals.patterns)throw new Error('Aggregate profile/source/count mismatch');
   const binary=atob(value.segmentsB64);if(binary.length!==n*10)throw new Error('Aggregate segment bytes mismatch');
   const raw=Uint8Array.from(binary,c=>c.charCodeAt(0)),view=new DataView(raw.buffer),columns=new Uint16Array(n*5);
   for(let i=0;i<columns.length;i++)columns[i]=view.getUint16(i*2,true);
@@ -26,7 +26,7 @@ export function decodeAggregate(value,manifest,referenceZoom){
 }
 
 export function aggregateScene(decoded,manifest,bounds,filters,reserve=0){
-  const{profiles,counts,columns:c,n,scale}=decoded,day=manifest.dates.indexOf(filters.day),active=profiles.map(row=>(!filters.source||filters.source===row[0])&&(!filters.operator||filters.operator===row[1])&&(filters.day==='all'?row[4]||row[5]:day>=0&&((row[4]|row[5])&(1<<day))));
+  const{profiles,counts,columns:c,n,scale}=decoded,day=manifest.dates.indexOf(filters.day),active=profiles.map(row=>(!filters.source||filters.source===row[0])&&(!filters.operator||filters.operator===row[1])&&(!filters.country||row[6]?.includes(filters.country))&&(!filters.international||row[6]?.length>1)&&(filters.day==='all'?row[4]||row[5]:day>=0&&((row[4]|row[5])&(1<<day))));
   const west=worldPoint(bounds[0],bounds[3]),east=worldPoint(bounds[2],bounds[1]),box=[west[0]/256*scale,west[1]/256*scale,east[0]/256*scale,east[1]/256*scale];
   const lines=[new Set(),new Set()],points=new Set();let vertices=0;
   for(let i=0;i<n;i++){
@@ -43,19 +43,19 @@ export function aggregateScene(decoded,manifest,bounds,filters,reserve=0){
 }
 
 export class BusAggregate{
-  constructor(requests,configuration){this.requests=requests;this.configuration=configuration;this.catalogue=null;this.decoded=new WeakMap();this.scene=null;this.sequence=0;}
+  constructor(requests,configuration,{countryFilters=false}={}){this.countryFilters=countryFilters;this.requests=requests;this.configuration=configuration;this.catalogue=null;this.decoded=new WeakMap();this.scene=null;this.sequence=0;}
   async render(manifest,manifestSha,bounds,zoom,filters,camera,reserve,reader,check){
     const configuration=aggregateConfiguration(this.configuration,manifestSha),limits=BUS_AGGREGATE_LIMITS;
     if(!this.catalogue)this.catalogue=validBusDocument(await this.requests.load(configuration.catalogue,{reader,limit:limits.wireBytes}),'bus_atlas_aggregate_catalogue');check();
     const cat=this.catalogue;
-    if(cat.busManifestSha256!==manifestSha||!same(cat.dates,manifest.dates)||!same([...cat.sourceIds||[]].sort(),manifest.sources.map(s=>s.id).sort())||cat.routeCount!==manifest.totals.patterns||cat.maxSceneVertices!==limits.vertices||!Array.isArray(cat.levels)||cat.levels.length!==2||!same(cat.levels.map(level=>level.referenceZoom).sort(),[3,5]))throw new Error('Aggregate catalogue/cohort mismatch');
+    if(cat.busManifestSha256!==manifestSha||!same(cat.dates,manifest.dates)||!same([...cat.sourceIds||[]].sort(),manifest.sources.map(s=>s.id).sort())||cat.routeCount!==manifest.totals.patterns||cat.maxSceneVertices!==limits.vertices||!Array.isArray(cat.levels)||(cat.countryFilters===true)!==this.countryFilters||cat.levels.length!==(this.countryFilters?1:2)||!same(cat.levels.map(level=>level.referenceZoom).sort(),this.countryFilters?[3]:[3,5]))throw new Error('Aggregate catalogue/cohort mismatch');
     // All broad views use the complete generalized network. Source/operator/day
     // filters change membership before union without a second packet download;
     // local native paths and selected fine geometry take over at zoom 7.
     const referenceZoom=3,descriptor=cat.levels.find(item=>item.referenceZoom===referenceZoom);
     if(!hash.test(descriptor.sha256||'')||!integer(descriptor.bytes,1,limits.wireBytes)||!integer(descriptor.uncompressedBytes,1,limits.decodedBytes)||descriptor.encoding!=='gzip')throw new Error('Unbounded aggregate packet');
     const value=validBusDocument(await this.requests.load(descriptor,{reader,limit:limits.wireBytes}),'bus_atlas_aggregate_overview');check();
-    if(value.busManifestSha256!==manifestSha)throw new Error('Aggregate level/cohort mismatch');
+    if(value.busManifestSha256!==manifestSha||(value.countryFilters===true)!==this.countryFilters)throw new Error('Aggregate level/cohort mismatch');
     let decoded=this.decoded.get(value);if(!decoded){decoded=decodeAggregate(value,manifest,referenceZoom);this.decoded.set(value,decoded);}
     const scene=aggregateScene(decoded,manifest,bounds,filters,reserve);
     if(!scene)throw new Error('Complete aggregate overview exceeds scene budget');
