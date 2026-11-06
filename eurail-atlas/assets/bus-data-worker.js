@@ -1,8 +1,9 @@
-import{BUS_LIMITS,BUS_OVERVIEW_LIMITS,BusRequests,validBusDocument,busMatches,intersects,searchBusRoutes,clearBusSearchCache,foldBusText}from'./bus-core.js?v=2b8acad8c5d626c4';
-import{worldPoint}from'./atlas-core.js?v=2b8acad8c5d626c4';
-import{BusSearch,BusTileIndex}from'./bus-search.js?v=2b8acad8c5d626c4';
-import{BusAggregate}from'./bus-aggregate.js?v=2b8acad8c5d626c4';
-import{BusGeometryReference}from'./bus-geometry.js?v=2b8acad8c5d626c4';
+import{BUS_LIMITS,BUS_OVERVIEW_LIMITS,BusRequests,validBusDocument,busMatches,intersects,searchBusRoutes,clearBusSearchCache,foldBusText}from'./bus-core.js?v=67e4ec8c5ceb3893';
+import{worldPoint}from'./atlas-core.js?v=67e4ec8c5ceb3893';
+import{BusSearch,BusTileIndex}from'./bus-search.js?v=67e4ec8c5ceb3893';
+import{BusAggregate}from'./bus-aggregate.js?v=67e4ec8c5ceb3893';
+import{BusGeometryReference}from'./bus-geometry.js?v=67e4ec8c5ceb3893';
+import{BusLocalRouting}from'./bus-spatial-routing.js?v=67e4ec8c5ceb3893';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 const operators=routes=>{const rows=new Map();for(const route of routes)if(route.operator)rows.set(JSON.stringify([route.sourceId,route.operator]),{sourceId:route.sourceId,name:route.operator});return[...rows.values()];};
@@ -10,9 +11,9 @@ const operators=routes=>{const rows=new Map();for(const route of routes)if(route
 // Keep large immutable JSON documents in the worker. Only the bounded visible
 // geometry, search matches or selected route cross to the animation thread.
 export class BusDataService{
-  constructor(base,options={}){this.requests=new BusRequests(base,options);const sharedPool=this.requests.pool;this.overviewDescriptor=options.overview;this.overviewRequests=new BusRequests(options.overviewBaseUrl||new URL('../assets/',base),{...options,sharedPool,detailsBaseUrl:null});this.aggregateRequests=options.busAtlasOverview?new BusRequests(options.busAtlasOverview.assetBaseUrl,{...options,sharedPool,detailsBaseUrl:null,requireHashes:true}):null;this.aggregate=this.aggregateRequests?new BusAggregate(this.aggregateRequests,options.busAtlasOverview):null;this.countryAggregate=options.countryOverview?new BusAggregate(this.overviewRequests,{...options.countryOverview,assetBaseUrl:this.overviewRequests.base.href},{countryFilters:true}):null;this.placesDescriptor=options.places;this.placesMetadata=new WeakMap();this.activeAggregate=null;this.geometryRequests=options.busGeometry?new BusRequests(options.busGeometry.assetBaseUrl,{...options,sharedPool,detailsBaseUrl:null,requireHashes:true}):null;this.geometryReference=this.geometryRequests?new BusGeometryReference(this.geometryRequests,options.busGeometry):null;this.epochs=new Map();this.metadata=new WeakMap();this.overviewMetadata=new WeakMap();}
+  constructor(base,options={}){this.requests=new BusRequests(base,options);const sharedPool=this.requests.pool;this.overviewDescriptor=options.overview;this.overviewRequests=new BusRequests(options.overviewBaseUrl||new URL('../assets/',base),{...options,sharedPool,detailsBaseUrl:null});this.aggregateRequests=options.busAtlasOverview?new BusRequests(options.busAtlasOverview.assetBaseUrl,{...options,sharedPool,detailsBaseUrl:null,requireHashes:true}):null;this.aggregate=this.aggregateRequests?new BusAggregate(this.aggregateRequests,options.busAtlasOverview):null;this.countryAggregate=options.countryOverview?new BusAggregate(this.overviewRequests,{...options.countryOverview,assetBaseUrl:this.overviewRequests.base.href},{countryFilters:true}):null;this.localRouting=options.localRouting?new BusLocalRouting(this.requests,this.overviewRequests,options.localRouting):null;this.placesDescriptor=options.places;this.placesMetadata=new WeakMap();this.activeAggregate=null;this.geometryRequests=options.busGeometry?new BusRequests(options.busGeometry.assetBaseUrl,{...options,sharedPool,detailsBaseUrl:null,requireHashes:true}):null;this.geometryReference=this.geometryRequests?new BusGeometryReference(this.geometryRequests,options.busGeometry):null;this.epochs=new Map();this.metadata=new WeakMap();this.overviewMetadata=new WeakMap();}
   cancel(reader){this.epochs.set(reader,(this.epochs.get(reader)||0)+1);this.requests.cancel(reader);this.overviewRequests.cancel(reader);this.aggregateRequests?.cancel(reader);}
-  cancelAll(){for(const reader of new Set([...this.epochs.keys(),...this.requests.readers.keys()]))this.cancel(reader);this.requests.cancelAll();this.aggregate?.clear();this.countryAggregate?.clear();this.placesMetadata=new WeakMap();this.activeAggregate=null;this.metadata=new WeakMap();this.overviewMetadata=new WeakMap();clearBusSearchCache();}
+  cancelAll(){for(const reader of new Set([...this.epochs.keys(),...this.requests.readers.keys()]))this.cancel(reader);this.requests.cancelAll();this.aggregate?.clear();this.countryAggregate?.clear();this.localRouting?.clear();this.placesMetadata=new WeakMap();this.activeAggregate=null;this.metadata=new WeakMap();this.overviewMetadata=new WeakMap();clearBusSearchCache();}
   async overview(manifest,bounds,filters,reader,check){
     const descriptor=this.overviewDescriptor,limits=BUS_OVERVIEW_LIMITS;
     if(descriptor.maximumZoom!==BUS_LIMITS.minimumZoom||descriptor.routeCount>limits.routes||descriptor.vertexCount>limits.vertices||descriptor.uncompressedBytes>limits.decodedBytes)throw new Error('Bus overview exceeds display budget');
@@ -67,7 +68,7 @@ export class BusDataService{
     const{manifest,zoom,filters}=message;let bounds=message.bounds;if(filters.cityBounds){const c=filters.cityBounds;if(!Array.isArray(c)||c.length!==4||!c.every(Number.isFinite)||c[0]>=c[2]||c[1]>=c[3])throw new Error('Invalid city map area');bounds=[Math.max(bounds[0],c[0]),Math.max(bounds[1],c[1]),Math.min(bounds[2],c[2]),Math.min(bounds[3],c[3])];if(bounds[0]>=bounds[2]||bounds[1]>=bounds[3])return{routes:[],stops:[],entries:[],vertices:0,limited:false,operators:[]};}
     const aggregate=(filters.country||filters.international)?this.countryAggregate:this.aggregate;if((filters.country||filters.international)&&!aggregate)throw new Error('Country overview is unavailable for this cohort');this.activeAggregate=aggregate;if(aggregate&&zoom<BUS_LIMITS.minimumZoom){const descriptor=this.manifestDescriptor||'manifest.json';await this.requests.load(descriptor,{reader,limit:2*1024*1024});check();return aggregate.render(manifest,this.requests.identity(descriptor),bounds,zoom,filters,message.options.camera,Math.min(BUS_LIMITS.vertices,Math.max(0,message.options.selectedVertices||0)),reader,check);}
     if(this.overviewDescriptor&&zoom<BUS_LIMITS.minimumZoom)return this.overview(manifest,bounds,filters,reader,check);
-    const plan=await new BusTileIndex(this.requests,manifest).plan(bounds,zoom,filters,{reader}),pages=[];check();
+    let plan;if(this.localRouting){const descriptor=this.manifestDescriptor||'manifest.json';await this.requests.load(descriptor,{reader,limit:2*1024*1024});check();plan=await this.localRouting.plan(manifest,this.requests.identity(descriptor),bounds,zoom,filters,{reader,check});}else plan=await new BusTileIndex(this.requests,manifest).plan(bounds,zoom,filters,{reader});const pages=[];check();
     for(let offset=0;offset<plan.entries.length;offset+=3){const batch=await Promise.all(plan.entries.slice(offset,offset+3).map(async descriptor=>{
       const data=validBusDocument(await this.requests.load(descriptor,{reader,limit:4*1024*1024}),'bus_atlas_tile');
       if(descriptor.sourceId&&(data.sourceId!==descriptor.sourceId||!Array.isArray(data.routes)||data.routes.some(route=>route.sourceId!==descriptor.sourceId)))throw new Error('Bus map source mismatch');
@@ -81,7 +82,7 @@ export class BusDataService{
       if(routes.length>=BUS_LIMITS.routes||vertices+count>BUS_LIMITS.vertices){limited=true;continue;}vertices+=count;
       routes.push({...route,stopNames:[stopNames.get(route.stopIds?.[0]),stopNames.get(route.stopIds?.at(-1))].filter(Boolean),geometryKey:(plan.entries[i].sha256||plan.entries[i].path)+':'+route.id});
     }
-    return{routes,stops,limited,vertices,entries:plan.entries.map(entry=>entry.key),metadataBytes:plan.metadataBytes||0,operators:[...allOperators.values()]};
+    return{routes,stops,limited,vertices,entries:plan.entries.map(entry=>entry.key),metadataBytes:plan.metadataBytes||0,metadataDecodedBytes:plan.metadataDecodedBytes||0,routingCells:plan.routingCells||[],operators:[...allOperators.values()]};
   }
 }
 
@@ -89,7 +90,7 @@ if(typeof WorkerGlobalScope==='function'&&globalThis instanceof WorkerGlobalScop
   let service=null;
   globalThis.onmessage=async event=>{
     const message=event.data;
-    if(message?.op==='init'){service?.cancelAll();service=new BusDataService(message.base,{maximumBytes:message.maximumBytes,requireHashes:message.requireHashes,overview:message.overview,busAtlasOverview:message.busAtlasOverview,busGeometry:message.busGeometry,countryOverview:message.countryOverview,places:message.places,detailsBaseUrl:message.detailsBaseUrl??null,overviewBaseUrl:message.overviewBaseUrl});return;}
+    if(message?.op==='init'){service?.cancelAll();service=new BusDataService(message.base,{maximumBytes:message.maximumBytes,requireHashes:message.requireHashes,overview:message.overview,busAtlasOverview:message.busAtlasOverview,busGeometry:message.busGeometry,countryOverview:message.countryOverview,places:message.places,localRouting:message.localRouting,detailsBaseUrl:message.detailsBaseUrl??null,overviewBaseUrl:message.overviewBaseUrl});return;}
     if(message?.op==='cancel'){service?.cancel(message.reader);return;}
     if(message?.op==='cancelAll'){service?.cancelAll();return;}
     try{if(!service)throw new Error('Bus worker has not initialized');const result=await service.run(message),buffers=result?.aggregate?(result.bitmap?[result.bitmap]:[...result.aggregateGroups.map(group=>group.world.buffer),result.presence.buffer,result.occupancy.buffer]):result?.overview&&result.routes.length?[result.routes[0]._world.buffer]:[];globalThis.postMessage({id:message.id,result},buffers);}

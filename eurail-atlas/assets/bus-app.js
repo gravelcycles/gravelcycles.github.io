@@ -1,6 +1,7 @@
-import{createBusLayer}from'./bus-layer.js?v=2b8acad8c5d626c4';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=2b8acad8c5d626c4';
-import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=2b8acad8c5d626c4';
+import{createBusLayer}from'./bus-layer.js?v=67e4ec8c5ceb3893';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=67e4ec8c5ceb3893';
+import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=67e4ec8c5ceb3893';
+import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=67e4ec8c5ceb3893';
 
 const params=new URLSearchParams(location.search),initial={busDay:'all',...Object.fromEntries(params)},$=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,zoomSnap:.25,minZoom:3,maxZoom:19,preferCanvas:true});
@@ -16,7 +17,7 @@ async function start(){
   $('controlsToggle').disabled=true;
   try{
     if(!delivery){const response=await fetch(new URL('../bus-external/config.json',import.meta.url),{cache:'no-cache',credentials:'omit',redirect:'error'});if(!response.ok)throw new Error('Bus delivery configuration unavailable');const raw=await response.text();if(raw.length>64*1024)throw new Error('Bus delivery configuration exceeds budget');delivery=JSON.parse(raw);}
-    if(!layer)layer=createBusLayer({map,delivery,initial,countryOverview:BUS_COUNTRY_OVERVIEW,places:BUS_PLACES,onGeography:summary,onChange:save});
+    if(!layer)layer=createBusLayer({map,delivery,initial,countryOverview:BUS_COUNTRY_OVERVIEW,places:BUS_PLACES,localRouting:BUS_LOCAL_ROUTING,onGeography:summary,onChange:save});
     await layer.enable({open:true});ready=true;save();
   }catch{$('busPageStatus').hidden=false;$('busPageStatus').textContent='The bus map could not load. Use Bus filters to retry.';}
   $('controlsToggle').disabled=false;
