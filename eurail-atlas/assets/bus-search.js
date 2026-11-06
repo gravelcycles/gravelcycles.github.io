@@ -1,4 +1,4 @@
-import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=67e4ec8c5ceb3893';
+import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=2fc851f9ab1d30d3';
 
 export const BUS_SEARCH_LIMITS=Object.freeze({sources:4,partitions:6,wireBytes:2*1024*1024,decodedBytes:12*1024*1024,catalogueBytes:1024*1024,indexBytes:1024*1024,packetBytes:512*1024});
 const distance=(box,bounds)=>!box||!bounds?0:((box[0]+box[2]-bounds[0]-bounds[2])/2)**2+((box[1]+box[3]-bounds[1]-bounds[3])/2)**2;

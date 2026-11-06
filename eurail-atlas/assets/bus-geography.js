@@ -1,5 +1,5 @@
-import{escapeHTML as esc}from'./atlas-core.js?v=67e4ec8c5ceb3893';
-import{BUS_LIMITS}from'./bus-core.js?v=67e4ec8c5ceb3893';
+import{escapeHTML as esc}from'./atlas-core.js?v=2fc851f9ab1d30d3';
+import{BUS_LIMITS}from'./bus-core.js?v=2fc851f9ab1d30d3';
 
 export function cityArea(city,radiusKm=15){
   const dy=radiusKm/111.2,dx=dy/Math.max(.15,Math.cos(city.lat*Math.PI/180));
@@ -21,13 +21,13 @@ export function setupBusGeography({panel,filters,initial,client,changed,map,onSu
     run++;framing++;city=row;filters.cityBounds=cityArea(row);input.value=row.name;close();
     $('busCityFocus').textContent=`Map area within about 15 km of ${row.name}. Showing retained paths in or through this area; inspect actual stops before travelling.`;
     $('busClearCity').hidden=false;if(notify)changed();summary();
-    if(frame){const b=filters.cityBounds;map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[30,30],maxZoom:11});}
+    if(frame){const b=filters.cityBounds;map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[30,30],maxZoom:11,animate:false});}
   }
   $('busClearCity').onclick=()=>{clearCity();changed();input.focus();};
   country.onchange=async()=>{
     clearCity();filters.country=country.value;changed();summary();
     const ticket=++framing,selected=filters.country;if(!selected)return;
-    try{const rows=await client()?.countryInfo();if(ticket!==framing||selected!==filters.country)return;const b=rows?.find(r=>r.name===selected)?.bbox;if(b)map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[35,35],maxZoom:BUS_LIMITS.minimumZoom-.25});}catch{/* Route loading reports an unavailable country packet. */}
+    try{const rows=await client()?.countryInfo();if(ticket!==framing||selected!==filters.country)return;const b=rows?.find(r=>r.name===selected)?.bbox;if(b)map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[35,35],maxZoom:BUS_LIMITS.minimumZoom-.25,animate:false});}catch{/* Route loading reports an unavailable country packet. */}
   };
   scope.onchange=()=>{filters.international=scope.value==='international';changed();summary();};
   input.oninput=()=>{
