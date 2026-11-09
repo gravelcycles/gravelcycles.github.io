@@ -1,5 +1,5 @@
-import{escapeHTML as esc}from'./atlas-core.js?v=2fc851f9ab1d30d3';
-import{BUS_LIMITS}from'./bus-core.js?v=2fc851f9ab1d30d3';
+import{escapeHTML as esc}from'./atlas-core.js?v=ff8d6df720021934';
+import{BUS_LIMITS}from'./bus-core.js?v=ff8d6df720021934';
 
 export function cityArea(city,radiusKm=15){
   const dy=radiusKm/111.2,dx=dy/Math.max(.15,Math.cos(city.lat*Math.PI/180));
@@ -19,7 +19,7 @@ export function setupBusGeography({panel,filters,initial,client,changed,map,onSu
   function clearCity(){run++;framing++;client()?.cancel('places');clearTimeout(timer);city=null;filters.cityBounds=null;input.value='';$('busCityFocus').textContent='';$('busClearCity').hidden=true;close();summary();}
   function selectCity(row,{frame=true,notify=true}={}){
     run++;framing++;city=row;filters.cityBounds=cityArea(row);input.value=row.name;close();
-    $('busCityFocus').textContent=`Map area within about 15 km of ${row.name}. Showing retained paths in or through this area; inspect actual stops before travelling.`;
+    $('busCityFocus').textContent=`Map area within about 15 km of ${row.name}. Routes with recorded stops in this approximate area stay highlighted; other loaded routes turn grey. Local results are limited. Inspect actual boarding stops before travelling.`;
     $('busClearCity').hidden=false;if(notify)changed();summary();
     if(frame){const b=filters.cityBounds;map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[30,30],maxZoom:11,animate:false});}
   }

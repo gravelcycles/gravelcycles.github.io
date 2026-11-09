@@ -1,4 +1,4 @@
-import{safeBusBase}from'./bus-delivery.js?v=2fc851f9ab1d30d3';
+import{safeBusBase}from'./bus-delivery.js?v=ff8d6df720021934';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});

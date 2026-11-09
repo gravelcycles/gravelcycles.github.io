@@ -7,12 +7,12 @@
   <meta name="theme-color" content="#153238">
   <meta name="description" content="Explore scheduled European bus and coach routes by country, international service and city area.">
   <title>Euro Bus — Europe, by bus</title>
-  <link rel="stylesheet" href="assets/leaflet.css?v=2fc851f9ab1d30d3">
-  <link rel="stylesheet" href="assets/app.css?v=2fc851f9ab1d30d3">
-  <link rel="stylesheet" href="assets/bus-layer.css?v=2fc851f9ab1d30d3">
-  <link rel="stylesheet" href="assets/bus-page.css?v=2fc851f9ab1d30d3">
-  <script defer src="assets/leaflet.js?v=2fc851f9ab1d30d3"></script>
-  <script type="module" src="assets/bus-app.js?v=2fc851f9ab1d30d3"></script>
+  <link rel="stylesheet" href="assets/leaflet.css?v=ff8d6df720021934">
+  <link rel="stylesheet" href="assets/app.css?v=ff8d6df720021934">
+  <link rel="stylesheet" href="assets/bus-layer.css?v=ff8d6df720021934">
+  <link rel="stylesheet" href="assets/bus-page.css?v=ff8d6df720021934">
+  <script defer src="assets/leaflet.js?v=ff8d6df720021934"></script>
+  <script type="module" src="assets/bus-app.js?v=ff8d6df720021934"></script>
 </head>
 <body class="bus-page">
   <header class="site-header">
@@ -24,7 +24,7 @@
     <section class="map-area" aria-label="Bus map">
       <div id="map" tabindex="0" role="region" aria-label="Bus map. Drag to explore; pinch or use plus and minus to zoom."></div>
       <div class="map-heading"><div class="map-kicker"><span class="small-line"></span>BUSES &amp; COACHES</div><h1 id="busMapTitle">Explore by bus</h1><p id="busMapSummary">Partial scheduled coverage · pass inclusion unknown</p></div>
-      <div class="bus-map-actions"><button type="button" id="busResetView" aria-label="Reset map to Europe">Europe</button><button type="button" id="busShare">Share view</button><button type="button" id="busFullscreen">Fullscreen</button></div>
+      <div class="bus-map-actions"><button type="button" id="busClearHighlight" hidden>Clear highlight</button><button type="button" id="busResetView" aria-label="Reset map to Europe">Europe</button><button type="button" id="busShare">Share view</button><button type="button" id="busFullscreen">Fullscreen</button></div>
       <p id="busPageStatus" role="status" aria-live="polite" hidden></p>
     </section>
   </main>

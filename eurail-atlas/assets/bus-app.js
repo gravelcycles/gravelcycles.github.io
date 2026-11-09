@@ -1,7 +1,7 @@
-import{createBusLayer}from'./bus-layer.js?v=2fc851f9ab1d30d3';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=2fc851f9ab1d30d3';
-import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=2fc851f9ab1d30d3';
-import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=2fc851f9ab1d30d3';
+import{createBusLayer}from'./bus-layer.js?v=ff8d6df720021934';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=ff8d6df720021934';
+import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=ff8d6df720021934';
+import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=ff8d6df720021934';
 
 const params=new URLSearchParams(location.search),initial={busDay:'all',...Object.fromEntries(params)},$=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,zoomSnap:.25,minZoom:3,maxZoom:19,preferCanvas:true});
@@ -11,7 +11,7 @@ installSmoothWheelZoom(map);
 const europe=[[35.1,-11.5],[64.5,35.5]],lat=Number(params.get('lat')),lon=Number(params.get('lon')),z=Number(params.get('z'));
 if(params.has('lat')&&Number.isFinite(lat+lon+z)&&Math.abs(lat)<=85&&Math.abs(lon)<=180&&z>=3&&z<=19)map.setView([lat,lon],z);else map.fitBounds(europe,{padding:[30,30]});
 let layer,ready=false,delivery=null;
-function save(){if(!ready||!layer)return;const p=new URLSearchParams(layer.state()),c=map.getCenter();p.delete('bus');p.set('lat',c.lat.toFixed(5));p.set('lon',c.lng.toFixed(5));p.set('z',String(map.getZoom()));history.replaceState(null,'',location.pathname+'?'+p);}
+function save(){if(!ready||!layer)return;const state=layer.state(),p=new URLSearchParams(state),c=map.getCenter();$('busClearHighlight').hidden=!(state.busRoute||state.busStop||state.busCity);p.delete('bus');p.set('lat',c.lat.toFixed(5));p.set('lon',c.lng.toFixed(5));p.set('z',String(map.getZoom()));history.replaceState(null,'',location.pathname+'?'+p);}
 function summary({country,international,city}){$('busMapTitle').textContent=city?city.name:country||'Explore by bus';$('busMapSummary').textContent=[international?'International routes':'All bus routes',city?'City area':country?'Recorded calls in '+country:'Partial scheduled coverage','Pass inclusion unknown'].join(' · ');}
 async function start(){
   $('controlsToggle').disabled=true;
@@ -23,6 +23,7 @@ async function start(){
   $('controlsToggle').disabled=false;
 }
 $('controlsToggle').onclick=()=>layer?.enabled()?layer.open():start();
+$('busClearHighlight').onclick=()=>layer?.clearFocus();
 $('busResetView').onclick=()=>{layer?.resetGeography();map.fitBounds(europe,{padding:[30,30]});};
 $('busShare').onclick=async()=>{save();try{await navigator.clipboard.writeText(location.href);$('busPageStatus').hidden=false;$('busPageStatus').textContent='View link copied.';}catch{$('busPageStatus').hidden=false;$('busPageStatus').textContent='Copy the current address to share this view.';}};
 $('busFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{document.body.classList.toggle('bus-fullscreen');map.invalidateSize();}};
