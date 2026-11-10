@@ -1,8 +1,8 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=ff8d6df720021934';
-import{decodeDisplay}from'./display-codec.js?v=ff8d6df720021934';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=ff8d6df720021934';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=ff8d6df720021934';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=ff8d6df720021934';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=36bcedbe061d63be';
+import{decodeDisplay}from'./display-codec.js?v=36bcedbe061d63be';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=36bcedbe061d63be';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=36bcedbe061d63be';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=36bcedbe061d63be';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -152,17 +152,27 @@ export async function queryEdgeJourneys(urls,directions,{signal}={}){
   if(signal?.aborted)throw abortError();
   return findEdgeJourneys(parts,directions);
 }
-export function findStationJourneys(parts,stationIds){
-  const ids=new Set(stationIds),matches=new Map();
-  for(const part of parts)for(const journey of part.journeys||[]){
+function collectStationJourneys(part,ids,matches){
+  for(const journey of part.journeys||[]){
     if((journey.stops||[]).some(call=>ids.has(Array.isArray(call)?call[0]:call.id)))matches.set(JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]),journey);
   }
+}
+export function findStationJourneys(parts,stationIds){
+  const ids=new Set(stationIds),matches=new Map();
+  for(const part of parts)collectStationJourneys(part,ids,matches);
   return[...matches.values()];
 }
 export async function queryStationJourneys(urls,stationIds,{signal}={}){
-  const parts=await Promise.all(urls.map(url=>journeyPart(url,signal)));
+  const ids=new Set(stationIds),matches=new Map();
+  // A city can span many parts. Keep only matching journeys after each batch,
+  // allowing the bounded part cache to release old unmatched decoded rows.
   if(signal?.aborted)throw abortError();
-  return findStationJourneys(parts,stationIds);
+  for(let start=0;start<urls.length;start+=3){
+    const parts=await Promise.all(urls.slice(start,start+3).map(url=>journeyPart(url,signal)));
+    if(signal?.aborted)throw abortError();
+    for(const part of parts)collectStationJourneys(part,ids,matches);
+  }
+  return[...matches.values()];
 }
 
 if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope){

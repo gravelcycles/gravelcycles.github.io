@@ -1,5 +1,5 @@
-import{escapeHTML as esc}from'./atlas-core.js?v=ff8d6df720021934';
-import{BUS_LIMITS}from'./bus-core.js?v=ff8d6df720021934';
+import{escapeHTML as esc}from'./atlas-core.js?v=36bcedbe061d63be';
+import{BUS_LIMITS}from'./bus-core.js?v=36bcedbe061d63be';
 
 export function cityArea(city,radiusKm=15){
   const dy=radiusKm/111.2,dx=dy/Math.max(.15,Math.cos(city.lat*Math.PI/180));

@@ -1,11 +1,15 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=ff8d6df720021934';
-import{mergeSleepServices}from'./sleep-service.js?v=ff8d6df720021934';
-import{mapPairFocusId}from'./route-focus.js?v=ff8d6df720021934';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=ff8d6df720021934';
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=ff8d6df720021934';
-import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=ff8d6df720021934';
+import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=36bcedbe061d63be';
+import{mergeSleepServices}from'./sleep-service.js?v=36bcedbe061d63be';
+import{mapPairFocusId}from'./route-focus.js?v=36bcedbe061d63be';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=36bcedbe061d63be';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=36bcedbe061d63be';
+import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=36bcedbe061d63be';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
+export function passengerCall(call){
+  const pickup=Array.isArray(call)?call[1]:call?.pickup,dropoff=Array.isArray(call)?call[2]:call?.dropoff;
+  return String(pickup??'0')!=='1'||String(dropoff??'0')!=='1';
+}
 export function sourceTrainLabelKey(value){const text=String(value||'').replace(/\s+/g,'').toUpperCase(),match=text.match(/^(?:RJX|RJ|RAILJET|EC|ECE|IC|ICE|EN|NJ)?(\d{1,6})$/);return match?match[1]:text;}
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);
 // A public number identifies a run, not a route. Preserve source, provider,
@@ -139,10 +143,7 @@ export function groupStationRoutes(journeys,stationIds,state,dates){return group
 export function routeStationFocus(groups){
   const stations=new Set(),endpoints=new Set();
   for(const group of groups){
-    const calls=(group.stops||[]).filter(call=>{
-      const pickup=Array.isArray(call)?call[1]:call?.pickup,dropoff=Array.isArray(call)?call[2]:call?.dropoff;
-      return String(pickup??'0')!=='1'||String(dropoff??'0')!=='1';
-    }).map(callId).filter(Boolean);
+    const calls=(group.stops||[]).filter(passengerCall).map(callId).filter(Boolean);
     for(const id of calls)stations.add(id);
     if(calls.length){endpoints.add(calls[0]);endpoints.add(calls.at(-1));}
   }

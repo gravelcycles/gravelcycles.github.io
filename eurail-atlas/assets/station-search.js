@@ -1,7 +1,7 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=ff8d6df720021934';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=ff8d6df720021934';
-import{stationInScope}from'./project-scope.js?v=ff8d6df720021934';
-import{countryMatches}from'./explorer-core.js?v=ff8d6df720021934';
+import{normalize,validMapLocation}from'./atlas-core.js?v=36bcedbe061d63be';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=36bcedbe061d63be';
+import{stationInScope}from'./project-scope.js?v=36bcedbe061d63be';
+import{countryMatches}from'./explorer-core.js?v=36bcedbe061d63be';
 
 const searchNameCache=new WeakMap();
 function searchNames(station){
@@ -39,26 +39,26 @@ export function nearbyStationRecords(station,stations,limit=5){
   return best.map(row=>row.s);
 }
 
-export function setupStationSearch({getStations,getState,ensureStations,onPick,sourceName,onOpen}){
+export function setupStationSearch({getStations,getState,ensureStations,getCities=()=>[],onPick,sourceName,onOpen}){
   const root=document.getElementById('stationSearch'),input=document.getElementById('stationSearchInput'),list=document.getElementById('stationSearchResults'),status=document.getElementById('stationSearchStatus'),toggle=document.getElementById('stationSearchToggle');
   let choices=[],active=-1,sequence=0,timer=0;
   function hide(){sequence++;list.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1;}
   function close(){hide();root.hidden=true;toggle.setAttribute('aria-expanded','false');}
   function select(station){close();input.value=station.name;onPick(station);}
-  function paint(){
-    choices=stationOptions(getStations(),input.value,getState());active=-1;list.replaceChildren();input.removeAttribute('aria-activedescendant');
+  function paint(cities){
+    choices=[...cities,...stationOptions(getStations(),input.value,getState())];active=-1;list.replaceChildren();input.removeAttribute('aria-activedescendant');
     for(const[sIndex,station]of choices.entries()){
       const option=document.createElement('li');option.id='station-search-option-'+sIndex;option.setAttribute('role','option');option.setAttribute('aria-selected','false');
       const name=document.createElement('strong');name.textContent=station.name;option.appendChild(name);
       const details=document.createElement('small'),inactive=!stationSourceSelected(station,getState());
-      details.textContent=[station.country,stationSourceLabel(station,sourceName),inactive?'sources not selected':'',validMapLocation(station.lon,station.lat)?'':'location unavailable'].filter(Boolean).join(' · ');option.appendChild(details);
+      details.textContent=station.isCityArea?'All stations · '+station.country:[station.country,stationSourceLabel(station,sourceName),inactive?'sources not selected':'',validMapLocation(station.lon,station.lat)?'':'location unavailable'].filter(Boolean).join(' · ');option.appendChild(details);
       option.onmousedown=event=>event.preventDefault();option.onclick=()=>select(station);list.appendChild(option);
     }
-    list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));status.textContent=choices.length?choices.length+' stations found.':normalize(input.value).length<2?'Enter at least two characters.':'No station matches. Try another spelling or country.';
+    list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));status.textContent=choices.length?choices.length+' results found.':normalize(input.value).length<2?'Enter at least two characters.':'No city or station matches. Try another spelling.';
   }
   async function search(){
     const ticket=++sequence;status.textContent='Loading station index…';
-    try{await ensureStations();if(ticket===sequence&&!root.hidden&&document.activeElement===input)paint();}
+    try{const[,cities]=await Promise.all([ensureStations(),getCities(input.value)]);if(ticket===sequence&&!root.hidden&&document.activeElement===input)paint(cities);}
     catch{if(ticket===sequence)status.textContent='Station search could not load. Type again to retry.';}
   }
   function open(){onOpen?.();root.hidden=false;toggle.setAttribute('aria-expanded','true');input.focus();if(input.value)input.select();search();}

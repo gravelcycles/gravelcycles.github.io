@@ -1,7 +1,7 @@
-import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=ff8d6df720021934';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=ff8d6df720021934';
-import{stationInScope}from'./project-scope.js?v=ff8d6df720021934';
-import{countryMatches}from'./explorer-core.js?v=ff8d6df720021934';
+import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=36bcedbe061d63be';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=36bcedbe061d63be';
+import{stationInScope}from'./project-scope.js?v=36bcedbe061d63be';
+import{countryMatches}from'./explorer-core.js?v=36bcedbe061d63be';
 
 export const STATION_ZOOM=9;
 function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}

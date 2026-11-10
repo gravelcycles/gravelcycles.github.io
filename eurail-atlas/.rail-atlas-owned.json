@@ -105,28 +105,28 @@
       "sha256": "1dd5c629d142749964c9a4d475178961a977ffbc75105488e40cfc98c5feb0ad"
     },
     "assets/app.js": {
-      "bytes": 148669,
-      "sha256": "3c928a7309eccfcaf0ad06c5886b67fbd66453c4b4c68060cde3ef50afdd2450"
+      "bytes": 152617,
+      "sha256": "4013c87d8119dbb83178cb58ddafb397cfc6a886055adf1d34a3545db491d263"
     },
     "assets/atlas-core.js": {
       "bytes": 25106,
-      "sha256": "1ebfc9b118fc1c38d5a85634beafda47b8d8db09e325c35eded80d5e74110cec"
+      "sha256": "ffbb594a50d0c25655ae3f47274be58d4dda0a11740ae817dcf0c5e1102a49a8"
     },
     "assets/bus-aggregate.js": {
       "bytes": 11155,
-      "sha256": "6958b363cec6a75c5ab0e00d54a487083de3645cfed46d6119ef1c7ed6f53e5f"
+      "sha256": "ee721059339cd198897b8c641e3ab74ebd9cc55197345258ccaa9a1d19a5880b"
     },
     "assets/bus-app.js": {
       "bytes": 3734,
-      "sha256": "16f0595e537198fc54b3de12f28ecf34ff0e3d9089a812dc3c006d29cf54e0fa"
+      "sha256": "024b559bef1fd1210f3b57f6245616751d1cf95b53eaa28c12177346d59103a3"
     },
     "assets/bus-canvas.js": {
       "bytes": 17767,
-      "sha256": "fdf3af69f31f31d19f2e0473c1ba5d49ae729b2154d1b9cdc9d2b56b0f86d0fa"
+      "sha256": "60b33749d0dc64f2042cf94d75edeee608ab5bf681ce6d3d410f3ab018bfdaee"
     },
     "assets/bus-core.js": {
       "bytes": 15186,
-      "sha256": "bf3e0c7be939a7b2e750f61f03057b3851c726dfb168f625ac890cddd856fd25"
+      "sha256": "67a76cb799da8eebfe2d3ab6322a976e4d658e317bf660a079810d45c5846a09"
     },
     "assets/bus-countries/catalogue.json.gz": {
       "bytes": 2079,
@@ -146,11 +146,11 @@
     },
     "assets/bus-data-client.js": {
       "bytes": 5248,
-      "sha256": "dada0c8f8d5c97cba658100b55f815549d7d4447e065e544c5a4087ce67039a1"
+      "sha256": "e355eb400b66bbcc8ec26d1f9d45a274b63e64dcf66e8a96a549486212bdbb76"
     },
     "assets/bus-data-worker.js": {
       "bytes": 16043,
-      "sha256": "b9edae1fff068280136de26b0d1fe63ca3ce3a6663cb9f10951060f9be1d2ae7"
+      "sha256": "7eb8d4e2a00220fba593a7da65c32021373bf520845b99880e6e4a7bc2c6beea"
     },
     "assets/bus-delivery.js": {
       "bytes": 2665,
@@ -162,11 +162,11 @@
     },
     "assets/bus-geography.js": {
       "bytes": 6349,
-      "sha256": "d83b79640044b4799fadfe07a2288964a66e4e8a99460963f61b12f6301839ff"
+      "sha256": "bc1e1d63853d34b1bde7b4e12adf85beb6b1842f189affef4c47055f1dbf60ab"
     },
     "assets/bus-geometry.js": {
       "bytes": 6318,
-      "sha256": "9dce6a06a3f1af24c519cc319962c9100c9e33f192af4537c277a49d6ab11cdd"
+      "sha256": "deea2fd9cad62453cd85f754e44b6a5ae1379cfdd85eb0d7a273d558bc8a0e60"
     },
     "assets/bus-layer.css": {
       "bytes": 6512,
@@ -174,7 +174,7 @@
     },
     "assets/bus-layer.js": {
       "bytes": 40489,
-      "sha256": "9bd7af9d30ff7be16a94fbce7c19f583dae1bc06e209bc409cf15cfea38afa72"
+      "sha256": "cee496c0a8760fe1de802e95d13a0ff7a27bf1148176d98bd6009a4b95865b1b"
     },
     "assets/bus-local-routing.js": {
       "bytes": 314,
@@ -1622,15 +1622,19 @@
     },
     "assets/bus-search.js": {
       "bytes": 10081,
-      "sha256": "7f40f5ab1b4ac9ded5e63d01c679c57da3a45cd43aae2e51abe0f823585c1d37"
+      "sha256": "fd03ea9b50ac76d610f70048dd7b7ca007b4f5fa9b3324d878b91811ba628984"
     },
     "assets/bus-spatial-routing.js": {
       "bytes": 7598,
-      "sha256": "d4d83fec966db80b8223edde6cf0033a7cb84171dd891355167969d06278db73"
+      "sha256": "88fa48ba58819de9a33a0d4835991f064d885c68ecdf21c92ced2899f254cbc4"
     },
     "assets/buses.html": {
       "bytes": 2159,
-      "sha256": "2dd6a71d0294a4060688305fe1db475a3e057280aa2101bcb2806094c6b6db34"
+      "sha256": "ac6f2986cbbd9a7e4ed70d91b6ecc84f55b542f8c60f75e516790c4ef377cc23"
+    },
+    "assets/city-areas.js": {
+      "bytes": 1740,
+      "sha256": "26d5537d634674b1a9410594a43ec453074766f149dca90bfe3d2e773fe378f2"
     },
     "assets/city-hubs-loader.js": {
       "bytes": 2124,
@@ -1638,7 +1642,7 @@
     },
     "assets/clock-coverage.js": {
       "bytes": 1147,
-      "sha256": "d9db6c951c438816ee8e4afaa8528a319f94bf09993dbc3f5352e7ad644418cf"
+      "sha256": "b221447c66983a87a8e808ed3ab0b1a294dd07542a9b92ca8a14c9792b686b0c"
     },
     "assets/context-panels.css": {
       "bytes": 1313,
@@ -1646,7 +1650,7 @@
     },
     "assets/context-scope.js": {
       "bytes": 3946,
-      "sha256": "f51a543cc66c5bd253ac002198f0d7dda5d51f0106352c0ec93976cadcc2b512"
+      "sha256": "6ea501a9f2e1632571a736c0c93cedb53cdaf04ccee415076bc819f8c5a6977e"
     },
     "assets/countries.geojson": {
       "bytes": 838726,
@@ -1662,11 +1666,11 @@
     },
     "assets/data-loader.js": {
       "bytes": 5213,
-      "sha256": "a9097c0ac2913e467d7d016332aaefe0fcaa93879dbe2b468d1d78f37fc640a9"
+      "sha256": "53854d83b3cd764fad9ba25571a36528a2e9f09b0288a7012662faa00d3d9922"
     },
     "assets/data-worker.js": {
-      "bytes": 11745,
-      "sha256": "c382e7d9fef94c8bb3865c1638b16b33873cf90b22293ae3a4bd92afc1e73859"
+      "bytes": 12218,
+      "sha256": "d14d34974db81248409a69b63fc8ed48adbde5dabefe24bd17c2ba9f687907a3"
     },
     "assets/detail-loading.js": {
       "bytes": 734,
@@ -1674,7 +1678,7 @@
     },
     "assets/display-codec.js": {
       "bytes": 4229,
-      "sha256": "7d2245e36557af3b6d206275fda54ec3f809e203d67944cff3f159250fed9174"
+      "sha256": "c47d650b61b8d27514d23bd432791aa81b64cc0426d90ad6cc1899e117c53c22"
     },
     "assets/dm-sans-400.ttf": {
       "bytes": 48280,
@@ -1686,7 +1690,7 @@
     },
     "assets/explorer-core.js": {
       "bytes": 10858,
-      "sha256": "ee58bbd5ae0bc098f41f2527c176c8883def1196489ad00b407a3f45ba1d6b9e"
+      "sha256": "ba89b92a415015a5b15e261f0da46f8e5b79a52b864fa0543ec7115fda5ba87c"
     },
     "assets/frequency-filter.css": {
       "bytes": 2822,
@@ -1694,15 +1698,15 @@
     },
     "assets/frequency-filter.js": {
       "bytes": 4768,
-      "sha256": "47c453dacc7fcd004498eb804dc6ba266e72bc504cfef47addc860807f02edf9"
+      "sha256": "b4cbfc236f42406a70d20b19dd1d102377ff0fcb27d92342bcafe174ae110bde"
     },
     "assets/hub-stations.js": {
       "bytes": 11413,
-      "sha256": "7f13fca629ae9055a72c3617e499e4387c095fcc12840207db4e6061d12a14ff"
+      "sha256": "6485ac2a8f872e7a984add62d919b61a2fd2dfec8bfb92dcadbc217db08083b1"
     },
     "assets/infrastructure-context.js": {
       "bytes": 8793,
-      "sha256": "d02a3f1d94190109d5da576542c78b8786a0c2eeccb2ade0b738c37dcbeaad5b"
+      "sha256": "c82d49ba01e4816ffc21882339272cd8298299cd82cb16f6ac1c22ecd840094e"
     },
     "assets/leaflet.css": {
       "bytes": 14806,
@@ -1718,7 +1722,7 @@
     },
     "assets/line-information.js": {
       "bytes": 4783,
-      "sha256": "09c44c9b6d3ebe4271a0c5e200319d2f776b0ce3d6efddaa348e59ce18a74c80"
+      "sha256": "9d7529393a9bb4db9f350929a2400ec438908c1a40f39154d7309ffd61ec69db"
     },
     "assets/logical-common-od.js": {
       "bytes": 4301,
@@ -1726,15 +1730,15 @@
     },
     "assets/map-renderer.js": {
       "bytes": 25679,
-      "sha256": "5c4f1546dac82166ee78af4d64694e3167da9f40a3948dbdf656d053078868cf"
+      "sha256": "dc1d6069c5922e0fe24dd841168f55400263578fddb658006e967ce67a4d9318"
     },
     "assets/mobile-sheets.js": {
       "bytes": 7085,
       "sha256": "45f0fc98ddb3e076c8b742a5987d6bd995d45a2647698a6d12082611db206cfc"
     },
     "assets/mobile-ui.css": {
-      "bytes": 20061,
-      "sha256": "5cfb6ec32213ecff4bd884642289101f2a5cfd26aa36bbcdc3132fff0bef8a0b"
+      "bytes": 20119,
+      "sha256": "029c3a33377f0c7d09bbbeaf8e008ccdba5f09bdc1b6799e1cbe8808db90b434"
     },
     "assets/native-public-numbers.js": {
       "bytes": 6714,
@@ -1746,7 +1750,7 @@
     },
     "assets/operating-transfers.js": {
       "bytes": 16954,
-      "sha256": "754d818af2c78365a62119f6c64a5e2484480988265bca1ccaf02e00fdf6fa68"
+      "sha256": "24933810a18192274686ae60e54b0fc2d112904bd5274971426fa81f992440a3"
     },
     "assets/pass-policies.js": {
       "bytes": 2309,
@@ -1754,15 +1758,15 @@
     },
     "assets/physical-count-cache.js": {
       "bytes": 3508,
-      "sha256": "002611434ed0b789340824e8a656ef955543542f980f4278e664146db9c7639f"
+      "sha256": "c7efe4199361dfce02d40750766a3a1163c543388c361cdb7948eef00aeceead"
     },
     "assets/physical-heat-inspector.js": {
       "bytes": 10876,
-      "sha256": "bd1ac04c40d7aa4c3c6ae4fddf7a63533e0ff35ee17835cc9413e1d3cbac896a"
+      "sha256": "2b55413fbb7af60708461ae028a89c21c973e9216d3e5468a5c6304bdfa2b541"
     },
     "assets/physical-heat.js": {
       "bytes": 13408,
-      "sha256": "6f94fb58b8c4702f8588a82eedf5cc87a0c3492b87f02d07e2a5b94d553cff2e"
+      "sha256": "e9714e15753a46b57ec072360d751ba0ae16ee3ec1f3ac22a8295d984f5a671a"
     },
     "assets/physical-transfer.js": {
       "bytes": 8563,
@@ -1776,17 +1780,21 @@
       "bytes": 7746876,
       "sha256": "e3736d72067cb3c07ca3ccc2423e06dd72961564e18e34970ea763721313ca17"
     },
+    "assets/rail-city-areas.json.gz": {
+      "bytes": 818935,
+      "sha256": "8bca2b847f37463b7e280e08d609c2ad9cd9becbae7f58d6637a17f6eb47b48c"
+    },
     "assets/rail-gpu.js": {
       "bytes": 9771,
       "sha256": "d95935a88f86da97f37ffe962d66ff0476a14422925b2a397918474fd91e51c9"
     },
     "assets/rail-lod.js": {
       "bytes": 1680,
-      "sha256": "522b9b83d7025c80117aba9dace1a266b27d59de89ced4c762400d491a7667f9"
+      "sha256": "f4894e62a9c2d830f68d95d65d2c871056e1147508f04c0b2d6c6488b0ed1b66"
     },
     "assets/rail-picking.js": {
       "bytes": 6871,
-      "sha256": "0720915797b27c5c59ed13abf3938725c26fca3dc99924746b583134b35c3ac4"
+      "sha256": "df3953f34b71d193ba483bfb5f32981f862ce69c31bc17cab9ecfefa5d3e3b03"
     },
     "assets/rail-primitives.js": {
       "bytes": 1740,
@@ -1798,15 +1806,15 @@
     },
     "assets/raster-client.js": {
       "bytes": 6080,
-      "sha256": "e3fdb3c15beef622717f572ac13a0cd6aababc8585c92b25c06ed20e1671b73e"
+      "sha256": "a5365c4b856a91f10ea4f13cd588e1c0e16aad1ad764c6b87f50fb02110914f2"
     },
     "assets/raster-worker.js": {
       "bytes": 10291,
-      "sha256": "cef04b2a10e2bfb8f64cc4444aecb32ca711e4d07eaae349e6f94b359952d294"
+      "sha256": "8ca9cd3bfb80176e04103c0b32e0cf0a2d720f2a5939b960aa873f30226c695f"
     },
     "assets/replacement-service.js": {
       "bytes": 2825,
-      "sha256": "a6c91ac3ba3838f7b0fdc36dcabc3c8651241de8ef9295ff013f428c50033b1f"
+      "sha256": "50d56d542e522615966134a7636f038b73551d59381e70c095e74b3ff46c289f"
     },
     "assets/reviewed-station-positions.js": {
       "bytes": 3510,
@@ -1818,11 +1826,11 @@
     },
     "assets/service-context.js": {
       "bytes": 13764,
-      "sha256": "3bb550cc918917109ac3aa5a04d17e63d859e695f3805f999852da8c92c9f97e"
+      "sha256": "0fc7ab051209e2040e6811b465de54c2d48f4477cf29455faa50475587a7598d"
     },
     "assets/sleep-service.js": {
       "bytes": 2458,
-      "sha256": "ea36cd8fb03212f202a3cc4a9768a8069628a09d676e8ab3da957d64ceb0ec9b"
+      "sha256": "81c242471c088e910a1d4e7cc6b82a4120553e1e3f69ec6bf45f526d3e27a2ca"
     },
     "assets/source-default-cohorts.js": {
       "bytes": 3104,
@@ -1830,39 +1838,39 @@
     },
     "assets/source-selection.js": {
       "bytes": 2148,
-      "sha256": "67c7b84b3e2049dad3fcefdb66384a57621b7c9c21e1c1aa13e980b0d07c96b9"
+      "sha256": "0328358f5de494c20df6fc28508b6fc9a951a68749327c5e5bdf2868e5447c8c"
     },
     "assets/station-identity.js": {
       "bytes": 5325,
-      "sha256": "baf8af2e10ddbfb8a74a6a2605ae26e4a7171e5b03b1508b76936998631187cb"
+      "sha256": "dda6d335c5aefcbd5549e1634fe7f090f8338da3e60434e291831e8470b2f589"
     },
     "assets/station-markers.js": {
       "bytes": 11877,
-      "sha256": "e2dcf544be8df5b157a69eb1404e69951b3307a70fd9f3bd0a430cf3e4291fb1"
+      "sha256": "e49dd7ad1135ddd187c2827fdb9e1e5cb26104e039639319baff6aa41f4a4078"
     },
     "assets/station-search.js": {
-      "bytes": 6751,
-      "sha256": "83a6dc5a0285e7b57d0cafd6519ad9771ab7987506ad7d872242074ddee53c18"
+      "bytes": 6898,
+      "sha256": "dd4c96f8f49ec4af1859c8767b2b439ccb54c15ecce6d92c5d687de4066ad420"
     },
     "assets/supplemental-availability.js": {
       "bytes": 9609,
-      "sha256": "e30495288548108af46fb1740ae0fe8e79c10f36c66fe275c36b7878fd29ecff"
+      "sha256": "6d1b4fe6546cda79ffa493954636f5b2be214c89ee12d16b266eaa3e59772f93"
     },
     "assets/through-continuations.js": {
       "bytes": 18903,
-      "sha256": "55db6533e2c2b744261097550a9a8161d852fb1c05f8658a8a48494a82e3c230"
+      "sha256": "f0a5800771cefbdc48d6494b1b6c049e892dcc897e923e120bfeddd90823efc4"
     },
     "assets/through-services.js": {
       "bytes": 2115,
       "sha256": "3375195fb82a06bef5175d830e564d8d6fe64aefc8e865336c757a2eb97c4028"
     },
     "assets/train-inspector.js": {
-      "bytes": 16388,
-      "sha256": "4e49c2f870946ee509ea8a8c4a2ea6e3658926b5f43096abd7f9ab01e5db453c"
+      "bytes": 17167,
+      "sha256": "2b0037c2dca764d78624f67cf39cbfef31c3afc07900df51522c32a29a1193de"
     },
     "assets/train-services.js": {
-      "bytes": 19110,
-      "sha256": "67f3c01cbfc19a0d33860544f0fc363c46c8c73bd41450ff7bcfd77ee637ad04"
+      "bytes": 19141,
+      "sha256": "f1bb3d0442e03b8e56baf6d7202693cbff4646019c0e48b22b8c8cdfef6efa53"
     },
     "assets/viewport-refresh.js": {
       "bytes": 905,
@@ -66885,8 +66893,8 @@
       "sha256": "c5dde9db3119ed285eefd6ff6cbf34797a91c365c9bd08a97873cfa37fd096fb"
     },
     "index.html": {
-      "bytes": 787939,
-      "sha256": "e06bcc7e5dcee46ffb57d8ba988765c810f748711012155af4ab89171ffd06ce"
+      "bytes": 788035,
+      "sha256": "cfe72de06429ea0a7b173bae6ed626a7ef5b4240a982efa50be66aace49380fa"
     }
   },
   "kind": "rail-atlas-public-pages",
