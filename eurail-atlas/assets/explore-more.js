@@ -1,8 +1,8 @@
 // More views: station rhythm (dials and hourly heartbeat), clock-face league,
 // country wake-up curves, weekend service, corridor strings, border crossings
 // and the city-pair league, all derived from one chosen day.
-import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=68a910d8fcec3088';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=68a910d8fcec3088';
+import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=be12ace3e364f8ae';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=be12ace3e364f8ae';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];
@@ -101,10 +101,11 @@ export function create(ctx){
       let dots='';for(const d of deps){const h=d/60;if(h<4)continue;const r=12+(h-4)/21*64,a=(d%60)/60*6.283-1.5708;dots+=`<circle cx="${(c+Math.cos(a)*r).toFixed(1)}" cy="${(c+Math.sin(a)*r).toFixed(1)}" r="1.3"/>`;}
       return`<div class="x-dial"><svg viewBox="0 0 ${R} ${R}" width="${R}" height="${R}" role="img" aria-label="Departure dial for ${esc(S.names[st])}">${g}<g fill="var(--s2)" fill-opacity=".75">${dots}</g></svg><b>${esc(S.names[st])}</b><span>${esc(S.countries[S.country[st]])} · ${fmt(deps.length)} departures</span></div>`;}).join('');
     const ramp=['--s6','--s5','--s4','--s3','--s2','--s1'];
-    let h=`<div style="display:grid;grid-template-columns:minmax(110px,180px) repeat(24,minmax(9px,1fr)) 52px;gap:1px;font-size:11px;align-items:center;min-width:560px;font-variant-numeric:tabular-nums"><span></span>`;
-    for(let i=0;i<24;i++)h+=`<span style="text-align:center;color:var(--muted)">${i%3===0?String(i).padStart(2,'0'):''}</span>`;h+='<span style="text-align:right;color:var(--muted)">total</span>';
+    const slim=$('rhythmHeat').clientWidth<520;
+    let h=`<div style="display:grid;grid-template-columns:${slim?'minmax(64px,1fr) repeat(24,minmax(0,8px)) 34px':'minmax(110px,180px) repeat(24,minmax(9px,1fr)) 52px'};gap:1px;font-size:${slim?10:11}px;align-items:center;${slim?'':'min-width:560px;'}font-variant-numeric:tabular-nums"><span></span>`;
+    for(let i=0;i<24;i++)h+=`<span style="text-align:center;color:var(--muted);overflow:visible;white-space:nowrap">${i%(slim?6:3)===0?String(i).padStart(2,'0'):''}</span>`;h+='<span style="text-align:right;color:var(--muted)">total</span>';
     for(const st of state.stations){const row=day.hourly.subarray(st*24,st*24+24),mx=Math.max(1,...row),tot=row.reduce((a,b)=>a+b,0);
-      h+=`<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px">${esc(S.names[st])}</span>`;
+      h+=`<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:${slim?4:8}px">${esc(S.names[st])}</span>`;
       for(let i=0;i<24;i++){const v=row[i],k=v?Math.min(5,1+Math.floor(v/mx*4.999)):0;h+=`<span style="height:16px;border-radius:2px;background:var(${ramp[k]})" title="${esc(S.names[st])}, ${String(i).padStart(2,'0')}:00 — ${v} departures"></span>`;}
       h+=`<span style="text-align:right;color:var(--ink-soft)">${fmt(tot)}</span>`;}
     $('rhythmHeat').innerHTML=h+'</div>';
@@ -138,9 +139,9 @@ export function create(ctx){
       if(hits.length<2)continue;const d0=pos.get(data.patternStation[ps+hits[0]]),d1=pos.get(data.patternStation[ps+hits[hits.length-1]]);if(Math.abs(d1-d0)<0.25*L)continue;
       const pts=[];for(const i of hits){const s=data.patternStation[ps+i];pts.push([data.tripStart[t]+data.profileArr[b+i],pos.get(s)],[data.tripStart[t]+data.profileDep[b+i],pos.get(s)]);}
       trains.push({t,cat:J.patternCategory[pat],pts});}
-    const W=1560,H=Math.max(300,Math.min(560,spine.length*30+60)),ml=170,mt=16,mb=28,t0=240,t1=1500,x=t=>ml+(Math.max(t0,Math.min(t1,t))-t0)/(t1-t0)*(W-ml-12),y=d=>mt+d/L*(H-mt-mb);let g='';
+    const slim=$('corrChart').clientWidth<520,W=slim?1040:1560,H=Math.max(300,Math.min(560,spine.length*30+60)),ml=slim?112:170,cutAt=slim?15:24,mt=16,mb=28,t0=240,t1=1500,x=t=>ml+(Math.max(t0,Math.min(t1,t))-t0)/(t1-t0)*(W-ml-12),y=d=>mt+d/L*(H-mt-mb);let g='';
     for(let h=4;h<=25;h++)g+=`<line x1="${x(h*60)}" x2="${x(h*60)}" y1="${mt}" y2="${H-mb}" stroke="var(--line)"/><text x="${x(h*60)}" y="${H-9}" font-size="11" text-anchor="middle">${String(h%24).padStart(2,'0')}:00</text>`;
-    let last=-99;for(const s of spine){const yy=y(pos.get(s));g+=`<line x1="${ml}" x2="${W-12}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-opacity=".6"/>`;if(yy-last>=13){g+=`<text x="${ml-8}" y="${yy+4}" font-size="11.5" text-anchor="end" fill="var(--ink)">${esc(S.names[s].length>24?S.names[s].slice(0,23)+'…':S.names[s])}</text>`;last=yy;}}
+    let last=-99;for(const s of spine){const yy=y(pos.get(s));g+=`<line x1="${ml}" x2="${W-12}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-opacity=".6"/>`;if(yy-last>=13){g+=`<text x="${ml-8}" y="${yy+4}" font-size="11.5" text-anchor="end" fill="var(--ink)">${esc(S.names[s].length>cutAt?S.names[s].slice(0,cutAt-1)+'…':S.names[s])}</text>`;last=yy;}}
     const tokens=['--c1','--c2','--c3','--c4'];let paths='';
     for(const tr of trains){if(tr.pts[tr.pts.length-1][0]<t0-60||tr.pts[0][0]>t1+60)continue;const info=tripInfo(data,tr.t);
       paths+=`<path d="${tr.pts.map((q,i)=>(i?'L':'M')+x(q[0]).toFixed(1)+' '+y(q[1]).toFixed(1)).join('')}" stroke="var(${tokens[tr.cat]})"><title>${esc(info.title)} · ${esc(info.operator)} · ${esc(info.from)} ${clockLabel(info.calls[0].dep)} → ${esc(info.to)}</title></path>`;}
@@ -160,15 +161,15 @@ export function create(ctx){
     const H=S.hubs,rows=[];
     const centre=new Map();for(let i=0;i<S.N;i++){if(S.hub[i]<0)continue;const e=centre.get(S.hub[i])||[0,0,0];e[0]+=S.lat[i];e[1]+=S.lon[i];e[2]++;centre.set(S.hub[i],e);}
     for(const [k,e] of day.hubs){const a=Math.floor(k/1000),b=k%1000,ca=centre.get(a),cb=centre.get(b);if(!ca||!cb)continue;const km=haversineKm(ca[0]/ca[2],ca[1]/ca[2],cb[0]/cb[2],cb[1]/cb[2]);if(km<60)continue;rows.push([cap(H[a]),cap(H[b]),km,e.best,e.count]);}
-    const W=900,Hh=470,ml=52,mb=38,mt=12,xm=1300,ym=1200,x=v=>ml+v/xm*(W-ml-14),y=v=>Hh-mb-v/ym*(Hh-mb-mt);let g='';
-    for(let k=0;k<=1200;k+=200)g+=`<line x1="${x(k)}" x2="${x(k)}" y1="${mt}" y2="${Hh-mb}" stroke="var(--line)"/><text x="${x(k)}" y="${Hh-mb+15}" font-size="11" text-anchor="middle">${k}</text>`;
+    const slim=$('pairsChart').clientWidth<520,W=slim?Math.max(300,$('pairsChart').clientWidth):900,Hh=slim?380:470,ml=slim?38:52,mb=38,mt=12,xm=slim?1000:1300,ym=1200,x=v=>ml+v/xm*(W-ml-14),y=v=>Hh-mb-v/ym*(Hh-mb-mt);let g='';
+    for(let k=0;k<=(slim?1000:1200);k+=slim?250:200)g+=`<line x1="${x(k)}" x2="${x(k)}" y1="${mt}" y2="${Hh-mb}" stroke="var(--line)"/><text x="${x(k)}" y="${Hh-mb+15}" font-size="11" text-anchor="middle">${k}</text>`;
     for(let m=0;m<=1200;m+=240)g+=`<line x1="${ml}" x2="${W-14}" y1="${y(m)}" y2="${y(m)}" stroke="var(--line)"/><text x="${ml-7}" y="${y(m)+4}" font-size="11" text-anchor="end">${m/60} h</text>`;
-    g+=`<text x="${(ml+W)/2}" y="${Hh-6}" font-size="11.5" text-anchor="middle">Straight-line distance between city centres, km</text>`;
+    g+=`<text x="${(ml+W)/2}" y="${Hh-6}" font-size="11.5" text-anchor="middle">${slim?'Straight-line distance, km':'Straight-line distance between city centres, km'}</text>`;
     for(const sp of [200,80]){const xe=Math.min(xm,ym/60*sp);g+=`<line x1="${x(0)}" y1="${y(0)}" x2="${x(xe)}" y2="${y(xe/sp*60)}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${x(xe)-6}" y="${y(xe/sp*60)+(sp>100?14:-6)}" font-size="11" text-anchor="end">${sp} km/h</text>`;}
     rows.sort((a,b)=>b[4]-a[4]);
-    for(const r of rows){if(r[3]>ym||r[2]>xm)continue;const rr=Math.min(11,2.4+Math.sqrt(r[4])*0.8);g+=`<circle cx="${x(r[2]).toFixed(1)}" cy="${y(r[3]).toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--s2)" fill-opacity=".6" stroke="var(--panel)"><title>${esc(r[0])} – ${esc(r[1])}: ${fmt(r[2])} km, fastest direct ${Math.floor(r[3]/60)} h ${String(r[3]%60).padStart(2,'0')} (${fmt(r[2]/(r[3]/60))} km/h), ${r[4]} direct trains</title></circle>`;}
-    const fast=[...rows].sort((a,b)=>b[2]/b[3]-a[2]/a[3]).slice(0,4);for(const r of fast)g+=`<text x="${x(r[2])+9}" y="${y(r[3])+4}" font-size="11" fill="var(--ink)">${esc(r[0])}–${esc(r[1])}</text>`;
-    $('pairsChart').innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" style="min-width:620px;max-width:100%;height:auto" role="img" aria-label="City pairs: distance against fastest direct journey">${g}</svg><p class="x-note">${fmt(rows.length)} city pairs with a direct train. Fastest: ${fast.map(r=>`${esc(r[0])}–${esc(r[1])} ${fmt(r[2]/(r[3]/60))} km/h`).join(', ')}.</p>`;
+    for(const r of rows){if(r[3]>ym||r[2]>xm)continue;const rr=Math.min(11,2.4+Math.sqrt(r[4])*0.8)*(slim?.62:1);g+=`<circle cx="${x(r[2]).toFixed(1)}" cy="${y(r[3]).toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--s2)" fill-opacity=".6" stroke="var(--panel)"><title>${esc(r[0])} – ${esc(r[1])}: ${fmt(r[2])} km, fastest direct ${Math.floor(r[3]/60)} h ${String(r[3]%60).padStart(2,'0')} (${fmt(r[2]/(r[3]/60))} km/h), ${r[4]} direct trains</title></circle>`;}
+    const fast=[...rows].sort((a,b)=>b[2]/b[3]-a[2]/a[3]).slice(0,4);for(const r of slim?[]:fast)g+=`<text x="${x(r[2])+9}" y="${y(r[3])+4}" font-size="11" fill="var(--ink)">${esc(r[0])}–${esc(r[1])}</text>`;
+    $('pairsChart').innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" style="${slim?'':'min-width:620px;'}max-width:100%;height:auto" role="img" aria-label="City pairs: distance against fastest direct journey">${g}</svg><p class="x-note">${fmt(rows.length)} city pairs with a direct train. Fastest: ${fast.map(r=>`${esc(r[0])}–${esc(r[1])} ${fmt(r[2]/(r[3]/60))} km/h`).join(', ')}.</p>`;
   }
 
   function renderAll(){$('moreStatus').textContent='Working out the day…';setTimeout(()=>{computeDay();renderRhythm();renderCountries();renderCorridor();renderBorders();renderPairs();$('moreStatus').textContent=`Figures for ${data.dates[state.day].label}.`;},20);}

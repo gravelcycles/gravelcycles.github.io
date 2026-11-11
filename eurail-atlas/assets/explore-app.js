@@ -1,5 +1,5 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=68a910d8fcec3088';
-import{css,fmt,esc}from'./explore-ui.js?v=68a910d8fcec3088';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=be12ace3e364f8ae';
+import{css,fmt,esc}from'./explore-ui.js?v=be12ace3e364f8ae';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -39,11 +39,18 @@ async function main(){
     // Phones: bring a result that appears at the foot of the sheet into view.
     reveal(el){if(!phone.matches||el.hidden)return;if($('panel').classList.contains('collapsed'))return;el.scrollIntoView({block:'start',behavior:'smooth'});}};
   const phone=window.matchMedia('(max-width:760px)');
-  let dirty=true,current=null,views={},data=null;
+  let dirty=true,current=null,views={},data=null,drawFailed=false;
 
   $('panelToggle').addEventListener('click',()=>{const panel=$('panel'),open=panel.classList.toggle('collapsed');$('panelToggle').setAttribute('aria-expanded',String(!open));$('panelToggle').textContent=open?'+':'–';$('panelToggle').setAttribute('aria-label',open?'Show controls':'Hide controls');});
   map.on('move zoom',()=>{ctx.hideTooltip();dirty=true;});
   map.on('resize',()=>{layer.resize();dirty=true;});
+  // In-app browsers and rotating phones can size the page after it loads without a window resize,
+  // which leaves the map and its canvas at the old (or zero) size. Follow the element itself.
+  const refit=()=>{if($('mapView').hidden)return;map.invalidateSize({animate:false});const size=map.getSize();if(size.x!==layer.width||size.y!==layer.height)layer.resize();dirty=true;};
+  if(window.ResizeObserver)new ResizeObserver(refit).observe($('map'));
+  for(const name of ['pageshow','orientationchange','focus'])window.addEventListener(name,()=>setTimeout(refit,60));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(refit,60);});
+  window.visualViewport?.addEventListener('resize',refit);
   map.on('mousemove',e=>current?.onMove?.(e.containerPoint));
   // After a tap the browser sends a synthetic mouseout; the readout stays until the next tap or map move.
   let touched=0;$('map').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')touched=performance.now();},true);
@@ -58,7 +65,9 @@ async function main(){
   new MutationObserver(themeChanged).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
   function frame(time){
-    if(current&&data&&(dirty||current.animating?.())){dirty=false;current.draw(time);}
+    // A failed frame must not end the loop: the next one may succeed, and the reader sees why.
+    try{if(current&&data&&layer.width&&layer.height&&(dirty||current.animating?.())){dirty=false;current.draw(time);}}
+    catch(error){if(!drawFailed){drawFailed=true;console.error('Explore draw failed:',error);window.exploreReport?.('draw: '+(error?.message||error));}}
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -71,7 +80,7 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=68a910d8fcec3088':name==='reach'?'./explore-reach.js?v=68a910d8fcec3088':name==='speed'?'./explore-speed.js?v=68a910d8fcec3088':'./explore-more.js?v=68a910d8fcec3088');
+    const module=await import(name==='motion'?'./explore-motion.js?v=be12ace3e364f8ae':name==='reach'?'./explore-reach.js?v=be12ace3e364f8ae':name==='speed'?'./explore-speed.js?v=be12ace3e364f8ae':'./explore-more.js?v=be12ace3e364f8ae');
     return views[name]=module.create(ctx);
   }
   async function route(){
