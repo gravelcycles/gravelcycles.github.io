@@ -1,4 +1,4 @@
-import{selectedDays}from'./atlas-core.js?v=be12ace3e364f8ae';
+import{selectedDays}from'./atlas-core.js?v=627060c35bf1a7ca';
 
 // A wrapper can cover only exact dates. Presence alone does not mean the
 // selected trains have clocks; native frequencies and operating dates persist.

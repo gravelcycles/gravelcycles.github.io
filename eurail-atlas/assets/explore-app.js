@@ -1,5 +1,6 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=be12ace3e364f8ae';
-import{css,fmt,esc}from'./explore-ui.js?v=be12ace3e364f8ae';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=627060c35bf1a7ca';
+import{css,fmt,esc}from'./explore-ui.js?v=627060c35bf1a7ca';
+import{makeLabels}from'./explore-labels.js?v=627060c35bf1a7ca';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -39,7 +40,7 @@ async function main(){
     // Phones: bring a result that appears at the foot of the sheet into view.
     reveal(el){if(!phone.matches||el.hidden)return;if($('panel').classList.contains('collapsed'))return;el.scrollIntoView({block:'start',behavior:'smooth'});}};
   const phone=window.matchMedia('(max-width:760px)');
-  let dirty=true,current=null,views={},data=null,drawFailed=false;
+  let dirty=true,current=null,views={},data=null,drawFailed=false,labels=null,showNames=true;
 
   $('panelToggle').addEventListener('click',()=>{const panel=$('panel'),open=panel.classList.toggle('collapsed');$('panelToggle').setAttribute('aria-expanded',String(!open));$('panelToggle').textContent=open?'+':'–';$('panelToggle').setAttribute('aria-label',open?'Show controls':'Hide controls');});
   map.on('move zoom',()=>{ctx.hideTooltip();dirty=true;});
@@ -60,13 +61,13 @@ async function main(){
   // On phones the panel is a bottom sheet: lift it while typing so the keyboard cannot cover the field.
   $('panel').addEventListener('focusin',e=>{if(e.target.matches('input[type=search]')){$('panel').classList.add('typing');e.target.closest('.x-search')?.scrollIntoView({block:'start'});}});
   $('panel').addEventListener('focusout',e=>{if(e.target.matches('input[type=search]'))setTimeout(()=>$('panel').classList.remove('typing'),150);});
-  const themeChanged=()=>{restyle();Object.values(views).forEach(v=>v.onTheme?.());dirty=true;};
+  const themeChanged=()=>{labels?.reset();restyle();Object.values(views).forEach(v=>v.onTheme?.());dirty=true;};
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',themeChanged);
   new MutationObserver(themeChanged).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
   function frame(time){
     // A failed frame must not end the loop: the next one may succeed, and the reader sees why.
-    try{if(current&&data&&layer.width&&layer.height&&(dirty||current.animating?.())){dirty=false;current.draw(time);}}
+    try{if(current&&data&&layer.width&&layer.height&&(dirty||current.animating?.())){dirty=false;current.draw(time);if(showNames)labels?.draw();}}
     catch(error){if(!drawFailed){drawFailed=true;console.error('Explore draw failed:',error);window.exploreReport?.('draw: '+(error?.message||error));}}
     requestAnimationFrame(frame);
   }
@@ -76,11 +77,12 @@ async function main(){
     data=await loadExplore(DATA_URL,(done,total)=>{if(total){$('loadingBar').style.width=Math.round(done/total*100)+'%';$('loadingDetail').textContent=`${(done/1e6).toFixed(1)} of ${(total/1e6).toFixed(1)} MB`;}});
   }catch(error){$('loading').hidden=true;$('error').hidden=false;$('errorDetail').textContent=error.message.includes('HTTP')?'The Explore data is not published at this address yet.':'Check your connection and reload the page.';console.error('Explore data failed:',error);return;}
   $('loading').hidden=true;
-  ctx.data=data;ctx.search=makeStationSearch(data);
+  ctx.data=data;ctx.search=makeStationSearch(data);labels=makeLabels(ctx);
+  $('placeNames').addEventListener('change',e=>{showNames=e.target.checked;dirty=true;});
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=be12ace3e364f8ae':name==='reach'?'./explore-reach.js?v=be12ace3e364f8ae':name==='speed'?'./explore-speed.js?v=be12ace3e364f8ae':'./explore-more.js?v=be12ace3e364f8ae');
+    const module=await import(name==='motion'?'./explore-motion.js?v=627060c35bf1a7ca':name==='reach'?'./explore-reach.js?v=627060c35bf1a7ca':name==='speed'?'./explore-speed.js?v=627060c35bf1a7ca':'./explore-more.js?v=627060c35bf1a7ca');
     return views[name]=module.create(ctx);
   }
   async function route(){

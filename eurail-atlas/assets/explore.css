@@ -59,7 +59,8 @@ a{color:var(--control)}
 .x-panel-body{overflow:auto;padding:4px 14px 14px;display:grid;gap:12px}
 /* Collapsed, the panel keeps one line: the clock and play button, or the legend. */
 .x-panel.collapsed .x-panel-body{overflow:hidden;padding-bottom:10px}
-.x-panel.collapsed .x-view-panel>:not(.x-keep){display:none}
+.x-panel.collapsed .x-view-panel>:not(.x-keep),.x-panel.collapsed .x-names{display:none}
+.x-names{order:2;border-top:1px solid var(--line);padding-top:10px}
 .x-view-panel{display:grid;gap:11px}
 .x-lede{margin:0;color:var(--ink-soft)}
 .x-note{margin:0;color:var(--muted);font-size:12px}
