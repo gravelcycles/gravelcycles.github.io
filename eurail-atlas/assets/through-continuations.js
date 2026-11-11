@@ -1,6 +1,6 @@
 // Logical through availability is independent of source-frequency and physical
 // traffic assets. This module never joins neighbouring services or public IDs.
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=83cd3d7da92ba977';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=2ab1ff3e26abb8a6';
 const callId=call=>Array.isArray(call)?call[0]:call?.id;
 const validVector=(value,days,binary=false)=>Array.isArray(value)&&value.length===days&&value.every(n=>Number.isSafeInteger(n)&&n>=0&&(!binary||n<=1));
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
@@ -62,11 +62,16 @@ const availabilityCountFields=['daily',...[
   ...['reservation','supplement','free','chargeUnknown',...[1,2,3,4,8,9,10].map(mask=>'chargeMask'+mask)]
     .flatMap(field=>[field,field+'Boardable'])
 ].map(field=>field+'Daily')];
+// A pattern that rail-duplicates.js already reduced keeps its published row
+// as ``_published``: its copies leave the movement and the pass counters by
+// different amounts, so "this bucket holds all of the date's runs" is read
+// from the published counters, never from the reduced ones.
+const wholeBucket=(row,key,day,raw)=>{const published=row._published;return published&&validVector(published[key],raw.length)&&validVector(published.daily,raw.length)?published[key][day]!==0&&published[key][day]===published.daily[day]:row[key][day]===raw[day];};
 export function scopeAvailabilityCounts(row,weights,raw=row.daily){
   const result={...row},days=raw?.length;
   if(!validVector(raw,days)||!validVector(weights,days))throw new Error('Invalid scoped service-count vectors');
   for(const key of availabilityCountFields){const value=row[key];if(validVector(value,days)){
-    result[key]=value.map((n,i)=>n===raw[i]?Math.max(0,n-weights[i]):n);
+    result[key]=value.map((n,i)=>wholeBucket(row,key,i,raw)?Math.max(0,n-weights[i]):n);
     const weekly=key==='daily'?'weekly':key.slice(0,-5)+'Weekly';if(weekly in row)result[weekly]=result[key].reduce((a,b)=>a+b,0);
   }}
   return result;
@@ -74,7 +79,10 @@ export function scopeAvailabilityCounts(row,weights,raw=row.daily){
 // Deduplication is scoped to this query and current filters. A full pattern with
 // no exact source-run proof cannot suppress any original source availability.
 // ``spanFor`` returns the exact queried call span, never a city-name match.
-export function deduplicateContinuationAvailability(journeys,{dates,dailyFor,selectedDayIndices,spanFor=journey=>journey._match?[journey._match.from,journey._match.to]:null}={}){
+// ``leftOut(parent, runId, day)`` is true for a fragment run that the current
+// view already leaves out as another feed's copy (rail-duplicates.js): the
+// joined service must not take the same run out of its pattern a second time.
+export function deduplicateContinuationAvailability(journeys,{dates,dailyFor,selectedDayIndices,spanFor=journey=>journey._match?[journey._match.from,journey._match.to]:null,leftOut=(parent,runId,day)=>!!((parent?._duplicateRunIds?.get(runId)?.[0]||0)>>day&1)}={}){
   if(!Array.isArray(journeys)||!Array.isArray(dates)||typeof dailyFor!=='function')throw new Error('Incomplete logical availability query');
   const selected=new Set(selectedDayIndices||dates.map((_,index)=>index));
   const parents=new Map(journeys.map(row=>[row.id,row])),deductions=new Map(),seen=new Set();
@@ -93,7 +101,9 @@ export function deduplicateContinuationAvailability(journeys,{dates,dailyFor,sel
         const parentDate=new Date(Date.parse(dates[day]+'T12:00:00Z')+offset*86400000).toISOString().slice(0,10),parentDay=dates.indexOf(parentDate);
         if(parentDay<0||!selected.has(day)||!selected.has(parentDay)||!active[day]||!proof.daily[day]||!dailyFor(parent)[parentDay])continue;
         if(!within(spanFor(full,day),proof.fullCallRange)||!within(spanFor(parent,parentDay),proof.fragmentCallRange))continue;
-        if(fields.some(key=>parent[key][parentDay]!==0&&parent[key][parentDay]!==parent.daily[parentDay]))continue;
+        const published=parent._published&&fields.every(key=>validVector(parent._published[key],dates.length))?parent._published:parent;
+        if(fields.some(key=>published[key][parentDay]!==0&&published[key][parentDay]!==published.daily[parentDay]))continue;
+        if(leftOut(parent,proof.runId,parentDay))continue;
         const key=JSON.stringify([parent.source,parent.snapshot,parent.id,proof.runId,parentDate]);if(seen.has(key))continue;seen.add(key);
         if(!deductions.has(parent.id))deductions.set(parent.id,{daily:dates.map(()=>0),labels:new Map(),runs:new Map()});
         const entry=deductions.get(parent.id);entry.daily[parentDay]++;
@@ -113,11 +123,17 @@ export function deduplicateContinuationAvailability(journeys,{dates,dailyFor,sel
     }
     const deductionsFor=deductions.get(parent.id);if(!deductionsFor)return parent;
     const result=trim(parent,deductionsFor.daily,parent.daily);
-    result.publicTrains=(parent.publicTrains||[]).map(label=>{
+    const labels=list=>(list||[]).map(label=>{
       const weights=deductionsFor.labels.get(label.label);if(!weights)return label;
       const row=trim(label,weights,label.daily||dates.map(()=>0));
       row.sleepServices=(label.sleepServices||[]).map(sleep=>trim(sleep,weights,label.daily||dates.map(()=>0)));return row;
     });
+    result.publicTrains=labels(parent.publicTrains);
+    // The pass view of a reduced pattern (rail-duplicates.js) loses the same run.
+    if(validVector(parent._passDaily,dates.length)){
+      result._passDaily=parent._passDaily.map((n,i)=>Math.max(0,n-deductionsFor.daily[i]));
+      if(parent._passJourney)result._passJourney={...parent._passJourney,daily:result._passDaily,publicTrains:labels(parent._passJourney.publicTrains)};
+    }
     result.sleepServices=(parent.sleepServices||[]).map(row=>trim(row,deductionsFor.daily,parent.daily));
     result._logicalAvailabilityDeduplicated={daily:deductionsFor.daily,runs:[...deductionsFor.runs].map(([runId,daily])=>({runId,daily})),ordinarySourceRecordPreserved:true};
     return result;

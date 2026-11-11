@@ -1,6 +1,6 @@
-import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=83cd3d7da92ba977';
-import{journeyDaily,selectCityJourneyContexts}from'./train-services.js?v=83cd3d7da92ba977';
-import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=83cd3d7da92ba977';
+import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
+import{journeyDaily,selectCityJourneyContexts,runLeftOut}from'./train-services.js?v=2ab1ff3e26abb8a6';
+import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=2ab1ff3e26abb8a6';
 
 const countryKeys=new Map();
 function countryKey(country){if(!countryKeys.has(country))countryKeys.set(country,normalize(country));return countryKeys.get(country);}
@@ -80,11 +80,13 @@ export function cityConnectionEdges(document,state,dates){
   const cities=new Map(document.cities.filter(city=>city.rank<=limit).map(city=>[city.id,city]));
   const days=selectedDays(state.day,dates),prefix=state.hubExamples==='fast'?'fast':state.hubExamples==='overnight'?'overnight':null;
   const field=prefix?prefix+(effectivePass(state)?'Included':'')+'ExampleDaily':null;
-  const special=new Map(),connections=document.connections.filter(row=>!row.availabilityJourneyId);
-  for(const row of document.connections)if(row.availabilityJourneyId){const key=JSON.stringify([row.fromCity,row.toCity]);if(!special.has(key))special.set(key,[]);special.get(key).push(selectCityJourneyContexts({...row,_cityRowId:row.id,id:row.availabilityJourneyId},state,dates));}
-  for(const rows of special.values())for(const item of deduplicateContinuationAvailability(rows,{dates,selectedDayIndices:days,dailyFor:row=>journeyDaily(row,state,dates),spanFor:(row,day)=>row._contextSpansByDate?.[day]||row._contextSpan})){
+  // Trains another selected feed also publishes are counted once (rail-duplicates.js).
+  const counted=state.duplicates,published=counted?counted.cityRows(document.connections):document.connections;
+  const special=new Map(),connections=published.filter(row=>!row.availabilityJourneyId);
+  for(const row of published)if(row.availabilityJourneyId){const key=JSON.stringify([row.fromCity,row.toCity]),journey={...row,_cityRowId:row.id,id:row.availabilityJourneyId};if(!special.has(key))special.set(key,[]);special.get(key).push(selectCityJourneyContexts(counted?counted.journey(journey):journey,state,dates));}
+  for(const rows of special.values())for(const item of deduplicateContinuationAvailability(rows,{dates,selectedDayIndices:days,dailyFor:row=>journeyDaily(row,state,dates),spanFor:(row,day)=>row._contextSpansByDate?.[day]||row._contextSpan,leftOut:(parent,runId,day)=>runLeftOut(parent,runId,day,state)})){
     const context=continuationMetrics(item,state,dates),raw=context?.daily||item.daily;
-    const included=context?raw.map((n,i)=>Math.min(n,context.eurailDaily[i]+context.reviewedEurailDaily[i])):raw.map((n,i)=>Math.min(n,(Number(item.eurailDaily?.[i])||0)+(Number(item.reviewedEurailDaily?.[i])||0)));
+    const included=context?raw.map((n,i)=>Math.min(n,context.eurailDaily[i]+context.reviewedEurailDaily[i])):raw.map((n,i)=>Math.min(item._passDaily?.[i]??n,(Number(item.eurailDaily?.[i])||0)+(Number(item.reviewedEurailDaily?.[i])||0)));
     // Resolve contextual metrics before ordinary map-pair aggregation. Keeping
     // the first row's policy object on a summed city edge would lose later
     // logical runs or re-evaluate station IDs as city IDs.

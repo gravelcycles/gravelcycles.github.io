@@ -75,8 +75,13 @@ export class TransitLayer{
     if(this.enabled)return;
     this.enabled=true;this.requests=new TransitRequests(this.base,this.fetcher);
     this.renderer=this.L.canvas({padding:0.2});this.group=this.L.layerGroup().addTo(this.map);
-    this.manifest=await this.requests.json('manifest.json','transit_atlas_manifest');
-    this.dates=this.manifest.dates;this.day=this.day||this.dates[0];
+    const first=await this.requests.json('manifest.json');
+    // A recorded hold (its week has passed, or its sources changed) draws nothing and says why.
+    if(first.kind==='transit_atlas_hold'){this.hold=first;this.status(first.message);return;}
+    if(first.kind!=='transit_atlas_manifest')throw new Error('Unsupported transit data format');
+    this.manifest=first;this.hold=null;
+    if(!this.modesChosen)this.modes=new Set(this.manifest.modes||['tram','metro']);
+    this.dates=this.manifest.dates;this.day=this.dates.includes(this.day)?this.day:defaultDay(this.dates);
     this.catalogue=await this.requests.json(this.manifest.tiles.catalogue,'transit_atlas_tile_catalogue');
     this.refresh=()=>this.draw();this.map.on('moveend zoomend',this.refresh);
     await this.draw();
@@ -85,9 +90,9 @@ export class TransitLayer{
     if(!this.enabled)return;
     this.enabled=false;this.generation++;this.requests?.abort();
     if(this.refresh)this.map.off('moveend zoomend',this.refresh);
-    this.group?.remove();this.group=null;this.manifest=null;this.catalogue=null;
+    this.group?.remove();this.group=null;this.manifest=null;this.hold=null;this.catalogue=null;
   }
-  setModes(modes){this.modes=new Set(modes);return this.enabled?this.draw():null;}
+  setModes(modes){this.modes=new Set(modes);this.modesChosen=true;return this.enabled?this.draw():null;}
   setDay(day){this.day=day;return this.enabled?this.draw():null;}
   bounds(){const b=this.map.getBounds();return[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];}
   async draw(){
@@ -118,7 +123,7 @@ export class TransitLayer{
     this.status((limited||picked.limited?'Partial view: zoom in or filter. ':'')+(routes.length?Object.entries(byMode).map(([m,n])=>`${n} ${TRANSIT_MODE_STYLE[m]?.label||m} route patterns`).join(' · '):'No selected city transit in this view on this date.'));
     return{routes:routes.length,byMode,limited:limited||picked.limited};
   }
-  async select(route){const detail=await this.requests.json(route.detail,'transit_atlas_detail');this.onSelect?.(detail,this.day);return detail;}
+  async select(route){if(!this.enabled)return null;const detail=await this.requests.json(route.detail,'transit_atlas_detail');this.onSelect?.(detail,this.day);return detail;}
   status(text){this.onStatus?.(text);}
 }
 
@@ -129,3 +134,50 @@ export function departures(detail,day){
   return out.sort((a,b)=>a.seconds-b.seconds);
 }
 export function clock(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${h>=24?' (+1)':''}`;}
+
+// The layer's own dates decide the day shown: today when it is inside the week, else the first day.
+export function defaultDay(dates,now=new Date()){const today=now.toISOString().slice(0,10);return dates.includes(today)?today:dates[0];}
+
+const ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+export const esc=value=>String(value??'').replace(/[&<>"']/g,c=>ESC[c]);
+const safeURL=value=>{try{const u=new URL(String(value||''));return u.protocol==='https:'?u.href:'';}catch{return'';}};
+const link=(url,text)=>{const u=safeURL(url);return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)} ↗</a>`:esc(text);};
+const LICENCE_NAMES={'CC0-1.0':'CC0 1.0','CC-BY-4.0':'CC BY 4.0','CC-BY-SA-4.0':'CC BY-SA 4.0','ODbL-1.0':'ODbL 1.0','Licence-Ouverte-2.0':'Licence Ouverte 2.0','NLOD-2.0':'NLOD 2.0','Swiss-ODmCH-Terms':'opentransportdata.swiss terms of use','none-stated':'licence: none stated'};
+
+// Lines held from the layer, with the reviewed reason. A line none of whose
+// route rows is admitted (e.g. a wholly held U-Bahn line) is invisible on the
+// map, so it must be listed here.
+export function transitHeldLines(manifest){
+  const out=[];
+  for(const s of manifest?.sources||[])for(const h of s.heldLines||[])
+    out.push({sourceId:s.id,source:s.name||s.id,operator:h.operator||'',label:h.label||h.sourceRouteId,reason:h.reason||'Held after review.',whole:!h.otherRowsOfLineAdmitted,tripDates:Number(h.tripServiceDates)||0});
+  return out.sort((a,b)=>Number(b.whole)-Number(a.whole)||b.tripDates-a.tripDates||a.operator.localeCompare(b.operator)||String(a.label).localeCompare(String(b.label)));
+}
+
+export function transitCredits(manifest){
+  return(manifest?.credits||[]).map(c=>({...c,licenceName:LICENCE_NAMES[c.licence]||c.licence}));
+}
+
+export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
+  if(!document)return'';
+  if(document.kind==='transit_atlas_hold')return`<p class="transit-hold"><strong>Held.</strong> ${esc(document.message)}</p>`;
+  const week=document.serviceWeek||{},credits=transitCredits(document),held=transitHeldLines(document),whole=held.filter(h=>h.whole);
+  const swiss=credits.some(c=>c.licence==='Swiss-ODmCH-Terms');
+  const heldRows=held.slice(0,heldLimit).map(h=>`<li><strong>${esc(h.label)}</strong> · ${esc(h.operator||h.source)}${h.whole?' · <em>whole line held</em>':' · part of line held'}<br><span>${esc(h.reason)}</span></li>`).join('');
+  const days=(document.dates||[]).map(d=>`<option value="${esc(d)}"${d===day?' selected':''}>${esc(new Date(d+'T12:00:00Z').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}))}</option>`).join('');
+  return`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
+    (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
+    `<p class="helper">Counts are scheduled source records per mode, separate from trains and buses. Coverage is partial; pass inclusion is unknown. White centre dashes mark lines that are partly held or also shown as trains.</p>`+
+    ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
+    (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary><ul>${heldRows}</ul>${held.length>heldLimit?`<p class="helper">${(held.length-heldLimit).toLocaleString()} more held route rows are listed in the transit manifest.</p>`:''}</details>`:'')+
+    `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice?`<p class="helper">${esc(document.odblNotice)}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;
+}
+
+export function transitDetailHTML(detail,day){
+  const style=TRANSIT_MODE_STYLE[detail.mode]||{label:detail.mode},p=detail.provenance||{},list=departures(detail,day);
+  return`<button class="close-button" id="transitDetailClose" aria-label="Close city transit line">×</button><p class="eyebrow">${esc(style.label)} · CITY TRANSIT</p><h3>${esc(detail.label||detail.sourceRouteId)}</h3><p>${esc(detail.operator||'Operator unavailable')}</p>`+
+    (detail.partlyHeld?`<p class="transit-hold">${esc(detail.partlyHeld.note)}</p>`:'')+
+    (detail.alsoShownAsTrain?`<p class="helper">The train layer also shows this line (${esc(detail.alsoShownAsTrain.railRoute||'')}); it is not counted twice in either layer's totals.</p>`:'')+
+    `<p>${list.length.toLocaleString()} recorded departures on ${esc(day)} · ${esc(detail.countBasis||'')}</p><p class="helper">${esc(detail.geometryWarning||'')} Eurail / Interrail inclusion: unknown.</p>`+
+    `<p class="helper">${esc(p.attribution||'')} · ${link(p.licenceUrl,LICENCE_NAMES[p.licence]||p.licence||'Licence')} · ${link(p.sourcePage,'Source')}</p>`;
+}
