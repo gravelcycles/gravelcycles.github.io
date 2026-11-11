@@ -1,5 +1,5 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=cec8b75fa8c21f7e';
-import{css,fmt,esc}from'./explore-ui.js?v=cec8b75fa8c21f7e';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=5365ea7a3816698f';
+import{css,fmt,esc}from'./explore-ui.js?v=5365ea7a3816698f';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -62,7 +62,7 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=cec8b75fa8c21f7e':name==='reach'?'./explore-reach.js?v=cec8b75fa8c21f7e':name==='speed'?'./explore-speed.js?v=cec8b75fa8c21f7e':'./explore-more.js?v=cec8b75fa8c21f7e');
+    const module=await import(name==='motion'?'./explore-motion.js?v=5365ea7a3816698f':name==='reach'?'./explore-reach.js?v=5365ea7a3816698f':name==='speed'?'./explore-speed.js?v=5365ea7a3816698f':'./explore-more.js?v=5365ea7a3816698f');
     return views[name]=module.create(ctx);
   }
   async function route(){

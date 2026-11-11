@@ -1,4 +1,4 @@
-import{worldPoint,validMapLocation}from'./atlas-core.js?v=cec8b75fa8c21f7e';
+import{worldPoint,validMapLocation,STRAIGHT_JUMP_KM}from'./atlas-core.js?v=5365ea7a3816698f';
 
 export const DISPLAY_FORMAT='rail-atlas-display-v1';
 const metrics=['daily','eurailDaily','reviewedEurailDaily','conditionalDaily','reviewedConditionalDaily'];
@@ -32,11 +32,12 @@ export function decodeDisplay(data){
     const source=at(sources,row[0]),country=at(countries,row[1]),geometryStatus=at(geometry,row[2]),primary=Boolean(row[3]);
     const id='pair:'+JSON.stringify([source,pair,primary,geometryStatus]);
     if(identities.has(id))invalid();identities.add(id);
-    const world=projected.subarray(start*2,end*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,missingLocation=false;
+    const world=projected.subarray(start*2,end*2);let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,missingLocation=false,jump=0;
     for(let i=start;i<end;i++){
       const lon=coordinates[i*2],lat=coordinates[i*2+1];
       if(typeof lon!=='number'||typeof lat!=='number'||!Number.isFinite(lon)||!Number.isFinite(lat)||lon< -180||lon>180||lat< -85||lat>85)invalid();
       if(!validMapLocation(lon,lat))missingLocation=true;
+      if(i>start){const dy=(lat-coordinates[i*2-1])*111.32,dx=(lon-coordinates[i*2-2])*111.32*Math.cos((lat+coordinates[i*2-1])*Math.PI/360);if(dx*dx+dy*dy>jump*jump)jump=Math.hypot(dx,dy);}
       const[x,y]=worldPoint(lon,lat),offset=(i-start)*2;world[offset]=x;world[offset+1]=y;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
     }
@@ -44,6 +45,8 @@ export function decodeDisplay(data){
       _world:world,_pointCount:end-start,_bbox:[minX,minY,maxX,maxY],
       coords:[[coordinates[start*2],coordinates[start*2+1]],[coordinates[(end-1)*2],coordinates[(end-1)*2+1]]]};
     if(modes.has(index))edge.serviceMode=modes.get(index);
+    // A chord of this length is not a railway alignment; the page draws it dashed.
+    if(jump>=STRAIGHT_JUMP_KM)edge.straightJumpKm=Math.round(jump);
     for(let field=0;field<metrics.length;field++)edge[metrics[field]]=at(daily,row[field+4]);
     if(data.throughServiceCounts){edge.throughConnection=true;edge._throughServices={daily:edge.daily,eurailDaily:edge.eurailDaily,reviewedEurailDaily:edge.reviewedEurailDaily,uncertainDaily:edge.conditionalDaily,boardableDaily:edge.daily,eurailBoardableDaily:edge.eurailDaily,reviewedEurailBoardableDaily:edge.reviewedEurailDaily};}
     // Preserve original row indexes: metadata pages use _startupIndex.

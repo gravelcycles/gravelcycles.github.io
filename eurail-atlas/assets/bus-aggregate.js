@@ -1,6 +1,6 @@
-import{validBusDocument}from'./bus-core.js?v=cec8b75fa8c21f7e';
-import{safeBusBase}from'./bus-delivery.js?v=cec8b75fa8c21f7e';
-import{worldPoint}from'./atlas-core.js?v=cec8b75fa8c21f7e';
+import{validBusDocument}from'./bus-core.js?v=5365ea7a3816698f';
+import{safeBusBase}from'./bus-delivery.js?v=5365ea7a3816698f';
+import{worldPoint}from'./atlas-core.js?v=5365ea7a3816698f';
 
 export const BUS_AGGREGATE_LIMITS=Object.freeze({wireBytes:3*1024*1024,decodedBytes:16*1024*1024,vertices:250000,segments:1000000,profiles:65536,pixels:8*1024*1024});
 const hash=/^[a-f0-9]{64}$/;
@@ -25,21 +25,67 @@ export function decodeAggregate(value,manifest,referenceZoom){
   return{profiles,counts,columns,n,scale};
 }
 
-export function aggregateScene(decoded,manifest,bounds,filters,reserve=0){
-  const{profiles,counts,columns:c,n,scale}=decoded,day=manifest.dates.indexOf(filters.day),active=profiles.map(row=>(!filters.source||filters.source===row[0])&&(!filters.operator||filters.operator===row[1])&&(!filters.country||row[6]?.includes(filters.country))&&(!filters.international||row[6]?.length>1)&&(filters.day==='all'?row[4]||row[5]:day>=0&&((row[4]|row[5])&(1<<day))));
-  const west=worldPoint(bounds[0],bounds[3]),east=worldPoint(bounds[2],bounds[1]),box=[west[0]/256*scale,west[1]/256*scale,east[0]/256*scale,east[1]/256*scale];
-  const lines=[new Set(),new Set()],points=new Set();let vertices=0;
+// Exact membership for coordinate pairs packed into two uint32 values. The former string keys were
+// rebuilt, hashed and re-parsed for every segment on every pan.
+function pairSet(capacity){
+  let size=16;while(size<capacity*2)size*=2;
+  const first=new Uint32Array(size),second=new Uint32Array(size),used=new Uint8Array(size),mask=size-1;
+  return(a,b)=>{let h=(Math.imul(a,0x9e3779b1)^Math.imul(b,0x85ebca6b))>>>0;h=(h^(h>>>15))&mask;while(used[h]){if(first[h]===a&&second[h]===b)return false;h=(h+1)&mask;}used[h]=1;first[h]=a;second[h]=b;return true;};
+}
+// Membership and same-style union depend on the filters, never on the camera. Keep the deduplicated
+// network of the latest filter sets so a pan or zoom only culls it against the new bounds.
+const AGGREGATE_FILTER_SETS=4,unions=new WeakMap();
+function aggregateUnion(decoded,manifest,filters){
+  const{profiles,counts,columns:c,n}=decoded,key=JSON.stringify([filters.source||'',filters.operator||'',filters.country||'',!!filters.international,filters.day??'']);
+  let cache=unions.get(decoded);if(!cache){cache=new Map();unions.set(decoded,cache);}
+  const cached=cache.get(key);if(cached){cache.delete(key);cache.set(key,cached);return cached;}
+  const day=manifest.dates.indexOf(filters.day),active=profiles.map(row=>!!((!filters.source||filters.source===row[0])&&(!filters.operator||filters.operator===row[1])&&(!filters.country||row[6]?.includes(filters.country))&&(!filters.international||row[6]?.length>1)&&(filters.day==='all'?row[4]||row[5]:day>=0&&((row[4]|row[5])&(1<<day)))));
+  const style=profiles.map(row=>row[3]==='provider_shape'?0:1),totals=[0,0];let pointTotal=0;
+  for(let i=0;i<n;i++){const profile=c[i];if(!active[profile])continue;if(c[n+i]===c[n*3+i]&&c[n*2+i]===c[n*4+i])pointTotal++;else totals[style[profile]]++;}
+  const lines=totals.map(total=>({seen:pairSet(total),data:new Uint16Array(total*4),length:0})),points=new Uint16Array(pointTotal*2),seenPoint=pairSet(pointTotal);let pointLength=0;
   for(let i=0;i<n;i++){
     const profile=c[i];if(!active[profile])continue;const ax=c[n+i],ay=c[n*2+i],bx=c[n*3+i],by=c[n*4+i];
-    if(Math.max(ax,bx)<box[0]||Math.min(ax,bx)>box[2]||Math.max(ay,by)<box[1]||Math.min(ay,by)>box[3])continue;
-    if(ax===bx&&ay===by){const key=ax*65536+ay;if(!points.has(key)){points.add(key);vertices++;}}
-    else{const group=lines[profiles[profile][3]==='provider_shape'?0:1],key=ax+','+ay+','+bx+','+by;if(!group.has(key)){group.add(key);vertices+=2;}}
-    if(vertices+reserve>BUS_AGGREGATE_LIMITS.vertices)return null;
+    if(ax===bx&&ay===by){if(seenPoint(ax,ay)){points[pointLength++]=ax;points[pointLength++]=ay;}}
+    else{const line=lines[style[profile]];if(line.seen((ax<<16|ay)>>>0,(bx<<16|by)>>>0)){const o=line.length;line.data[o]=ax;line.data[o+1]=ay;line.data[o+2]=bx;line.data[o+3]=by;line.length=o+4;}}
   }
-  const groups=lines.map((set,style)=>{const world=new Float64Array(set.size*4);let offset=0;for(const key of set)for(const value of key.split(','))world[offset++]=Number(value)/scale*256;return{world,dash:style===1};});
-  const presence=new Float64Array(points.size*2);let offset=0;for(const key of points){presence[offset++]=Math.floor(key/65536)/scale*256;presence[offset++]=(key%65536)/scale*256;}
   const operators=new Map();profiles.forEach(row=>{if(row[1])operators.set(JSON.stringify(row.slice(0,2)),{sourceId:row[0],name:row[1]});});
-  return{groups,presence,vertices,patternCount:counts.reduce((sum,count,i)=>sum+(active[i]?count:0),0),operators:[...operators.values()]};
+  const value={lines:lines.map(line=>line.data.slice(0,line.length)),points:points.slice(0,pointLength),patternCount:counts.reduce((sum,count,i)=>sum+(active[i]?count:0),0),operators:[...operators.values()]};
+  cache.set(key,value);if(cache.size>AGGREGATE_FILTER_SETS)cache.delete(cache.keys().next().value);
+  return value;
+}
+// A scene over the vertex budget is generalized on a coarser grid, never truncated: every in-view segment
+// keeps a representative (segments that collapse become presence points), so no served area disappears.
+function coarsenAggregate(lines,points,step){
+  const snap=v=>Math.round(v/step)*step,outPoints=new Uint16Array(points.length+lines[0].length/2+lines[1].length/2),seenPoint=pairSet(outPoints.length/2);let p=0;
+  const add=(x,y)=>{if(seenPoint(x,y)){outPoints[p++]=x;outPoints[p++]=y;}};
+  const outLines=lines.map(data=>{
+    const seen=pairSet(data.length/4),out=new Uint16Array(data.length);let o=0;
+    for(let i=0;i<data.length;i+=4){
+      let ax=snap(data[i]),ay=snap(data[i+1]),bx=snap(data[i+2]),by=snap(data[i+3]);
+      if(ax===bx&&ay===by){add(ax,ay);continue;}
+      if(ax>bx||(ax===bx&&ay>by)){const x=ax,y=ay;ax=bx;ay=by;bx=x;by=y;}
+      if(seen((ax<<16|ay)>>>0,(bx<<16|by)>>>0)){out[o]=ax;out[o+1]=ay;out[o+2]=bx;out[o+3]=by;o+=4;}
+    }
+    return out.subarray(0,o);
+  });
+  for(let i=0;i<points.length;i+=2)add(snap(points[i]),snap(points[i+1]));
+  return{lines:outLines,points:outPoints.subarray(0,p)};
+}
+export function aggregateScene(decoded,manifest,bounds,filters,reserve=0){
+  const{scale}=decoded,union=aggregateUnion(decoded,manifest,filters),limit=BUS_AGGREGATE_LIMITS.vertices;
+  const west=worldPoint(bounds[0],bounds[3]),east=worldPoint(bounds[2],bounds[1]),box=[west[0]/256*scale,west[1]/256*scale,east[0]/256*scale,east[1]/256*scale];
+  const inView=union.lines.map(data=>{
+    const out=new Uint16Array(data.length);let o=0;
+    for(let i=0;i<data.length;i+=4){const ax=data[i],ay=data[i+1],bx=data[i+2],by=data[i+3];if(Math.max(ax,bx)<box[0]||Math.min(ax,bx)>box[2]||Math.max(ay,by)<box[1]||Math.min(ay,by)>box[3])continue;out[o]=ax;out[o+1]=ay;out[o+2]=bx;out[o+3]=by;o+=4;}
+    return out.subarray(0,o);
+  });
+  const all=union.points,pointsInView=new Uint16Array(all.length);let count=0;
+  for(let i=0;i<all.length;i+=2){const x=all[i],y=all[i+1];if(x<box[0]||x>box[2]||y<box[1]||y>box[3])continue;pointsInView[count++]=x;pointsInView[count++]=y;}
+  let lines=inView,points=pointsInView.subarray(0,count),decimation=1;
+  const total=()=>lines[0].length/2+lines[1].length/2+points.length/2;
+  while(total()+reserve>limit){decimation*=2;if(decimation>scale)return null;({lines,points}=coarsenAggregate(inView,pointsInView.subarray(0,count),decimation));}
+  const world=data=>{const out=new Float64Array(data.length);for(let i=0;i<data.length;i++)out[i]=data[i]/scale*256;return out;};
+  return{groups:lines.map((data,style)=>({world:world(data),dash:style===1})),presence:world(points),vertices:total(),patternCount:union.patternCount,operators:[...union.operators],decimation};
 }
 
 export class BusAggregate{
@@ -58,6 +104,7 @@ export class BusAggregate{
     if(value.busManifestSha256!==manifestSha||(value.countryFilters===true)!==this.countryFilters)throw new Error('Aggregate level/cohort mismatch');
     let decoded=this.decoded.get(value);if(!decoded){decoded=decodeAggregate(value,manifest,referenceZoom);this.decoded.set(value,decoded);}
     const scene=aggregateScene(decoded,manifest,bounds,filters,reserve);
+    // Over-budget scenes arrive generalized (scene.decimation>1); only an impossible reserve still fails.
     if(!scene)throw new Error('Complete aggregate overview exceeds scene budget');
     if(!camera||!integer(camera.width,1,4096)||!integer(camera.height,1,4096)||!Number.isFinite(camera.centerX+camera.centerY+camera.scale)||camera.scale!==2**zoom)throw new Error('Invalid aggregate camera');
     const id=++this.sequence,cell=16,gridWidth=Math.ceil(camera.width/cell),gridHeight=Math.ceil(camera.height/cell),occupancy=new Uint8Array(gridWidth*gridHeight);
@@ -74,7 +121,7 @@ export class BusAggregate{
     }
     try{check();}catch(error){bitmap?.close();throw error;}
     this.scene={...scene,id,camera};
-    return{aggregate:true,sceneId:id,camera,bitmap,aggregateGroups:bitmap?[]:scene.groups.map(group=>({...group,world:group.world.slice()})),presence:bitmap?new Float64Array():scene.presence.slice(),occupancy,gridWidth,cell,vertices:scene.vertices,patternCount:scene.patternCount,referenceZoom,operators:scene.operators,routes:[],stops:[],entries:['aggregate'],limited:false};
+    return{aggregate:true,sceneId:id,camera,bitmap,aggregateGroups:bitmap?[]:scene.groups.map(group=>({...group,world:group.world.slice()})),presence:bitmap?new Float64Array():scene.presence.slice(),occupancy,gridWidth,cell,vertices:scene.vertices,patternCount:scene.patternCount,referenceZoom,operators:scene.operators,routes:[],stops:[],entries:['aggregate'],limited:scene.decimation>1,decimation:scene.decimation};
   }
   hit(id,x,y){
     const scene=this.scene;if(!scene||scene.id!==id||!Number.isFinite(x+y))return null;

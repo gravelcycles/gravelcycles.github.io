@@ -1,4 +1,4 @@
-import{safeBusBase}from'./bus-delivery.js?v=cec8b75fa8c21f7e';
+import{safeBusBase}from'./bus-delivery.js?v=5365ea7a3816698f';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
@@ -18,7 +18,7 @@ export function busRouteInArea(route,box){
 }
 export function busCount(route,day,dates){const i=dates.indexOf(day);return day==='all'?(route.dates||[]).reduce((n,v)=>n+(Number(v)||0),0):i<0?0:Number(route.dates?.[i])||0;}
 export function busEstimate(route,day,dates){return busCount({dates:route.estimatedDates},day,dates);}
-export function busMatches(route,filters,dates){return(!filters.source||route.sourceId===filters.source)&&(!filters.operator||route.operator===filters.operator)&&(!filters.country||route.countries?.includes(filters.country))&&(!filters.international||route.countries?.length>1)&&(!filters.cityBounds||busRouteInArea(route,filters.cityBounds))&&(busCount(route,filters.day,dates)>0||busEstimate(route,filters.day,dates)>0);}
+export function busMatches(route,filters,dates){return(!filters.source||route.sourceId===filters.source)&&(!filters.operator||route.operator===filters.operator)&&(!filters.country||route.countries?.includes(filters.country))&&(!filters.international||route.countries?.length>1)&&(!filters.mode||(filters.mode==='coach')===(route.mode==='coach'))&&(!filters.cityBounds||busRouteInArea(route,filters.cityBounds))&&(busCount(route,filters.day,dates)>0||busEstimate(route,filters.day,dates)>0);}
 export function viewportTiles(manifest,bounds,zoom,limits=BUS_LIMITS,filters={}){
   if(zoom<Math.max(manifest.minimumZoom||0,limits.minimumZoom))return{entries:[],limited:false};
   const center=[(bounds[0]+bounds[2])/2,(bounds[1]+bounds[3])/2],distance=e=>{const b=e.bbox;return((b[0]+b[2])/2-center[0])**2+((b[1]+b[3])/2-center[1])**2;};
@@ -91,7 +91,10 @@ export class BusRequests{
   }
   async read(flight){
     const{url,descriptor,limit,controller,key}=flight;const check=()=>{if(controller.signal.aborted||!flight.calls.size)throw aborted();};check();
-    const response=await this.fetcher(url.href,{signal:controller.signal,cache:'no-cache',credentials:'omit',mode:'cors',redirect:'error',referrerPolicy:'no-referrer'});if(!response.ok||response.type==='opaque')throw new Error('Bus data unavailable ('+response.status+')');
+    // A checksum-bound packet is immutable and verified below, so the HTTP cache may answer without a
+    // revalidation round trip. The manifest and any unhashed load still revalidate on every read.
+    const immutable=/^[a-f0-9]{64}$/.test(descriptor?.sha256||'')&&!url.pathname.endsWith('/manifest.json');
+    const response=await this.fetcher(url.href,{signal:controller.signal,cache:immutable?'default':'no-cache',credentials:'omit',mode:'cors',redirect:'error',referrerPolicy:'no-referrer'});if(!response.ok||response.type==='opaque')throw new Error('Bus data unavailable ('+response.status+')');
     if(response.url){const final=new URL(response.url);if(final.origin!==url.origin||final.pathname!==url.pathname||final.search!==url.search)throw new Error('Unexpected bus asset redirect');}
     if(Number(response.headers?.get('content-length'))>limit)throw new Error('Bus asset exceeds download budget');
     let buffer;if(response.body?.getReader){const stream=response.body.getReader(),chunks=[];let size=0;try{for(;;){const{done,value}=await stream.read();if(done)break;size+=value.byteLength;if(size>limit){await stream.cancel();throw new Error('Bus asset exceeds download budget');}chunks.push(value);}}finally{stream.releaseLock();}buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}}
@@ -102,7 +105,7 @@ export class BusRequests{
     const sha256=descriptor?.sha256||url.pathname.endsWith('/manifest.json')?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):undefined;if(descriptor?.sha256&&sha256!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');
     check();
     if(descriptor?.encoding==='gzip'||url.pathname.endsWith('.gz')){
-      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=cec8b75fa8c21f7e');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
+      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=5365ea7a3816698f');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
       else{const stream=new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip')).getReader(),chunks=[],abort=()=>{stream.cancel().catch(()=>{});};let size=0;controller.signal.addEventListener('abort',abort,{once:true});
       try{for(;;){const{done,value}=await stream.read();if(done)break;size+=value.byteLength;if(size>Math.min(limit*8,48*1024*1024)){await stream.cancel();throw new Error('Decoded bus asset exceeds memory budget');}chunks.push(value);}}finally{controller.signal.removeEventListener('abort',abort);stream.releaseLock();}
       buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}}

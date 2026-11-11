@@ -1,13 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=cec8b75fa8c21f7e';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=cec8b75fa8c21f7e';
-import{RouteIndex}from'./rail-picking.js?v=cec8b75fa8c21f7e';
-import{renderWorld}from'./rail-lod.js?v=cec8b75fa8c21f7e';
-import{RasterClient}from'./raster-client.js?v=cec8b75fa8c21f7e';
-import{matchesFocus}from'./route-focus.js?v=cec8b75fa8c21f7e';
-import{isPhysicalSection}from'./physical-heat.js?v=cec8b75fa8c21f7e';
-import{edgeInScope}from'./project-scope.js?v=cec8b75fa8c21f7e';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=cec8b75fa8c21f7e';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=cec8b75fa8c21f7e';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=5365ea7a3816698f';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=5365ea7a3816698f';
+import{RouteIndex}from'./rail-picking.js?v=5365ea7a3816698f';
+import{renderWorld}from'./rail-lod.js?v=5365ea7a3816698f';
+import{RasterClient}from'./raster-client.js?v=5365ea7a3816698f';
+import{matchesFocus}from'./route-focus.js?v=5365ea7a3816698f';
+import{isPhysicalSection}from'./physical-heat.js?v=5365ea7a3816698f';
+import{edgeInScope}from'./project-scope.js?v=5365ea7a3816698f';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=5365ea7a3816698f';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=5365ea7a3816698f';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -35,7 +35,7 @@ export function prepareStyles(edges,{state,dates,stations,focusIds},zoom){
     if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b?(!isItaly(a.country)||!isItaly(b.country)):!isItaly(edge.country))continue;}
     const value=(physical?physicalCounts.count(edge):edgeCount(edge,state,dates))/days,review=pass&&state.review?(physical?(chargeFiltered(state)?0:physicalCounts.count(edge,{conditional:true})):conditionalCount(edge,state,dates))/days:0;
     frequencies[i*2]=value;frequencies[i*2+1]=review;
-    const dashed=isTemporaryReplacement(edge)||approximateAlignment(edge);
+    const dashed=isTemporaryReplacement(edge)||dashedAlignment(edge);
     if(value>0){if(physical)putPhysical(i*16,value,dashed,false);else put(i*16,colorFor(value),Math.min(4.4,.75+Math.log1p(value)*.48)*(zoom<5?.95:1)+boost,dashed,value);}
     if(review>0){if(physical)putPhysical(i*16+8,review,dashed,true);else put(i*16+8,'#a85c00',Math.min(3.3,.85+Math.log1p(review)*.32)+boost,dashed,review);}
     if(focusIds&&!matchesFocus(edge,focusIds)){
@@ -109,7 +109,7 @@ export class RailRenderer{
     map.on('wheelzoomstart',()=>{this.wheelZooming=true;this.clearHover();this.surface.style.transition='none';});map.on('wheelzoomend',()=>{this.wheelZooming=false;this.schedule();});
     map.on('move',()=>this.pan());map.on('moveend resize',()=>this.schedule());
     map.on('zoomanim',event=>this.zoomAnimation(event));map.on('zoomend',()=>{this.zoomAnimating=false;this.surface.style.transition='none';if(this.raster)this.alignBitmap(this.view());else this.surface.style.transform='';this.schedule();});
-    map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge);});
+    map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge,this.pickAll(event.containerPoint.x,event.containerPoint.y,edge));});
     map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';});});
     map.on('mouseout',()=>this.clearHover());map.on('dragstart',()=>{this.dragging=true;this.clearHover();});map.on('dragend',()=>{this.dragging=false;});
   }
@@ -260,5 +260,11 @@ export class RailRenderer{
       this.pickStyleKey=key;this.pickStyleEdges=this.meshEdges;
     }
     return this.index.pick(x,y,this.view(),7.5,edge=>qualifiesEdge(edge,matchesFocus(edge,data.focusIds)?fullRouteState(data.state):data.state,data.dates,data.stations),edge=>this.pickStyles.get(edge));
+  }
+  // All visible routes under the pointer, with the painted winner first.
+  pickAll(x,y,winner=null){
+    const data=this.getData();if(!this.index||this.dragging||this.zoomAnimating)return winner?[winner]:[];
+    const rows=this.index.pickAll(x,y,this.view(),5,edge=>qualifiesEdge(edge,matchesFocus(edge,data.focusIds)?fullRouteState(data.state):data.state,data.dates,data.stations));
+    return winner?[winner,...rows.filter(edge=>edge!==winner)]:rows;
   }
 }

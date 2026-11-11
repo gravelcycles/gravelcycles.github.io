@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=cec8b75fa8c21f7e';
-import{edgeInScope}from'./project-scope.js?v=cec8b75fa8c21f7e';
-import{continuationMetrics}from'./through-continuations.js?v=cec8b75fa8c21f7e';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=5365ea7a3816698f';
+import{edgeInScope}from'./project-scope.js?v=5365ea7a3816698f';
+import{continuationMetrics}from'./through-continuations.js?v=5365ea7a3816698f';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -11,7 +11,14 @@ export const MODES = {
 };
 export const PASS_MODES=new Set(['eurail','italy']);
 export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
-export function normalize(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
+// Station, city and country names are folded repeatedly (catalogue, hub ranking,
+// search). Remember results; the bound keeps free-text queries from growing it.
+const normalized=new Map();
+export function normalize(s){
+  const text=String(s||'');let value=normalized.get(text);
+  if(value===undefined){value=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();if(normalized.size<120000)normalized.set(text,value);}
+  return value;
+}
 export function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));}
 const daySelections=new WeakMap();
 export function selectedDays(day,dates){let selections=daySelections.get(dates);if(!selections){selections=new Map();daySelections.set(dates,selections);}if(selections.has(day))return selections.get(day);const result=computeSelectedDays(day,dates);selections.set(day,result);return result;}
@@ -73,6 +80,14 @@ export function readState(search){const p=new URLSearchParams(search),requested=
 export function serializeState(state,map){const p=new URLSearchParams(),layers=serviceLayers(state),closedCorridors=typeof state.closedCorridors==='boolean'?state.closedCorridors:state.service==='works';p.set('view',state.mode);if(state.country)p.set('country',state.country);if(state.hubCount&&state.hubCount!==100)p.set('cities',state.hubCount);if(state.hubExamples&&state.hubExamples!=='all')p.set('examples',state.hubExamples);if(state.hubCity)p.set('city',state.hubCity);if(state.day!=='all')p.set('day',state.day);if(state.pass)p.set('pass','1');if(state.review)p.set('review','1');if(normalizeCharge(state.charge)!=='all')p.set('charge',normalizeCharge(state.charge));if(state.chargeMatch==='all')p.set('match','all');if(state.included===false)p.set('included','0');if(!layers.trains)p.set('trains','0');if(!layers.replacements)p.set('replacements','0');if(state.aligned===false)p.set('aligned','0');if(state.inferred===false)p.set('inferred','0');if(state.alternatives)p.set('alt','1');if(!state.hubs)p.set('hubs','0');if(!state.schematic)p.set('schematic','0');if(state.legend===false)p.set('key','0');if(closedCorridors)p.set('works','1');if(state.physicalRailways)p.set('physical','1');if(state.min){const exact=exactFrequencyMinimum(state.min);if(exact===null)p.set('min',state.min);else p.set('minfreq',exact);}if(state.sources&&(!state.defaultSources||state.sources.size!==state.defaultSources.size||[...state.sources].some(id=>!state.defaultSources.has(id))))p.set('src',[...state.sources].sort().join(','));if(state.from)p.set('from',state.from);if(state.to)p.set('to',state.to);if(state.edge)p.set('edge',state.edge);if(state.station)p.set('station',state.station);const stationDisplay=stationDisplayMode(state);if(stationDisplay==='hidden')p.set('stations','0');else if(stationDisplay==='always')p.set('stations','always');if(map){const c=map.getCenter();p.set('lat',c.lat.toFixed(3));p.set('lon',c.lng.toFixed(3));p.set('z',map.getZoom().toFixed(2));}return'?'+p.toString();}
 export function formatNumber(n){return new Intl.NumberFormat('en-GB',{maximumFractionDigits:n<10?1:0}).format(Number(n)||0);}
 export function dateLabel(day,dates){if(day==='all')return'all 7 service dates';if(day==='weekdays')return'weekdays';if(day==='weekend')return'the weekend';const d=dates[Number(day.slice(4))];return d?new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}):'selected dates';}
+// The service week named by its ends. A week inside one month keeps the compact "1–7 Nov" form; a week
+// crossing a month or year boundary names both ends, so "29 Nov – 5 Dec" is never shown as "29–5 Nov".
+export function dateRangeLabels(dates){
+  const first=new Date(dates[0]+'T12:00:00Z'),last=new Date(dates.at(-1)+'T12:00:00Z'),sameYear=first.getUTCFullYear()===last.getUTCFullYear(),sameMonth=sameYear&&first.getUTCMonth()===last.getUTCMonth();
+  const end=(date,month,year)=>date.getUTCDate()+' '+date.toLocaleDateString('en-GB',{month,timeZone:'UTC'})+(year?' '+date.getUTCFullYear():'');
+  const range=month=>sameMonth?(first.getUTCDate()===last.getUTCDate()?'':first.getUTCDate()+'–')+end(last,month,false):end(first,month,!sameYear)+' – '+end(last,month,!sameYear);
+  return{short:range('short'),long:range('long'),snapshot:range('short')+(sameYear?' '+first.getUTCFullYear():'')};
+}
 // Fixed doubling bands make the same frequency comparable across views and
 // zooms. The former scale saturated near94/day; busy corridors exceed1000/day.
 export const FREQUENCY_BREAKS=Object.freeze([0,4,8,16,32,64,128,256,512]);
@@ -146,9 +161,20 @@ export function worldPoint(lon,lat){const sin=Math.sin(Math.max(-85,Math.min(85,
 export function validMapLocation(lon,lat){return Number.isFinite(lon)&&Number.isFinite(lat)&&Math.abs(lon)<=180&&Math.abs(lat)<=85&&!(lon===0&&lat===0);}
 export function stationMapPoint(station){return station&&validMapLocation(station.lon,station.lat)?[station.lat,station.lon]:null;}
 export function nearbyStationLocations(a,b){return!!stationMapPoint(a)&&!!stationMapPoint(b)&&Math.abs(a.lat-b.lat)<.006&&Math.abs(a.lon-b.lon)<.008;}
+// A path that leaps this far between two vertices is not following track there,
+// whatever its source label says. Draw the line dashed and say so, instead of
+// presenting a chord across the map as a railway alignment.
+export const STRAIGHT_JUMP_KM=25;
+export function longestJumpKm(coords){let best=0;for(let i=1;i<coords.length;i++){const a=coords[i-1],b=coords[i],lat=b[1]-a[1],lon=b[0]-a[0];
+  // 0.15° is under 17 km on either axis (under 24 km diagonally): ordinary track
+  // vertices cannot reach the threshold, so skip the trigonometry for them.
+  if(lat<.15&&lat>-.15&&lon<.15&&lon>-.15)continue;const dy=lat*111.32,dx=lon*111.32*Math.cos((a[1]+b[1])*Math.PI/360);if(dx*dx+dy*dy>best*best)best=Math.hypot(dx,dy);}return best;}
+export function straightJump(edge){return Number(edge.straightJumpKm)>=STRAIGHT_JUMP_KM;}
 export function approximateAlignment(edge){return /schematic|unresolved|train_ferry/.test(edge.geometryStatus||'');}
+// Stroke style only: geometry filters keep following the published status.
+export function dashedAlignment(edge){return approximateAlignment(edge)||straightJump(edge);}
 export function edgePointCount(edge){return Number.isInteger(edge?._pointCount)?edge._pointCount:edge?.coords?.length||0;}
-export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2||edge.coords.some(p=>!Array.isArray(p)||!validMapLocation(p[0],p[1])))return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY]};}
+export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2||edge.coords.some(p=>!Array.isArray(p)||!validMapLocation(p[0],p[1])))return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}const jump=isPhysicalSection(edge)?0:longestJumpKm(edge.coords);return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY],...(jump>=STRAIGHT_JUMP_KM?{straightJumpKm:Math.round(jump)}:{})};}
 export function segmentDistanceSquared(x,y,ax,ay,bx,by){let dx=bx-ax,dy=by-ay;if(dx||dy){const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));ax+=t*dx;ay+=t*dy;}return(x-ax)**2+(y-ay)**2;}
 export function qualifiesEdge(edge,state,dates,stations){if(!edgeInScope(edge,state))return false;const physical=isPhysicalSection(edge);if((state.mode==='traffic')!==physical)return false;if(!physical&&state.sources&&!state.sources.has(edge.source))return false;if(!physical&&edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))return false;if(!serviceVisible(edge,state)||!edge._cityConnection&&!matchesGeometry(edge,state))return false;if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b){if(!isItaly(a.country)||!isItaly(b.country))return false;}else if(!isItaly(edge.country))return false;}const normal=edgeCount(edge,state,dates),review=effectivePass(state)&&state.review?conditionalCount(edge,state,dates):0;return(normal>0&&normal/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min))||(review>0&&review/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min));}
 export function aggregateMapPairs(input){
