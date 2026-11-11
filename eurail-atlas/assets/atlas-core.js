@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=83cd3d7da92ba977';
-import{edgeInScope}from'./project-scope.js?v=83cd3d7da92ba977';
-import{continuationMetrics}from'./through-continuations.js?v=83cd3d7da92ba977';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=2ab1ff3e26abb8a6';
+import{edgeInScope}from'./project-scope.js?v=2ab1ff3e26abb8a6';
+import{continuationMetrics}from'./through-continuations.js?v=2ab1ff3e26abb8a6';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -53,10 +53,15 @@ function serviceLayerSelected(state,key){
 }
 export function serviceLayers(state){return{trains:serviceLayerSelected(state,'trains'),replacements:serviceLayerSelected(state,'replacements')};}
 export function serviceVisible(row,state){return row?.serviceMode!=='coach'&&!(state.mode==='hubs'&&isTemporaryReplacement(row))&&serviceLayerSelected(state,isTemporaryReplacement(row)?'replacements':'trains');}
-export const edgeMetrics=(edge,state,dates)=>continuationMetrics(edge,state,dates)||edge._throughServices||edge;
+// Published counters of a connection, less the trains another selected feed
+// also publishes (rail-duplicates.js). Without that packet: the published ones.
+const countedOnce=(edge,metrics,state)=>metrics&&state?.duplicates?state.duplicates.metrics(edge.id,metrics):metrics;
+export const throughMetrics=(edge,state)=>countedOnce(edge,edge._throughServices,state);
+export const passPolicyMetrics=(edge,state)=>countedOnce(edge,edge._passPolicy,state);
+export const edgeMetrics=(edge,state,dates)=>continuationMetrics(edge,state,dates)||throughMetrics(edge,state)||edge;
 export function reviewedCount(edge,state,dates,boarding=usesHubConnections(state)){if(!serviceVisible(edge,state))return 0;const metric=edgeMetrics(edge,state,dates);return boarding?sumDays(metric,state.day,dates,'reviewedEurailBoardableDaily','reviewedEurailBoardableWeekly'):sumDays(metric,state.day,dates,'reviewedEurailDaily','reviewedEurailWeekly');}
-export function conditionalCount(edge,state,dates){if(!serviceVisible(edge,state)||chargeFiltered(state))return 0;if(isPhysicalSection(edge))return sectionCount(edge,{...state,pass:true},selectedDays(state.day,dates),{conditional:true});const context=continuationMetrics(edge,state,dates);if(context)return sumDays(context,state.day,dates,'uncertainDaily');if(edge._throughServices)return sumDays(edge._throughServices,state.day,dates,'uncertainDaily');const unknown=state.mode==='eurail'?sumDays(edge._passPolicy||{},state.day,dates,'unknownDaily'):0;const boarding=usesHubConnections(state),raw=boarding?sumDays(edge,state.day,dates,'conditionalBoardableDaily','conditionalBoardableWeekly'):sumDays(edge,state.day,dates,'conditionalDaily','conditionalWeekly'),reviewedIntersection=boarding?sumDays(edge,state.day,dates,'reviewedConditionalBoardableDaily','reviewedConditionalBoardableWeekly'):sumDays(edge,state.day,dates,'reviewedConditionalDaily','reviewedConditionalWeekly');return Math.max(0,raw-reviewedIntersection)+unknown;}
-export function edgeCount(edge,state,dates){if(!serviceVisible(edge,state)||state.mode==='eurail'&&state.included===false)return 0;if(isPhysicalSection(edge))return state.mode==='traffic'?sectionCount(edge,{...state,pass:effectivePass(state)},selectedDays(state.day,dates)):0;if(state.mode==='traffic')return 0;const metric=edgeMetrics(edge,state,dates);if(chargeFiltered(state))return chargeCount(continuationMetrics(edge,state,dates)||edge._throughServices||edge._passPolicy,state,dates);const boarding=usesHubConnections(state);return effectivePass(state)?sumDays(metric,state.day,dates,boarding?'eurailBoardableDaily':'eurailDaily',boarding?'eurailBoardableWeekly':'eurailWeekly')+reviewedCount(edge,state,dates):sumDays(metric,state.day,dates,boarding?'boardableDaily':'daily',boarding?'boardableWeekly':'weekly');}
+export function conditionalCount(edge,state,dates){if(!serviceVisible(edge,state)||chargeFiltered(state))return 0;if(isPhysicalSection(edge))return sectionCount(edge,{...state,pass:true},selectedDays(state.day,dates),{conditional:true});const context=continuationMetrics(edge,state,dates);if(context)return sumDays(context,state.day,dates,'uncertainDaily');if(edge._throughServices)return sumDays(throughMetrics(edge,state),state.day,dates,'uncertainDaily');const unknown=state.mode==='eurail'?sumDays(passPolicyMetrics(edge,state)||{},state.day,dates,'unknownDaily'):0;const boarding=usesHubConnections(state),raw=boarding?sumDays(edge,state.day,dates,'conditionalBoardableDaily','conditionalBoardableWeekly'):sumDays(edge,state.day,dates,'conditionalDaily','conditionalWeekly'),reviewedIntersection=boarding?sumDays(edge,state.day,dates,'reviewedConditionalBoardableDaily','reviewedConditionalBoardableWeekly'):sumDays(edge,state.day,dates,'reviewedConditionalDaily','reviewedConditionalWeekly');return Math.max(0,raw-reviewedIntersection)+unknown;}
+export function edgeCount(edge,state,dates){if(!serviceVisible(edge,state)||state.mode==='eurail'&&state.included===false)return 0;if(isPhysicalSection(edge))return state.mode==='traffic'?sectionCount(edge,{...state,pass:effectivePass(state)},selectedDays(state.day,dates)):0;if(state.mode==='traffic')return 0;const metric=edgeMetrics(edge,state,dates);if(chargeFiltered(state))return chargeCount(continuationMetrics(edge,state,dates)||throughMetrics(edge,state)||passPolicyMetrics(edge,state),state,dates);const boarding=usesHubConnections(state);return effectivePass(state)?sumDays(metric,state.day,dates,boarding?'eurailBoardableDaily':'eurailDaily',boarding?'eurailBoardableWeekly':'eurailWeekly')+reviewedCount(edge,state,dates):sumDays(metric,state.day,dates,boarding?'boardableDaily':'daily',boarding?'boardableWeekly':'weekly');}
 export function perDay(edge,state,dates){return edgeCount(edge,state,dates)/Math.max(1,selectedDays(state.day,dates).length);}
 export function threshold(value){return Math.round(Math.exp(Number(value)/100*Math.log(151))-1);}
 // Keep the original scalar scale so every existing renderer/context caller
@@ -177,6 +182,39 @@ export function edgePointCount(edge){return Number.isInteger(edge?._pointCount)?
 export function prepareEdge(edge){if(!edge?.id||!Array.isArray(edge.coords)||edge.coords.length<2||edge.coords.some(p=>!Array.isArray(p)||!validMapLocation(p[0],p[1])))return null;if(edge._world instanceof Float64Array&&edge._world.length>=4&&edge._world.length%2===0&&edge._pointCount===edge._world.length/2&&Array.isArray(edge._bbox)&&edge._bbox.length===4&&edge._bbox.every(Number.isFinite))return edge;const world=[];let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of edge.coords){if(!Array.isArray(point)||!Number.isFinite(point[0])||!Number.isFinite(point[1]))return null;const[x,y]=worldPoint(point[0],point[1]);world.push(x,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}const jump=isPhysicalSection(edge)?0:longestJumpKm(edge.coords);return{...edge,_world:new Float64Array(world),_pointCount:edge.coords.length,_bbox:[minX,minY,maxX,maxY],...(jump>=STRAIGHT_JUMP_KM?{straightJumpKm:Math.round(jump)}:{})};}
 export function segmentDistanceSquared(x,y,ax,ay,bx,by){let dx=bx-ax,dy=by-ay;if(dx||dy){const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));ax+=t*dx;ay+=t*dy;}return(x-ax)**2+(y-ay)**2;}
 export function qualifiesEdge(edge,state,dates,stations){if(!edgeInScope(edge,state))return false;const physical=isPhysicalSection(edge);if((state.mode==='traffic')!==physical)return false;if(!physical&&state.sources&&!state.sources.has(edge.source))return false;if(!physical&&edge.primary===false&&!state.alternatives&&!state.altSourceIds?.has(edge.source))return false;if(!serviceVisible(edge,state)||!edge._cityConnection&&!matchesGeometry(edge,state))return false;if(state.mode==='italy'){const a=stations.get(edge.a),b=stations.get(edge.b);if(a&&b){if(!isItaly(a.country)||!isItaly(b.country))return false;}else if(!isItaly(edge.country))return false;}const normal=edgeCount(edge,state,dates),review=effectivePass(state)&&state.review?conditionalCount(edge,state,dates):0;return(normal>0&&normal/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min))||(review>0&&review/Math.max(1,selectedDays(state.day,dates).length)>=threshold(state.min));}
+// What a connection shows in the current view and date selection: its
+// included services (all services outside the pass views) and, in a pass view
+// with uncertain coverage shown, the services whose pass inclusion is
+// uncertain. A connection is drawn, picked and listed for either
+// (qualifiesEdge), so every place that puts a number beside one uses both.
+export function shownCounts(edge,state,dates){
+  const included=edgeCount(edge,state,dates),uncertain=effectivePass(state)&&state.review?conditionalCount(edge,state,dates):0;
+  return{included,uncertain,total:included+uncertain};
+}
+// "36 included + 10 uncertain through services / day"; a single number when only one kind is shown.
+export function shownCountText({included=0,uncertain=0}={},days=1,unit='services',format=formatNumber){
+  const perDay=n=>format(n/Math.max(1,days));
+  if(!uncertain)return`${perDay(included)} ${unit} / day`;
+  if(!included)return`${perDay(uncertain)} uncertain ${unit} / day`;
+  return`${perDay(included)} included + ${perDay(uncertain)} uncertain ${unit} / day`;
+}
+// Rows of the "connections on this track" chooser, busiest first: one row per
+// station pair (and per feed when each train is counted on one feed's line
+// only, `perFeed`), dated variants within a feed added up. A pair with
+// nothing to show in the current view and dates has no row.
+export function overlapRows(edges,state,dates,{label,qualifies=()=>true,perFeed=false}={}){
+  const groups=new Map();
+  for(const row of edges||[]){
+    if(!qualifies(row))continue;
+    const counts=shownCounts(row,state,dates);if(!(counts.total>0))continue;
+    const text=label(row),key=JSON.stringify([text,isTemporaryReplacement(row),perFeed?row.source:null]);
+    let group=groups.get(key);if(!group)groups.set(key,group={label:text,sources:new Map()});
+    const source=group.sources.get(row.source);
+    if(!source)group.sources.set(row.source,{row,...counts,best:counts.total,variants:1});
+    else{source.included+=counts.included;source.uncertain+=counts.uncertain;source.total+=counts.total;source.variants++;if(counts.total>source.best){source.best=counts.total;source.row=row;}}
+  }
+  return[...groups.values()].map(group=>{const ranked=[...group.sources.values()].sort((a,b)=>b.total-a.total);return{...ranked[0],label:group.label,feeds:ranked.length};}).sort((a,b)=>b.total-a.total);
+}
 export function aggregateMapPairs(input){
   const groups=new Map(),fields=['daily','eurailDaily','boardableDaily','eurailBoardableDaily','conditionalDaily','conditionalBoardableDaily','reviewedEurailDaily','reviewedEurailBoardableDaily','reviewedConditionalDaily','reviewedConditionalBoardableDaily'],weeks=['weekly','eurailWeekly','boardableWeekly','eurailBoardableWeekly','conditionalWeekly','conditionalBoardableWeekly','reviewedEurailWeekly','reviewedEurailBoardableWeekly','reviewedConditionalWeekly','reviewedConditionalBoardableWeekly'];
   for(const edge of input){

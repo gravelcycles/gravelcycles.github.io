@@ -1,9 +1,10 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=83cd3d7da92ba977';
-import{mergeSleepServices}from'./sleep-service.js?v=83cd3d7da92ba977';
-import{mapPairFocusId}from'./route-focus.js?v=83cd3d7da92ba977';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=83cd3d7da92ba977';
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=83cd3d7da92ba977';
-import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=83cd3d7da92ba977';
+import{effectivePass,selectedDays,journeyMatchesEdge,journeyThroughMatch,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
+import{uncertainScope}from'./rail-duplicates.js?v=2ab1ff3e26abb8a6';
+import{mergeSleepServices}from'./sleep-service.js?v=2ab1ff3e26abb8a6';
+import{mapPairFocusId}from'./route-focus.js?v=2ab1ff3e26abb8a6';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=2ab1ff3e26abb8a6';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=2ab1ff3e26abb8a6';
+import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=2ab1ff3e26abb8a6';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export function passengerCall(call){
@@ -50,13 +51,16 @@ export function journeyDaily(journey,state,dates){
   return dates.map((_,i)=>{
     if(!pass)return Number(journey.daily?.[i])||0;
     const supported=(Number(journey.eurailDaily?.[i])||0)+(Number(journey.reviewedEurailDaily?.[i])||0),included=state.mode==='eurail'&&state.included===false?0:supported;
-    const uncertain=state.review&&(!charge||charge==='all')&&['unknown','conditional','conflicting_reference'].includes(journey.inclusion)?Math.max(0,(Number(journey.daily?.[i])||0)-supported):0;
+    // A copy counted on another feed's line can still be the only one with this pass status.
+    const uncertain=state.review&&(!charge||charge==='all')&&['unknown','conditional','conflicting_reference'].includes(journey.inclusion)?Math.max(0,(Number((journey._passDaily||journey.daily)?.[i])||0)-supported-(journey._uncertainLost?.[i]||0)):0;
     return included+uncertain;
   });
 }
 // Identifier and accommodation metadata must describe the same dated subset
 // as the selected service. A number is presence evidence, never another train.
-export function filteredServiceMetadata(journey,daily){
+export function filteredServiceMetadata(journey,daily,pass=false){
+  // In the pass view a copy keeps the train numbers whose pass status still counts.
+  if(pass&&journey._passJourney)journey=journey._passJourney;
   const trim=row=>{
     const result={...row};
     for(const[key,value]of Object.entries(row))if((key==='daily'||key.endsWith('Daily'))&&Array.isArray(value)){
@@ -83,6 +87,29 @@ export function selectCityJourneyContexts(journey,state,dates){
   const selected=dates.map((_,day)=>candidates.find(candidate=>candidate.visible[day]>0)?.span||candidates.find(candidate=>candidate.raw[day]>0)?.span||candidates[0].span);
   return{...journey,_contextSpan:selected[0],_contextSpansByDate:selected};
 }
+// A journey as a connection or a station sees it (rail-duplicates.js): where
+// another feed's included copy covers the stops asked about, a kept run is
+// not listed as uncertain, exactly as the connection's count leaves it out.
+export function journeyForQuery(journey,{directions=[],stationIds=null}={}){
+  if(!journey?._duplicateUncertain)return journey;
+  const calls=journey.stops||[];let positions=null;
+  if(stationIds){positions=calls.flatMap((call,index)=>stationIds.has(callId(call))?[index]:[]);}
+  else for(const direction of directions){
+    if(direction.throughConnection){const match=journeyThroughMatch(journey,direction);if(match){positions=[match.from,match.to];break;}}
+    else{
+      // A drawn connection between two successive calls (or two successive city hubs).
+      const identity=i=>direction.isHub?journey.hubIds?.[i]:callId(calls[i]);let previous=-1;
+      for(let i=0;i<calls.length&&!positions;i++){if(!identity(i))continue;if(previous>=0&&identity(previous)===direction.a&&identity(i)===direction.b)positions=[previous,i];previous=i;}
+      if(positions)break;
+    }
+  }
+  return uncertainScope(journey,positions);
+}
+// True when this dated run is already left out of the current view as a copy.
+export function runLeftOut(journey,runId,day,state){
+  const pass=effectivePass(state);
+  return!!((journey?._duplicateRunIds?.get(runId)?.[pass?1:0]||0)>>day&1)||!!pass&&!!state.review&&!!((journey?._uncertainLostRunIds?.get(runId)||0)>>day&1);
+}
 export function groupSegmentRoutes(journeys,edge,state,dates){
   if(edge._cityConnection)journeys=(journeys||[]).flatMap(journey=>{
     const members=(edge._directionEdges||[edge]).filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot);
@@ -107,10 +134,11 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
   });
   const directions=(edge._directionEdges||[edge]).map(direction=>({...direction,...(usesHubConnections(state)&&!edge.availabilityOnly?{isHub:true}:{}),...(edge.throughConnection?{throughConnection:true}:{})})),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   const stationIds=edge._stationIds?new Set(edge._stationIds):null;
-  const matching=(journeys||[]).filter(journey=>stationIds?(journey.stops||[]).some(call=>stationIds.has(callId(call))):directions.some(direction=>journeyMatchesEdge(journey,direction)));
+  journeys=(journeys||[]).map(journey=>journeyForQuery(journey,{directions,stationIds}));
+  const matching=journeys.filter(journey=>stationIds?(journey.stops||[]).some(call=>stationIds.has(callId(call))):directions.some(direction=>journeyMatchesEdge(journey,direction)));
   const spanFor=(journey,day)=>{if(Number.isSafeInteger(day)&&journey._contextSpansByDate?.[day])return journey._contextSpansByDate[day];if(edge._cityConnection&&journey._availabilityCityDirection)return journey._contextSpan;if(edge._cityConnection){const spans=directions.filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot&&Array.isArray(row._contextSpan)).map(row=>row._contextSpan),unique=[...new Map(spans.map(span=>[JSON.stringify(span),span])).values()];if(unique.length===1)return unique[0];}if(stationIds){const indexes=(journey.stops||[]).flatMap((call,index)=>stationIds.has(callId(call))?[index]:[]);return indexes.length===1?[indexes[0],indexes[0]]:null;}const calls=journey.stops||[];for(const edge of directions){const starts=calls.flatMap((call,index)=>callId(call)===edge.a?[index]:[]),ends=calls.flatMap((call,index)=>callId(call)===edge.b?[index]:[]);if(starts.length===1&&ends.length===1&&ends[0]>starts[0])return[starts[0],ends[0]];}return null;};
   const contextual=matching.map(journey=>journey.availabilityOnly?{...journey,_contextSpan:spanFor(journey)||undefined}:journey);
-  const available=edge._cityConnection?contextual:deduplicateContinuationAvailability(contextual,{dates,selectedDayIndices:days,dailyFor:journey=>journeyDaily(journey,state,dates),spanFor});
+  const available=edge._cityConnection?contextual:deduplicateContinuationAvailability(contextual,{dates,selectedDayIndices:days,dailyFor:journey=>journeyDaily(journey,state,dates),spanFor,leftOut:(parent,runId,day)=>runLeftOut(parent,runId,day,state)});
   for(const journey of available){
     const identity=journeyIdentity(journey)+(edge._cityConnection?JSON.stringify(journey._availabilityCityDirection):'');if(seen.has(identity)||(stationIds?!(journey.stops||[]).some(call=>stationIds.has(callId(call))):!directions.some(direction=>journeyMatchesEdge(journey,direction))))continue;seen.add(identity);
     const daily=journeyDaily(journey,state,dates),count=days.reduce((sum,i)=>sum+daily[i],0),inspection=journey._logicalAvailabilityAlternative?.originalJourney||journey,routeDaily=journeyDaily(inspection,state,dates),routeCount=days.reduce((sum,i)=>sum+routeDaily[i],0);if(!count&&!routeCount)continue;
@@ -118,7 +146,7 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
     if(!groups.has(key))groups.set(key,{key,source:journey.source,operator:journey.operator||'Recorded operator',serviceMode:journey.serviceMode||'rail',availabilityOnly:journey.availabilityOnly===true,callValidationReview:journey.continuation?.callValidationReview,sourceStopNames:journey.sourceStopNames,stops:journey.stops,daily:dates.map(()=>0),count:0,routeCount:0,journeys:[],labels:[],sleepServices:[],edgeIds:new Set()});
     const group=groups.get(key);group.count+=count;group.routeCount+=routeCount;group.logicalOverlapAlternative||=!!journey._logicalAvailabilityAlternative;group.journeys.push(inspection);daily.forEach((n,i)=>group.daily[i]+=n);
     for(const id of continuationFocusEdgeIds(journey))group.edgeIds.add(id);
-    const metadata=filteredServiceMetadata(inspection,routeDaily);
+    const metadata=filteredServiceMetadata(inspection,routeDaily,effectivePass(state));
     group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));
     group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);
   }
@@ -131,7 +159,7 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
     if(duplicates.size){
       group.journeys=group.journeys.map((row,index)=>duplicates.has(index)?scopeAvailabilityCounts(row,duplicates.get(index).daily):row);
       group.routeCount=0;group.labels=[];group.sleepServices=[];
-      for(const row of group.journeys){const daily=journeyDaily(row,state,dates),metadata=filteredServiceMetadata(row,daily);group.routeCount+=days.reduce((sum,i)=>sum+daily[i],0);group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);}
+      for(const row of group.journeys){const daily=journeyDaily(row,state,dates),metadata=filteredServiceMetadata(row,daily,effectivePass(state));group.routeCount+=days.reduce((sum,i)=>sum+daily[i],0);group.labels.push(...publicTrainLabels(metadata.publicTrains,{day:state.day,dates,limit:Infinity}));group.sleepServices=mergeSleepServices(group.sleepServices,metadata.sleepServices);}
     }
     return{...group,lineDesignations:sourceServiceDesignations(group.journeys),labels:publicTrainLabels(group.labels,{day:state.day,dates,limit:Infinity}).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}))};
   }).sort((a,b)=>b.count-a.count||a.key.localeCompare(b.key));
@@ -195,9 +223,11 @@ export function routeRuns(group,pages,state,dates){
   for(const journey of group.journeys){
     const daily=journeyDaily(journey,state,dates),entry=pages.get(journey.id);
     if(!entry||entry.source!==journey.source||entry.snapshot!==journey.snapshot)continue;
-    for(const run of entry.runs||[]){
-      const consumed=journey._logicalAvailabilityDeduplicated?.runs?.find(row=>row.runId===run.id)?.daily;
-      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]);if(!active.length)continue;
+    // Dated runs another selected feed also publishes are listed there, not here.
+    const copies=journey._duplicateRuns,copyField=effectivePass(state)?1:0,elsewhere=effectivePass(state)?journey._uncertainLostRuns:null;
+    for(const[runIndex,run]of(entry.runs||[]).entries()){
+      const consumed=journey._logicalAvailabilityDeduplicated?.runs?.find(row=>row.runId===run.id)?.daily,copied=copies?.get(runIndex)?.[copyField]||0;
+      const active=serviceDates(run.daily,state,dates).filter(date=>daily[dates.indexOf(date)]>0&&!consumed?.[dates.indexOf(date)]&&!(copied>>dates.indexOf(date)&1)&&!((elsewhere?.get(runIndex)||0)>>dates.indexOf(date)&1));if(!active.length)continue;
       if(!Array.isArray(run.callTimes)||run.callTimes.length!==journey.stops.length)continue;
       const key=JSON.stringify([journeyIdentity(journey),run.id]);if(seen.has(key))continue;seen.add(key);
       for(const view of numberedRunViews(journey,entry,run,active)){

@@ -1,13 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=83cd3d7da92ba977';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=83cd3d7da92ba977';
-import{RouteIndex}from'./rail-picking.js?v=83cd3d7da92ba977';
-import{renderWorld}from'./rail-lod.js?v=83cd3d7da92ba977';
-import{RasterClient}from'./raster-client.js?v=83cd3d7da92ba977';
-import{matchesFocus}from'./route-focus.js?v=83cd3d7da92ba977';
-import{isPhysicalSection}from'./physical-heat.js?v=83cd3d7da92ba977';
-import{edgeInScope}from'./project-scope.js?v=83cd3d7da92ba977';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=83cd3d7da92ba977';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=83cd3d7da92ba977';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=2ab1ff3e26abb8a6';
+import{RouteIndex}from'./rail-picking.js?v=2ab1ff3e26abb8a6';
+import{renderWorld}from'./rail-lod.js?v=2ab1ff3e26abb8a6';
+import{RasterClient}from'./raster-client.js?v=2ab1ff3e26abb8a6';
+import{matchesFocus}from'./route-focus.js?v=2ab1ff3e26abb8a6';
+import{isPhysicalSection}from'./physical-heat.js?v=2ab1ff3e26abb8a6';
+import{edgeInScope}from'./project-scope.js?v=2ab1ff3e26abb8a6';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=2ab1ff3e26abb8a6';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=2ab1ff3e26abb8a6';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -157,7 +157,7 @@ export class RailRenderer{
     if(this.raster){this.geometryEpoch++;this.raster.geometry(this.geometryEpoch,this.meshEdges.map(edge=>renderWorld(edge._world,view.zoom)),{compactPrimitives:this.meshEdges.length>0&&this.meshEdges.every(isPhysicalSection)});}
     if(this.gpu&&!this.gpuLost)this.gpu.upload(this.meshEdges.map(edge=>({_world:renderWorld(edge._world,view.zoom)})),false,[view.centerX,view.centerY]);
   }
-  filterKey({state,stations,focusIds},zoom){const layers=serviceLayers(state);return JSON.stringify([state.scopeRevision||0,state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,layers.trains,layers.replacements,state.alternatives,state.schematic,state.aligned,state.inferred,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size,focusIds?[...focusIds]:null]);}
+  filterKey({state,stations,focusIds},zoom){const layers=serviceLayers(state);return JSON.stringify([state.scopeRevision||0,state.duplicateRevision||0,state.mode,state.day,state.pass,state.review,state.charge,state.chargeMatch,state.included,layers.trains,layers.replacements,state.alternatives,state.schematic,state.aligned,state.inferred,state.sources?[...state.sources].sort():null,[...state.altSourceIds||[]].sort(),zoom<5,zoomStrokeBoost(zoom),stations.size,focusIds?[...focusIds]:null]);}
   draw(){
     if(this.zoomAnimating||this.wheelZooming)return;
     const started=performance.now(),data=this.getData(),view=this.view();if(!(view.width>0&&view.height>0))return;this.resize(view);if(!this.raster)this.surface.style.transform='';
