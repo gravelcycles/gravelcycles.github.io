@@ -1,0 +1,118 @@
+/* Polish layer: motion, elevation and focus refinements. Loaded last.
+   Colours, layout, breakpoints and control sizes stay owned by the earlier
+   sheets; this file only refines how surfaces sit on the map and how they move.
+   Entrances animate; dismissals stay instant so `hidden` remains the single
+   source of truth for visibility. Individual `translate`/`scale` properties are
+   used so the existing centring `transform`s are never overridden. */
+:root{
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-standard:cubic-bezier(.2,0,0,1);
+  --dur-fast:120ms;
+  --dur:220ms;
+  --dur-slow:360ms;
+  --hairline:#15323830;
+  --radius-control:9px;
+  --radius-panel:13px;
+  --elev-1:0 1px 2px #15323817,0 3px 10px #15323812;
+  --elev-2:0 1px 2px #15323812,0 8px 24px #1532381c,0 24px 48px -20px #15323838;
+  --shadow:var(--elev-2);
+  --focus:#0a7ea4;
+  --focus-ring:0 0 0 3px #006f922b;
+}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+h1,h2,h3{text-wrap:balance}
+.helper,.subline,.method-dialog p,.coverage-dialog p{text-wrap:pretty}
+.detail-stat strong,.legend-labels,.frequency-stops,.map-summary,.snapshot-badge,.filter-count,.section-label,output{font-variant-numeric:tabular-nums}
+
+/* State changes ease instead of snapping. */
+button,a,select,summary,input,.suggestions li,.station-search li,.country-choices>*{transition:background-color var(--dur-fast) ease,color var(--dur-fast) ease,border-color var(--dur-fast) ease,box-shadow var(--dur) ease,opacity var(--dur-fast) ease,scale var(--dur-fast) var(--ease-out)}
+:is(.controls-toggle,.map-tools button,.primary-button,.share-button,.filters-done,.date-tabs button,.view-button,.close-button,.legend-toggle,.country-picker-toggle,.hub-options-toggle,.frequency-band-button,.inspector-map-action,.swap-button,.map-error button):active:not(:disabled){scale:.96}
+.primary-button>span,.inline-button{transition:translate var(--dur) var(--ease-out),color var(--dur-fast) ease}
+.primary-button:hover>span{translate:3px 0}
+.switch:before{transition:transform var(--dur) var(--ease-out)}
+
+/* One calm focus treatment everywhere. */
+button:focus-visible,a:focus-visible,summary:focus-visible,input[type=checkbox]:focus-visible,input[type=range]:focus-visible,.only-button:focus-visible,.filter-chip:focus-visible,.fee-advanced>summary:focus-visible,.frequency-band-button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.site-header :is(button,a):focus-visible{outline-color:#a9dcec}
+:is(.station-input,.station-search,.country-dialog) input:focus-visible{outline:0;border-color:var(--route);box-shadow:var(--focus-ring)}
+:is(.station-input,.station-search,.country-dialog) input:hover:not(:focus-visible){border-color:#8ba6a0}
+
+/* Surfaces: one hairline, one elevation scale. */
+.controls-toggle,.sidebar,.inspector,.station-search,.map-tools,.map-legend,.map-loading,.map-error,.suggestions,.hubs-tools label,.country-picker-toggle,.station-explore,.map-key[data-collapsed=true] .legend-toggle{border-color:var(--hairline);background-clip:padding-box}
+.map-legend{box-shadow:var(--elev-1)}
+.map-summary,.overview-note{box-shadow:0 0 0 1px #15323814,var(--elev-1);border-radius:999px;padding-inline:11px}
+.toast{border-radius:999px;padding-inline:20px;box-shadow:var(--elev-2)}
+.method-dialog,.coverage-dialog,.country-dialog{border-color:var(--hairline);box-shadow:0 2px 6px #15323814,0 32px 90px -12px #15323866}
+.date-tabs button.active{box-shadow:0 0 0 1px #1532380f,0 1px 3px #1532381f}
+.site-header{box-shadow:0 1px 0 #0000002e,0 4px 16px #15323824}
+
+/* Header tabs: the selection marker draws in instead of jumping. */
+.view-button:after{content:'';position:absolute;left:12px;right:12px;bottom:0;height:3px;background:var(--selected);border-radius:3px 3px 0 0;opacity:0;scale:.35 1;transition:scale var(--dur-slow) var(--ease-out),opacity var(--dur) ease}
+.view-button.active:after{opacity:1;scale:1 1}
+
+/* Entrances. Every floating surface arrives from the control that opened it. */
+.sidebar,.station-search,.inspector,.hubs-tools,.service-context-panel,.map-legend,.suggestions,#stationSearchResults,.map-loading,.map-error,.map-coverage-warning,.basemap-status,.view-tools-note,.filter-summary,.country-picker-toggle,.hub-options-toggle{transition:opacity var(--dur) ease,translate var(--dur-slow) var(--ease-out),background-color var(--dur-fast) ease,border-color var(--dur-fast) ease,scale var(--dur-fast) var(--ease-out)}
+.toast,.filter-count,.overview-note{transition:opacity var(--dur) ease,translate var(--dur-slow) var(--ease-out),scale var(--dur-slow) var(--ease-out)}
+@starting-style{
+  .sidebar:not([hidden]),.station-search:not([hidden]){opacity:0;translate:0 -8px}
+  .inspector:not([hidden]){opacity:0;translate:10px 0}
+  .hubs-tools:not([hidden]),.country-picker-toggle:not([hidden]),.hub-options-toggle:not([hidden]),.view-tools-note:not([hidden]),.filter-summary:not([hidden]),.map-coverage-warning:not([hidden]),.basemap-status:not([hidden]){opacity:0;translate:0 -5px}
+  .suggestions:not([hidden]),#stationSearchResults:not([hidden]){opacity:0;translate:0 -4px}
+  .service-context-panel:not([hidden]),.map-loading:not([hidden]),.map-error:not([hidden]){opacity:0}
+  .map-legend:not([hidden]){opacity:0;translate:0 6px}
+  .toast:not([hidden]){opacity:0;translate:0 10px;scale:.97}
+  .overview-note:not([hidden]){opacity:0;translate:0 6px}
+  .filter-count:not([hidden]){opacity:0;scale:.5}
+}
+
+/* Dialogs rise into place over a fading scrim. */
+dialog[open]{transition:opacity var(--dur) ease,translate var(--dur-slow) var(--ease-out)}
+dialog[open]::backdrop{transition:opacity var(--dur-slow) ease}
+@starting-style{
+  dialog[open]{opacity:0;translate:0 14px}
+  dialog[open]::backdrop{opacity:0}
+}
+
+/* Disclosures open smoothly where the browser can interpolate to `auto`. */
+@supports (interpolate-size:allow-keywords){
+  .sidebar details{interpolate-size:allow-keywords}
+  .sidebar details::details-content{block-size:0;overflow-y:clip;transition:block-size var(--dur-slow) var(--ease-standard),content-visibility var(--dur-slow) allow-discrete}
+  .sidebar details[open]::details-content{block-size:auto}
+}
+
+/* Range thumb responds to the hand. */
+#minFrequency::-webkit-slider-thumb{transition:scale var(--dur-fast) var(--ease-out),box-shadow var(--dur) ease}
+#minFrequency:hover::-webkit-slider-thumb{box-shadow:0 0 0 1px #15323870,0 2px 5px #15323830,0 0 0 6px #1532381a}
+#minFrequency:active::-webkit-slider-thumb{scale:1.12}
+.weekly-chart button{transition:background-color var(--dur-fast) ease,height var(--dur-slow) var(--ease-out)}
+
+/* Desktop and tablet chrome. Phone sheets keep their own geometry. */
+@media not ((max-width:700px) or ((max-height:500px) and (pointer:coarse))){
+  .controls-toggle,.map-tools,.map-legend,.hubs-tools label,.country-picker-toggle,.station-explore{border-radius:var(--radius-control)}
+  .sidebar,.inspector,.station-search,.map-loading,.map-error{border-radius:var(--radius-panel)}
+  .view-button,.share-button{border-radius:7px}
+  .close-button{border-radius:7px}
+  .map-tools button{transition:background-color var(--dur-fast) ease,color var(--dur-fast) ease,scale var(--dur-fast) var(--ease-out)}
+  .controls-toggle:hover{border-color:#15323859;box-shadow:var(--elev-2),0 0 0 3px #15323810}
+  .controls-caret{transition:rotate var(--dur) var(--ease-out)}
+  .controls-toggle[aria-expanded=true] .controls-caret{rotate:180deg}
+  .sidebar{transform-origin:0 0}
+  /* The map title reads as part of the chrome, not as lettering on the map. */
+  .workspace .map-heading{top:calc(var(--toolbar-height) + 18px);padding:6px 14px 7px;background:#fbfaf6f2;border:1px solid var(--hairline);border-radius:var(--radius-control);background-clip:padding-box;box-shadow:var(--elev-1);text-shadow:none}
+  .workspace .map-heading h2{font-size:17px;line-height:1.15;letter-spacing:-.02em;margin:0 0 2px}
+  .workspace .map-heading>p{font-size:11px;line-height:1.35}
+}
+
+/* Phone sheets rise from the bottom edge. */
+@media (max-width:700px),(max-height:500px) and (pointer:coarse){
+  @starting-style{
+    .sidebar:not([hidden]),.station-search:not([hidden]){opacity:0;translate:0 28px}
+    .inspector:not([hidden]){opacity:0;translate:0 36px}
+    dialog[open]{opacity:0;translate:0 28px}
+  }
+  .view-button>svg{transition:translate var(--dur) var(--ease-out)}
+  .view-button.active>svg{translate:0 -1px}
+}
+
+/* Headings that only receive scripted focus do not draw a ring. */
+:is(h2,h3)[tabindex="-1"]:focus{outline:0}

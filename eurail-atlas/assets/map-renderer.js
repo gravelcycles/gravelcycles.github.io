@@ -1,13 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=cec8b75fa8c21f7e';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=cec8b75fa8c21f7e';
-import{RouteIndex}from'./rail-picking.js?v=cec8b75fa8c21f7e';
-import{renderWorld}from'./rail-lod.js?v=cec8b75fa8c21f7e';
-import{RasterClient}from'./raster-client.js?v=cec8b75fa8c21f7e';
-import{matchesFocus}from'./route-focus.js?v=cec8b75fa8c21f7e';
-import{isPhysicalSection}from'./physical-heat.js?v=cec8b75fa8c21f7e';
-import{edgeInScope}from'./project-scope.js?v=cec8b75fa8c21f7e';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=cec8b75fa8c21f7e';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=cec8b75fa8c21f7e';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=5365ea7a3816698f';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=5365ea7a3816698f';
+import{RouteIndex}from'./rail-picking.js?v=5365ea7a3816698f';
+import{renderWorld}from'./rail-lod.js?v=5365ea7a3816698f';
+import{RasterClient}from'./raster-client.js?v=5365ea7a3816698f';
+import{matchesFocus}from'./route-focus.js?v=5365ea7a3816698f';
+import{isPhysicalSection}from'./physical-heat.js?v=5365ea7a3816698f';
+import{edgeInScope}from'./project-scope.js?v=5365ea7a3816698f';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=5365ea7a3816698f';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=5365ea7a3816698f';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 

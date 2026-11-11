@@ -1,9 +1,11 @@
-import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote}from'./bus-core.js?v=cec8b75fa8c21f7e';
-import{resolveBusDelivery}from'./bus-delivery.js?v=cec8b75fa8c21f7e';
-import{BusCanvas}from'./bus-canvas.js?v=cec8b75fa8c21f7e';
-import{BusDataClient}from'./bus-data-client.js?v=cec8b75fa8c21f7e';
-import{BUS_OVERVIEW}from'./bus-overview.js?v=cec8b75fa8c21f7e';
-import{setupBusGeography}from'./bus-geography.js?v=cec8b75fa8c21f7e';
+import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote}from'./bus-core.js?v=5365ea7a3816698f';
+import{resolveBusDelivery}from'./bus-delivery.js?v=5365ea7a3816698f';
+import{BusCanvas}from'./bus-canvas.js?v=5365ea7a3816698f';
+import{BusDataClient}from'./bus-data-client.js?v=5365ea7a3816698f';
+import{BUS_OVERVIEW}from'./bus-overview.js?v=5365ea7a3816698f';
+import{setupBusGeography}from'./bus-geography.js?v=5365ea7a3816698f';
+import{FREQUENCY_COLORS,FREQUENCY_LABELS}from'./atlas-core.js?v=5365ea7a3816698f';
+import{busFrequencyBand}from'./bus-network.js?v=5365ea7a3816698f';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id),safeURL=value=>{try{const u=new URL(value);return['https:','http:'].includes(u.protocol)?u.href:null;}catch{return null;}};
 const licenceText=source=>{const v=source.licence||source.license;return typeof v==='string'?v:v?.name||'';};

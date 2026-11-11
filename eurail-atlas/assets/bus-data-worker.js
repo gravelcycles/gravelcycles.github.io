@@ -1,9 +1,10 @@
-import{BUS_LIMITS,BUS_OVERVIEW_LIMITS,BusRequests,validBusDocument,busMatches,intersects,searchBusRoutes,clearBusSearchCache,foldBusText}from'./bus-core.js?v=cec8b75fa8c21f7e';
-import{worldPoint}from'./atlas-core.js?v=cec8b75fa8c21f7e';
-import{BusSearch,BusTileIndex}from'./bus-search.js?v=cec8b75fa8c21f7e';
-import{BusAggregate}from'./bus-aggregate.js?v=cec8b75fa8c21f7e';
-import{BusGeometryReference}from'./bus-geometry.js?v=cec8b75fa8c21f7e';
-import{BusLocalRouting}from'./bus-spatial-routing.js?v=cec8b75fa8c21f7e';
+import{BUS_LIMITS,BUS_OVERVIEW_LIMITS,BusRequests,validBusDocument,busMatches,intersects,searchBusRoutes,clearBusSearchCache,foldBusText}from'./bus-core.js?v=5365ea7a3816698f';
+import{worldPoint}from'./atlas-core.js?v=5365ea7a3816698f';
+import{BusSearch,BusTileIndex}from'./bus-search.js?v=5365ea7a3816698f';
+import{BusAggregate}from'./bus-aggregate.js?v=5365ea7a3816698f';
+import{BusGeometryReference}from'./bus-geometry.js?v=5365ea7a3816698f';
+import{BusLocalRouting}from'./bus-spatial-routing.js?v=5365ea7a3816698f';
+import{BusNetwork}from'./bus-network.js?v=5365ea7a3816698f';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 const operators=routes=>{const rows=new Map();for(const route of routes)if(route.operator)rows.set(JSON.stringify([route.sourceId,route.operator]),{sourceId:route.sourceId,name:route.operator});return[...rows.values()];};
