@@ -1,13 +1,13 @@
-import{BUS_LIMITS}from'./bus-core.js?v=b7451278123857d9';
-import{BusDataService}from'./bus-data-worker.js?v=b7451278123857d9';
+import{BUS_LIMITS}from'./bus-core.js?v=cec8b75fa8c21f7e';
+import{BusDataService}from'./bus-data-worker.js?v=cec8b75fa8c21f7e';
 
 const aborted=()=>new DOMException('Stale bus request','AbortError');
 let sequence=0;
 function work(id,active){if(typeof globalThis.document?.dispatchEvent==='function'&&typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('atlasdatawork',{detail:{id:'bus:'+id,active}}));}
 
 export class BusDataClient{
-  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,requireHashes=false,overview=null,detailsBaseUrl=null,overviewBaseUrl=null,busAtlasOverview=null,busGeometry=null,busNetwork=null,countryOverview=null,places=null,localRouting=null}={}){
-    this.base=new URL(base).href;this.options={maximumBytes,requireHashes:requireHashes||detailsBaseUrl!==null,overview,busAtlasOverview,busGeometry,busNetwork,countryOverview,places,localRouting,detailsBaseUrl:detailsBaseUrl===null?null:String(detailsBaseUrl),overviewBaseUrl:overviewBaseUrl===null?null:String(overviewBaseUrl),...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=b7451278123857d9',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;this.manifestDescriptor=null;
+  constructor(base,{workerFactory,fetcher,maximumBytes=BUS_LIMITS.cacheBytes,requireHashes=false,overview=null,detailsBaseUrl=null,overviewBaseUrl=null,busAtlasOverview=null,busGeometry=null,countryOverview=null,places=null,localRouting=null}={}){
+    this.base=new URL(base).href;this.options={maximumBytes,requireHashes:requireHashes||detailsBaseUrl!==null,overview,busAtlasOverview,busGeometry,countryOverview,places,localRouting,detailsBaseUrl:detailsBaseUrl===null?null:String(detailsBaseUrl),overviewBaseUrl:overviewBaseUrl===null?null:String(overviewBaseUrl),...(fetcher?{fetcher}:{})};this.workerFactory=workerFactory||(()=>{const url=new URL('./bus-data-worker.js?v=cec8b75fa8c21f7e',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'bus-atlas-data'});});this.worker=null;this.started=false;this.pending=new Map();this.fallback=null;this.manifestDescriptor=null;
   }
   start(){
     if(this.started)return;this.started=true;

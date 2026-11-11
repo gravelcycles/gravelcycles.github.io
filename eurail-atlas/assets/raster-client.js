@@ -3,7 +3,7 @@
 export class RasterClient{
   constructor(canvas,{onFrame=()=>{},onError=()=>{},canPresent=()=>true,allowIntermediate=()=>false,workerFactory}={}){
     this.canvas=canvas;this.onFrame=onFrame;this.onError=onError;this.canPresent=canPresent;this.allowIntermediate=allowIntermediate;this.pending=null;this.active=null;this.sequence=0;this.ready=false;this.destroyed=false;this.sentEpoch=null;
-    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=b7451278123857d9',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
+    const create=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=cec8b75fa8c21f7e',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-raster'});});
     this.worker=create();
     try{this.context=canvas.getContext('bitmaprenderer');}catch{}
     if(!this.context){this.context=canvas.getContext('2d');this.drawImage=true;}
