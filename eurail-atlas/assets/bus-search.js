@@ -1,4 +1,4 @@
-import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=f3b9966f76c4666e';
+import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=68a910d8fcec3088';
 
 // Source indexes are admitted by the aggregate byte budgets, largest inventory first; `sources` is only a
 // sanity bound on fan-out. A count cut by bbox-centre distance once excluded the dominant national source.
@@ -76,11 +76,12 @@ export class BusSearch{
     if(packet.sourceId!==source.sourceId||!Array.isArray(packet.routes)||packet.routes.length>512)throw new Error('Invalid bus route lookup');
     return packet.routes.find(r=>r.id===id&&r.sourceId===source.sourceId)||null;
   }
-  async query(text,{filters,dates,bounds,scope='area',country='',reader='search'}={}){
+  // `adjust` maps a published row to the row to show, or null to leave it out (a trip shown by another source).
+  async query(text,{filters,dates,bounds,scope='area',country='',reader='search',adjust=null}={}){
     const{load,check}=readerScope(this.requests,reader);
     if(this.manifest.search.kind!=='partitioned'){
       const document=validBusDocument(await load(this.manifest.search,{reader,limit:BUS_LIMITS.searchBytes}),'bus_atlas_search');
-      const rows=searchBusRoutes(document.routes||[],text,filters,dates,41);return{rows,limited:rows.length>40,scope:'published cohort',loadedPartitions:1,availablePartitions:1};
+      const rows=searchBusRoutes(adjust?(document.routes||[]).map(adjust).filter(Boolean):document.routes||[],text,filters,dates,41);return{rows,limited:rows.length>40,scope:'published cohort',loadedPartitions:1,availablePartitions:1};
     }
     if((scope==='source'&&!filters.source)||(scope==='country'&&!country))return{rows:[],needsScope:true,limited:false};
     if(!['area','source','country'].includes(scope))throw new Error('Choose a bounded bus search area');
@@ -109,7 +110,7 @@ export class BusSearch{
         if(page.sourceId!==descriptor.sourceId||!Array.isArray(page.routes)||page.routes.length>512)throw new Error('Invalid bounded bus search packet');
         return page;
       }));
-      for(const page of pages)for(const row of page.routes){if(row.sourceId!==page.sourceId||seen.has(row.id))continue;seen.add(row.id);if(scope==='area'&&!visible(row,bounds))continue;if(scope==='country'&&!row.countries?.includes(country))continue;found.push(row);}
+      for(const page of pages)for(const row of page.routes){if(row.sourceId!==page.sourceId||seen.has(row.id))continue;seen.add(row.id);if(scope==='area'&&!visible(row,bounds))continue;if(scope==='country'&&!row.countries?.includes(country))continue;const kept=adjust?adjust(row):row;if(kept)found.push(kept);}
     }
     const rows=searchBusRoutes(found,text,filters,dates,41);
     // Say how much was read: a bounded search that found nothing has not established that nothing runs.

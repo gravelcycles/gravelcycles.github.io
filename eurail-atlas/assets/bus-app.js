@@ -1,8 +1,8 @@
-import{createBusLayer}from'./bus-layer.js?v=f3b9966f76c4666e';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=f3b9966f76c4666e';
-import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=f3b9966f76c4666e';
-import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=f3b9966f76c4666e';
-import{BUS_NETWORK}from'./bus-network-tiles.js?v=f3b9966f76c4666e';
+import{createBusLayer}from'./bus-layer.js?v=68a910d8fcec3088';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=68a910d8fcec3088';
+import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=68a910d8fcec3088';
+import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=68a910d8fcec3088';
+import{BUS_NETWORK,BUS_DUPLICATES}from'./bus-network-tiles.js?v=68a910d8fcec3088';
 
 const params=new URLSearchParams(location.search),initial={busDay:'all',...Object.fromEntries(params)},$=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,zoomSnap:.25,minZoom:3,maxZoom:19,preferCanvas:true});
@@ -11,7 +11,8 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,maxNati
 installSmoothWheelZoom(map);
 const europe=[[35.1,-11.5],[64.5,35.5]],lat=Number(params.get('lat')),lon=Number(params.get('lon')),z=Number(params.get('z'));
 if(params.has('lat')&&Number.isFinite(lat+lon+z)&&Math.abs(lat)<=85&&Math.abs(lon)<=180&&z>=3&&z<=19)map.setView([lat,lon],z);else map.fitBounds(europe,{padding:[30,30]});
-// busNetwork=0 keeps the earlier packet loading path for comparison and tests.
+// busNetwork=0 keeps the earlier packet loading path for comparison and tests. The duplicate list still
+// applies there: a trip two sources publish is shown once on either path.
 const legacyNetwork=params.get('busNetwork')==='0';
 let layer,ready=false,delivery=null;
 function save(){if(!ready||!layer)return;const state=layer.state(),p=new URLSearchParams(state),c=map.getCenter();$('busClearHighlight').hidden=!(state.busRoute||state.busStop||state.busCity);p.delete('bus');if(legacyNetwork)p.set('busNetwork','0');p.set('lat',c.lat.toFixed(5));p.set('lon',c.lng.toFixed(5));p.set('z',String(map.getZoom()));history.replaceState(null,'',location.pathname+'?'+p);}
@@ -20,7 +21,7 @@ async function start(){
   $('controlsToggle').disabled=true;
   try{
     if(!delivery){const response=await fetch(new URL('../bus-external/config.json',import.meta.url),{cache:'no-cache',credentials:'omit',redirect:'error'});if(!response.ok)throw new Error('Bus delivery configuration unavailable');const raw=await response.text();if(raw.length>64*1024)throw new Error('Bus delivery configuration exceeds budget');delivery=JSON.parse(raw);if(legacyNetwork)delete delivery.busNetwork;}
-    if(!layer)layer=createBusLayer({map,delivery,initial,countryOverview:BUS_COUNTRY_OVERVIEW,places:BUS_PLACES,localRouting:BUS_LOCAL_ROUTING,network:legacyNetwork?null:BUS_NETWORK,onGeography:summary,onChange:save});
+    if(!layer)layer=createBusLayer({map,delivery,initial,countryOverview:BUS_COUNTRY_OVERVIEW,places:BUS_PLACES,localRouting:BUS_LOCAL_ROUTING,network:legacyNetwork?null:BUS_NETWORK,duplicates:BUS_DUPLICATES,onGeography:summary,onChange:save});
     await layer.enable({open:true});ready=true;save();
   }catch{$('busPageStatus').hidden=false;$('busPageStatus').textContent='The bus map could not load. Use Bus filters to retry.';}
   $('controlsToggle').disabled=false;

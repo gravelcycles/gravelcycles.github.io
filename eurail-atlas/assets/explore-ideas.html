@@ -680,7 +680,8 @@ function dot(c,x,y,r){c.moveTo(x+r,y);c.arc(x,y,r,0,6.283)}
 (function(){
   const base=new URL('../explore-data/',location.href),fail=()=>{document.getElementById('ideasError').hidden=false;};
   fetch(new URL('manifest.json',base)).then(r=>{if(!r.ok)throw new Error('manifest');return r.json();}).then(m=>{
-    const name=m.files&&m.files.ideas;if(!name)throw new Error('no ideas data');
+    // A delivery without Ideas data is for a week this page was not written for.
+    const name=m.files&&m.files.ideas;if(!name){const box=document.getElementById('ideasError');box.textContent='These views were written for the week of 1 to 7 November 2026 and have not been rebuilt for the timetable now published. The Explore views use the current week.';box.hidden=false;return;}
     const url=new URL(name,base),sha=m.assets&&m.assets[name]&&m.assets[name].sha256;if(sha)url.searchParams.set('v',sha.slice(0,16));
     const s=document.createElement('script');s.src=url.href;s.onload=()=>{try{window.startIdeas();}catch(e){console.error(e);fail();}};s.onerror=fail;document.head.appendChild(s);
   }).catch(fail);

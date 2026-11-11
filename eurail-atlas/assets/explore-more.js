@@ -1,8 +1,8 @@
 // More views: station rhythm (dials and hourly heartbeat), clock-face league,
 // country wake-up curves, weekend service, corridor strings, border crossings
 // and the city-pair league, all derived from one chosen day.
-import{haversineKm,clockLabel,tripInfo}from'./explore-data.js?v=f3b9966f76c4666e';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=f3b9966f76c4666e';
+import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=68a910d8fcec3088';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=68a910d8fcec3088';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];
@@ -35,7 +35,7 @@ export function create(ctx){
   <section id="wake"><div class="eyebrow">Country</div><h2>When each country runs</h2>
     <p>Trains in motion through the day, in Central European Time, scaled to each country's own peak. The share still running at 03:00 is in each label.</p>
     <div class="x-card"><div class="x-minis" id="wakeMinis"></div></div>
-    <div class="x-card"><h3>Weekend service against a midweek day</h3><div class="x-scroll" id="weekendChart"></div><p class="x-note">Scheduled trips on Saturday and Sunday as a share of the Tuesday–Thursday average. Sunday 1 November was also All Saints' Day in much of Europe.</p></div></section>
+    <div class="x-card"><h3>Weekend service against a midweek day</h3><div class="x-scroll" id="weekendChart"></div><p class="x-note">Scheduled trips on Saturday and Sunday as a share of the Tuesday–Thursday average.${data.dates.some(d=>d.date==='2026-11-01')?" Sunday 1 November was also All Saints' Day in much of Europe.":''}</p></div></section>
 
   <section id="corridor"><div class="eyebrow">Corridor</div><h2>Corridor strings</h2>
     <p>Stations down the side, the day across, one line per train. Steeper lines are faster trains; crossings are where trains meet.</p>
@@ -117,7 +117,7 @@ export function create(ctx){
     $('clockBars').innerHTML=bars(rows,v=>v.toFixed(0)+'%');
     $('wakeMinis').innerHTML=WAKE_COUNTRIES.map((c,i)=>{const v=day.wake[i].subarray(0,96),mx=Math.max(1,...v),W=160,H=46;let d=`M0 ${H}`;for(let k=0;k<96;k++)d+=`L${(k/95*W).toFixed(1)} ${(H-v[k]/mx*(H-4)).toFixed(1)}`;d+=`L${W} ${H}Z`;const pk=v.indexOf(mx);
       return`<div class="x-mini"><svg viewBox="0 0 ${W} ${H+11}" role="img" aria-label="Trains in motion through the day in ${esc(c)}"><path d="${d}" fill="var(--s4)"/><line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/><circle cx="${(pk/95*W).toFixed(1)}" cy="3" r="2.5" fill="var(--accent)"/>${[0,6,12,18,24].map(t=>`<text x="${Math.min(W-6,Math.max(6,t/24*W))}" y="${H+10}" font-size="8" text-anchor="middle">${t}</text>`).join('')}</svg><b>${esc(c)}</b><span>peak ${clockLabel(pk*15)} · ${(v[12]/mx*100).toFixed(1)}% at 03:00</span></div>`;}).join('');
-    const week=data.summary.tripsByWeekdayAndCountry,rowsW=Object.entries(week).map(([c,v])=>{const mid=(v[2]+v[3]+v[4])/3;return[c,v[0]/mid,v[6]/mid,v.reduce((a,b)=>a+b,0)];}).filter(r=>r[3]>3000&&r[1]>0).sort((a,b)=>a[1]-b[1]);
+    const week=data.summary.tripsByWeekdayAndCountry,at=weekdayIndex(data.dates.map(d=>d.date)),rowsW=Object.entries(week).map(([c,v])=>{const mid=(v[at[2]]+v[at[3]]+v[at[4]])/3;return[c,v[at[0]]/mid,v[at[6]]/mid,v.reduce((a,b)=>a+b,0)];}).filter(r=>r[3]>3000&&r[1]>0).sort((a,b)=>a[1]-b[1]);
     const narrow=$('weekendChart').clientWidth<520,W=narrow?Math.max(300,$('weekendChart').clientWidth):720,rh=19,ml=narrow?96:130,H=rowsW.length*rh+34,x=v=>ml+v/1.15*(W-ml-20);let g='';
     for(const t of [0,.25,.5,.75,1])g+=`<line x1="${x(t)}" x2="${x(t)}" y1="8" y2="${H-22}" stroke="var(--line)"/><text x="${x(t)}" y="${H-8}" font-size="11" text-anchor="middle">${t*100}%</text>`;
     rowsW.forEach((r,i)=>{const y=14+i*rh;g+=`<text x="${ml-8}" y="${y+4}" font-size="11.5" text-anchor="end" fill="var(--ink)">${esc(r[0])}</text><line x1="${x(Math.min(r[1],r[2]))}" x2="${x(Math.max(r[1],r[2]))}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/><circle cx="${x(r[2])}" cy="${y}" r="4.5" fill="var(--c2)" stroke="var(--panel)" stroke-width="2"><title>${esc(r[0])}: Saturday ${Math.round(r[2]*100)}%</title></circle><circle cx="${x(r[1])}" cy="${y}" r="4.5" fill="var(--c3)" stroke="var(--panel)" stroke-width="2"><title>${esc(r[0])}: Sunday ${Math.round(r[1]*100)}%</title></circle>`;});
