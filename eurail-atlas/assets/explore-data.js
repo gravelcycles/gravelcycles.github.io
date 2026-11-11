@@ -11,7 +11,7 @@ async function inflate(bytes){
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-  const{gunzip}=await import('./gunzip.js?v=f3b9966f76c4666e');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=68a910d8fcec3088');return gunzip(bytes);
 }
 async function fetchBytes(url,onProgress){
   const response=await fetch(url);
@@ -67,7 +67,15 @@ export async function loadExplore(baseURL,onProgress){
     journeys:{rows:J,operators:journeysDoc.operators,sources:journeysDoc.sources,labels:journeysDoc.labels,patternCategory,patternPass,patternKm},...tt};
 }
 
-// Calls of one trip: station rows and absolute CET minutes.
+// Position of each weekday (0 = Sunday) in a week of seven consecutive dates,
+// whichever day the delivery starts on.
+export function weekdayIndex(dates){const at=new Array(7).fill(-1);dates.forEach((date,i)=>{at[new Date(date+'T12:00:00Z').getUTCDay()]=i;});return at;}
+
+// Name of the delivery's shared clock, read from its manifest sentence
+// ("Minutes after 00:00 CEST (UTC+2) on each date"): CET in a winter week.
+export function clockName(manifest){return(/00:00 ([A-Z]{2,5}) \(UTC/.exec(manifest?.clock||'')||[])[1]||'CET';}
+
+// Calls of one trip: station rows and minutes on the delivery's shared clock.
 export function tripCalls(data,trip){
   const profile=data.tripProfile[trip],pattern=data.profilePattern[profile],start=data.tripStart[trip];
   const from=data.patternStart[pattern],to=data.patternStart[pattern+1],p0=data.profileStart[profile],calls=[];

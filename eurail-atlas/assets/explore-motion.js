@@ -1,6 +1,6 @@
 // Europe in motion: every timed train at its scheduled position for one day.
-import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel}from'./explore-data.js?v=f3b9966f76c4666e';
-import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=f3b9966f76c4666e';
+import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=68a910d8fcec3088';
+import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=68a910d8fcec3088';
 
 const $=id=>document.getElementById(id);
 const RAD=Math.PI/180,KM_PER_WORLD=40075.016/256,TRAIL=10,MAX_ACTIVE=60000;
@@ -106,7 +106,7 @@ export function create(ctx){
       locate(state.selected,T);const x=X(out.x),y=Y(out.y);g.strokeStyle=ctx.css('--route-hi');g.lineWidth=3;g.beginPath();g.arc(x,y,r+5,0,6.283);g.stroke();
       if(state.follow&&(Math.abs(x-W/2)>2||Math.abs(y-H/2)>2))map.panTo(unproject(out.x,out.y),{animate:false});
     }
-    $('motionClock').textContent=clockLabel(T)+' CET';$('motionCount').textContent=`${fmt(total)} trains moving`;
+    $('motionClock').textContent=clockLabel(T)+' '+clockName(data.manifest);$('motionCount').textContent=`${fmt(total)} trains moving`;
     const slider=$('motionTime');if(document.activeElement!==slider)slider.value=Math.floor(T);
     if(state.playing)drawSpark();
   }
