@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#153238">
+<meta name="description" content="Twelve more ways into a week of European train timetables: station cards, last trains, day trips, sleepers, a time map and more.">
+<title>Euro Rail — Ideas lab</title>
+<style>
+/* Explore header, shared look with explore.css. */
+.x-header{position:sticky;top:0;z-index:30;min-height:60px;padding-top:env(safe-area-inset-top,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:#153238;color:#d1dfdc;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.x-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;flex:0 0 auto}
+.x-brand svg{width:28px;height:28px;fill:none;stroke:#d4e3de;stroke-width:2;stroke-linecap:round}
+.x-brand strong{display:block;font:700 22px/1 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.x-brand small{display:block;color:#9fb6b4;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.x-tabs{display:flex;gap:2px;flex:1;justify-content:center;min-width:0;overflow-x:auto;scrollbar-width:none}
+.x-tab{color:#d1dfdc;text-decoration:none;padding:9px 14px;border-radius:5px;font-weight:650;font-size:13px;white-space:nowrap}
+.x-tab:hover{background:#ffffff14}
+.x-tab[aria-current="page"]{background:#fff;color:#153238}
+.x-back{color:#d1dfdc;text-decoration:none;font-size:13px;white-space:nowrap}
+@media (max-width:760px){.x-header{gap:6px 12px;padding-block:6px}.x-tabs{order:3;flex:1 1 100%;justify-content:flex-start}.x-tab{padding:7px 10px}.x-back{margin-left:auto}}
+.x-error{margin:16px 0;padding:14px 16px;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+/* Layout: the same reading column and tokens as the idea book; each backlog idea is a section with a scale eyebrow, a working figure on real timetable data and first findings. */
+:root{
+  --paper:#ecefeb; --panel:#fbfaf6; --ink:#153238; --ink2:#39575c; --muted:#6b8286; --rule:#cbd2ce;
+  --control:#006f92; --accent:#c9471f; --land:#f8f7f2; --coast:#b9c4c0; --sea:#dce5e4;
+  --s1:#0b3c49; --s2:#1b6b7d; --s3:#3f97a6; --s4:#7dbfc4; --s5:#aed3d1; --s6:#cfdcd8; --s0:#d8ddd9;
+  --c-reg:#2a78d6; --c-fast:#d95926; --c-night:#6250d6;
+  --serif:Georgia,"Times New Roman",serif; --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0f1f22; --panel:#162a2e; --ink:#e3ebe9; --ink2:#b4c5c3; --muted:#8aa09f; --rule:#2c4347;
+  --control:#5cb8d6; --accent:#f07a54; --land:#17292d; --coast:#35504f; --sea:#0f1f22;
+  --s1:#d2f4f3; --s2:#8fd3d6; --s3:#56a9b3; --s4:#35808c; --s5:#285f6a; --s6:#22474f; --s0:#1f3337;
+  --c-reg:#3987e5; --c-fast:#e06a36; --c-night:#9085e9; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --paper:#0f1f22; --panel:#162a2e; --ink:#e3ebe9; --ink2:#b4c5c3; --muted:#8aa09f; --rule:#2c4347;
+  --control:#5cb8d6; --accent:#f07a54; --land:#17292d; --coast:#35504f; --sea:#0f1f22;
+  --s1:#d2f4f3; --s2:#8fd3d6; --s3:#56a9b3; --s4:#35808c; --s5:#285f6a; --s6:#22474f; --s0:#1f3337;
+  --c-reg:#3987e5; --c-fast:#e06a36; --c-night:#9085e9; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3.1rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.45rem,3vw,1.9rem)}
+h3{font-size:1.08rem}
+p{margin:0;max-width:66ch}
+a{color:var(--control)}
+.lede{font-size:1.12rem;color:var(--ink2)}
+header.top{display:grid;gap:14px;padding-bottom:22px;border-bottom:2px solid var(--ink)}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:.86rem;color:var(--ink2);font-variant-numeric:tabular-nums}
+.facts b{color:var(--ink);font-weight:650}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 8px;padding-block:14px;font-size:.86rem}
+nav.toc a{text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:3px 11px;color:var(--ink2);background:var(--panel)}
+nav.toc a:hover{border-color:var(--control);color:var(--control)}
+section.idea{display:grid;gap:14px;padding-block:34px 6px;border-top:1px solid var(--rule);min-width:0}
+.eyebrow{font-size:.74rem;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.fig{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px;display:grid;gap:12px;min-width:0}
+.fig>*{min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:.9rem}
+.controls label{display:inline-flex;gap:6px;align-items:center;color:var(--ink2);min-width:0;max-width:100%}
+select{max-width:100%;min-width:0;text-overflow:ellipsis}
+select,button,input{font:inherit;color:inherit}
+select,button.btn{background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:5px 10px;color:var(--ink)}
+button.btn{cursor:pointer;min-width:74px}
+button.btn:hover,select:hover{border-color:var(--control)}
+button.btn[aria-pressed="true"]{background:var(--control);border-color:var(--control);color:var(--panel)}
+:focus-visible{outline:3px solid var(--control);outline-offset:2px}
+.count{font-variant-numeric:tabular-nums;color:var(--ink2);font-size:.88rem}
+canvas.map{display:block;width:100%;max-width:720px;aspect-ratio:1091/1220;margin:0 auto;border-radius:4px;background:var(--sea);touch-action:pan-y}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--ink2);align-items:center}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.sw.line{height:3px;width:18px;vertical-align:3px;border-radius:2px}
+.note{font-size:.84rem;color:var(--muted);max-width:78ch}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px 28px}
+.two>div{min-width:0;display:grid;gap:6px;align-content:start}
+.two h3,.sub{font-family:var(--sans);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.two p,.two li{font-size:.95rem}
+ul{margin:0;padding-left:1.1em;display:grid;gap:5px;max-width:70ch}
+.split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.split>div{min-width:0;display:grid;gap:8px;align-content:start}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.bars{display:grid;gap:5px;font-size:.84rem;font-variant-numeric:tabular-nums}
+.bar{display:grid;grid-template-columns:minmax(92px,170px) 1fr 54px;gap:8px;align-items:center}
+.bar .t{background:var(--s0);height:12px;border-radius:0 4px 4px 0;overflow:hidden;position:relative}
+.bar .f{display:block;height:100%;background:var(--s3);border-radius:0 4px 4px 0}
+.bar .f2{position:absolute;left:0;top:0;height:100%;background:var(--s1);border-radius:0 4px 4px 0}
+.bar .v{text-align:right;color:var(--ink2)}
+.bar .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scroll{overflow-x:auto;min-width:0}
+svg text{font-family:var(--sans);fill:var(--ink2)}
+svg{display:block}
+table{border-collapse:collapse;font-size:.84rem;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:700;padding:4px 8px 4px 0;border-bottom:1px solid var(--rule)}
+td{padding:5px 8px 5px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+td.r,th.r{text-align:right;padding-right:0;white-space:nowrap}
+td .m{color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{border:1px solid var(--rule);border-radius:5px;padding:8px 10px;background:var(--paper);display:grid;gap:1px;min-width:0}
+.tile b{font-size:1.3rem;font-variant-numeric:tabular-nums;font-weight:650;line-height:1.25}
+.tile span{font-size:.78rem;color:var(--muted)}
+.tile em{font-style:normal;font-size:.8rem;color:var(--ink2);overflow-wrap:anywhere}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
+.card{border:1px solid var(--rule);border-radius:5px;padding:10px 12px;background:var(--paper);display:grid;gap:6px;min-width:0}
+.card h3{font-family:var(--sans);font-size:.98rem;font-weight:700;display:grid;gap:1px}
+.card h3 span{font-size:.76rem;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.metric{display:grid;grid-template-columns:96px 1fr 54px;gap:6px;align-items:center;font-size:.78rem;font-variant-numeric:tabular-nums}
+.metric .t{background:var(--s0);height:8px;border-radius:0 3px 3px 0;overflow:hidden}
+.metric .f{display:block;height:100%;background:var(--s3)}
+.metric.on .f{background:var(--accent)}
+.metric .v{text-align:right;color:var(--ink2)}
+.metric .n{color:var(--ink2)}
+.week{display:grid;grid-template-columns:minmax(100px,150px) repeat(7,minmax(38px,1fr)) minmax(54px,70px);gap:2px;font-size:.78rem;align-items:center;min-width:470px;font-variant-numeric:tabular-nums}
+.week .hd{color:var(--muted);text-align:center;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.week .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px}
+.week .c{height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.72rem}
+.week .x{text-align:right;color:var(--ink2)}
+#tip{position:fixed;pointer-events:none;z-index:20;background:var(--ink);color:var(--paper);font-size:.8rem;line-height:1.35;padding:6px 9px;border-radius:5px;max-width:270px;font-variant-numeric:tabular-nums}
+.skip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px 30px}
+.skip>div{display:grid;gap:8px;align-content:start;min-width:0}
+.skip li{font-size:.93rem}
+.skip li b{font-weight:650}
+.hide{display:none}
+#bi-table{min-width:520px}
+</style>
+</head>
+<body>
+<header class="x-header">
+  <a class="x-brand" href="../" aria-label="Back to the Euro Rail map"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M7 6v11c0 7 22 2 22 13M29 6v9c0 7-22 5-22 15"/><circle cx="7" cy="7" r="3"/><circle cx="29" cy="7" r="3"/><circle cx="18" cy="20" r="3"/></svg><span><strong>Euro Rail</strong><small>Explore the data</small></span></a>
+  <nav class="x-tabs" aria-label="Explore views">
+    <a class="x-tab" href="explore.html#motion">Europe in motion</a><a class="x-tab" href="explore.html#reach">Reach</a><a class="x-tab" href="explore.html#speed">Speed</a><a class="x-tab" href="explore.html#more">More views</a><a class="x-tab" href="explore-ideas.html" aria-current="page">Ideas lab</a>
+  </nav>
+  <a class="x-back" href="../">Atlas ↗</a>
+</header>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Explore the data</div>
+  <h1>Ideas lab</h1>
+  <p class="lede">Twelve more ways into the same week of timetables, each with a working figure and a first look at what the numbers say. Station, city and train views use Wednesday 4 November 2026.</p>
+  <div class="x-error" id="ideasError" role="alert" hidden><strong>The ideas data could not be loaded.</strong> Check your connection and reload the page.</div>
+  <div class="facts">
+    <span><b id="f-runs"></b> timed runs</span><span><b id="f-trips"></b> trains on Wednesday</span><span><b id="f-conn"></b> stop-to-stop connections</span><span>service week <b>1–7 November 2026</b></span><span>single-day views use <b>Wednesday 4 November</b></span>
+  </div>
+</header>
+<nav class="toc" aria-label="Ideas">
+  <a href="#card">Station card</a><a href="#last">Last train home</a><a href="#day">Day-trip finder</a><a href="#pulse">Connection pulse</a><a href="#sleep">Sleep map</a><a href="#ctry">Countries without changing</a><a href="#cards">Country cards</a><a href="#far">Farthest in a day</a><a href="#time">Time map</a><a href="#gate">Gateway score</a><a href="#bio">Train biography</a><a href="#week">Week in the life</a><a href="#notes">Not built and data notes</a>
+</nav>
+
+<section class="idea" id="card">
+  <div class="eyebrow">Station</div>
+  <h2>Station card</h2>
+  <p>One summary per station: how much traffic runs through rather than ending there, how international it is, who operates it, when it goes quiet and how far its trains reach without a change.</p>
+  <div class="fig">
+    <div class="controls"><label>Station <select id="sc-sel"></select></label></div>
+    <div class="tiles" id="sc-tiles"></div>
+    <div class="split">
+      <div><h3 class="sub">Departures by hour, Wednesday</h3><div id="sc-hours"></div></div>
+      <div><h3 class="sub">Operators by share of calls</h3><div class="bars" id="sc-ops"></div></div>
+    </div>
+    <p class="count" id="sc-reach"></p>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>München Hbf is a pure terminus in this data: every one of its 1,186 Wednesday calls starts or ends there. Köln Hbf (86%) and København H (89%) are almost all through traffic.</li>
+      <li>Genève is the most international big station: 57% of its calls are on trains that also run in France, almost all of them Léman Express.</li>
+      <li>București Nord never closes: its longest quiet spell is 27 minutes. Lyon Part-Dieu and Barcelona Sants are silent for about five hours.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Calls, operators, hours and quiet spells use Wednesday's timed runs. Through share counts calls where the train neither starts nor ends. Direct reach and countries use every journey of the week, including countries without public clock times. A train split across national feeds counts as separate pieces, so reach is a floor.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="last">
+  <div class="eyebrow">City</div>
+  <h2>Last train home</h2>
+  <p>Pick a city. Every other station is coloured by the latest time you can leave it and still arrive in that city before 01:00, changing trains if needed. Darker means you can stay out later.</p>
+  <div class="fig">
+    <div class="controls"><label>Home city <select id="lt-sel"></select></label><span class="count" id="lt-stats"></span></div>
+    <div class="split">
+      <canvas class="map" id="lt-canvas" aria-label="Map of latest departures that still reach the chosen city tonight"></canvas>
+      <div><h3 class="sub">Latest departure from other atlas cities</h3><div id="lt-list"></div></div>
+    </div>
+    <div class="legend" id="lt-legend"></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Bratislava to Vienna and Rotterdam to Amsterdam both still work after midnight: the last useful trains leave at 00:03 and 00:11.</li>
+      <li>From Barcelona, the last train that gets you to Madrid the same night leaves at 20:00. From Copenhagen to Stockholm it is 18:30.</li>
+      <li>To be home in Paris by 01:00 you must leave Brussels by 21:16 and London by 20:01 London time.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Reverse connection scan over Wednesday's timed runs: latest departure that reaches any station of the city by 01:00 local time, five-minute minimum change, walks under 700 m between stations. Times are local to the home city. Stations in Finland, Norway, Portugal, Croatia, Greece, Northern Ireland, most of Denmark and Hungary's domestic network have no public clock times and show no dots.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="day">
+  <div class="eyebrow">City</div>
+  <h2>Day-trip finder</h2>
+  <p>Leave after 07:00, spend at least four hours somewhere, and be home by 22:00. The map colours every station by how long you get there. The list picks the farthest well-served places that pass the test.</p>
+  <div class="fig">
+    <div class="controls"><label>Start from <select id="dt-sel"></select></label><span class="count" id="dt-stats"></span></div>
+    <div class="split">
+      <canvas class="map" id="dt-canvas" aria-label="Map of time available on a day trip from the chosen city"></canvas>
+      <div><h3 class="sub">Farthest day trips with four hours or more</h3><div id="dt-list"></div></div>
+    </div>
+    <div class="legend" id="dt-legend"></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>London and Lyon, 737 km apart, are a day trip from each other: four to four and a half hours on the ground either way, changing in Lille or Paris.</li>
+      <li>Paris has the widest day-trip range: 3,919 stations at least 300 km away still give you four hours, as far as Irun on the Spanish border (695 km).</li>
+      <li>Madrid reaches only 593 stations this way, but 417 of them are 300 km or more away. High-speed lines make it all or nothing.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Earliest arrival leaving the city at 07:00 (forward scan) and latest departure that is back by 22:00 (reverse scan) on Wednesday. Time on the ground is the gap between the two. Times are local to the starting city. Same limits as above: no metro or bus links, and countries without clock times are invisible.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="pulse">
+  <div class="eyebrow">Station</div>
+  <h2>Connection pulse</h2>
+  <p>At a timed hub, trains from every direction arrive just before the same minute and leave just after it. This measures that: for trains that run at most twice an hour, how often an arrival has a departure in another direction three to ten minutes later, compared with what chance would give.</p>
+  <div class="fig">
+    <div class="controls"><label>Station <select id="pu-sel"></select></label><span class="count" id="pu-stats"></span></div>
+    <div class="two">
+      <div><h3 class="sub">Arrivals and departures by minute past the hour</h3><div id="pu-min"></div></div>
+      <div><h3 class="sub">Wait to the next train in each other direction</h3><div id="pu-wait"></div></div>
+    </div>
+    <div class="legend"><span><i class="sw" style="background:var(--c-reg)"></i>Arrivals</span><span><i class="sw" style="background:var(--c-fast)"></i>Departures</span><span><i class="sw" style="background:var(--s3)"></i>Observed waits</span><span><i class="sw line" style="background:var(--accent)"></i>Expected by chance</span></div>
+  </div>
+  <div class="fig">
+    <div class="split">
+      <div><h3 class="sub">Most timed stations</h3><div class="scroll"><table id="pu-top"></table></div></div>
+      <div><h3 class="sub">Median station by country</h3><div class="bars" id="pu-ctry"></div><p class="note">Index 1.0 means quick changes happen as often as chance. Countries with at least eight measured stations.</p></div>
+    </div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>The most timed stations are small and mid-sized junctions, not big hubs. Gera Süd, Turnov, Česká Lípa and Aulendorf give a quick change about three times as often as chance.</li>
+      <li>Big stations score about 1.0. Zürich HB is 0.96: with so many trains in every direction, a quick connection does not need planning.</li>
+      <li>By country, the median Dutch station scores 1.4 and the median Slovak, Swiss and Czech station about 1.2. Britain (0.93), France (0.94) and Spain (0.95) are below chance.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Wednesday 06:00–22:00. A direction is the next stop plus line. Only feeders and departures running at most twice an hour count, and a train that continues is not a change. Chance is the same timetable with each direction shifted by 1 to 59 minutes. The wait histogram uses all such pairs up to an hour.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="sleep">
+  <div class="eyebrow">Continent</div>
+  <h2>Sleep map</h2>
+  <p>Every train you can board between 19:00 and midnight and leave between 06:00 and 10:00 the next morning, drawn from its first evening boarding stop to its last morning stop. Thicker arcs run more nights a week.</p>
+  <div class="fig">
+    <div class="controls"><label>Night <select id="sl-sel"><option value="-1">Any night this week</option></select></label><span class="count" id="sl-stats"></span></div>
+    <canvas class="map" id="sl-canvas" aria-label="Map of overnight trains"></canvas>
+    <div class="legend"><span><i class="sw line" style="background:var(--c-night)"></i>Listed as a night train in the atlas</span><span><i class="sw line" style="background:var(--c-reg)"></i>Other overnight train</span><span>Circle marks where you board</span></div>
+  </div>
+  <div class="fig"><h3 class="sub">Longest overnight runs</h3><div class="scroll"><table id="sl-table"></table></div></div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>180 distinct overnight trains, 130 to 146 on any one night. Saturday is the quietest night.</li>
+      <li>Italy's Intercity Notte owns the long end: Lecce to Turin is 1,074 km in a straight line from first boarding to last stop.</li>
+      <li>Paris Austerlitz and Roma Termini are the busiest evening departure points, with seven overnight trains each, ahead of București Nord (6).</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Local times at each station, any day of the week. Pieces of the same train from different national feeds are merged when one fits inside another. Overnight trains in Finland, Norway, Portugal, Croatia and Greece have no public times and are missing.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="ctry">
+  <div class="eyebrow">Station · Continent</div>
+  <h2>Countries without changing</h2>
+  <p>For each station, the number of countries its direct trains call in, counting both directions and the station's own country. A measure of how far a platform reaches into Europe.</p>
+  <div class="fig">
+    <div class="split">
+      <canvas class="map" id="ct-canvas" aria-label="Map of stations by number of countries reached directly"></canvas>
+      <div><h3 class="sub">Most countries from one platform</h3><div class="bars" id="ct-bars"></div></div>
+    </div>
+    <div class="legend" id="ct-legend"></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Salzburg Hbf leads with 11 countries, from the Netherlands and Belgium to Croatia and Hungary.</li>
+      <li>Wien Hbf, Bruxelles-Midi and Dresden Hbf follow with 10 each. Dresden's reach comes from trains between Scandinavia, Prague and Budapest.</li>
+      <li id="ct-f3"></li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>All journeys of the week, including countries without clock times. International trains are often split between national feeds, and a split piece only carries the countries of its own stops, so counts are a floor. Stations without a country are left out.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="cards">
+  <div class="eyebrow">Country</div>
+  <h2>Country cards</h2>
+  <p>Six numbers per country, side by side. Bars are scaled to the highest country, and the sort control highlights one metric.</p>
+  <div class="fig">
+    <div class="controls"><label>Sort by <select id="cc-sel"></select></label></div>
+    <div class="cards" id="cc-cards"></div>
+    <p class="note">Wednesday timed runs. Average speed is straight-line distance over scheduled time between stops inside the country. Stop spacing is the median hop. Trip length is the median straight-line run of trains based in the country. Late and early is the share of departures between 22:00 and 06:00. Cross-border is the share of departures on trains that also call abroad. Clock-face is the share of departures in frequent groups whose minutes past the hour repeat. Denmark and Hungary are left out because only part of their clock data is public.</p>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Switzerland is the most regular network (90% clock-face) and among the slowest (52 km/h). France and Sweden are fastest at about 80 km/h.</li>
+      <li>Luxembourg is the only country where most departures (54%) are on trains that also run abroad.</li>
+      <li>Romania is the slowest (49 km/h) and has no clock-face pattern at all.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Hops faster than 330 km/h are dropped as coordinate faults (67 on Wednesday). Countries with fewer than 3,000 timed departures are not shown. Slovenia's 100% clock-face rests on very few frequent groups.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="far">
+  <div class="eyebrow">City</div>
+  <h2>Farthest in a day</h2>
+  <p>Leave at 08:00 and take any trains. How far, in a straight line, can you be after 4, 8 and 12 hours?</p>
+  <div class="fig">
+    <div class="scroll"><div id="fa-svg"></div></div>
+    <div class="legend"><span><i class="sw" style="background:var(--s4);border-radius:50%"></i>4 hours</span><span><i class="sw" style="background:var(--s2);border-radius:50%"></i>8 hours</span><span><i class="sw" style="background:var(--accent);border-radius:50%"></i>12 hours</span><span>Hover a dot for the station</span></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Lyon reaches farthest in 12 hours: 1,314 km, to the west of Scotland via Paris and London. Amsterdam is next with 1,253 km, to the Barcelona suburbs.</li>
+      <li>London goes 1,037 km in 8 hours, to the Toulon coast via Paris. Eight hours from Vienna reaches only 617 km.</li>
+      <li>Bucharest gets 380 km in 12 hours. Its trains average under 50 km/h, and Hungary's domestic times are missing.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Earliest-arrival scan on Wednesday, 08:00 local departure, five-minute changes, short walks. Distance is from the city centre point to the farthest station reached. The farthest station is often a small halt just past a big city.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="time">
+  <div class="eyebrow">City · Continent</div>
+  <h2>Time map</h2>
+  <p>Redraw Europe so that distance from the chosen city equals travel time leaving at 08:00, keeping each station's compass bearing. A place reached at 100 km/h in a straight line stays where it is. Faster links pull places in; slow ones push them out.</p>
+  <div class="fig">
+    <div class="controls"><label>Centre <select id="tm-sel"></select></label><button class="btn" id="tm-btn" type="button" aria-pressed="true">Travel time</button><span class="count" id="tm-stats"></span></div>
+    <canvas class="map" id="tm-canvas" aria-label="Stations placed by travel time from the chosen city"></canvas>
+    <div class="legend" id="tm-legend"></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul id="tm-find"></ul></div>
+    <div><h3>Method and limits</h3><p>Same scan as the farthest-in-a-day figure. One map unit is 2.8 km, so 100 km/h is 36 units per hour. Rings are every two hours. Stations not reached on Wednesday are hidden in time mode.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="gate">
+  <div class="eyebrow">City · Country</div>
+  <h2>Gateway score</h2>
+  <p>For every ordered pair of the atlas hub cities, take the fastest Wednesday route at 08:00 and at 13:00, and note which other hub cities it passes through or changes in.</p>
+  <div class="fig">
+    <div class="split">
+      <div><h3 class="sub">Share of fastest routes through each city</h3><div class="bars" id="gw-bars"></div><div class="legend"><span><i class="sw" style="background:var(--s1)"></i>Change trains there</span><span><i class="sw" style="background:var(--s3)"></i>Ride through</span></div></div>
+      <div><h3 class="sub">Capital pull</h3><div class="scroll"><table id="gw-cap"></table></div><p class="note">Share of fastest routes between two other hub cities of the same country that pass through the capital. Bern stands in for Switzerland.</p></div>
+    </div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Frankfurt lies on 19% of all fastest hub-to-hub routes, more than any other city, but riders change there on only half of them.</li>
+      <li>London (19%) and Paris (15%) are pure change points: every route through them changes trains, because the lines meet at separate terminals.</li>
+      <li>Paris pulls 54% of fastest routes between other French hub cities. Berlin pulls under 6% of German ones, London 5% of British ones.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p id="gw-meth"></p></div>
+  </div>
+</section>
+
+<section class="idea" id="bio">
+  <div class="eyebrow">Single train</div>
+  <h2>Train biography</h2>
+  <p>One train's Wednesday run, stop by stop: speed between stops along the route, time standing still at each stop, and the countries it passes.</p>
+  <div class="fig">
+    <div class="controls"><label>Train <select id="bi-sel"></select></label></div>
+    <div class="tiles" id="bi-tiles"></div>
+    <div class="scroll"><div id="bi-svg"></div></div>
+    <div class="legend" id="bi-legend"></div>
+    <div class="scroll"><table id="bi-table"></table></div>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>The Frecciarossa from Turin to Reggio Calabria covers 1,244 km in 11 h 35 and touches 240 km/h, yet spends 83 minutes standing at its 21 intermediate stops.</li>
+      <li>The Bernina Express averages 26 km/h over 120 km. The Podhalanin from Zakopane to Świnoujście stands for two hours in total across 41 stops.</li>
+      <li>LNER's London to Edinburgh run waits five minutes in total. The Eurostar to Amsterdam waits fourteen.</li>
+    </ul></div>
+    <div><h3>Method and limits</h3><p>Speeds are straight-line distance over scheduled time between consecutive stops, so curving mountain lines read slow. Times are local at each station. Runs come from a single feed; the IR night train from Bucharest stops at the Hungarian border because Hungarian times are not public.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="week">
+  <div class="eyebrow">Country</div>
+  <h2>Week in the life</h2>
+  <p>Scheduled trains on each day of the week as a share of the Tuesday–Thursday average, plus the share of train patterns that run every day.</p>
+  <div class="fig">
+    <div class="scroll"><div class="week" id="wk-grid"></div></div>
+    <p class="note">All journeys including countries without clock times. Sunday 1 November was All Saints' Day in much of Europe. Patterns in Britain and Hungary are filed per day of the week, so their every-day share reads near zero.</p>
+  </div>
+  <div class="two">
+    <div><h3>First findings</h3><ul>
+      <li>Ireland, Slovenia and Croatia run less than half their midweek service on the Sunday holiday. Bulgaria, Lithuania and Romania barely change.</li>
+      <li>Romania runs fewer trains on Thursday and Friday (91%) than on Sunday (103%), which points to a calendar change in the feed that week.</li>
+      <li>Hungary shows almost no trains on Sunday and Estonia shows 29% more than midweek. Both are worth checking at source before shipping.</li>
+    </ul></div>
+    <div><h3>What it adds</h3><p>The idea book already compared weekends with midweek. Laid out as a week strip it doubles as a data check: holiday cuts look smooth, feed gaps look like cliffs.</p></div>
+  </div>
+</section>
+
+<section class="idea" id="notes">
+  <div class="eyebrow">Not built yet</div>
+  <h2>Skipped ideas and data notes</h2>
+  <div class="skip">
+    <div><h3>Skipped</h3><ul>
+      <li><b>Rare trains.</b> Train numbers that run once or twice a week are mostly weekend and holiday variants of everyday services. At city-pair level only 26 pairs qualify, and most are pieces of daily international trains, such as the Hamburg–Budapest railjet, that appear whole in one feed on one day only.</li>
+      <li><b>Departure fan, terminus compass, operator territories, slack finder, rail deserts.</b> Not attempted in this pass.</li>
+    </ul></div>
+    <div><h3>Data notes</h3><ul>
+      <li id="n-dup"></li>
+      <li>International trains are often split across national feeds with different day patterns, so whole-train views (rare trains, countries per platform, sleepers) need stitching by train number first.</li>
+      <li>Léman Express in Geneva shows hourly trains through Wednesday night, which keeps Genève from ever going quiet.</li>
+      <li>Hops over 330 km/h are dropped as coordinate faults. Distances are straight lines between calls.</li>
+    </ul></div>
+  </div>
+</section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+window.startIdeas=function(){
+const D=window.MORE,$=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=n=>Math.round(n).toLocaleString('en-GB');
+const hm=m=>{m=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const dur=m=>{m=Math.round(m);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+$('f-runs').textContent=fmt(D.info.runs);$('f-trips').textContent=fmt(D.info.wedTrips);$('f-conn').textContent=fmt(D.info.wedConn);
+$('n-dup').textContent=`${fmt(D.info.dups)} trips this week were copies of the same train published by two national feeds, most of them the Geneva Léman Express and French trains in the Swiss feed. They are removed here and everywhere else in Explore, including partial copies that list only one country's stops.`;
+
+/* tooltip */
+const tip=$('tip');
+function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(6,Math.min(innerWidth-w-6,x+12))+'px';tip.style.top=Math.max(6,(y-h-12<6?y+16:y-h-12))+'px'}
+function hideTip(){tip.hidden=true}
+document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e.clientX,e.clientY)});
+document.addEventListener('mousemove',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e.clientX,e.clientY)});
+document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('[data-tip]'))hideTip()});
+
+/* map projection shared with the idea book: data units are (lon+12)*40, (72-lat)*40 */
+const KX=0.62,X0=40,Y0=240,MW=1091,MH=1220;
+const px=x=>(x-X0)*KX, py=y=>y-Y0;
+function prep(cv){const w=cv.clientWidth||600,h=w*MH/MW,dpr=Math.min(2,window.devicePixelRatio||1);if(cv.width!==Math.round(w*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}const c=cv.getContext('2d');const k=cv.width/MW;c.setTransform(k,0,0,k,0,0);c.clearRect(0,0,MW,MH);return {c,k,u:MW/w}}
+function land(c,u){c.fillStyle=css('--land');c.strokeStyle=css('--coast');c.lineWidth=.8*u;for(const p of D.land){c.beginPath();for(let i=0;i<p.length;i+=2){const X=px(p[i]),Y=py(p[i+1]);i?c.lineTo(X,Y):c.moveTo(X,Y)}c.closePath();c.fill();c.stroke()}}
+function evPos(cv,e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*MW/r.width,(e.clientY-r.top)*MW/r.width]}
+const redraws=[];const onTheme=f=>redraws.push(f);
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>redraws.forEach(f=>f()),120)});
+(function(){const mq=matchMedia('(prefers-color-scheme: dark)'),f=()=>redraws.forEach(g=>g());if(mq.addEventListener)mq.addEventListener('change',f);else if(mq.addListener)mq.addListener(f);})();
+new MutationObserver(()=>redraws.forEach(f=>f())).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+function legendHTML(bands,extra){return bands.map(b=>`<span><i class="sw" style="background:var(${b[1]})"></i>${b[2]}</span>`).join('')+(extra||'')}
+function fill(sel,items){items.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)})}
+
+/* compressed arrays: byte planes, zlib, base64 */
+const canUnz=typeof DecompressionStream!=='undefined';
+async function unz(b64){const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const s=new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate'));return new Uint8Array(await new Response(s).arrayBuffer())}
+function u16(b){const n=b.length>>1,o=new Uint16Array(n);for(let i=0;i<n;i++)o[i]=b[i]|(b[n+i]<<8);return o}
+const P=D.points,NP=P.xy.length/2,PX=new Float32Array(NP),PY=new Float32Array(NP);
+for(let i=0;i<NP;i++){PX[i]=px(P.xy[i*2]);PY[i]=py(P.xy[i*2+1])}
+let PN=null,PC=null;
+const namesReady=canUnz?Promise.all([unz(P.name),unz(P.ctry)]).then(([a,b])=>{const td=new TextDecoder();PN=td.decode(a).split('\n');PC=td.decode(b).split('\n')}):Promise.resolve();
+const nm=i=>PN?PN[i]:'Station';
+const PG=new Map();for(let i=0;i<NP;i++){const k=(PX[i]/12|0)+','+(PY[i]/12|0);(PG.get(k)||PG.set(k,[]).get(k)).push(i)}
+function nearest(mx,my,ok){let best=-1,bd=81;const gx=mx/12|0,gy=my/12|0;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=PG.get((gx+a)+','+(gy+b));if(!l)continue;for(const i of l){if(ok&&!ok(i))continue;const d=(PX[i]-mx)**2+(PY[i]-my)**2;if(d<bd){bd=d;best=i}}}return best}
+const S=D.scan,cityCache=new Map();
+async function city(i){if(cityCache.has(i))return cityCache.get(i);const c=S[i];const p=Promise.all([unz(c.tm),unz(c.last),unz(c.day.packed)]).then(([tm,la,dy])=>({tm,last:u16(la),day:u16(dy)}));cityCache.set(i,p);return p}
+const cityOpts=S.map((c,i)=>[i,c.label]);
+function noUnz(cv){const {c}=prep(cv);c.fillStyle=css('--ink2');c.font='28px sans-serif';c.fillText('This browser cannot unpack the map data.',40,80)}
+function dot(c,x,y,r){c.moveTo(x+r,y);c.arc(x,y,r,0,6.283)}
+
+/* ---------- Station card ---------- */
+(function(){
+  const sel=$('sc-sel'),C=D.stations;fill(sel,C.map((c,i)=>[i,`${c.name} · ${c.ctry}`]));
+  function draw(){const c=C[+sel.value],thr=c.calls-c.start-c.end;
+    const gap=c.gap?`${hm(c.gap[1])}–${hm(c.gap[2])}`:'none';
+    const tiles=[[fmt(c.calls),'calls on Wednesday',`${fmt(c.deps.reduce((a,b)=>a+b,0))} departures`],[pct(thr,c.calls)+'%','run through',`${pct(c.start,c.calls)}% start here, ${pct(c.end,c.calls)}% end here`],[pct(c.intl,c.calls)+'%','on international trains','trains that also call abroad'],[String(c.nops),'operators',esc(c.ops[0][0])+' runs '+pct(c.ops[0][1],c.calls)+'%'],[c.last!=null?hm(c.last):'–','last departure',c.first!=null?'first again at '+hm(c.first):''],[c.gap?dur(c.gap[0]):'–','longest quiet spell',`no arrival or departure ${gap}`],[fmt(c.reach),'stations without changing',`in ${c.reachCt.length} countries`],[String(c.callCt.length),'countries its trains call in',esc(c.callCt.join(', '))]];
+    $('sc-tiles').innerHTML=tiles.map(t=>`<div class="tile"><b>${t[0]}</b><span>${t[1]}</span><em>${t[2]}</em></div>`).join('');
+    const W=480,H=170,mb=22,mt=8,mx=Math.max(...c.deps,1),bw=W/24;let g='';
+    for(const v of [mx]){g+=`<text x="2" y="${mt+11}" font-size="13">${v}</text>`}
+    c.deps.forEach((v,h)=>{const bh=v/mx*(H-mb-mt);g+=`<rect x="${(h*bw+1).toFixed(1)}" y="${(H-mb-bh).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${bh.toFixed(1)}" fill="var(--s3)" data-tip="${String(h).padStart(2,'0')}:00–${String(h).padStart(2,'0')}:59 · ${v} departures"/>`;if(h%3===0)g+=`<text x="${(h*bw+bw/2).toFixed(1)}" y="${H-4}" font-size="13" text-anchor="middle">${String(h).padStart(2,'0')}</text>`});
+    g+=`<line x1="0" x2="${W}" y1="${H-mb}" y2="${H-mb}" stroke="var(--rule)"/>`;
+    $('sc-hours').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Departures by hour at ${esc(c.name)}">${g}</svg>`;
+    const om=c.ops[0][1];
+    $('sc-ops').innerHTML=c.ops.map(o=>`<div class="bar" data-tip="${esc(o[0])}: ${fmt(o[1])} calls"><span class="n">${esc(o[0])}</span><span class="t"><span class="f" style="width:${(o[1]/om*100).toFixed(1)}%"></span></span><span class="v">${pct(o[1],c.calls)}%</span></div>`).join('');
+    $('sc-reach').innerHTML=`Direct trains reach ${fmt(c.reach)} stations: `+c.reachCt.slice(0,8).map(r=>`${esc(r[0])} ${fmt(r[1])}`).join(' · ')+(c.reachCt.length>8?' · …':'')+(c.far?`. Farthest without changing: ${esc(c.far[0])} (${esc(c.far[1])}), ${fmt(c.far[2])} km.`:'');
+  }
+  sel.addEventListener('change',draw);draw();
+})();
+
+/* ---------- Last train home ---------- */
+(function(){
+  const cv=$('lt-canvas'),sel=$('lt-sel');fill(sel,cityOpts);sel.value=String(S.findIndex(c=>c.id==='vienna'));
+  const bands=[[23*60,'--s1','after 23:00'],[22*60,'--s2','22:00–23:00'],[20*60,'--s3','20:00–22:00'],[17*60,'--s4','17:00–20:00'],[12*60,'--s5','12:00–17:00'],[0,'--s6','before noon']];
+  $('lt-legend').innerHTML=legendHTML(bands,'<span><i class="sw" style="background:var(--accent);border-radius:50%"></i>home city</span><span>No dot: no way home tonight, or no clock times</span>');
+  let cur=null;
+  async function draw(){if(!canUnz)return noUnz(cv);const i=+sel.value,c=S[i];cur={i,d:await city(i)};const v=cur.d.last;const {c:ctx,u}=prep(cv);land(ctx,u);const s=Math.max(2,1.7*u);
+    for(let b=bands.length-1;b>=0;b--){const lo=bands[b][0],hi=b?bands[b-1][0]:1e9;ctx.fillStyle=css(bands[b][1]);for(let k=0;k<NP;k++){const t=v[k];if(t!==65535&&t>=lo&&t<hi)ctx.fillRect(PX[k]-s/2,PY[k]-s/2,s,s)}}
+    ctx.fillStyle=css('--accent');ctx.strokeStyle=css('--land');ctx.lineWidth=1.5*u;ctx.beginPath();dot(ctx,px(c.xy[0]),py(c.xy[1]),5*u);ctx.fill();ctx.stroke();
+    $('lt-stats').textContent=`${fmt(c.lastN)} stations can still get you to ${c.label} by 01:00`;
+    $('lt-list').innerHTML=`<table><thead><tr><th>From</th><th class="r">Leave by</th><th class="r">km</th></tr></thead><tbody>${c.lastHubs.slice(0,12).map(r=>`<tr><td>${esc(r[0])}</td><td class="r">${hm(r[1])}${r[1]>=1440?' <span class="m">+1</span>':''}</td><td class="r">${fmt(r[2])}</td></tr>`).join('')}</tbody></table>`}
+  sel.addEventListener('change',draw);onTheme(draw);
+  cv.addEventListener('mousemove',e=>{if(!cur)return;const [mx,my]=evPos(cv,e),k=nearest(mx,my);if(k<0)return hideTip();const t=cur.d.last[k],c=S[cur.i];showTip(`<b>${esc(nm(k))}</b><br>`+(t===65535?`No way to reach ${esc(c.label)} by 01:00`:`Leave by ${hm(t)}${t>=1440?' (after midnight)':''} to reach ${esc(c.label)} by 01:00`),e.clientX,e.clientY)});
+  cv.addEventListener('mouseleave',hideTip);
+  namesReady.then(draw);
+})();
+
+/* ---------- Day trip ---------- */
+(function(){
+  const cv=$('dt-canvas'),sel=$('dt-sel');fill(sel,cityOpts);sel.value=String(S.findIndex(c=>c.id==='london'));
+  const bands=[[600,'--s1','10 h or more'],[480,'--s2','8–10 h'],[360,'--s3','6–8 h'],[240,'--s4','4–6 h'],[60,'--s6','1–4 h, too short']];
+  $('dt-legend').innerHTML=legendHTML(bands,'<span><i class="sw" style="background:var(--accent);border-radius:50%"></i>start</span>');
+  let cur=null;
+  async function draw(){if(!canUnz)return noUnz(cv);const i=+sel.value,c=S[i],d=await city(i);const T=d.day,g=new Int16Array(NP).fill(-1),A=new Int16Array(NP),Dd=new Int16Array(NP);for(let j=0;j<T.length;j+=3){g[T[j]]=T[j+2]-T[j+1];A[T[j]]=T[j+1];Dd[T[j]]=T[j+2]}cur={i,g,A,Dd};
+    const {c:ctx,u}=prep(cv);land(ctx,u);const s=Math.max(2,1.7*u);
+    for(let b=bands.length-1;b>=0;b--){const lo=bands[b][0],hi=b?bands[b-1][0]:1e9;ctx.fillStyle=css(bands[b][1]);for(let k=0;k<NP;k++){const t=g[k];if(t>=lo&&t<hi)ctx.fillRect(PX[k]-s/2,PY[k]-s/2,s,s)}}
+    ctx.fillStyle=css('--accent');ctx.strokeStyle=css('--land');ctx.lineWidth=1.5*u;ctx.beginPath();dot(ctx,px(c.xy[0]),py(c.xy[1]),5*u);ctx.fill();ctx.stroke();
+    $('dt-stats').textContent=`${fmt(c.day.n4)} stations give four hours or more · ${fmt(c.day.n4_300)} of them at least 300 km away`;
+    $('dt-list').innerHTML=c.day.top.length?`<table><thead><tr><th>Place</th><th class="r">km</th><th class="r">There</th></tr></thead><tbody>${c.day.top.map(r=>`<tr><td>${esc(r[0])}<br><span class="m">${esc(r[1])}</span></td><td class="r">${fmt(r[2])}</td><td class="r">${hm(r[3])}–${hm(r[4])}</td></tr>`).join('')}</tbody></table><p class="note">Times in ${esc(c.label)} local time.</p>`:'<p class="note">No well-served station qualifies.</p>'}
+  sel.addEventListener('change',draw);onTheme(draw);
+  cv.addEventListener('mousemove',e=>{if(!cur)return;const [mx,my]=evPos(cv,e),k=nearest(mx,my,j=>cur.g[j]>=60);if(k<0)return hideTip();showTip(`<b>${esc(nm(k))}</b><br>arrive ${hm(420+cur.A[k])}, leave ${hm(420+cur.Dd[k])}<br>${dur(cur.g[k])} there (${esc(S[cur.i].label)} time)`,e.clientX,e.clientY)});
+  cv.addEventListener('mouseleave',hideTip);
+  namesReady.then(draw);
+})();
+
+/* ---------- Connection pulse ---------- */
+(function(){
+  const U=D.pulse,sel=$('pu-sel');fill(sel,U.detail.map((d,i)=>[i,`${d.name} · ${d.ctry}`]));
+  function draw(){const d=U.detail[+sel.value];
+    $('pu-stats').textContent=`${d.obs*100>=10?Math.round(d.obs*100):(d.obs*100).toFixed(1)}% of changes within 3–10 min · chance ${(d.exp*100).toFixed(1)}% · index ${d.idx.toFixed(2)}`;
+    const W=360,H=200,mid=100,mxA=Math.max(...d.ma,...d.md,1),bw=W/60;let g='';
+    for(let m=0;m<60;m++){const a=d.ma[m]/mxA*(mid-14),b=d.md[m]/mxA*(mid-22);g+=`<rect x="${(m*bw+.4).toFixed(1)}" y="${(mid-a).toFixed(1)}" width="${(bw-.8).toFixed(1)}" height="${a.toFixed(1)}" fill="var(--c-reg)" data-tip=":${String(m).padStart(2,'0')} · ${d.ma[m]} arrivals"/><rect x="${(m*bw+.4).toFixed(1)}" y="${mid}" width="${(bw-.8).toFixed(1)}" height="${b.toFixed(1)}" fill="var(--c-fast)" data-tip=":${String(m).padStart(2,'0')} · ${d.md[m]} departures"/>`}
+    g+=`<line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--rule)"/>`;for(const m of [0,15,30,45]){g+=`<text x="${(m*bw+bw/2).toFixed(1)}" y="${H-4}" font-size="12" text-anchor="${m?'middle':'start'}">:${String(m).padStart(2,'0')}</text>`}
+    $('pu-min').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Arrivals and departures by minute past the hour at ${esc(d.name)}">${g}</svg>`;
+    const mh=Math.max(...d.hist,...d.ehist,1),bx=W/61;let h=`<rect x="${(3*bx).toFixed(1)}" y="6" width="${(8*bx).toFixed(1)}" height="${H-30}" fill="var(--accent)" fill-opacity=".08"/>`;
+    for(let m=0;m<=60;m++){const v=d.hist[m]/mh*(H-34);h+=`<rect x="${(m*bx+.4).toFixed(1)}" y="${(H-24-v).toFixed(1)}" width="${(bx-.8).toFixed(1)}" height="${v.toFixed(1)}" fill="var(--s3)" data-tip="${m} min wait · ${d.hist[m]} observed, ${d.ehist[m]} by chance"/>`}
+    let p='';for(let m=0;m<=60;m++){p+=(m?'L':'M')+(m*bx+bx/2).toFixed(1)+' '+(H-24-d.ehist[m]/mh*(H-34)).toFixed(1)}h+=`<path d="${p}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+    h+=`<line x1="0" x2="${W}" y1="${H-24}" y2="${H-24}" stroke="var(--rule)"/>`;for(const m of [0,10,20,30,40,50,60])h+=`<text x="${(m*bx+bx/2).toFixed(1)}" y="${H-6}" font-size="12" text-anchor="${m===0?'start':m===60?'end':'middle'}">${m}${m===60?' min':''}</text>`;
+    $('pu-wait').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Distribution of waits for connections at ${esc(d.name)}">${h}</svg>`}
+  sel.addEventListener('change',draw);draw();
+  $('pu-top').innerHTML=`<thead><tr><th>Station</th><th class="r">Index</th><th class="r">Quick</th><th class="r">Chance</th></tr></thead><tbody>${U.top.slice(0,15).map(r=>`<tr><td>${esc(r[0])} <span class="m">${esc(r[1])}</span></td><td class="r">${r[2].toFixed(2)}</td><td class="r">${r[3]}%</td><td class="r">${r[4]}%</td></tr>`).join('')}</tbody>`;
+  const mx=Math.max(...U.ctry.map(r=>r[1]));
+  $('pu-ctry').innerHTML=U.ctry.map(r=>`<div class="bar" data-tip="${esc(r[0])}: median index ${r[1]} over ${r[2]} stations"><span class="n">${esc(r[0])}</span><span class="t"><span class="f" style="width:${(r[1]/mx*100).toFixed(1)}%"></span></span><span class="v">${r[1].toFixed(2)}</span></div>`).join('');
+})();
+
+/* ---------- Sleep map ---------- */
+(function(){
+  const cv=$('sl-canvas'),sel=$('sl-sel'),A=D.sleep.arcs,DN=['Sunday 1','Monday 2','Tuesday 3','Wednesday 4','Thursday 5','Friday 6','Saturday 7'];
+  fill(sel,DN.map((d,i)=>[i,'Evening of '+d+' Nov']));
+  const ctl=a=>{const x1=px(a[0]),y1=py(a[1]),x2=px(a[2]),y2=py(a[3]),mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1;return [x1,y1,mx-dy*.18,my+dx*.18,x2,y2]};
+  const on=a=>{const d=+sel.value;return d<0||a[17][d]==='1'};
+  function draw(){const {c,u}=prep(cv);land(c,u);c.lineCap='round';let n=0;
+    for(const pass of [0,1])for(const a of A){if(!on(a)||a[18]!==pass)continue;n++;const k=ctl(a),nights=[...a[17]].filter(x=>x==='1').length;c.strokeStyle=css(pass?'--c-night':'--c-reg');c.globalAlpha=.75;c.lineWidth=(.8+nights*.33)*u;c.beginPath();c.moveTo(k[0],k[1]);c.quadraticCurveTo(k[2],k[3],k[4],k[5]);c.stroke()}
+    c.globalAlpha=1;c.fillStyle=css('--ink');c.beginPath();for(const a of A){if(!on(a))continue;dot(c,px(a[0]),py(a[1]),2.2*u)}c.fill();
+    $('sl-stats').textContent=`${n} overnight trains`}
+  sel.addEventListener('change',draw);onTheme(draw);draw();
+  cv.addEventListener('mousemove',e=>{const [mx,my]=evPos(cv,e),u=MW/cv.clientWidth;let best=null,bd=1e9;for(const a of A){if(!on(a))continue;const k=ctl(a);for(let t=0;t<=1;t+=.1){const x=(1-t)*(1-t)*k[0]+2*(1-t)*t*k[2]+t*t*k[4],y=(1-t)*(1-t)*k[1]+2*(1-t)*t*k[3]+t*t*k[5],d=(x-mx)**2+(y-my)**2;if(d<bd){bd=d;best=a}}}
+    if(!best||bd>(10*u)**2)return hideTip();const a=best,days=[...a[17]].map((x,i)=>x==='1'?'SMTWTFS'[i]:'·').join('');
+    showTip(`<b>${esc(a[4])}</b> · ${esc(a[5])}<br>Board ${esc(a[6])} ${hm(a[7])}${a[10]>1?`<br>…to ${esc(a[8])} ${hm(a[9])}`:''}<br>Wake ${esc(a[11])} ${hm(a[12])}${a[15]>1?`<br>…to ${esc(a[13])} ${hm(a[14])}`:''}<br>${fmt(a[16])} km · nights ${days}`,e.clientX,e.clientY)});
+  cv.addEventListener('mouseleave',hideTip);
+  const top=A.slice().sort((a,b)=>b[16]-a[16]).slice(0,12);
+  $('sl-table').innerHTML=`<thead><tr><th>Train</th><th>Board</th><th>Wake</th><th class="r">km</th><th class="r">Nights</th></tr></thead><tbody>${top.map(a=>`<tr><td>${esc(a[4])}<br><span class="m">${esc(a[5])}</span></td><td>${esc(a[6])} ${hm(a[7])}</td><td>${esc(a[13])} ${hm(a[14])}</td><td class="r">${fmt(a[16])}</td><td class="r">${[...a[17]].filter(x=>x==='1').length}</td></tr>`).join('')}</tbody>`;
+})();
+
+/* ---------- Countries without changing ---------- */
+(function(){
+  const cv=$('ct-canvas'),Cn=D.countries,pts=[];for(let i=0;i<Cn.pts.length;i+=3)pts.push([px(Cn.pts[i]),py(Cn.pts[i+1]),Cn.pts[i+2]]);
+  const col=k=>k>=9?'--accent':k>=7?'--s1':k>=5?'--s2':k>=4?'--s3':'--s4';
+  $('ct-legend').innerHTML=[[3,'--s4','3 countries'],[4,'--s3','4'],[5,'--s2','5–6'],[7,'--s1','7–8'],[9,'--accent','9 or more']].map(b=>`<span><i class="sw" style="background:var(${b[1]});border-radius:50%"></i>${b[2]}</span>`).join('');
+  function draw(){const {c,u}=prep(cv);land(c,u);for(const k of [3,4,5,6,7,8,9,10,11,12]){c.fillStyle=css(col(k));c.beginPath();for(const p of pts)if(p[2]===k)dot(c,p[0],p[1],(1+k*.45)*u);c.fill()}}
+  onTheme(draw);draw();
+  cv.addEventListener('mousemove',e=>{const [mx,my]=evPos(cv,e),u=MW/cv.clientWidth;let b=null,bd=1e9;for(let i=0;i<pts.length;i++){const d=(pts[i][0]-mx)**2+(pts[i][1]-my)**2;if(d<bd){bd=d;b=i}}if(b===null||bd>(9*u)**2)return hideTip();showTip(`<b>${esc(Cn.names[b])}</b><br>direct trains call in ${pts[b][2]} countries`,e.clientX,e.clientY)});
+  cv.addEventListener('mouseleave',hideTip);
+  const top=Cn.top.slice(0,16),mx=top[0][2];
+  $('ct-bars').innerHTML=top.map(r=>`<div class="bar" data-tip="<b>${esc(r[0])}</b><br>${esc(r[3].join(', '))}"><span class="n">${esc(r[0])}</span><span class="t"><span class="f" style="width:${(r[2]/mx*100).toFixed(1)}%"></span></span><span class="v">${r[2]}</span></div>`).join('');
+  const n5=Cn.dist.filter(d=>d[0]>=5).reduce((a,d)=>a+d[1],0);
+  $('ct-f3').textContent=`${fmt(Cn.n2)} stations have direct trains into at least two countries, and ${fmt(n5)} into five or more.`;
+})();
+
+/* ---------- Country cards ---------- */
+(function(){
+  const R=D.country.rows,sel=$('cc-sel');
+  const M=[['speed','Average speed',v=>v.toFixed(0)+' km/h'],['spacing','Stop spacing',v=>v.toFixed(1)+' km'],['trip','Trip length',v=>fmt(v)+' km'],['night','Late and early',v=>v.toFixed(1)+'%'],['xb','Cross-border',v=>v.toFixed(1)+'%'],['clock','Clock-face',v=>v.toFixed(0)+'%']];
+  fill(sel,[['deps','Departures'],...M.map(m=>[m[0],m[1]])]);
+  const max={};for(const m of M)max[m[0]]=Math.max(...R.map(r=>r[m[0]]));
+  function draw(){const k=sel.value,rows=R.slice().sort((a,b)=>b[k]-a[k]);
+    $('cc-cards').innerHTML=rows.map(r=>`<div class="card"><h3>${esc(r.c)}<span>${fmt(r.trains)} trains · ${fmt(r.deps)} departures</span></h3>${M.map(m=>`<div class="metric${m[0]===k?' on':''}"><span class="n">${m[1]}</span><span class="t"><span class="f" style="width:${(r[m[0]]/max[m[0]]*100).toFixed(1)}%"></span></span><span class="v">${m[2](r[m[0]])}</span></div>`).join('')}</div>`).join('')}
+  sel.addEventListener('change',draw);draw();
+})();
+
+/* ---------- Farthest in a day ---------- */
+(function(){
+  const rows=S.map(c=>({l:c.label,f:c.far.all})).sort((a,b)=>b.f[2][1]-a.f[2][1]);
+  const W=760,rh=24,ml=104,mt=8,H=rows.length*rh+40,xm=1400,x=v=>ml+v/xm*(W-ml-16);let g='';
+  for(let k=0;k<=xm;k+=200){g+=`<line x1="${x(k)}" x2="${x(k)}" y1="${mt}" y2="${H-26}" stroke="var(--rule)"/><text x="${x(k)}" y="${H-10}" font-size="11" text-anchor="${k===xm?'end':'middle'}">${k}${k===xm?' km':''}</text>`}
+  const cols=['--s4','--s2','--accent'];
+  rows.forEach((r,i)=>{const y=mt+12+i*rh,v=r.f.map(f=>f[1]);g+=`<text x="${ml-8}" y="${y+4}" font-size="11.5" text-anchor="end" fill="var(--ink)">${esc(r.l)}</text><line x1="${x(Math.min(...v))}" x2="${x(Math.max(...v))}" y1="${y}" y2="${y}" stroke="var(--rule)" stroke-width="2"/>`;
+    r.f.forEach((f,j)=>{g+=`<circle cx="${x(f[1]).toFixed(1)}" cy="${y}" r="5" fill="var(${cols[j]})" stroke="var(--panel)" stroke-width="1.5" data-tip="<b>${esc(r.l)}</b>, ${f[0]} hours from 08:00<br>${esc(f[2])} (${esc(f[3])})<br>${fmt(f[1])} km, reached in ${dur(f[4])}"/>`})});
+  $('fa-svg').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto;min-width:520px" role="img" aria-label="Farthest straight-line distance reached in 4, 8 and 12 hours from each city">${g}</svg>`;
+})();
+
+/* ---------- Time map ---------- */
+(function(){
+  const cv=$('tm-canvas'),sel=$('tm-sel'),btn=$('tm-btn');fill(sel,cityOpts);sel.value=String(S.findIndex(c=>c.id==='paris'));
+  const bands=[[12,'--s1','within 2 h'],[24,'--s2','2–4 h'],[36,'--s3','4–6 h'],[48,'--s4','6–8 h'],[72,'--s5','8–12 h'],[254,'--s6','over 12 h']];
+  $('tm-legend').innerHTML=legendHTML(bands,'<span><i class="sw" style="background:var(--accent);border-radius:50%"></i>centre</span>');
+  const K=36;let mode=1,f=1,tm=null,ox=0,oy=0,TX=new Float32Array(NP),TY=new Float32Array(NP),anim=0;
+  function bandOf(t){for(let b=0;b<bands.length;b++)if(t<=bands[b][0])return b;return -1}
+  function draw(){if(!tm)return;const {c,u}=prep(cv);land(c,u);
+    if(f>0.01){c.strokeStyle=css('--muted');c.globalAlpha=.55*f;c.lineWidth=u;c.setLineDash([4*u,4*u]);c.fillStyle=css('--ink2');c.font=`${11*u}px sans-serif`;for(let h=2;h<=12;h+=2){c.beginPath();c.arc(ox,oy,h*K,0,6.283);c.stroke();c.fillText(h+' h',ox+3*u,oy-h*K-3*u)}c.setLineDash([]);c.globalAlpha=1}
+    const s=Math.max(2,1.7*u);
+    for(let b=bands.length-1;b>=0;b--){c.fillStyle=css(bands[b][1]);const lo=b?bands[b-1][0]:-1,hi=bands[b][0];for(let k=0;k<NP;k++){const t=tm[k];if(t===255||t<=lo||t>hi)continue;const X=PX[k]+(TX[k]-PX[k])*f,Y=PY[k]+(TY[k]-PY[k])*f;c.fillRect(X-s/2,Y-s/2,s,s)}}
+    if(f<0.99){c.globalAlpha=1-f;c.fillStyle=css('--s0');for(let k=0;k<NP;k++)if(tm[k]===255)c.fillRect(PX[k]-s/2,PY[k]-s/2,s,s);c.globalAlpha=1}
+    c.fillStyle=css('--accent');c.strokeStyle=css('--land');c.lineWidth=1.5*u;c.beginPath();dot(c,ox,oy,5*u);c.fill();c.stroke()}
+  async function load(){if(!canUnz)return noUnz(cv);const i=+sel.value,C=S[i],d=await city(i);tm=d.tm;ox=px(C.xy[0]);oy=py(C.xy[1]);
+    for(let k=0;k<NP;k++){const dx=PX[k]-ox,dy=PY[k]-oy,r=Math.hypot(dx,dy)||1,t=tm[k];if(t===255){TX[k]=PX[k];TY[k]=PY[k];continue}const R=((t+.15+((k*0.6180339)%1)*.7)/6)*K;TX[k]=ox+dx/r*R;TY[k]=oy+dy/r*R}
+    const n=C.far.allN;$('tm-stats').textContent=`${C.label}: ${fmt(n[1])} stations within 4 h · ${fmt(n[4])} within 12 h`;draw()}
+  function animate(to){cancelAnimationFrame(anim);const from=f,t0=performance.now(),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;const step=ts=>{const p=reduce?1:Math.min(1,(ts-t0)/800),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;f=from+(to-from)*e;draw();if(p<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
+  btn.addEventListener('click',()=>{mode=1-mode;btn.setAttribute('aria-pressed',mode?'true':'false');btn.textContent=mode?'Travel time':'Geography';animate(mode)});
+  sel.addEventListener('change',load);onTheme(draw);
+  cv.addEventListener('mousemove',e=>{if(!tm)return;const [mx,my]=evPos(cv,e);let best=-1,bd=81;for(let k=0;k<NP;k++){if(tm[k]===255&&f>.5)continue;const X=PX[k]+(TX[k]-PX[k])*f,Y=PY[k]+(TY[k]-PY[k])*f,d=(X-mx)**2+(Y-my)**2;if(d<bd){bd=d;best=k}}if(best<0)return hideTip();const t=tm[best];showTip(`<b>${esc(nm(best))}</b><br>`+(t===255?'Not reached on Wednesday':t>=254?'More than 42 hours':`about ${dur(t*10)} from ${esc(S[+sel.value].label)} leaving 08:00`),e.clientX,e.clientY)});
+  cv.addEventListener('mouseleave',hideTip);
+  namesReady.then(load);
+  const F=D.timeFind||[];$('tm-find').innerHTML=F.map(s=>`<li>${esc(s)}</li>`).join('');
+})();
+
+/* ---------- Gateway ---------- */
+(function(){
+  const G=D.gateway,rows=G.hubs.filter(h=>h[3]>0).sort((a,b)=>b[3]-a[3]).slice(0,18),mx=rows[0][3];
+  $('gw-bars').innerHTML=rows.map(r=>`<div class="bar" data-tip="<b>${esc(r[1])}</b><br>on ${(r[3]/G.total*100).toFixed(1)}% of fastest routes<br>change trains there on ${(r[4]/G.total*100).toFixed(1)}%"><span class="n">${esc(r[1])}</span><span class="t"><span class="f" style="width:${(r[3]/mx*100).toFixed(1)}%"></span><span class="f2" style="width:${(r[4]/mx*100).toFixed(1)}%"></span></span><span class="v">${(r[3]/G.total*100).toFixed(1)}%</span></div>`).join('');
+  $('gw-cap').innerHTML=`<thead><tr><th>Country</th><th>Capital</th><th class="r">Share</th><th class="r">Routes</th></tr></thead><tbody>${G.cap.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="r">${r[2]}%</td><td class="r">${r[3]}</td></tr>`).join('')}</tbody>`;
+  const nh=G.reach.filter(r=>r[1]>=10).length;
+  $('gw-meth').textContent=`${fmt(G.total)} routes between ${nh} hub cities with clock times, at two departure times. A route passes a city when any of its trains calls at one of that city's stations. Hubs in countries without clock times (Lisbon, Porto, Helsinki, Oslo, Athens, Thessaloniki and others) drop out, and Britain's ten hubs make London look bigger than it would on a continental view.`;
+})();
+
+/* ---------- Train biography ---------- */
+(function(){
+  const Bi=D.bio,sel=$('bi-sel');fill(sel,Bi.map((b,i)=>[i,b.title]));
+  const pal=['--c-reg','--c-fast','--c-night','--s3','--accent'];
+  function draw(){const b=Bi[+sel.value],s=b.stops,n=s.length,tot=s[n-1][4],T=s[n-1][5]-s[0][6];
+    const ctry=[];s.forEach(x=>{if(x[1]&&!ctry.includes(x[1]))ctry.push(x[1])});const cc=c=>pal[Math.max(0,ctry.indexOf(c))%pal.length];
+    let mxv=0,dw=0;const hops=[];for(let k=1;k<n;k++){const t=s[k][5]-s[k-1][6],d=s[k][4]-s[k-1][4],v=t>0?d/(t/60):0;hops.push({k,t,d,v:v>330?0:v});if(v<=330)mxv=Math.max(mxv,v)}
+    for(let k=1;k<n-1;k++)dw+=Math.max(0,s[k][3]-s[k][2]);
+    const DW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],on=DW.filter((d,i)=>b.days[i]),days=on.length===7?'every day':on.length>3?on.length+' days':on.join(', ');
+    const tiles=[[fmt(tot)+' km','straight-line length',`${n} stops`],[dur(T),'end to end',`departs ${hm(s[0][3])}, arrives ${hm(s[n-1][2])}`],[Math.round(tot/(T/60))+' km/h','average speed','including stops'],[Math.round(mxv)+' km/h','fastest hop','between two stops'],[dur(dw),'standing at stops',`${n-2} intermediate stops`],[String(ctry.length),'countries',esc(ctry.join(', '))],[esc(b.label||b.line),'service',esc(b.op)+' · this timing runs '+days]];
+    $('bi-tiles').innerHTML=tiles.map(t=>`<div class="tile"><b>${t[0]}</b><span>${t[1]}</span><em>${t[2]}</em></div>`).join('');
+    const W=Math.max(640,Math.min(1400,n*30)),H=256,ml=44,mr=10,mt=22,top=176,x=v=>ml+v/tot*(W-ml-mr),ym=Math.max(100,Math.ceil(mxv/50)*50),y=v=>top-v/ym*(top-mt);let g='';
+    for(let v=0;v<=ym;v+=50)g+=`<line x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${ml-6}" y="${y(v)+4}" font-size="10" text-anchor="end">${v}</text>`;
+    g+=`<text x="${ml}" y="11" font-size="10">km/h</text>`;
+    for(const h of hops){const x1=x(s[h.k-1][4]),x2=x(s[h.k][4]);g+=`<rect x="${x1.toFixed(1)}" y="${y(h.v).toFixed(1)}" width="${Math.max(1,x2-x1-.6).toFixed(1)}" height="${(top-y(h.v)).toFixed(1)}" fill="var(${cc(s[h.k-1][1])})" fill-opacity=".85" data-tip="${esc(s[h.k-1][0])} → ${esc(s[h.k][0])}<br>${h.d.toFixed(1)} km in ${h.t} min · ${Math.round(h.v)} km/h"/>`}
+    const mxd=Math.max(1,...s.slice(1,-1).map(x=>x[3]-x[2]));
+    for(let k=0;k<n;k++){const X=x(s[k][4]),dwk=Math.max(0,s[k][3]-s[k][2]);g+=`<line x1="${X.toFixed(1)}" x2="${X.toFixed(1)}" y1="${top}" y2="${top+6}" stroke="var(--muted)"/>`;if(k>0&&k<n-1)g+=`<circle cx="${X.toFixed(1)}" cy="${top+22}" r="${(2+Math.sqrt(dwk/mxd)*9).toFixed(1)}" fill="var(--s4)" fill-opacity=".8" stroke="var(--panel)" data-tip="<b>${esc(s[k][0])}</b><br>arrive ${hm(s[k][2])}, leave ${hm(s[k][3])}<br>${dwk} min standing"/>`}
+    g+=`<text x="${ml}" y="${H-28}" font-size="10">${esc(s[0][0])}</text><text x="${W-mr}" y="${H-28}" font-size="10" text-anchor="end">${esc(s[n-1][0])}</text><text x="${(ml+W)/2}" y="${H-8}" font-size="10.5" text-anchor="middle">Distance along the run, km (circles show time standing at each stop)</text>`;
+    $('bi-svg').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto;min-width:560px" role="img" aria-label="Speed profile of ${esc(b.title)}">${g}</svg>`;
+    $('bi-legend').innerHTML=ctry.map(c=>`<span><i class="sw" style="background:var(${cc(c)})"></i>${esc(c)}</span>`).join('');
+    $('bi-table').innerHTML=`<thead><tr><th>Stop</th><th class="r">Arrive</th><th class="r">Leave</th><th class="r">Stand</th><th class="r">km</th><th class="r">km/h in</th></tr></thead><tbody>${s.map((x,k)=>`<tr><td>${esc(x[0])} <span class="m">${esc(x[1])}</span></td><td class="r">${k?hm(x[2]):''}</td><td class="r">${k<n-1?hm(x[3]):''}</td><td class="r">${k&&k<n-1?Math.max(0,x[3]-x[2])+' min':''}</td><td class="r">${fmt(x[4])}</td><td class="r">${k?Math.round(hops[k-1].v):''}</td></tr>`).join('')}</tbody>`}
+  sel.addEventListener('change',draw);draw();
+})();
+
+/* ---------- Week in the life ---------- */
+(function(){
+  const R=D.week,DN=['Sun 1','Mon 2','Tue 3','Wed 4','Thu 5','Fri 6','Sat 7'];
+  const ramp=v=>v<.5?['--s6','--ink']:v<.7?['--s5','--ink']:v<.85?['--s4','--ink']:v<.95?['--s3','--panel']:v<=1.05?['--s2','--panel']:['--s1','--panel'];
+  let h='<span></span>'+DN.map(d=>`<span class="hd">${d}</span>`).join('')+'<span class="hd">every day</span>';
+  for(const r of R){const mid=(r.d[2]+r.d[3]+r.d[4])/3;h+=`<span class="nm" title="${esc(r.c)}">${esc(r.c)}</span>`;
+    r.d.forEach((v,i)=>{const f=v/mid,c=ramp(f);h+=`<span class="c" style="background:var(${c[0]});color:var(${c[1]})" data-tip="${esc(r.c)}, ${DN[i]} Nov<br>${fmt(v)} trains · ${Math.round(f*100)}% of midweek">${Math.round(f*100)}</span>`});
+    h+=`<span class="x">${Math.round(r.all*100)}%</span>`}
+  $('wk-grid').innerHTML=h;
+})();
+};
+// Data lives in the Explore delivery; its manifest hash busts the cache.
+(function(){
+  const base=new URL('../explore-data/',location.href),fail=()=>{document.getElementById('ideasError').hidden=false;};
+  fetch(new URL('manifest.json',base)).then(r=>{if(!r.ok)throw new Error('manifest');return r.json();}).then(m=>{
+    const name=m.files&&m.files.ideas;if(!name)throw new Error('no ideas data');
+    const url=new URL(name,base),sha=m.assets&&m.assets[name]&&m.assets[name].sha256;if(sha)url.searchParams.set('v',sha.slice(0,16));
+    const s=document.createElement('script');s.src=url.href;s.onload=()=>{try{window.startIdeas();}catch(e){console.error(e);fail();}};s.onerror=fail;document.head.appendChild(s);
+  }).catch(fail);
+})();
+</script>
+</body>
+</html>

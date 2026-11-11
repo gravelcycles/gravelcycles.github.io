@@ -17,7 +17,8 @@
   "stations": "stations.json.gz",
   "journeys": "journeys.json.gz",
   "summary": "summary.json.gz",
-  "timetable": "timetable.bin.gz"
+  "timetable": "timetable.bin.gz",
+  "ideas": "ideas.js"
  },
  "counts": {
   "stations": 30379,
@@ -25,31 +26,146 @@
   "profiles": 124765,
   "days": {
    "2026-11-01": {
-    "trips": 119625
+    "trips": 115878
    },
    "2026-11-02": {
-    "trips": 170131
+    "trips": 164408
    },
    "2026-11-03": {
-    "trips": 171255
+    "trips": 165545
    },
    "2026-11-04": {
-    "trips": 171339
+    "trips": 165635
    },
    "2026-11-05": {
-    "trips": 171114
+    "trips": 165388
    },
    "2026-11-06": {
-    "trips": 172235
+    "trips": 166447
    },
    "2026-11-07": {
-    "trips": 143026
+    "trips": 138619
    }
   }
  },
  "skipped": {
   "journeys_with_unlocated_stations": 104,
   "runs_without_complete_clocks": 7
+ },
+ "deduplication": {
+  "rule": "A run is dropped when all its calls appear, in order and within a minute, in a run from another source on the same date; of two equal copies the run starting in its own feed country is kept.",
+  "droppedTripsByDate": {
+   "2026-11-01": 3747,
+   "2026-11-02": 5605,
+   "2026-11-03": 5586,
+   "2026-11-04": 5584,
+   "2026-11-05": 5605,
+   "2026-11-06": 5665,
+   "2026-11-07": 4285
+  },
+  "droppedTrips": 36077,
+  "sourcePairs": [
+   [
+    "ch_gtfs_2026",
+    "fr_sncf",
+    15281
+   ],
+   [
+    "ch_gtfs_2026",
+    "de_rv",
+    3630
+   ],
+   [
+    "cz_czptt",
+    "de_rv",
+    1609
+   ],
+   [
+    "de_rv",
+    "ch_gtfs_2026",
+    1493
+   ],
+   [
+    "fr_idfm",
+    "fr_sncf",
+    1173
+   ],
+   [
+    "es_renfe_cercanias_transitous",
+    "es_renfe_ld",
+    1061
+   ],
+   [
+    "de_rv",
+    "cz_czptt",
+    1045
+   ],
+   [
+    "ch_gtfs_2026",
+    "at_mvo_rail_transitous",
+    987
+   ],
+   [
+    "fr_sncf",
+    "ch_gtfs_2026",
+    908
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "de_rv",
+    742
+   ],
+   [
+    "es_renfe_ld",
+    "es_renfe_cercanias_transitous",
+    697
+   ],
+   [
+    "de_fv",
+    "ch_gtfs_2026",
+    602
+   ],
+   [
+    "ch_gtfs_2026",
+    "it_trenord",
+    583
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "de_fv",
+    475
+   ],
+   [
+    "cz_czptt",
+    "pl_polish_trains",
+    471
+   ],
+   [
+    "de_rv",
+    "at_mvo_rail_transitous",
+    469
+   ],
+   [
+    "fr_sncf",
+    "fr_idfm",
+    411
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "si_dujpp_official",
+    348
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "cz_czptt",
+    313
+   ],
+   [
+    "cz_czptt",
+    "at_mvo_rail_transitous",
+    305
+   ]
+  ]
  },
  "assets": {
   "stations.json.gz": {
@@ -65,16 +181,20 @@
    "encoding": "gzip"
   },
   "timetable.bin.gz": {
-   "sha256": "eff9864a1d20724889b8117a7c9a13dbb0d65e4caa4331b64c20f2760c6e9c4d",
-   "bytes": 4519704,
-   "contentBytes": 19624610,
+   "sha256": "be936c27af2567397c4250d494dd51719d5098c692cc2c4daae69b1431af7ca8",
+   "bytes": 4414684,
+   "contentBytes": 19256560,
    "encoding": "gzip"
   },
   "summary.json.gz": {
-   "sha256": "5445ef822c176b6463d493ab867b7998d72038e1f8034471860ba7935272d626",
-   "bytes": 715,
+   "sha256": "8da0dfb2153be78f08f0c0099e7e40bd15248cf314462529bfabe85566e7cb39",
+   "bytes": 714,
    "contentBytes": 1373,
    "encoding": "gzip"
+  },
+  "ideas.js": {
+   "sha256": "4e66781a4a5fc990c00dbc299dcbd4d32dac018ba05988c8efc52dccb32878f3",
+   "bytes": 2230448
   }
  },
  "methodology": {
