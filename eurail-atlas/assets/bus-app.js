@@ -1,8 +1,8 @@
-import{createBusLayer}from'./bus-layer.js?v=5365ea7a3816698f';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=5365ea7a3816698f';
-import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=5365ea7a3816698f';
-import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=5365ea7a3816698f';
-import{BUS_NETWORK}from'./bus-network-tiles.js?v=5365ea7a3816698f';
+import{createBusLayer}from'./bus-layer.js?v=f3b9966f76c4666e';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=f3b9966f76c4666e';
+import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=f3b9966f76c4666e';
+import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=f3b9966f76c4666e';
+import{BUS_NETWORK}from'./bus-network-tiles.js?v=f3b9966f76c4666e';
 
 const params=new URLSearchParams(location.search),initial={busDay:'all',...Object.fromEntries(params)},$=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,zoomSnap:.25,minZoom:3,maxZoom:19,preferCanvas:true});

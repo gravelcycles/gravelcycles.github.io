@@ -1,7 +1,7 @@
 // Reach: earliest arrival at every station from a chosen origin and time,
 // by connection scan over one day's timed trains, with walking transfers.
-import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=5365ea7a3816698f';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=5365ea7a3816698f';
+import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=f3b9966f76c4666e';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=f3b9966f76c4666e';
 
 const $=id=>document.getElementById(id);
 const CHANGE=5,WALK_M=700,INF=1e9,BANDS=6;
@@ -10,6 +10,7 @@ const RAMP=['--r1','--r2','--r3','--r4','--r5','--r6'];
 export function create(ctx){
   const{data,layer,search}=ctx,S=data.stations,N=S.N;
   const state={day:3,t0:8*60,maxH:6,pass:false,origin:null,target:-1};
+  const coarse=window.matchMedia?.('(pointer:coarse)').matches;
   let conn=null,result=null,colors=[],shown=[],busy=false;
 
   // Walking links between stations under 700 m, from a coarse lat/lon grid.
@@ -110,8 +111,8 @@ export function create(ctx){
 
   function nearest(p){let best=-1,bd=100;for(let k=0;k<shown.length;k+=3){const d=(shown[k]-p.x)**2+(shown[k+1]-p.y)**2;if(d<bd){bd=d;best=shown[k+2];}}return best;}
   function onMove(p){const s=nearest(p);if(s<0||!result)return ctx.hideTooltip();const m=result.ea[s]-state.t0,legs=journey(s),trains=legs.filter(l=>!l.walk).length;
-    ctx.tooltip(`<b>${esc(S.names[s])}</b><br>Arrive ${clockLabel(result.ea[s])} · ${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min<br>${trains<=1?'Direct train':`${trains-1} change${trains>2?'s':''}`} · click for the route`,p.x,p.y);}
-  function onClick(p){const s=nearest(p);state.target=s;showJourney();ctx.requestDraw();}
+    ctx.tooltip(`<b>${esc(S.names[s])}</b><br>Arrive ${clockLabel(result.ea[s])} · ${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min<br>${trains<=1?'Direct train':`${trains-1} change${trains>2?'s':''}`} · ${coarse?'shown below':'click for the route'}`,p.x,p.y);}
+  function onClick(p){const s=nearest(p);state.target=s;showJourney();if(s>=0)ctx.reveal($('reachJourney'));ctx.requestDraw();}
 
   function setOrigin(entry){state.origin=entry;state.target=-1;$('reachFrom').value=entry.name;
     const xs=entry.stations;if(xs.length){let la=0,lo=0;for(const s of xs){la+=S.lat[s];lo+=S.lon[s];}ctx.map.panTo([la/xs.length,lo/xs.length],{animate:false});

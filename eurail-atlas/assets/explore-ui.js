@@ -14,6 +14,8 @@ export function attachStationSearch(input,list,search,onPick){
   input.addEventListener('keydown',e=>{if(list.hidden)return;if(e.key==='ArrowDown'){active=Math.min(items.length-1,active+1);render();e.preventDefault();}else if(e.key==='ArrowUp'){active=Math.max(0,active-1);render();e.preventDefault();}else if(e.key==='Enter'){pick(active);e.preventDefault();}else if(e.key==='Escape')close();});
   list.addEventListener('mousedown',e=>{const li=e.target.closest('li');if(li){e.preventDefault();pick(+li.dataset.i);}});
   input.addEventListener('blur',()=>setTimeout(close,120));
+  // A filled field is replaced, not appended to, when the reader returns to it.
+  input.addEventListener('focus',()=>{if(input.value)input.select();});
 }
 
 export function fillDaySelect(select,dates,selected){select.innerHTML=dates.map(d=>`<option value="${d.index}"${d.index===selected?' selected':''}>${esc(d.label)}</option>`).join('');}

@@ -1,8 +1,8 @@
 // More views: station rhythm (dials and hourly heartbeat), clock-face league,
 // country wake-up curves, weekend service, corridor strings, border crossings
 // and the city-pair league, all derived from one chosen day.
-import{haversineKm,clockLabel,tripInfo}from'./explore-data.js?v=5365ea7a3816698f';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=5365ea7a3816698f';
+import{haversineKm,clockLabel,tripInfo}from'./explore-data.js?v=f3b9966f76c4666e';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=f3b9966f76c4666e';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];
@@ -118,10 +118,10 @@ export function create(ctx){
     $('wakeMinis').innerHTML=WAKE_COUNTRIES.map((c,i)=>{const v=day.wake[i].subarray(0,96),mx=Math.max(1,...v),W=160,H=46;let d=`M0 ${H}`;for(let k=0;k<96;k++)d+=`L${(k/95*W).toFixed(1)} ${(H-v[k]/mx*(H-4)).toFixed(1)}`;d+=`L${W} ${H}Z`;const pk=v.indexOf(mx);
       return`<div class="x-mini"><svg viewBox="0 0 ${W} ${H+11}" role="img" aria-label="Trains in motion through the day in ${esc(c)}"><path d="${d}" fill="var(--s4)"/><line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/><circle cx="${(pk/95*W).toFixed(1)}" cy="3" r="2.5" fill="var(--accent)"/>${[0,6,12,18,24].map(t=>`<text x="${Math.min(W-6,Math.max(6,t/24*W))}" y="${H+10}" font-size="8" text-anchor="middle">${t}</text>`).join('')}</svg><b>${esc(c)}</b><span>peak ${clockLabel(pk*15)} · ${(v[12]/mx*100).toFixed(1)}% at 03:00</span></div>`;}).join('');
     const week=data.summary.tripsByWeekdayAndCountry,rowsW=Object.entries(week).map(([c,v])=>{const mid=(v[2]+v[3]+v[4])/3;return[c,v[0]/mid,v[6]/mid,v.reduce((a,b)=>a+b,0)];}).filter(r=>r[3]>3000&&r[1]>0).sort((a,b)=>a[1]-b[1]);
-    const W=720,rh=19,ml=130,H=rowsW.length*rh+34,x=v=>ml+v/1.15*(W-ml-20);let g='';
+    const narrow=$('weekendChart').clientWidth<520,W=narrow?Math.max(300,$('weekendChart').clientWidth):720,rh=19,ml=narrow?96:130,H=rowsW.length*rh+34,x=v=>ml+v/1.15*(W-ml-20);let g='';
     for(const t of [0,.25,.5,.75,1])g+=`<line x1="${x(t)}" x2="${x(t)}" y1="8" y2="${H-22}" stroke="var(--line)"/><text x="${x(t)}" y="${H-8}" font-size="11" text-anchor="middle">${t*100}%</text>`;
     rowsW.forEach((r,i)=>{const y=14+i*rh;g+=`<text x="${ml-8}" y="${y+4}" font-size="11.5" text-anchor="end" fill="var(--ink)">${esc(r[0])}</text><line x1="${x(Math.min(r[1],r[2]))}" x2="${x(Math.max(r[1],r[2]))}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/><circle cx="${x(r[2])}" cy="${y}" r="4.5" fill="var(--c2)" stroke="var(--panel)" stroke-width="2"><title>${esc(r[0])}: Saturday ${Math.round(r[2]*100)}%</title></circle><circle cx="${x(r[1])}" cy="${y}" r="4.5" fill="var(--c3)" stroke="var(--panel)" stroke-width="2"><title>${esc(r[0])}: Sunday ${Math.round(r[1]*100)}%</title></circle>`;});
-    $('weekendChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto;min-width:440px" role="img" aria-label="Weekend service as a share of midweek by country">${g}</svg><div class="x-legend"><span><i style="background:var(--c3)"></i>Sunday</span><span><i style="background:var(--c2)"></i>Saturday</span></div>`;
+    $('weekendChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="Weekend service as a share of midweek by country">${g}</svg><div class="x-legend"><span><i style="background:var(--c3)"></i>Sunday</span><span><i style="background:var(--c2)"></i>Saturday</span></div>`;
   }
 
   // ---- Corridor strings --------------------------------------------------
@@ -145,7 +145,7 @@ export function create(ctx){
     for(const tr of trains){if(tr.pts[tr.pts.length-1][0]<t0-60||tr.pts[0][0]>t1+60)continue;const info=tripInfo(data,tr.t);
       paths+=`<path d="${tr.pts.map((q,i)=>(i?'L':'M')+x(q[0]).toFixed(1)+' '+y(q[1]).toFixed(1)).join('')}" stroke="var(${tokens[tr.cat]})"><title>${esc(info.title)} · ${esc(info.operator)} · ${esc(info.from)} ${clockLabel(info.calls[0].dep)} → ${esc(info.to)}</title></path>`;}
     $('corrChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Time–distance diagram from ${esc(c.from.name)} to ${esc(c.to.name)}">${g}${paths}</svg>`;
-    $('corrNote').textContent=`${fmt(trains.length)} trains along ${fmt(L)} km of the corridor. Hover a line for the train.`;
+    $('corrNote').textContent=`${fmt(trains.length)} trains along ${fmt(L)} km of the corridor. ${coarse?'Scroll sideways through the day; tap':'Hover'} a line for the train.`;
     $('corrLegend').innerHTML=['Regional','Long distance','High speed','Night'].map((l,i)=>`<span><i class="line" style="background:var(${tokens[i]})"></i>${l}</span>`).join('');
   }
 
@@ -182,6 +182,15 @@ export function create(ctx){
   attachStationSearch($('corrTo'),$('corrToList'),search,setCorr('to',$('corrTo')));
   for(const name of DEFAULT_STATIONS){const i=S.names.indexOf(name);if(i>=0)state.stations.push(i);}
   const zh=search('Zürich HB')[0],be=search('Bern').find(e=>e.name==='Bern');state.corridor={from:zh,to:be};$('corrFrom').value=zh?.name||'';$('corrTo').value=be?.name||'';
+  // Touch has no hover: a tap on a mark shows the text a pointer would get as
+  // a tooltip. Thin lines are hard to hit, so nearby points are tried too.
+  const coarse=window.matchMedia?.('(pointer:coarse)').matches,readout=document.createElement('div');readout.className='x-readout';readout.setAttribute('role','status');readout.hidden=true;$('moreView').append(readout);
+  let readoutTimer=0;const label=el=>el?.closest?.('#moreView')?(el.querySelector?.(':scope>title')?.textContent||el.closest('[title]')?.getAttribute('title')||''):'';
+  $('moreView').addEventListener('click',e=>{
+    let text=label(e.target);
+    if(!text&&e.target.closest('svg'))for(const r of [5,10])for(let a=0;a<8&&!text;a++)text=label(document.elementFromPoint(e.clientX+Math.cos(a*.785)*r,e.clientY+Math.sin(a*.785)*r));
+    clearTimeout(readoutTimer);readout.hidden=!text;if(text){readout.textContent=text;readoutTimer=setTimeout(()=>{readout.hidden=true;},6000);}
+  });
   let rendered=false;
   return{activate(){if(!rendered){rendered=true;renderAll();}},draw(){},onTheme(){}};
 }

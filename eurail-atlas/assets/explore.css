@@ -40,6 +40,7 @@ a{color:var(--control)}
 .x-tab{color:var(--header-ink);text-decoration:none;padding:9px 14px;border-radius:5px;font-weight:650;font-size:13px;white-space:nowrap}
 .x-tab:hover{background:#ffffff14}
 .x-tab[aria-current="page"]{background:#fff;color:#153238}
+.x-short{display:none}
 .x-back{color:var(--header-ink);text-decoration:none;font-size:13px;white-space:nowrap}
 .x-main{position:fixed;inset:calc(var(--header-h) + env(safe-area-inset-top,0px)) 0 0}
 
@@ -56,7 +57,9 @@ a{color:var(--control)}
 .x-panel h1{font:700 19px/1.15 var(--serif);margin:0}
 .x-icon-button{width:30px;height:30px;border:1px solid var(--line);border-radius:5px;background:transparent;cursor:pointer;font-weight:700}
 .x-panel-body{overflow:auto;padding:4px 14px 14px;display:grid;gap:12px}
-.x-panel.collapsed .x-panel-body{display:none}
+/* Collapsed, the panel keeps one line: the clock and play button, or the legend. */
+.x-panel.collapsed .x-panel-body{overflow:hidden;padding-bottom:10px}
+.x-panel.collapsed .x-view-panel>:not(.x-keep){display:none}
 .x-view-panel{display:grid;gap:11px}
 .x-lede{margin:0;color:var(--ink-soft)}
 .x-note{margin:0;color:var(--muted);font-size:12px}
@@ -101,8 +104,9 @@ a{color:var(--control)}
 .x-toplist button:hover{color:var(--control);text-decoration:underline}
 .x-toplist b{font-weight:650}
 
-.x-tooltip{position:absolute;z-index:950;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;line-height:1.4;padding:7px 10px;border-radius:6px;max-width:280px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.x-tooltip{position:absolute;z-index:1002;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;line-height:1.4;padding:7px 10px;border-radius:6px;max-width:280px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
 .x-tooltip b{font-weight:650}
+.x-readout{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:990;width:max-content;max-width:min(520px,calc(100vw - 24px));background:var(--ink);color:var(--paper);font-size:13px;line-height:1.4;padding:9px 13px;border-radius:8px;box-shadow:var(--shadow);font-variant-numeric:tabular-nums;pointer-events:none}
 .x-loading,.x-error{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:980;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:16px 20px;display:grid;gap:6px;min-width:min(320px,calc(100vw - 32px));text-align:center}
 .x-loading span{color:var(--muted);font-size:12px}
 .x-bar{display:block;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
@@ -133,6 +137,7 @@ a{color:var(--control)}
 .x-dials{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .x-dial{display:grid;justify-items:center;gap:2px;font-size:12px;text-align:center}
 .x-dial b{font-size:13px}
+.x-dial svg{max-width:100%;height:auto}
 .x-dial span{color:var(--muted);font-variant-numeric:tabular-nums}
 .x-minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 16px}
 .x-mini{display:grid;gap:2px;font-size:12px;min-width:0}
@@ -155,5 +160,37 @@ a{color:var(--control)}
   .x-panel{top:auto;bottom:max(10px,env(safe-area-inset-bottom,0px));left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));width:auto;max-height:46%}
   .x-split{grid-template-columns:1fr}
   .leaflet-bottom.leaflet-right{display:none}
+  /* Five tabs across a phone: a short first label, and no sideways scroll. */
+  .x-long{display:none}.x-short{display:inline}
+  .x-tabs{justify-content:space-between;gap:0}
+  .x-tab{padding:9px clamp(3px,2.4vw,12px);font-size:clamp(12px,3.4vw,13px)}
+  .x-back{padding:8px 0}
+  /* 16px form text stops iOS zooming the page on focus; larger touch targets. */
+  .x-field select,.x-field input[type=search]{font-size:16px;min-height:42px;padding:8px 10px}
+  .x-field input[type=range]{min-height:30px}
+  .x-button{min-height:42px;padding:8px 16px}
+  .x-icon-button{width:42px;height:42px;font-size:18px}
+  .x-panel-head{padding:8px 10px 4px 14px}
+  .x-checks{gap:2px 16px}
+  .x-checks label,.x-switch{min-height:36px;font-size:14px}
+  .x-checks input,.x-switch input{width:20px;height:20px}
+  .x-spark{height:48px}
+  .x-suggest{max-height:200px}.x-suggest li{padding:11px 10px}
+  .x-toplist{gap:0}.x-toplist button{padding:7px 0}
+  .x-chip{padding:4px 4px 4px 12px;font-size:13px}.x-chip button{padding:8px 10px;font-size:16px}
+  .x-row .x-field{max-width:none}
+  .x-dials{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 8px}
+  .x-bars .bar{grid-template-columns:minmax(90px,1.6fr) 1fr 64px;min-height:26px}
+  .x-more-inner{padding-block:18px 72px}
+  /* Typing in the sheet: lift it under the header so the keyboard cannot cover the field. */
+  .x-panel.typing{top:10px;bottom:auto;max-height:min(60%,340px);z-index:1001}
+}
+@media (max-width:350px){.x-tab{font-size:11px;padding-inline:3px}}
+@media (max-width:760px) and (orientation:landscape) and (max-height:500px){
+  :root{--header-h:52px}
+  .x-header{flex-wrap:nowrap}.x-brand small{display:none}
+  .x-tabs{order:0;flex:1;justify-content:center}.x-back{margin-left:0}
+  .x-panel{right:auto;width:min(340px,48%);top:8px;bottom:8px;max-height:none}
+  .x-panel.collapsed{top:auto}
 }
 @media (prefers-reduced-motion:reduce){.x-bar i{transition:none}}

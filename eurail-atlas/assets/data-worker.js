@@ -1,8 +1,8 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=5365ea7a3816698f';
-import{decodeDisplay}from'./display-codec.js?v=5365ea7a3816698f';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=5365ea7a3816698f';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=5365ea7a3816698f';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=5365ea7a3816698f';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=f3b9966f76c4666e';
+import{decodeDisplay}from'./display-codec.js?v=f3b9966f76c4666e';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=f3b9966f76c4666e';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=f3b9966f76c4666e';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=f3b9966f76c4666e';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.

@@ -18,7 +18,9 @@
 .x-tab:hover{background:#ffffff14}
 .x-tab[aria-current="page"]{background:#fff;color:#153238}
 .x-back{color:#d1dfdc;text-decoration:none;font-size:13px;white-space:nowrap}
-@media (max-width:760px){.x-header{gap:6px 12px;padding-block:6px}.x-tabs{order:3;flex:1 1 100%;justify-content:flex-start}.x-tab{padding:7px 10px}.x-back{margin-left:auto}}
+@media (max-width:760px){.x-header{gap:6px 12px;padding-block:6px}.x-tabs{order:3;flex:1 1 100%;justify-content:flex-start}.x-tab{padding:9px clamp(3px,2.4vw,12px);font-size:clamp(12px,3.4vw,13px)}.x-tabs{justify-content:space-between;gap:0}.x-back{margin-left:auto;padding:8px 0}.x-long{display:none}.x-short{display:inline}}
+@media (max-width:350px){.x-tab{font-size:11px;padding-inline:3px}}
+@media (min-width:761px){.x-short{display:none}}
 .x-error{margin:16px 0;padding:14px 16px;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
 /* Layout: the same reading column and tokens as the idea book; each backlog idea is a section with a scale eyebrow, a working figure on real timetable data and first findings. */
 :root{
@@ -81,7 +83,13 @@ canvas.map{display:block;width:100%;max-width:720px;aspect-ratio:1091/1220;margi
 ul{margin:0;padding-left:1.1em;display:grid;gap:5px;max-width:70ch}
 .split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
 .split>div{min-width:0;display:grid;gap:8px;align-content:start}
-@media (max-width:760px){.split{grid-template-columns:1fr}}
+@media (max-width:760px){.split{grid-template-columns:1fr}
+  /* Phones: 16px form text stops iOS zooming on focus; larger touch targets. */
+  select,button.btn{font-size:16px;min-height:42px;padding:8px 12px}
+  .controls label{flex:1 1 100%}.controls label select{flex:1}
+  nav.toc{gap:8px}nav.toc a{padding:8px 13px}
+  .wrap{padding-block:20px 72px}
+  #tip{font-size:.85rem;max-width:min(270px,calc(100vw - 24px))}}
 .bars{display:grid;gap:5px;font-size:.84rem;font-variant-numeric:tabular-nums}
 .bar{display:grid;grid-template-columns:minmax(92px,170px) 1fr 54px;gap:8px;align-items:center}
 .bar .t{background:var(--s0);height:12px;border-radius:0 4px 4px 0;overflow:hidden;position:relative}
@@ -130,7 +138,7 @@ td .m{color:var(--muted)}
 <header class="x-header">
   <a class="x-brand" href="../" aria-label="Back to the Euro Rail map"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M7 6v11c0 7 22 2 22 13M29 6v9c0 7-22 5-22 15"/><circle cx="7" cy="7" r="3"/><circle cx="29" cy="7" r="3"/><circle cx="18" cy="20" r="3"/></svg><span><strong>Euro Rail</strong><small>Explore the data</small></span></a>
   <nav class="x-tabs" aria-label="Explore views">
-    <a class="x-tab" href="explore.html#motion">Europe in motion</a><a class="x-tab" href="explore.html#reach">Reach</a><a class="x-tab" href="explore.html#speed">Speed</a><a class="x-tab" href="explore.html#more">More views</a><a class="x-tab" href="explore-ideas.html" aria-current="page">Ideas lab</a>
+    <a class="x-tab" href="explore.html#motion" aria-label="Europe in motion"><span class="x-long">Europe in motion</span><span class="x-short">Motion</span></a><a class="x-tab" href="explore.html#reach">Reach</a><a class="x-tab" href="explore.html#speed">Speed</a><a class="x-tab" href="explore.html#more">More views</a><a class="x-tab" href="explore-ideas.html" aria-current="page">Ideas lab</a>
   </nav>
   <a class="x-back" href="../">Atlas ↗</a>
 </header>
@@ -430,6 +438,11 @@ $('n-dup').textContent=`${fmt(D.info.dups)} trips this week were copies of the s
 const tip=$('tip');
 function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(6,Math.min(innerWidth-w-6,x+12))+'px';tip.style.top=Math.max(6,(y-h-12<6?y+16:y-h-12))+'px'}
 function hideTip(){tip.hidden=true}
+// Touch has no hover: a tap shows the same readout, and scrolling clears it.
+if(matchMedia('(pointer:coarse)').matches){
+  document.addEventListener('click',e=>{hideTip();e.target.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:e.clientX,clientY:e.clientY}))});
+  addEventListener('scroll',hideTip,{passive:true});
+}
 document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e.clientX,e.clientY)});
 document.addEventListener('mousemove',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e.clientX,e.clientY)});
 document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('[data-tip]'))hideTip()});

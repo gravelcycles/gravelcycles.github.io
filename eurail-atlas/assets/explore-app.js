@@ -1,5 +1,5 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=5365ea7a3816698f';
-import{css,fmt,esc}from'./explore-ui.js?v=5365ea7a3816698f';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=f3b9966f76c4666e';
+import{css,fmt,esc}from'./explore-ui.js?v=f3b9966f76c4666e';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -35,15 +35,24 @@ async function main(){
   const ctx={map,L,layer,css,fmt,esc,
     tooltip(html,x,y){tooltip.innerHTML=html;tooltip.hidden=false;const box=$('mapView').getBoundingClientRect(),tw=tooltip.offsetWidth,th=tooltip.offsetHeight;tooltip.style.left=Math.max(6,Math.min(box.width-tw-6,x+14))+'px';tooltip.style.top=Math.max(6,y-th-12<6?y+16:y-th-12)+'px';},
     hideTooltip(){tooltip.hidden=true;},
-    requestDraw:()=>{dirty=true;}};
+    requestDraw:()=>{dirty=true;},
+    // Phones: bring a result that appears at the foot of the sheet into view.
+    reveal(el){if(!phone.matches||el.hidden)return;if($('panel').classList.contains('collapsed'))return;el.scrollIntoView({block:'start',behavior:'smooth'});}};
+  const phone=window.matchMedia('(max-width:760px)');
   let dirty=true,current=null,views={},data=null;
 
   $('panelToggle').addEventListener('click',()=>{const panel=$('panel'),open=panel.classList.toggle('collapsed');$('panelToggle').setAttribute('aria-expanded',String(!open));$('panelToggle').textContent=open?'+':'–';$('panelToggle').setAttribute('aria-label',open?'Show controls':'Hide controls');});
   map.on('move zoom',()=>{ctx.hideTooltip();dirty=true;});
   map.on('resize',()=>{layer.resize();dirty=true;});
   map.on('mousemove',e=>current?.onMove?.(e.containerPoint));
-  map.on('mouseout',()=>ctx.hideTooltip());
-  map.on('click',e=>current?.onClick?.(e.containerPoint));
+  // After a tap the browser sends a synthetic mouseout; the readout stays until the next tap or map move.
+  let touched=0;$('map').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')touched=performance.now();},true);
+  map.on('mouseout',()=>{if(performance.now()-touched>1200)ctx.hideTooltip();});
+  // A tap has no hover, so a click also shows the readout a pointer would get.
+  map.on('click',e=>{current?.onClick?.(e.containerPoint);current?.onMove?.(e.containerPoint);});
+  // On phones the panel is a bottom sheet: lift it while typing so the keyboard cannot cover the field.
+  $('panel').addEventListener('focusin',e=>{if(e.target.matches('input[type=search]')){$('panel').classList.add('typing');e.target.closest('.x-search')?.scrollIntoView({block:'start'});}});
+  $('panel').addEventListener('focusout',e=>{if(e.target.matches('input[type=search]'))setTimeout(()=>$('panel').classList.remove('typing'),150);});
   const themeChanged=()=>{restyle();Object.values(views).forEach(v=>v.onTheme?.());dirty=true;};
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',themeChanged);
   new MutationObserver(themeChanged).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
@@ -62,7 +71,7 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=5365ea7a3816698f':name==='reach'?'./explore-reach.js?v=5365ea7a3816698f':name==='speed'?'./explore-speed.js?v=5365ea7a3816698f':'./explore-more.js?v=5365ea7a3816698f');
+    const module=await import(name==='motion'?'./explore-motion.js?v=f3b9966f76c4666e':name==='reach'?'./explore-reach.js?v=f3b9966f76c4666e':name==='speed'?'./explore-speed.js?v=f3b9966f76c4666e':'./explore-more.js?v=f3b9966f76c4666e');
     return views[name]=module.create(ctx);
   }
   async function route(){

@@ -19,7 +19,7 @@
       <span><strong>Euro Rail</strong><small>Explore the data</small></span>
     </a>
     <nav class="x-tabs" aria-label="Explore views">
-      <a class="x-tab" href="#motion" data-view="motion">Europe in motion</a>
+      <a class="x-tab" href="#motion" data-view="motion" aria-label="Europe in motion"><span class="x-long">Europe in motion</span><span class="x-short">Motion</span></a>
       <a class="x-tab" href="#reach" data-view="reach">Reach</a>
       <a class="x-tab" href="#speed" data-view="speed">Speed</a>
       <a class="x-tab" href="#more" data-view="more">More views</a>
@@ -42,7 +42,7 @@
 
           <div class="x-view-panel" data-for="motion">
             <p class="x-lede">Every timed passenger train, at its scheduled position. Dots move in straight lines between stops.</p>
-            <div class="x-clock-row">
+            <div class="x-clock-row x-keep">
               <button class="x-button x-play" id="motionPlay" type="button">Pause</button>
               <output class="x-clock" id="motionClock">08:00</output>
               <output class="x-count" id="motionCount"></output>
@@ -82,7 +82,7 @@
               <option value="all">All trains</option>
               <option value="pass">Skip trains needing a reservation or not on the pass</option>
             </select></label>
-            <div class="x-legend" id="reachLegend"></div>
+            <div class="x-legend x-keep" id="reachLegend"></div>
             <p class="x-stat" id="reachStats"></p>
             <div class="x-selected" id="reachJourney" hidden></div>
             <p class="x-note">Five-minute minimum change; walking links between stations under 700 m. No metro or local bus. Countries without published clock times are blank.</p>
@@ -96,7 +96,7 @@
             </div>
             <fieldset class="x-checks" id="speedCategories"><legend>Trains</legend></fieldset>
             <label class="x-field"><span>At least <output id="speedMinLabel">1</output> trains a day</span><input type="range" id="speedMin" min="1" max="60" step="1" value="1"></label>
-            <div class="x-legend" id="speedLegend"></div>
+            <div class="x-legend x-keep" id="speedLegend"></div>
             <h2 class="x-subhead">Fastest hops in view</h2>
             <ol class="x-toplist" id="speedTop"></ol>
             <p class="x-note">Straight-line distance over scheduled time, so curving lines read slower than the train runs. Hops above 330 km/h are treated as location errors and hidden.</p>
