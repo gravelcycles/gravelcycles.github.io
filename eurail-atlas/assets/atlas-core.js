@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=627060c35bf1a7ca';
-import{edgeInScope}from'./project-scope.js?v=627060c35bf1a7ca';
-import{continuationMetrics}from'./through-continuations.js?v=627060c35bf1a7ca';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=b6077a89205ad576';
+import{edgeInScope}from'./project-scope.js?v=b6077a89205ad576';
+import{continuationMetrics}from'./through-continuations.js?v=b6077a89205ad576';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -202,3 +202,8 @@ export class MapPairIndex{
 // The index contains file membership, not an inferred journey. Ordered calls
 // and pickup/drop-off permissions are still checked in the loaded patterns.
 export function indexedJourneyFiles(index,fromIds,toIds){if(!Array.isArray(index?.files)||!index.stations||typeof index.stations!=='object')throw new Error('Invalid journey lookup');const collect=ids=>{const result=new Set();for(const id of ids){const entries=index.stations[id]||[];if(!Array.isArray(entries))throw new Error('Invalid station lookup');for(const i of entries){if(!Number.isInteger(i)||i<0||i>=index.files.length||typeof index.files[i]!=='string')throw new Error('Invalid journey file membership');result.add(i);}}return result;},from=collect(fromIds),to=collect(toIds);return[...from].filter(i=>to.has(i)).sort((a,b)=>a-b).map(i=>({url:index.files[i]}));}
+
+// SILENT licence class (publisher states no licence). Takedown requests go to
+// the public Pages repository's issue tracker (coordinator decision, 11 Nov 2026).
+export const SILENT_TAKEDOWN_CONTACT='https://github.com/gravelcycles/gravelcycles.github.io/issues';
+export function silentLicenceNotice(notice){if(!notice||typeof notice!=='object'||notice.class!=='SILENT'||notice.takedown!==true)return null;return{label:'licence: none stated',takedown:`Publisher wants this removed? Open an issue at ${SILENT_TAKEDOWN_CONTACT}`};}

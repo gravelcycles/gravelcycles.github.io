@@ -1,6 +1,6 @@
 // Logical through availability is independent of source-frequency and physical
 // traffic assets. This module never joins neighbouring services or public IDs.
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=627060c35bf1a7ca';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=b6077a89205ad576';
 const callId=call=>Array.isArray(call)?call[0]:call?.id;
 const validVector=(value,days,binary=false)=>Array.isArray(value)&&value.length===days&&value.every(n=>Number.isSafeInteger(n)&&n>=0&&(!binary||n<=1));
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);

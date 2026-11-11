@@ -1,7 +1,7 @@
-import{selectedDays,colorFor,matchesGeometry,approximateAlignment}from'./atlas-core.js?v=627060c35bf1a7ca';
-import{journeyDaily,groupSegmentRoutes,sourceTrainLabelKey}from'./train-services.js?v=627060c35bf1a7ca';
-import{matchesFocus}from'./route-focus.js?v=627060c35bf1a7ca';
-import{edgeInScope}from'./project-scope.js?v=627060c35bf1a7ca';
+import{selectedDays,colorFor,matchesGeometry,approximateAlignment}from'./atlas-core.js?v=b6077a89205ad576';
+import{journeyDaily,groupSegmentRoutes,sourceTrainLabelKey}from'./train-services.js?v=b6077a89205ad576';
+import{matchesFocus}from'./route-focus.js?v=b6077a89205ad576';
+import{edgeInScope}from'./project-scope.js?v=b6077a89205ad576';
 
 const FORMAT='rail-atlas-supplemental-availability-v1';
 const aborted=()=>new DOMException('Additional route request cancelled','AbortError');
