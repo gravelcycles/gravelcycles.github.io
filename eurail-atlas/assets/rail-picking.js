@@ -1,6 +1,6 @@
 // Index individual visible segments, rather than a long route's entire box.
 // Segment-cell traversal is linear in the screen distance, not its box area.
-import{segmentDistanceSquared}from'./atlas-core.js?v=f30fab96cb5a7c58';
+import{segmentDistanceSquared}from'./atlas-core.js?v=b7451278123857d9';
 
 // Building a vertex grid on every arriving geometry chunk creates millions of
 // allocations. Bboxes are already prepared in the data worker. Hover first
@@ -42,6 +42,18 @@ export class RouteIndex{
       }
     }
     return winner;
+  }
+  // Every qualifying route within the radius, nearest first. Station pairs of
+  // one service share a stretch of track; callers offer the whole stack.
+  pickAll(x,y,view,radius=5,qualifies=()=>true){
+    const wx=(x-view.width/2)/view.scale+view.centerX,wy=(y-view.height/2)/view.scale+view.centerY,padding=radius/view.scale,limit=padding*padding,rows=[];
+    for(const edge of this.candidates(wx,wy,padding)){
+      const b=edge._bbox;if(wx<b[0]-padding||wx>b[2]+padding||wy<b[1]-padding||wy>b[3]+padding||!qualifies(edge))continue;
+      const p=edge._world;let distance=Infinity;
+      for(let i=2;i<p.length;i+=2){if(p[i]===p[i-2]&&p[i+1]===p[i-1])continue;distance=Math.min(distance,segmentDistanceSquared(wx,wy,p[i-2],p[i-1],p[i],p[i+1]));}
+      if(distance<=limit)rows.push({edge,distance});
+    }
+    return rows.sort((a,b)=>a.distance-b.distance).map(row=>row.edge);
   }
 }
 

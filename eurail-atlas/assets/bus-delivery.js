@@ -16,7 +16,7 @@ export function resolveBusDelivery(configuration,localBase,pageURL=globalThis.lo
   const sourceIds=configuration.publication?.sourceIds;
   if(!Array.isArray(sourceIds)||!sourceIds.length||sourceIds.some(s=>typeof s!=='string'||!s)||new Set(sourceIds).size!==sourceIds.length||configuration.publication?.manifestSha256!==manifest.sha256)throw new Error('Bus delivery lacks its reviewed source binding');
   const derivatives={};
-  for(const[name,key]of[['busAtlasOverview','catalogue'],['busGeometry','manifest']])if(Object.hasOwn(configuration,name)){
+  for(const[name,key]of[['busAtlasOverview','catalogue'],['busGeometry','manifest'],['busNetwork','catalogue']])if(Object.hasOwn(configuration,name)){
     const value=configuration[name],descriptor=value?.[key];
     if(value?.busManifestSha256!==manifest.sha256||!HASH.test(descriptor?.sha256||'')||!Number.isSafeInteger(descriptor?.bytes)||descriptor.bytes<1||descriptor.bytes>3*1024*1024||!Number.isSafeInteger(descriptor?.uncompressedBytes)||descriptor.uncompressedBytes<1||descriptor.uncompressedBytes>16*1024*1024||descriptor.encoding!=='gzip')throw new Error('Invalid bus derivative binding');
     derivatives[name]={...value,assetBaseUrl:safeBusBase(value.assetBaseUrl,pageURL).href};

@@ -1,4 +1,4 @@
-import{normalize}from'./atlas-core.js?v=f30fab96cb5a7c58';
+import{normalize}from'./atlas-core.js?v=b7451278123857d9';
 
 // Canonical places are a display/lookup layer. Journey calls and rail geometry
 // continue to use the original source station IDs and boarding locations.
@@ -6,7 +6,8 @@ export function stationMemberIds(station){return station?.memberIds?.length?[...
 export function stationSources(station){return station?.sources?.length?[...new Set(station.sources)]:station?.source?[station.source]:[];}
 export function stationSourceSelected(station,state={}){return !state.sources||stationSources(station).some(source=>state.sources.has(source));}
 export function stationSourceLabel(station,sourceName){return stationSources(station).map(sourceName).join(' · ');}
-export function stationSearchText(station){return station._search||[station._name||normalize(station.name),...(station.aliases||[]).map(normalize),normalize(station.country)].join(' ');}
+// Built on first search, not for all 44,000 stations while the map is loading.
+export function stationSearchText(station){return station._search||(station._search=[station._name||normalize(station.name),...(station.aliases||[]).map(normalize),normalize(station.country)].join(' '));}
 
 // Boarding modes come from explicit source evidence. Identical stop names can
 // still describe different places to board, especially a replacement bus.
@@ -56,10 +57,10 @@ export class StationCatalog{
     // omitted by that smaller packet, including its canonical correspondence.
     // Keep selected/search objects alive when reviewed positions or late rows
     // arrive; the immutable packet's source point remains separately retained.
-    const row=this.sourceStations.get(station.id)||{};this.restorePosition(row);Object.assign(row,station);row._name=normalize(row.name);delete row._search;row._search=stationSearchText(row);this.sourceStations.set(row.id,row);this.sourcePosition(row);
+    const row=this.sourceStations.get(station.id)||{};this.restorePosition(row);Object.assign(row,station);if(typeof station._name!=='string')row._name=normalize(row.name);delete row._search;this.sourceStations.set(row.id,row);this.sourcePosition(row);
     const canonical=this.canonicalStations.get(this.memberStations.get(row.id));if(canonical){this.restorePosition(canonical);this.canonicalPosition(canonical);}return row;
   }
-  addCanonical(station){const row=this.canonicalStations.get(station.id)||{};this.restorePosition(row);const previous=stationMemberIds(row);Object.assign(row,station);row._name=normalize(row.name);delete row._search;row._search=stationSearchText(row);this.canonicalStations.set(row.id,row);for(const id of previous)if(this.memberStations.get(id)===row.id)this.memberStations.delete(id);for(const id of stationMemberIds(row))this.memberStations.set(id,row.id);this.canonicalPosition(row);return row;}
+  addCanonical(station){const row=this.canonicalStations.get(station.id)||{};this.restorePosition(row);const previous=stationMemberIds(row);Object.assign(row,station);if(typeof station._name!=='string')row._name=normalize(row.name);delete row._search;this.canonicalStations.set(row.id,row);for(const id of previous)if(this.memberStations.get(id)===row.id)this.memberStations.delete(id);for(const id of stationMemberIds(row))this.memberStations.set(id,row.id);this.canonicalPosition(row);return row;}
   resolve(id){const row=this.sourceStations.get(id);return this.canonicalStations.get(id)||this.canonicalStations.get(row?.canonicalId)||this.canonicalStations.get(this.memberStations.get(id))||row;}
   values(){return[...this.canonicalStations.values(),...[...this.sourceStations.values()].filter(row=>!this.canonicalStations.has(row.canonicalId)&&!this.canonicalStations.has(row.id))];}
 }

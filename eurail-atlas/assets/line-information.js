@@ -1,5 +1,5 @@
-import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement}from'./atlas-core.js?v=f30fab96cb5a7c58';
-import{replacementRailCorridor}from'./replacement-service.js?v=f30fab96cb5a7c58';
+import{approximateAlignment,inferredRailPath,inferredAlignment,sumDays,isTemporaryReplacement,straightJump}from'./atlas-core.js?v=b7451278123857d9';
+import{replacementRailCorridor}from'./replacement-service.js?v=b7451278123857d9';
 
 export function connectionFrequencyInformation(edge,{day='all',dates=[],detail=null}={}){
   if(edge.throughConnection)return{
@@ -37,6 +37,10 @@ export function lineInformation(edge,{uncertain=false}={}){
   else if(edge.geometryStatus==='train_ferry')notes.push({
     title:'Train carried by ferry',
     text:'The train is carried by ferry here. The line shows an approximate crossing, rather than railway tracks over the water. Its color shows the recorded scheduled train frequency.'
+  });
+  else if(straightJump(edge)&&!/schematic|unresolved/.test(edge.geometryStatus||''))notes.push({
+    title:'Why this line is dashed',
+    text:`These services are in the timetable, but part of this line is a straight link of about ${Math.round(edge.straightJumpKm)} km where no railway alignment was available. The dashed line may cut across land or water there. Its color still shows scheduled frequency; the line does not trace the tracks used.`
   });
   else if(approximateAlignment(edge))notes.push({
     title:'Why this line is dashed',
