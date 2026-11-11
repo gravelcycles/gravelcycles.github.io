@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=1b22fdb3ed27b6b9';
-import{edgeInScope}from'./project-scope.js?v=1b22fdb3ed27b6b9';
-import{continuationMetrics}from'./through-continuations.js?v=1b22fdb3ed27b6b9';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=c2d325ced363137f';
+import{edgeInScope}from'./project-scope.js?v=c2d325ced363137f';
+import{continuationMetrics}from'./through-continuations.js?v=c2d325ced363137f';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
