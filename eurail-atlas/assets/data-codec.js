@@ -5,9 +5,10 @@ export function resolveAssetURL(path,manifest,manifestURL){const physical=resolv
 export async function decodeJSONBytes(input,reportTextBytes){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
   if(bytes.length>=2&&bytes[0]===0x1f&&bytes[1]===0x8b){
-    if(typeof DecompressionStream!=='function')throw new Error('This browser cannot decompress the atlas data. Use a current browser.');
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    const text=await new Response(stream).text();reportTextBytes?.(text.length*2);return JSON.parse(text);
+    let text;
+    if(typeof DecompressionStream==='function'){const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));text=await new Response(stream).text();}
+    else{const{gunzip}=await import('./gunzip.js?v=1b22fdb3ed27b6b9');text=new TextDecoder().decode(gunzip(bytes));}
+    reportTextBytes?.(text.length*2);return JSON.parse(text);
   }
   const text=new TextDecoder().decode(bytes);reportTextBytes?.(text.length*2);return JSON.parse(text);
 }

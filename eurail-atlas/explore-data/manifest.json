@@ -1,0 +1,94 @@
+{
+ "schemaVersion": 1,
+ "kind": "rail_explore_delivery",
+ "sourceManifestSha256": "1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c",
+ "sourceReleaseId": "source-composition-52560f6a0829394647",
+ "dates": [
+  "2026-11-01",
+  "2026-11-02",
+  "2026-11-03",
+  "2026-11-04",
+  "2026-11-05",
+  "2026-11-06",
+  "2026-11-07"
+ ],
+ "clock": "Minutes after 00:00 CET (UTC+1) on each date",
+ "files": {
+  "stations": "stations.json.gz",
+  "journeys": "journeys.json.gz",
+  "summary": "summary.json.gz",
+  "timetable": "timetable.bin.gz"
+ },
+ "counts": {
+  "stations": 30379,
+  "journeys": 61602,
+  "profiles": 124765,
+  "days": {
+   "2026-11-01": {
+    "trips": 119625
+   },
+   "2026-11-02": {
+    "trips": 170131
+   },
+   "2026-11-03": {
+    "trips": 171255
+   },
+   "2026-11-04": {
+    "trips": 171339
+   },
+   "2026-11-05": {
+    "trips": 171114
+   },
+   "2026-11-06": {
+    "trips": 172235
+   },
+   "2026-11-07": {
+    "trips": 143026
+   }
+  }
+ },
+ "skipped": {
+  "journeys_with_unlocated_stations": 104,
+  "runs_without_complete_clocks": 7
+ },
+ "assets": {
+  "stations.json.gz": {
+   "sha256": "b8e7ca0982c7fb6ec82e05ea60943e477bffe6960b156404a092b7eedcac8f2b",
+   "bytes": 482572,
+   "contentBytes": 1271436,
+   "encoding": "gzip"
+  },
+  "journeys.json.gz": {
+   "sha256": "5419ca6b4c60b4827800d553907b78a0ab1dc8fac1b3f8b0544ab14eed06d46e",
+   "bytes": 360524,
+   "contentBytes": 2768727,
+   "encoding": "gzip"
+  },
+  "timetable.bin.gz": {
+   "sha256": "eff9864a1d20724889b8117a7c9a13dbb0d65e4caa4331b64c20f2760c6e9c4d",
+   "bytes": 4519704,
+   "contentBytes": 19624610,
+   "encoding": "gzip"
+  },
+  "summary.json.gz": {
+   "sha256": "5445ef822c176b6463d493ab867b7998d72038e1f8034471860ba7935272d626",
+   "bytes": 715,
+   "contentBytes": 1373,
+   "encoding": "gzip"
+  }
+ },
+ "methodology": {
+  "scope": "Primary scheduled rail patterns with published clock times. Replacement buses and coaches are excluded. Sources without public clock times are absent.",
+  "categories": "Display classes from timetable facts: night = sleeper services; high speed = 100 km or longer and averaging 120 km/h or with a hop of 50 km or more at 200 km/h or more; long distance = 150 km or longer; otherwise regional.",
+  "passClasses": "free = included with no mandatory reservation; reservation = mandatory reservation; excluded = not included; uncertain = unknown or conditional.",
+  "distances": "Straight-line distances between consecutive calls; speeds are lower bounds on curving lines.",
+  "firstDate": "Trips that began on the evening before the first date are not included on the first date."
+ },
+ "attribution": {
+  "countryContext": "Explicit display-only geometry; original provider attribution applies.",
+  "countryEvidence": "Eurostat/GISCO 2024; © EuroGeographics for administrative boundaries; analytical station-country evidence. Display basemap remains Natural Earth.",
+  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and attributed OSM feature distribution",
+  "stationNames": "Trainline EU Stations contributors; underlying OpenStreetMap and attributed open station references; SBB Infrastruktur / BAV / swisstopo service-point register",
+  "timetables": "Individual source licences and original publisher attribution apply; see sources."
+ }
+}

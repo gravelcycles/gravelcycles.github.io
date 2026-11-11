@@ -1,9 +1,9 @@
-import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote}from'./bus-core.js?v=36bcedbe061d63be';
-import{resolveBusDelivery}from'./bus-delivery.js?v=36bcedbe061d63be';
-import{BusCanvas}from'./bus-canvas.js?v=36bcedbe061d63be';
-import{BusDataClient}from'./bus-data-client.js?v=36bcedbe061d63be';
-import{BUS_OVERVIEW}from'./bus-overview.js?v=36bcedbe061d63be';
-import{setupBusGeography}from'./bus-geography.js?v=36bcedbe061d63be';
+import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote}from'./bus-core.js?v=1b22fdb3ed27b6b9';
+import{resolveBusDelivery}from'./bus-delivery.js?v=1b22fdb3ed27b6b9';
+import{BusCanvas}from'./bus-canvas.js?v=1b22fdb3ed27b6b9';
+import{BusDataClient}from'./bus-data-client.js?v=1b22fdb3ed27b6b9';
+import{BUS_OVERVIEW}from'./bus-overview.js?v=1b22fdb3ed27b6b9';
+import{setupBusGeography}from'./bus-geography.js?v=1b22fdb3ed27b6b9';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id),safeURL=value=>{try{const u=new URL(value);return['https:','http:'].includes(u.protocol)?u.href:null;}catch{return null;}};
 const licenceText=source=>{const v=source.licence||source.license;return typeof v==='string'?v:v?.name||'';};

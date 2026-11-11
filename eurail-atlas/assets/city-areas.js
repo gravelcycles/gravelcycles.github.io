@@ -1,5 +1,5 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=36bcedbe061d63be';
-import{countryMatches}from'./explorer-core.js?v=36bcedbe061d63be';
+import{normalize,validMapLocation}from'./atlas-core.js?v=1b22fdb3ed27b6b9';
+import{countryMatches}from'./explorer-core.js?v=1b22fdb3ed27b6b9';
 
 const searchIndex=new WeakMap();
 const countryAliases={'The Netherlands':'Netherlands','Bosnia and Herzegovina':'Bosnia-Herzegovina'};
