@@ -1,4 +1,4 @@
-import{BUS_LIMITS,busMatches,intersects,validBusDocument}from'./bus-core.js?v=b6077a89205ad576';
+import{BUS_LIMITS,busMatches,intersects,validBusDocument}from'./bus-core.js?v=83cd3d7da92ba977';
 
 export const BUS_LOCAL_ROUTING_LIMITS=Object.freeze({cells:6,wireBytes:3*1024*1024,decodedBytes:12*1024*1024});
 const ENCODING='i32le-rows-packet-profile-identity-west-south-east-north',SCALE=100000;
