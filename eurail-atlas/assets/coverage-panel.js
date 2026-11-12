@@ -24,6 +24,26 @@ export function historicalTimetableWarnings(manifest,state,bounds){
   }).map(source=>({id:source.id,country:source.country,label:(source.country==='Great Britain'?'Britain':source.country||source.name)+' · '+observationDate(source.timetableObservation.observedAt||source.timetableObservation.observed_at)+' baseline',detail:observationDetails(source,manifest)}));
 }
 
+/* Carried holds: a published source the weekly plan could not renew keeps its
+   original dated evidence from an earlier week. None of its trains are counted
+   or drawn for this week; the drawer names it with its last verified week. */
+export function carriedSources(manifest,country){
+  const dates=new Set(manifest?.dates||[]);
+  return(manifest?.carriedSources||[]).filter(source=>{
+    const carry=source?.weeklyCarry;
+    return carry?.state==='carried'&&Array.isArray(carry.lastVerifiedDates)&&carry.lastVerifiedDates.length>0&&!carry.lastVerifiedDates.some(date=>dates.has(date))&&(!country||source.country===country);
+  }).map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',label:String(source.weeklyCarry.label||'Last verified in an earlier week'),reason:String(source.weeklyCarry.reason||'')}));
+}
+function carriedSection(parent,manifest,country){
+  const rows=carriedSources(manifest,country);if(!rows.length)return;
+  const area=node('section','coverage-section coverage-carried');area.appendChild(node('h3','','Carried from an earlier week'));
+  area.appendChild(node('p','',(rows.length===1?'This source':'These sources')+' could not be renewed for this week. Their trains are not drawn or counted here, because their evidence covers another week; nothing is relabelled to these dates.'));
+  parent.appendChild(area);
+  const list=node('ul','coverage-carried-list');
+  for(const row of rows){const item=node('li','');item.append(node('strong','',row.name),node('span','',' · '+row.label+(country?'':' · '+row.country)));if(row.reason)item.appendChild(node('p','coverage-small',row.reason));list.appendChild(item);}
+  area.appendChild(list);
+}
+
 export function countryCoverageSummary(row,audience='public'){
   if(!row)return{label:'Coverage not certified',detail:'A country inventory is unavailable for this snapshot. Missing lines do not establish that no trains run.',tone:'unknown'};
   const statuses={
@@ -97,6 +117,7 @@ export function setupCoverage(options){
       const area=section(body,visibility.allHidden?'Hidden by source filters':'Some sources are hidden',visibility.allHidden?'All published timetable sources serving '+row.country+' are switched off in this view.':number(visibility.hidden.length)+' published timetable source(s) serving '+row.country+' are switched off in this view.');
       if(typeof hooks.onShowSources==='function'){const show=node('button','coverage-country-card','Show '+row.country+' sources');show.type='button';show.onclick=()=>{hooks.onShowSources(visibility.hidden);renderCountry(row);};area.appendChild(show);}
     }
+    carriedSection(body,hooks.getManifest?.(),row.country);
     for(const source of hooks.getManifest?.()?.sources||[])if(source.timetableObservation?.kind==='historical_base_snapshot'&&(source.country===row.country||row.publicDomesticSources?.includes(source.id)))section(body,'Historical base timetable',observationDetails(source,hooks.getManifest?.()));
     if(summary.policyGap)section(body,'Eurail policy gap','Pass inclusion needs review. Zero included map connections does not establish that Eurail excludes this country or its trains.');
     if(row.heldHomeSourceCount>0){const area=section(body,privateEdition?'Acquired but not in this personal snapshot':'Acquired but withheld from this public edition',privateEdition?'These timetable feeds were acquired but are not included in this personal snapshot. Their absence does not establish that their trains are unavailable.':'These timetable feeds are acquired, but their inclusion is restricted by the current publication policy. This is a dataset publication gap, not a statement that their trains are unavailable.');const list=node('ul');for(const name of row.omittedFeedNames||[])list.appendChild(node('li','',String(name)));area.appendChild(list);}
@@ -120,6 +141,7 @@ export function setupCoverage(options){
     const selected=rows.find(row=>row.country===select.value);if(selected){renderCountry(selected);return;}
     body.replaceChildren();
     if(!rows.length){paragraph(body,privateEdition?'Missing snapshot data does not mean there is no train service. Check an operator timetable before planning a journey.':'Missing public data does not mean there is no train service. Check an operator timetable before planning a journey.');return;}
+    carriedSection(body,manifest,'');
     const grid=node('div','coverage-country-list');
     for(const row of rows){const summary=countryCoverageSummary(row,audience()),item=node('button','coverage-country-card');item.type='button';item.append(node('strong','',row.country),node('span','',summary.label+(summary.policyGap?' · Eurail review':'')));item.onclick=()=>{select.value=row.country;renderCountry(row);};grid.appendChild(item);}body.appendChild(grid);
   }

@@ -1,24 +1,24 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=eb01a6b303604e81';
-import{serviceSleepHTML}from'./sleep-service.js?v=eb01a6b303604e81';
-import{replacementHTML}from'./replacement-service.js?v=eb01a6b303604e81';
-import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=eb01a6b303604e81';
-import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=eb01a6b303604e81';
-import{supplementalRouteGroups,publishedJourneys}from'./supplemental-availability.js?v=eb01a6b303604e81';
-import{runSelectionId}from'./native-public-numbers.js?v=eb01a6b303604e81';
-import{hasClockCoverageGaps}from'./clock-coverage.js?v=eb01a6b303604e81';
-import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=eb01a6b303604e81';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=2c9bcc6123743fe4';
+import{serviceSleepHTML}from'./sleep-service.js?v=2c9bcc6123743fe4';
+import{replacementHTML}from'./replacement-service.js?v=2c9bcc6123743fe4';
+import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=2c9bcc6123743fe4';
+import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=2c9bcc6123743fe4';
+import{supplementalRouteGroups,publishedJourneys}from'./supplemental-availability.js?v=2c9bcc6123743fe4';
+import{runSelectionId}from'./native-public-numbers.js?v=2c9bcc6123743fe4';
+import{hasClockCoverageGaps}from'./clock-coverage.js?v=2c9bcc6123743fe4';
+import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=2c9bcc6123743fe4';
 
 const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
 
 export function setupTrainInspector({getState,getDates,getJourneys,station,sourceName,loadTimetables,onFocus,onBack,onRetry,onStation,getSupplementalKey=()=>null,loadSupplementalAvailability,getNumberMetadataStatus=()=>({}),onRetryNumberMetadata}){
-  let edgeId='',routeKey='',trainLabel='',runId='',generation=0,loading=false,failure=false,timetable=null,groups=[],listScroll=0,cityRouteLimit=80;
+  let edgeId='',routeKey='',trainLabel='',runId='',generation=0,loading=false,failure=false,timetable=null,groups=[],listScroll=0,cityRouteLimit=80,stretchKeys=null;
   let supplemental=null,supplementalKey=null,supplementalController=null,supplementalLoading=false,supplementalError=false,supplementalGeneration=0;
   const name=id=>station(id).name||'Recorded station';
   const numberMetadataNote=()=>getNumberMetadataStatus().failed?'<p class="helper" role="status">Additional public train numbers could not load. Source routes and times remain available. <button class="text-button" id="retryNativeNumbers">Retry numbers →</button></p>':'';
   const bindNumberRetry=root=>root.querySelector('#retryNativeNumbers')?.addEventListener('click',()=>{Promise.resolve(onRetryNumberMetadata?.()).then(()=>render());});
   const scrollPanel=()=>{const body=document.getElementById('inspectorScroll');return body?.clientHeight>0?body:document.getElementById('inspector');};
   const endpoints=group=>`${esc(group.sourceStopNames?.[0]||name(callId(group.stops[0])))} → ${esc(group.sourceStopNames?.at(-1)||name(callId(group.stops.at(-1))))}`;
-  function reset(){edgeId='';routeKey='';trainLabel='';runId='';generation++;loading=false;failure=false;timetable=null;groups=[];cityRouteLimit=80;supplementalGeneration++;supplementalController?.abort();supplementalController=null;supplementalLoading=false;supplementalError=false;}
+  function reset(){stretchKeys=null;edgeId='';routeKey='';trainLabel='';runId='';generation++;loading=false;failure=false;timetable=null;groups=[];cityRouteLimit=80;supplementalGeneration++;supplementalController?.abort();supplementalController=null;supplementalLoading=false;supplementalError=false;}
   function ensureSupplemental(journeys){
     const key=getSupplementalKey();if(key!==supplementalKey){supplementalGeneration++;supplementalController?.abort();supplementalController=null;supplemental=null;supplementalKey=key;supplementalLoading=false;supplementalError=false;}
     if(!key||!loadSupplementalAvailability||!journeys||supplemental||supplementalLoading||supplementalError)return;
@@ -27,10 +27,10 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     const ticket=++supplementalGeneration,controller=new AbortController();supplementalController=controller;supplementalLoading=true;
     Promise.resolve().then(()=>loadSupplementalAvailability({signal:controller.signal})).then(value=>{if(ticket!==supplementalGeneration)return;supplemental=value;supplementalLoading=false;render();},error=>{if(ticket!==supplementalGeneration||error.name==='AbortError')return;supplementalLoading=false;supplementalError=true;render();});
   }
-  function back(){if(!routeKey)return false;routeKey='';trainLabel='';runId='';generation++;onBack();render();const panel=scrollPanel();if(panel)panel.scrollTop=listScroll;return true;}
+  function back(){if(!routeKey&&stretchKeys){stretchKeys=null;render();return true;}if(!routeKey)return false;routeKey='';trainLabel='';runId='';generation++;onBack();render();const panel=scrollPanel();if(panel)panel.scrollTop=listScroll;return true;}
   function currentGroup(){return groups.find(group=>group.key===routeKey);}
   async function choose(group){
-    if(!routeKey)listScroll=scrollPanel()?.scrollTop||0;routeKey=group.key;trainLabel='';runId='';timetable=null;loading=true;failure=false;const ticket=++generation;
+    stretchKeys=null;if(!routeKey)listScroll=scrollPanel()?.scrollTop||0;routeKey=group.key;trainLabel='';runId='';timetable=null;loading=true;failure=false;const ticket=++generation;
     onFocus(group);render();const panel=scrollPanel();if(panel)panel.scrollTop=0;document.getElementById('trainRouteBack')?.focus({preventScroll:true});
     try{const result=await loadTimetables(group);if(ticket!==generation)return;timetable=result;}
     catch{if(ticket!==generation)return;failure=true;}
@@ -57,6 +57,16 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
       const cards=(items,offset=0,extra=false)=>`<div class="route-service-list">${items.map((g,i)=>`<article class="route-service-card"><button class="route-service" data-route-index="${offset+i}"><strong>${esc(g.operator)}</strong>${g.lineDesignations?.length?`<small class="source-service-designation">Line: ${g.lineDesignations.map(esc).join(' · ')}</small>`:''}${extra?'<small>Additional native source · separate from frequency totals</small>':''}${g.availabilityOnly?'<small>Dated through service · partial coverage</small>':''}${g.logicalOverlapAlternative?'<small>Shares the same train on this selected stretch; counted once in totals.</small>':''}${g.serviceMode==='temporary_replacement_bus'?'<small class="replacement-label">Temporary rail-replacement bus</small>':''}<span>${endpoints(g)}</span><small>${g.stops.length} ${g.availabilityOnly?'recorded stops':'stops'} · ${fmt((g.routeCount??g.count)/days)} / day</small><small>${g.serviceMode==='temporary_replacement_bus'?'Replacement services':'Trains'}: ${g.labels.length?esc(g.labels.slice(0,8).map(n=>n.label).join(', '))+(g.labels.length>8?` +${g.labels.length-8} more`:''):'public number unavailable'}</small><span class="route-service-action">Times & full route →</span></button>${sleepMarkup(g)}</article>`).join('')}</div>`;
       const normal=edge._supplementalOnly?'':`<h4 class="detail-heading">${edge._cityArea?'SERVICES THROUGH THIS CITY AREA':atStation?'SERVICES AT THIS STATION':'SERVICES ON THIS CONNECTION'}</h4>${journeys?`<p class="helper">${fmt(normalGroups.length)} route${normalGroups.length===1?'':'s'} · ${fmt(normalGroups.reduce((sum,g)=>sum+g.count,0)/days)} scheduled services / day. Select a route for its train numbers, dates and full stopping pattern.</p>${cards(normalShown)}${normalGroups.length?'':'<p class="helper">No recorded services match the selected dates and filters.</p>'}`:error?'<p class="helper">The complete train list could not load.</p><button class="text-button" id="retrySegmentTrains">Retry train list →</button>':'<p class="helper" role="status">Loading every matching service and its full route…</p>'}`;
       const additional=extraShown.length?`<h4 class="detail-heading">ADDITIONAL COMPLETE ROUTES</h4><p class="helper">Published full routes from your selected sources, shown separately from the frequency totals. Each retains its original train, date and pass information.</p>${cards(extraShown,normalGroups.length,true)}`:supplementalLoading?'<p class="helper" role="status">Checking additional complete native routes…</p>':supplementalError?'<p class="helper">Additional native routes could not load.</p><button class="text-button" id="retrySupplementalRoutes">Retry additional routes →</button>':'';
+      // A map click on a stretch several of this station's routes share lists only those routes.
+      const stretch=stretchKeys?groups.map((g,i)=>[g,i]).filter(([g])=>stretchKeys.has(g.key)):null;
+      if(stretch?.length){
+        root.innerHTML=numberMetadataNote()+`<button class="train-route-back text-button" id="stretchRoutesBack">← ${edge._cityArea?'All city routes':'All services at this station'}</button><h4 class="detail-heading">ROUTES ON THIS STRETCH</h4><p class="helper" role="status">${fmt(stretch.length)} of this ${edge._cityArea?'city area’s':'station’s'} ${fmt(groups.length)} routes use the stretch you clicked. Select one for its train numbers, dates and full stopping pattern.</p><div class="route-service-list stretch-route-list">${stretch.map(([g,i])=>cards([g],i,extraGroups.includes(g)).replace(/^<div class="route-service-list">|<\/div>$/g,'')).join('')}</div>`;
+        bindNumberRetry(root);
+        root.querySelector('#stretchRoutesBack').onclick=()=>{stretchKeys=null;render();document.querySelector('#segmentTrains [data-route-index]')?.focus({preventScroll:true});};
+        root.querySelectorAll('[data-route-index]').forEach(button=>button.onclick=()=>choose(groups[Number(button.dataset.routeIndex)]));
+        return;
+      }
+      stretchKeys=null;
       root.innerHTML=numberMetadataNote()+normal+additional+more;bindNumberRetry(root);
       root.querySelector('#loadMoreCityRoutes')?.addEventListener('click',()=>{cityRouteLimit+=80;render();root.querySelector('#loadMoreCityRoutes')?.focus({preventScroll:true});});
       root.querySelectorAll('[data-route-index]').forEach(button=>button.onclick=()=>choose(groups[Number(button.dataset.routeIndex)]));
@@ -77,5 +87,14 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     root.querySelectorAll('[data-open-station]').forEach(button=>button.onclick=()=>onStation?.(button.dataset.openStation));
     root.querySelector('#retryTrainTimes')?.addEventListener('click',()=>choose(group));
   }
-  return{render,reset,back,get focused(){return!!routeKey;}};
+  // Map picks: open one route, or list the routes sharing the clicked stretch.
+  function pickRoutes(keys){
+    const matches=groups.filter(group=>keys.includes(group.key));if(!matches.length)return false;
+    if(matches.length===1){if(matches[0].key!==routeKey)choose(matches[0]);return true;}
+    if(routeKey){routeKey='';trainLabel='';runId='';generation++;onBack();}
+    stretchKeys=new Set(matches.map(group=>group.key));render();document.getElementById('stretchRoutesBack')?.scrollIntoView({block:'start'});
+    document.querySelector('#segmentTrains .stretch-route-list [data-route-index]')?.focus({preventScroll:true});
+    return true;
+  }
+  return{render,reset,back,pickRoutes,get groups(){return groups;},get focused(){return!!routeKey;}};
 }

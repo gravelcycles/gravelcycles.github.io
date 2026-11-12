@@ -1,4 +1,4 @@
-import{worldPoint,validMapLocation,STRAIGHT_JUMP_KM}from'./atlas-core.js?v=eb01a6b303604e81';
+import{worldPoint,validMapLocation,STRAIGHT_JUMP_KM}from'./atlas-core.js?v=2c9bcc6123743fe4';
 
 export const DISPLAY_FORMAT='rail-atlas-display-v1';
 const metrics=['daily','eurailDaily','reviewedEurailDaily','conditionalDaily','reviewedConditionalDaily'];

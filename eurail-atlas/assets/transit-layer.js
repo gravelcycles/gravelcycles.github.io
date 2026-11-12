@@ -36,6 +36,59 @@ export function visibleRoutes(packets,{modes,day,dates,bounds},limit=TRANSIT_LIM
   return{routes:[...seen.values()],limited};
 }
 
+// Wide-zoom overview (below the manifest's minimumZoom): one small packet,
+// transit-data/overview.json.gz, built with this layer's week and hash-named in
+// its manifest. Markers per city network; generalized lines from OVERVIEW_LINE_ZOOM.
+export const OVERVIEW_LINE_ZOOM=6;
+export function decodePath(flat,quantum=1e-4){const out=[];let x=0,y=0;for(let i=0;i+1<flat.length;i+=2){x+=flat[i];y+=flat[i+1];out.push([+(y*quantum).toFixed(5),+(x*quantum).toFixed(5)]);}return out;}
+const dayCount=(dates,day,all)=>day==='all'?(dates||[]).reduce((n,v)=>n+(Number(v)||0),0):Number((dates||[])[all.indexOf(day)])||0;
+export function overviewSelection(overview,{modes,day,dates,bounds,zoom}){
+  const cities=[],lines=[],keep=new Set();
+  (overview?.cities||[]).forEach((c,i)=>{
+    const shown=Object.entries(c.modes||{}).filter(([m,v])=>modes.has(m)&&dayCount(v.dates,day,dates)>0);
+    if(!shown.length||!intersects(c.bbox,bounds))return;
+    keep.add(i);cities.push({...c,index:i,shownModes:shown.map(([m])=>m),patterns:shown.reduce((n,[,v])=>n+(v.patterns||0),0),lineCount:shown.reduce((n,[,v])=>n+(v.lines||0),0)});
+  });
+  if(zoom>=OVERVIEW_LINE_ZOOM)for(const l of overview?.lines||[])if(keep.has(l.city)&&modes.has(l.mode)&&dayCount(l.dates,day,dates)>0)lines.push(l);
+  return{cities,lines};
+}
+// A build from before the overview product (or while its overview cannot load):
+// approximate areas from the catalogue, no lines. A region's bbox is its routes'
+// unclipped box, so a route crossing many z5 tiles (or one bad coordinate) would
+// stack markers far from the city: each box is clipped to its own tile, and the
+// regions of one source that touch are folded into one area marker placed on the
+// region with the most patterns.
+const clip=(b,t)=>t?[Math.max(b[0],t[0]),Math.max(b[1],t[1]),Math.min(b[2],t[2]),Math.min(b[3],t[3])]:b;
+const touches=(a,b)=>a[0]<=b[2]+1e-9&&b[0]<=a[2]+1e-9&&a[1]<=b[3]+1e-9&&b[1]<=a[3]+1e-9;
+export function catalogueOverview(catalogue,dates){
+  const ones=(dates||[]).map(()=>1),bySource=new Map();
+  for(const r of catalogue?.regions||[]){
+    let box=clip(r.bbox,r.tileBounds);
+    if(!(box[0]<=box[2]&&box[1]<=box[3]))box=r.tileBounds||r.bbox;
+    if(!bySource.has(r.sourceId))bySource.set(r.sourceId,[]);
+    bySource.get(r.sourceId).push({r,box,tile:r.tileBounds||box});
+  }
+  const cities=[];
+  for(const[sourceId,items]of[...bySource].sort((a,b)=>String(a[0]).localeCompare(String(b[0])))){
+    const seen=new Set();
+    for(let i=0;i<items.length;i++){
+      if(seen.has(i))continue;
+      const group=[],stack=[i];seen.add(i);
+      while(stack.length){const k=stack.pop();group.push(items[k]);for(let j=0;j<items.length;j++)if(!seen.has(j)&&touches(items[k].tile,items[j].tile)){seen.add(j);stack.push(j);}}
+      const main=group.reduce((a,b)=>(b.r.patterns||0)>(a.r.patterns||0)?b:a),modes=new Set(group.flatMap(g=>g.r.modes||[]));
+      // Routes repeat in every tile they cross: the largest region's count, never a sum.
+      cities.push({id:main.r.key,sourceId,label:'',approximate:true,regions:group.length,bbox:main.box,centre:[(main.box[0]+main.box[2])/2,(main.box[1]+main.box[3])/2],
+        modes:Object.fromEntries([...modes].map(m=>[m,{patterns:main.r.patterns,lines:0,dates:ones}]))});
+    }
+  }
+  return{cities,lines:[],fallback:true};
+}
+const MARKER_MODE=['metro','tram','rack_railway','funicular','aerial_lift','monorail','cable_tram','ferry'];
+export function markerMode(modes){return MARKER_MODE.find(m=>modes.includes(m))||modes[0];}
+export function markerRadius(patterns,zoom){return Math.min(11,3+Math.log2(1+(patterns||0))*0.8)*(zoom>=OVERVIEW_LINE_ZOOM?0.75:1);}
+// Clicking a city opens its network at a zoom where the real lines draw.
+export function cityZoom(boundsZoom,minimumZoom){return Math.max(minimumZoom,Math.min(14,boundsZoom));}
+
 async function sha256Hex(bytes){const d=await crypto.subtle.digest('SHA-256',bytes);return[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');}
 
 export class TransitRequests{
@@ -74,7 +127,12 @@ export class TransitLayer{
   async enable(){
     if(this.enabled)return;
     this.enabled=true;this.requests=new TransitRequests(this.base,this.fetcher);
-    this.renderer=this.L.canvas({padding:0.2});this.group=this.L.layerGroup().addTo(this.map);
+    this.renderer=this.L.canvas({padding:0.2});
+    // City markers are SVG: the rail station hit-test gives painted station dots
+    // precedence over an SVG path but takes every tap inside its tolerance halo
+    // from a canvas, which would make markers at main stations untappable.
+    if(this.map.getPane&&!this.map.getPane('transitCities'))this.map.createPane('transitCities').style.zIndex=450;
+    this.cityRenderer=this.L.svg?this.L.svg({pane:'transitCities',padding:0.2}):this.renderer;this.group=this.L.layerGroup().addTo(this.map);
     const first=await this.requests.json('manifest.json');
     // A recorded hold (its week has passed, or its sources changed) draws nothing and says why.
     if(first.kind==='transit_atlas_hold'){this.hold=first;this.status(first.message);return;}
@@ -83,6 +141,7 @@ export class TransitLayer{
     if(!this.modesChosen)this.modes=new Set(this.manifest.modes||['tram','metro']);
     this.dates=this.manifest.dates;this.day=this.dates.includes(this.day)?this.day:defaultDay(this.dates);
     this.catalogue=await this.requests.json(this.manifest.tiles.catalogue,'transit_atlas_tile_catalogue');
+    this.overview=null;
     this.refresh=()=>this.draw();this.map.on('moveend zoomend',this.refresh);
     await this.draw();
   }
@@ -90,14 +149,14 @@ export class TransitLayer{
     if(!this.enabled)return;
     this.enabled=false;this.generation++;this.requests?.abort();
     if(this.refresh)this.map.off('moveend zoomend',this.refresh);
-    this.group?.remove();this.group=null;this.manifest=null;this.hold=null;this.catalogue=null;
+    this.group?.remove();this.group=null;this.manifest=null;this.hold=null;this.catalogue=null;this.overview=null;
   }
   setModes(modes){this.modes=new Set(modes);this.modesChosen=true;return this.enabled?this.draw():null;}
   setDay(day){this.day=day;return this.enabled?this.draw():null;}
   bounds(){const b=this.map.getBounds();return[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];}
   async draw(){
     const generation=++this.generation,box=this.bounds();
-    if(this.map.getZoom()<this.manifest.minimumZoom){this.group.clearLayers();this.status(`Zoom in to see city transit (from zoom ${this.manifest.minimumZoom}).`);return{routes:0};}
+    if(this.map.getZoom()<this.manifest.minimumZoom)return this.drawOverview(generation,box);
     const regions=selectEntries(this.catalogue.regions,box,TRANSIT_LIMITS.regions).entries;
     const indexes=await Promise.all(regions.map(r=>this.requests.json(r.index,'transit_atlas_tile_region')));
     const picked=selectEntries(indexes.flatMap(i=>i.entries.filter(e=>e.modes.some(m=>this.modes.has(m)))),box,TRANSIT_LIMITS.tiles,{bytes:TRANSIT_LIMITS.tileBytes,decoded:TRANSIT_LIMITS.decodedBytes});
@@ -123,6 +182,45 @@ export class TransitLayer{
     this.status((limited||picked.limited?'Partial view: zoom in or filter. ':'')+(routes.length?Object.entries(byMode).map(([m,n])=>`${n} ${TRANSIT_MODE_STYLE[m]?.label||m} route patterns`).join(' · '):'No selected city transit in this view on this date.'));
     return{routes:routes.length,byMode,limited:limited||picked.limited};
   }
+  async loadOverview(){
+    // Fetched once per activation, only when a wide view first needs it; hash-checked against the manifest.
+    // A failed fetch or hash check is not kept: the next draw retries, and this one shows catalogue areas.
+    if(!this.overview)this.overview=this.manifest.overview?this.requests.json(this.manifest.overview,'transit_atlas_overview'):Promise.resolve(catalogueOverview(this.catalogue,this.dates));
+    const pending=this.overview;
+    try{const value=await pending;this.overviewFailed=false;return value;}
+    catch(error){if(this.overview===pending)this.overview=null;this.overviewFailed=true;return catalogueOverview(this.catalogue,this.dates);}
+  }
+  async drawOverview(generation,box){
+    const overview=await this.loadOverview(),zoom=this.map.getZoom();
+    if(generation!==this.generation||!this.enabled)return{stale:true};
+    const{cities,lines}=overviewSelection(overview,{modes:this.modes,day:this.day,dates:this.dates,bounds:box,zoom});
+    this.group.clearLayers();this.lastRoutes=[];
+    const q=overview.quantum||1e-4,order=['ferry','aerial_lift','funicular','rack_railway','tram','cable_tram','monorail','metro'];
+    // One canvas path per city and mode (not per line): about a fifth of the layers at zoom 6.
+    const merged=new Map();
+    for(const l of lines){const key=l.city+'|'+l.mode;if(!merged.has(key))merged.set(key,{city:l.city,mode:l.mode,paths:[]});merged.get(key).paths.push(...l.paths);}
+    const groups=[...merged.values()].sort((a,b)=>order.indexOf(a.mode)-order.indexOf(b.mode));
+    for(const g of groups){
+      const s=TRANSIT_MODE_STYLE[g.mode]||TRANSIT_MODE_STYLE.tram,city=overview.cities[g.city];
+      const line=this.L.polyline(g.paths.map(p=>decodePath(p,q)),{renderer:this.renderer,color:s.color,weight:Math.max(1.5,s.weight*(zoom>=8?0.7:0.5)),dashArray:s.dash,opacity:0.85,interactive:true});
+      line.on('click',()=>this.openCity(city));line.addTo(this.group);
+    }
+    for(const c of cities){
+      const mode=markerMode(c.shownModes),s=TRANSIT_MODE_STYLE[mode]||TRANSIT_MODE_STYLE.tram;
+      const marker=this.L.circleMarker([c.centre[1],c.centre[0]],{renderer:this.cityRenderer,pane:'transitCities',radius:markerRadius(c.patterns,zoom),color:'#ffffff',weight:1.5,fillColor:s.color,fillOpacity:0.9,interactive:true});
+      marker.on('click',()=>this.openCity(c));marker.addTo(this.group);
+    }
+    const byMode={};for(const c of cities)for(const m of c.shownModes)byMode[m]=(byMode[m]||0)+1;
+    const fallback=!!overview.fallback,unit=n=>fallback?(n===1?'approximate area':'approximate areas'):(n===1?'city':'cities');
+    const note=this.overviewFailed?'The transit overview could not be loaded; showing approximate areas and retrying on the next move. ':'';
+    this.status(note+(cities.length?`Overview: ${Object.entries(byMode).map(([m,n])=>`${n} ${unit(n)} with ${(TRANSIT_MODE_STYLE[m]?.label||m).toLowerCase()} lines`).join(' · ')}. Tap ${fallback?'an area':'a city'}, or zoom in to ${this.manifest.minimumZoom}+, for its full network.`:'No selected city transit in this view on this date.'));
+    return{routes:0,overview:true,cities:cities.length,lines:lines.length,byMode,fallback,overviewFailed:!!this.overviewFailed};
+  }
+  openCity(city){
+    if(!this.enabled||!city?.bbox)return;
+    const b=city.bbox,bounds=this.L.latLngBounds([b[1],b[0]],[b[3],b[2]]);
+    this.map.flyTo(bounds.getCenter(),cityZoom(this.map.getBoundsZoom(bounds),this.manifest.minimumZoom));
+  }
   async select(route){if(!this.enabled)return null;const detail=await this.requests.json(route.detail,'transit_atlas_detail');this.onSelect?.(detail,this.day);return detail;}
   status(text){this.onStatus?.(text);}
 }
@@ -142,7 +240,7 @@ const ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
 export const esc=value=>String(value??'').replace(/[&<>"']/g,c=>ESC[c]);
 const safeURL=value=>{try{const u=new URL(String(value||''));return u.protocol==='https:'?u.href:'';}catch{return'';}};
 const link=(url,text)=>{const u=safeURL(url);return u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(text)} ↗</a>`:esc(text);};
-const LICENCE_NAMES={'CC0-1.0':'CC0 1.0','CC-BY-4.0':'CC BY 4.0','CC-BY-SA-4.0':'CC BY-SA 4.0','ODbL-1.0':'ODbL 1.0','Licence-Ouverte-2.0':'Licence Ouverte 2.0','NLOD-2.0':'NLOD 2.0','Swiss-ODmCH-Terms':'opentransportdata.swiss terms of use','HR-Open-Licence':'Otvorena dozvola (Republic of Croatia open licence)','RS-Open-Data-Licence':'Serbian Open Data Licence','TR-Gaziantep-Open-Data-Licence':'Gaziantep Açık Veri Lisansı','ES-CRTM-Open-Data-Licence':'CRTM open-data licence','OGL-UK-3.0':'Open Government Licence v3.0','Licence-Mobilites':'Licence Mobilités','none-stated':'licence: none stated'};
+const LICENCE_NAMES={'CC0-1.0':'CC0 1.0','CC-BY-4.0':'CC BY 4.0','CC-BY-SA-4.0':'CC BY-SA 4.0','ODbL-1.0':'ODbL 1.0','Licence-Ouverte-2.0':'Licence Ouverte 2.0','NLOD-2.0':'NLOD 2.0','Swiss-ODmCH-Terms':'opentransportdata.swiss terms of use','HR-Open-Licence':'Otvorena dozvola (Republic of Croatia open licence)','RS-Open-Data-Licence':'Serbian Open Data Licence','TR-Gaziantep-Open-Data-Licence':'Gaziantep Açık Veri Lisansı','ES-CRTM-Open-Data-Licence':'CRTM open-data licence','OGL-UK-3.0':'Open Government Licence v3.0','Licence-Mobilites':'Licence Mobilités','PL-ZTM-Warszawa-Timetable-Data-Terms':'ZTM Warszawa timetable-data terms','none-stated':'licence: none stated'};
 
 // Lines held from the layer, with the reviewed reason. A line none of whose
 // route rows is admitted (e.g. a wholly held U-Bahn line) is invisible on the
