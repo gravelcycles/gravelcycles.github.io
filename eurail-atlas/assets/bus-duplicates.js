@@ -1,4 +1,4 @@
-import{validBusDocument}from'./bus-core.js?v=fce68094a07b4a25';
+import{validBusDocument}from'./bus-core.js?v=eb01a6b303604e81';
 
 // Trips that two feeds of one published cohort both carry are shown once. The
 // list is a display derivative of the immutable cohort, built by

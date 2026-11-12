@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=fce68094a07b4a25';
-import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=fce68094a07b4a25';
+import{selectedDays,escapeHTML as esc,capFramePadding}from'./atlas-core.js?v=eb01a6b303604e81';
+import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=eb01a6b303604e81';
 
 export function contextVisible(state){return state.closedCorridors===true;}
 
@@ -158,7 +158,8 @@ export function setupServiceContext({getManifest,getState,getDates,getView,getMa
       distance=notice=>Math.hypot(((notice.bounds[0]+notice.bounds[2])/2-lon)*Math.cos(lat*Math.PI/180),(notice.bounds[1]+notice.bounds[3])/2-lat),
       nearest=[...notices].sort((a,b)=>distance(a)-distance(b)||a.id.localeCompare(b.id))[0],b=nearest.bounds;
     if(!map)return false;
-    map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[45,130],maxZoom:10});return true;
+    // Capped so a ~250 px landscape phone map does not collapse to maxZoom.
+    map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{...capFramePadding({padding:[45,130]},map.getSize?.()),maxZoom:10});return true;
   }
 
   return{refresh,hide,visibleCount,fitAll,summary};

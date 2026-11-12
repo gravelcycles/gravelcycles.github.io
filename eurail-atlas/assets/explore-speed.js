@@ -1,7 +1,8 @@
 // Speed: every hop between consecutive stops, coloured by scheduled
 // straight-line speed for one day's trains.
-import{CATEGORY_LABELS,haversineKm}from'./explore-data.js?v=fce68094a07b4a25';
-import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=fce68094a07b4a25';
+import{CATEGORY_LABELS,haversineKm}from'./explore-data.js?v=eb01a6b303604e81';
+import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=eb01a6b303604e81';
+import{capFramePadding}from'./frame-padding.js?v=eb01a6b303604e81';
 
 const $=id=>document.getElementById(id);
 const BANDS=[[60,'Under 60','--s6'],[90,'60–90','--s5'],[120,'90–120','--s4'],[160,'120–160','--s3'],[200,'160–200','--s2'],[1e9,'200+ km/h','--accent']];
@@ -73,7 +74,10 @@ export function create(ctx){
     const k=nearest(p);if(k<0)return ctx.hideTooltip();
     ctx.tooltip(`<b>${esc(S.names[seg.A[k]])} – ${esc(S.names[seg.B[k]])}</b><br>${fmt(seg.km[k])} km in a straight line · ${seg.count[k]} trains this day<br>Fastest ${fmt(seg.best[k])} km/h · typical ${fmt(seg.typical[k])} km/h`,p.x,p.y);
   }
-  function zoomTo(k){map.fitBounds([[S.lat[seg.A[k]],S.lon[seg.A[k]]],[S.lat[seg.B[k]],S.lon[seg.B[k]]]],{padding:[120,120],maxZoom:10});}
+  // Capped so a ~250 px landscape phone does not collapse to maxZoom 10. The
+  // 0.7 share leaves portrait phones at least 343 px wide (240 px of padding)
+  // and desktop framed exactly as before.
+  function zoomTo(k){map.fitBounds([[S.lat[seg.A[k]],S.lon[seg.A[k]]],[S.lat[seg.B[k]],S.lon[seg.B[k]]]],{...capFramePadding({padding:[120,120]},map.getSize(),.7),maxZoom:10});}
 
   fillDaySelect($('speedDay'),data.dates,state.day);
   $('speedCategories').innerHTML='<legend>Trains</legend>'+CATEGORY_LABELS.map((l,i)=>`<label><input type="checkbox" data-cat="${i}" checked> ${esc(l)}</label>`).join('');

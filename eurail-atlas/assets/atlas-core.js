@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=fce68094a07b4a25';
-import{edgeInScope}from'./project-scope.js?v=fce68094a07b4a25';
-import{continuationMetrics}from'./through-continuations.js?v=fce68094a07b4a25';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=eb01a6b303604e81';
+import{edgeInScope}from'./project-scope.js?v=eb01a6b303604e81';
+import{continuationMetrics}from'./through-continuations.js?v=eb01a6b303604e81';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -11,27 +11,9 @@ export const MODES = {
 };
 export const PASS_MODES=new Set(['eurail','italy']);
 export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
-// Leaflet's fitBounds returns the maximum zoom when the padding on an axis is at
-// least the map's size on that axis. A phone in landscape has a map only about
-// 250 px tall, less than the chrome-avoiding padding asked for in portrait, and
-// opened at zoom 19. Scale each axis' padding down so together it never takes
-// more than `share` of the map's width or height; padding that already fits is
-// returned unchanged. A missing size leaves the padding as it is. The default
-// 60% leaves the portrait phone frame (353 of 664 px, 53%) and desktop frames
-// as they were while always keeping at least 40% of the map for the bounds.
-export const MAX_FRAME_PADDING_SHARE=.6;
-export function capFramePadding(padding,size,share=MAX_FRAME_PADDING_SHARE){
-  const topLeft=[...(padding.paddingTopLeft||[0,0])],bottomRight=[...(padding.paddingBottomRight||[0,0])];
-  for(const axis of[0,1]){
-    const extent=Number(axis?size?.y:size?.x);
-    if(!(extent>0))continue;
-    const total=topLeft[axis]+bottomRight[axis],limit=extent*share;
-    if(total<=limit||!(total>0))continue;
-    const scale=limit/total;
-    topLeft[axis]=Math.floor(topLeft[axis]*scale);bottomRight[axis]=Math.floor(bottomRight[axis]*scale);
-  }
-  return{...padding,paddingTopLeft:topLeft,paddingBottomRight:bottomRight};
-}
+// capFramePadding lives in its own small module so the Explore page can use
+// it without loading the atlas core.
+export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=eb01a6b303604e81';
 // Station, city and country names are folded repeatedly (catalogue, hub ranking,
 // search). Remember results; the bound keeps free-text queries from growing it.
 const normalized=new Map();
