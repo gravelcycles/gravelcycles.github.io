@@ -1,10 +1,10 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,journeyThroughMatch,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
-import{uncertainScope}from'./rail-duplicates.js?v=2ab1ff3e26abb8a6';
-import{mergeSleepServices}from'./sleep-service.js?v=2ab1ff3e26abb8a6';
-import{mapPairFocusId}from'./route-focus.js?v=2ab1ff3e26abb8a6';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=2ab1ff3e26abb8a6';
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=2ab1ff3e26abb8a6';
-import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=2ab1ff3e26abb8a6';
+import{effectivePass,selectedDays,journeyMatchesEdge,journeyThroughMatch,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=654e053d9fab5bcf';
+import{duplicateScope}from'./rail-duplicates.js?v=654e053d9fab5bcf';
+import{mergeSleepServices}from'./sleep-service.js?v=654e053d9fab5bcf';
+import{mapPairFocusId}from'./route-focus.js?v=654e053d9fab5bcf';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=654e053d9fab5bcf';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=654e053d9fab5bcf';
+import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=654e053d9fab5bcf';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export function passengerCall(call){
@@ -91,7 +91,7 @@ export function selectCityJourneyContexts(journey,state,dates){
 // another feed's included copy covers the stops asked about, a kept run is
 // not listed as uncertain, exactly as the connection's count leaves it out.
 export function journeyForQuery(journey,{directions=[],stationIds=null}={}){
-  if(!journey?._duplicateUncertain)return journey;
+  if(!journey?._duplicateUncertain&&!journey?._duplicatePartial)return journey;
   const calls=journey.stops||[];let positions=null;
   if(stationIds){positions=calls.flatMap((call,index)=>stationIds.has(callId(call))?[index]:[]);}
   else for(const direction of directions){
@@ -103,7 +103,20 @@ export function journeyForQuery(journey,{directions=[],stationIds=null}={}){
       if(positions)break;
     }
   }
-  return uncertainScope(journey,positions);
+  return duplicateScope(journey,positions);
+}
+// The feeds that carry trains left out of a station's list, for its "counted
+// once" note: read from each pattern the current view shows, as that station
+// sees it. A run that is a copy between a kept run's calls only names its
+// keeper where the kept run calls, and a tier that is not shown names nobody.
+export function stationDuplicateSources(journeys,stationIds,state){
+  const names=new Set(),stations=stationIds instanceof Set?stationIds:new Set(stationIds||[]);
+  for(const journey of journeys||[]){
+    if(!journey||!serviceVisible(journey,state)||state.sources&&!state.sources.has(journey.source))continue;
+    if(journey.agencyPrimary===false&&!state.alternatives&&!state.altSourceIds?.has(journey.source))continue;
+    for(const name of journeyForQuery(journey,{stationIds:stations})._duplicateSources||[])names.add(name);
+  }
+  return[...names].sort();
 }
 // True when this dated run is already left out of the current view as a copy.
 export function runLeftOut(journey,runId,day,state){
@@ -134,7 +147,9 @@ export function groupSegmentRoutes(journeys,edge,state,dates){
   });
   const directions=(edge._directionEdges||[edge]).map(direction=>({...direction,...(usesHubConnections(state)&&!edge.availabilityOnly?{isHub:true}:{}),...(edge.throughConnection?{throughConnection:true}:{})})),days=selectedDays(state.day,dates),seen=new Set(),groups=new Map();
   const stationIds=edge._stationIds?new Set(edge._stationIds):null;
-  journeys=(journeys||[]).map(journey=>journeyForQuery(journey,{directions,stationIds}));
+  // A city connection row counts its patterns between its own two stations (rail-duplicates.js does the same).
+  const rowStations=edge._cityConnection?journey=>{const row=(edge._directionEdges||[edge]).find(row=>Array.isArray(row.journeyIds)&&row.journeyIds.includes(journey.id)&&row.source===journey.source&&Array.isArray(row.sourceStations));return row?new Set(row.sourceStations):stationIds;}:()=>stationIds;
+  journeys=(journeys||[]).map(journey=>journeyForQuery(journey,{directions,stationIds:rowStations(journey)}));
   const matching=journeys.filter(journey=>stationIds?(journey.stops||[]).some(call=>stationIds.has(callId(call))):directions.some(direction=>journeyMatchesEdge(journey,direction)));
   const spanFor=(journey,day)=>{if(Number.isSafeInteger(day)&&journey._contextSpansByDate?.[day])return journey._contextSpansByDate[day];if(edge._cityConnection&&journey._availabilityCityDirection)return journey._contextSpan;if(edge._cityConnection){const spans=directions.filter(row=>row.availabilityJourneyId===journey.id&&row.source===journey.source&&row.snapshot===journey.snapshot&&Array.isArray(row._contextSpan)).map(row=>row._contextSpan),unique=[...new Map(spans.map(span=>[JSON.stringify(span),span])).values()];if(unique.length===1)return unique[0];}if(stationIds){const indexes=(journey.stops||[]).flatMap((call,index)=>stationIds.has(callId(call))?[index]:[]);return indexes.length===1?[indexes[0],indexes[0]]:null;}const calls=journey.stops||[];for(const edge of directions){const starts=calls.flatMap((call,index)=>callId(call)===edge.a?[index]:[]),ends=calls.flatMap((call,index)=>callId(call)===edge.b?[index]:[]);if(starts.length===1&&ends.length===1&&ends[0]>starts[0])return[starts[0],ends[0]];}return null;};
   const contextual=matching.map(journey=>journey.availabilityOnly?{...journey,_contextSpan:spanFor(journey)||undefined}:journey);

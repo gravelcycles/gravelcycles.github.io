@@ -1,7 +1,7 @@
-import{selectedDays,colorFor,matchesGeometry,approximateAlignment}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
-import{journeyDaily,groupSegmentRoutes,sourceTrainLabelKey}from'./train-services.js?v=2ab1ff3e26abb8a6';
-import{matchesFocus}from'./route-focus.js?v=2ab1ff3e26abb8a6';
-import{edgeInScope}from'./project-scope.js?v=2ab1ff3e26abb8a6';
+import{selectedDays,colorFor,matchesGeometry,approximateAlignment}from'./atlas-core.js?v=654e053d9fab5bcf';
+import{journeyDaily,groupSegmentRoutes,sourceTrainLabelKey}from'./train-services.js?v=654e053d9fab5bcf';
+import{matchesFocus}from'./route-focus.js?v=654e053d9fab5bcf';
+import{edgeInScope}from'./project-scope.js?v=654e053d9fab5bcf';
 
 const FORMAT='rail-atlas-supplemental-availability-v1';
 const aborted=()=>new DOMException('Additional route request cancelled','AbortError');
@@ -57,10 +57,15 @@ export function createSupplementalAvailabilityLoader({getDescriptor,getDates,loa
   return{load:loadFor,reset(){pending?.controller.abort();pending=null;document=null;key=null;}};
 }
 
+// Additional complete routes are the delivery's own annotation of its
+// published rows: separate from the frequency totals and uncounted. The
+// duplicate-train reduction (rail-duplicates.js) is about what is counted, so
+// this path reads every pattern as published, never a reduced or scoped copy.
+export const publishedJourneys=journeys=>Array.isArray(journeys)?journeys.map(journey=>journey?._published||journey):journeys;
 export function supplementalJourneys(journeys,state,dates,document){
   if(!document)return[];
   validateSupplementalAvailability(document,dates);
-  const rows=journeys||[],byId=new Map(rows.map(row=>[row.id,row])),days=new Set(selectedDays(state.day,dates)),scopedState={...state,alternatives:true},result=[];
+  const rows=publishedJourneys(journeys)||[],byId=new Map(rows.map(row=>[row.id,row])),days=new Set(selectedDays(state.day,dates)),scopedState={...state,alternatives:true},result=[];
   for(const original of rows){
     const annotation=document.journeys[original.id];
     if(!annotation||annotation.source!==original.source||annotation.snapshot!==original.snapshot)continue;

@@ -1,1 +1,0 @@
-export const BUS_LOCAL_ROUTING={"busManifestSha256":"b5fd8f46481680ca781defc35f52cf181217ac5caa78677ac5196390f3ebf25b","catalogue":{"path":"bus-local-routing/catalogue.json.gz","sha256":"d669ea78fb410f7f8da477aaee12f9e2f10186b7a47877365a53add55c725ee6","bytes":24039,"uncompressedBytes":92871,"encoding":"gzip"}};

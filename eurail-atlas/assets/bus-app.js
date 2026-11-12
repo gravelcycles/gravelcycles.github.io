@@ -1,8 +1,6 @@
-import{createBusLayer}from'./bus-layer.js?v=2ab1ff3e26abb8a6';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=2ab1ff3e26abb8a6';
-import{BUS_COUNTRY_OVERVIEW,BUS_PLACES}from'./bus-country-overview.js?v=2ab1ff3e26abb8a6';
-import{BUS_LOCAL_ROUTING}from'./bus-local-routing.js?v=2ab1ff3e26abb8a6';
-import{bindBusDisplay}from'./bus-delivery.js?v=2ab1ff3e26abb8a6';
+import{createBusLayer}from'./bus-layer.js?v=654e053d9fab5bcf';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=654e053d9fab5bcf';
+import{bindBusDisplay,busExplorerProducts}from'./bus-delivery.js?v=654e053d9fab5bcf';
 
 const params=new URLSearchParams(location.search),initial={busDay:'all',...Object.fromEntries(params)},$=id=>document.getElementById(id);
 const map=L.map('map',{zoomControl:false,zoomSnap:.25,minZoom:3,maxZoom:19,preferCanvas:true});
@@ -14,16 +12,17 @@ if(params.has('lat')&&Number.isFinite(lat+lon+z)&&Math.abs(lat)<=85&&Math.abs(lo
 // busNetwork=0 keeps the earlier packet loading path for comparison and tests. The duplicate list still
 // applies there: a trip two sources publish is shown once on either path.
 const legacyNetwork=params.get('busNetwork')==='0';
-// The network tiles of the delivered cohort, composed by the release. Without the file the packet view is used.
+// The network tiles, country overview and local routing index of the delivered cohort, composed by the release.
+// Without the file the packet view is used and the explorer runs without its country and city controls.
 async function busDisplay(){try{const response=await fetch(new URL('./bus-display.json',import.meta.url),{cache:'no-cache',credentials:'omit',redirect:'error'});if(!response.ok)return null;const raw=await response.text();return raw.length>16*1024?null:JSON.parse(raw);}catch{return null;}}
-let layer,ready=false,delivery=null;
+let layer,ready=false,delivery=null,explorer=null;
 function save(){if(!ready||!layer)return;const state=layer.state(),p=new URLSearchParams(state),c=map.getCenter();$('busClearHighlight').hidden=!(state.busRoute||state.busStop||state.busCity);p.delete('bus');if(legacyNetwork)p.set('busNetwork','0');p.set('lat',c.lat.toFixed(5));p.set('lon',c.lng.toFixed(5));p.set('z',String(map.getZoom()));history.replaceState(null,'',location.pathname+'?'+p);}
 function summary({country,international,city}){$('busMapTitle').textContent=city?city.name:country||'Explore by bus';$('busMapSummary').textContent=[international?'International routes':'All bus routes',city?'City area':country?'Recorded calls in '+country:'Partial scheduled coverage','Pass inclusion unknown'].join(' · ');}
 async function start(){
   $('controlsToggle').disabled=true;
   try{
-    if(!delivery){const display=busDisplay(),response=await fetch(new URL('../bus-external/config.json',import.meta.url),{cache:'no-cache',credentials:'omit',redirect:'error'});if(!response.ok)throw new Error('Bus delivery configuration unavailable');const raw=await response.text();if(raw.length>64*1024)throw new Error('Bus delivery configuration exceeds budget');delivery=bindBusDisplay(JSON.parse(raw),await display);if(legacyNetwork)delete delivery.busNetwork;}
-    if(!layer)layer=createBusLayer({map,delivery,initial,countryOverview:BUS_COUNTRY_OVERVIEW,places:BUS_PLACES,localRouting:BUS_LOCAL_ROUTING,onGeography:summary,onChange:save});
+    if(!delivery){const display=busDisplay(),response=await fetch(new URL('../bus-external/config.json',import.meta.url),{cache:'no-cache',credentials:'omit',redirect:'error'});if(!response.ok)throw new Error('Bus delivery configuration unavailable');const raw=await response.text();if(raw.length>64*1024)throw new Error('Bus delivery configuration exceeds budget');const configuration=JSON.parse(raw),bound=await display;delivery=bindBusDisplay(configuration,bound);explorer=busExplorerProducts(configuration,bound);if(legacyNetwork)delete delivery.busNetwork;}
+    if(!layer)layer=createBusLayer({map,delivery,initial,...explorer,onGeography:summary,onChange:save});
     await layer.enable({open:true});ready=true;save();
   }catch{$('busPageStatus').hidden=false;$('busPageStatus').textContent='The bus map could not load. Use Bus filters to retry.';}
   $('controlsToggle').disabled=false;

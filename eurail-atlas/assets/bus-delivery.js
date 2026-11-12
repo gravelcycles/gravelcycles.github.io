@@ -45,3 +45,25 @@ export function bindBusDisplay(configuration,display,pageURL=globalThis.location
   }
   return bound;
 }
+// The explorer products carried on the site itself (country overview with its
+// city places, and the local routing index) are named by the same binding, in
+// blocks with "location":"site" whose descriptors are relative to assets/. They
+// are used only when the binding names the configuration's manifest; otherwise
+// the explorer runs without them. No interface module pins their cohort.
+const SITE_PRODUCTS=[['busCountryOverview','bus-countries/',['catalogue','places']],['busLocalRouting','bus-local-routing/',['catalogue']]];
+function siteDescriptor(descriptor,prefix){
+  return descriptor&&typeof descriptor==='object'&&typeof descriptor.path==='string'&&descriptor.path.startsWith(prefix)&&descriptor.path.endsWith('.json.gz')&&!descriptor.path.includes('..')&&!descriptor.path.includes('//')&&!/[?#\\]/.test(descriptor.path)
+    &&HASH.test(descriptor.sha256||'')&&Number.isSafeInteger(descriptor.bytes)&&descriptor.bytes>=1&&descriptor.bytes<=3*1024*1024&&Number.isSafeInteger(descriptor.uncompressedBytes)&&descriptor.uncompressedBytes>=1&&descriptor.uncompressedBytes<=16*1024*1024&&descriptor.encoding==='gzip';
+}
+export function busExplorerProducts(configuration,display){
+  const sha=configuration?.manifest?.sha256,none={countryOverview:null,places:null,localRouting:null};
+  if(!display||typeof display!=='object'||display.schemaVersion!==1||display.kind!=='bus_atlas_display'||!HASH.test(sha||'')||display.busManifestSha256!==sha)return none;
+  const blocks={};
+  for(const[name,prefix,entries]of SITE_PRODUCTS){
+    const block=display[name];
+    if(block?.busManifestSha256===sha&&block.location==='site'&&entries.every(entry=>siteDescriptor(block[entry],prefix)))blocks[name]=block;
+  }
+  const country=blocks.busCountryOverview,local=blocks.busLocalRouting;
+  return{countryOverview:country?{busManifestSha256:sha,catalogue:country.catalogue}:null,places:country?country.places:null,
+    localRouting:local?{busManifestSha256:sha,catalogue:local.catalogue}:null};
+}

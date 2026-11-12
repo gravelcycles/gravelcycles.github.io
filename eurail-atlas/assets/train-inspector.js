@@ -1,12 +1,12 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=2ab1ff3e26abb8a6';
-import{serviceSleepHTML}from'./sleep-service.js?v=2ab1ff3e26abb8a6';
-import{replacementHTML}from'./replacement-service.js?v=2ab1ff3e26abb8a6';
-import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=2ab1ff3e26abb8a6';
-import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=2ab1ff3e26abb8a6';
-import{supplementalRouteGroups}from'./supplemental-availability.js?v=2ab1ff3e26abb8a6';
-import{runSelectionId}from'./native-public-numbers.js?v=2ab1ff3e26abb8a6';
-import{hasClockCoverageGaps}from'./clock-coverage.js?v=2ab1ff3e26abb8a6';
-import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=2ab1ff3e26abb8a6';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=654e053d9fab5bcf';
+import{serviceSleepHTML}from'./sleep-service.js?v=654e053d9fab5bcf';
+import{replacementHTML}from'./replacement-service.js?v=654e053d9fab5bcf';
+import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=654e053d9fab5bcf';
+import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=654e053d9fab5bcf';
+import{supplementalRouteGroups,publishedJourneys}from'./supplemental-availability.js?v=654e053d9fab5bcf';
+import{runSelectionId}from'./native-public-numbers.js?v=654e053d9fab5bcf';
+import{hasClockCoverageGaps}from'./clock-coverage.js?v=654e053d9fab5bcf';
+import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=654e053d9fab5bcf';
 
 const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
 
@@ -42,9 +42,10 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     edge=root._trainEdge;if(!edge)return;
     const atStation=!!edge._stationIds&&!edge._cityConnection&&!edge._directLookup;
     const state=getState(),dates=getDates(),journeys=getJourneys(edge.id),days=Math.max(1,selectedDays(state.day,dates).length);
-    ensureSupplemental(journeys);
+    // Additional complete routes read the patterns as published (supplemental-availability.js).
+    const published=publishedJourneys(journeys);ensureSupplemental(published);
     const normalGroups=edge._supplementalOnly?[]:edge.cityGroups||groupSegmentRoutes(journeys,edge,state,dates);let extraGroups=[];
-    try{extraGroups=supplementalRouteGroups(journeys,edge,state,dates,supplemental);}catch{supplementalError=true;}
+    try{extraGroups=supplementalRouteGroups(published,edge,state,dates,supplemental);}catch{supplementalError=true;}
     groups=[...normalGroups,...extraGroups];
     if(routeKey&&!currentGroup()){routeKey='';trainLabel='';runId='';generation++;onBack();}
     const group=currentGroup();root.className='segment-trains';

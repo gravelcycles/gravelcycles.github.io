@@ -27,6 +27,8 @@ export function validDuplicates(data){
     if(!Array.isArray(pairs)||pairs.some(row=>!Array.isArray(row)||!index(row[0],sources.length)||typeof row[1]!=='string'||!row[1]||!index(row[2],2)||!index(row[3],geometryStatuses.length)||!index(row[4],2)||!flatReferences(row,5,2,limits)||row.length<7))return false;
     const mask=1<<days;
     if(!journeys||typeof journeys!=='object'||Object.values(journeys).some(rows=>!Array.isArray(rows)||!rows.length||rows.some(row=>!Array.isArray(row)||row.length<4||row.length>6||!Number.isInteger(row[0])||row[0]<0||!index(row[1],conditions.length)||!index(row[2],mask)||!row[2]||!index(row[3],mask)||(row[3]&~row[2])!==0||row.slice(4).some(value=>typeof value!=='string'))))return false;
+    // Runs that are copies between a kept run's calls only: run, condition, dates, pass dates, the stops that kept run calls at (0 = all), train label, run identity.
+    if(data.partial!==undefined&&(!data.partial||typeof data.partial!=='object'||Array.isArray(data.partial)||Object.values(data.partial).some(rows=>!Array.isArray(rows)||!rows.length||rows.some(row=>!Array.isArray(row)||row.length<5||row.length>7||!Number.isInteger(row[0])||row[0]<0||!index(row[1],conditions.length)||!index(row[2],mask)||!row[2]||!index(row[3],mask)||(row[3]&~row[2])!==0||!(row[4]===0||Array.isArray(row[4])&&row[4].length>1&&row[4].every(n=>Number.isInteger(n)&&n>=0))||row.slice(5).some(value=>typeof value!=='string')))))return false;
     // Kept runs whose uncertain pass status is shown by another feed's included copy: run, condition, dates, the stops that copy covers (0 = all), run identity.
     if(data.uncertain!==undefined&&(!data.uncertain||typeof data.uncertain!=='object'||Array.isArray(data.uncertain)||Object.values(data.uncertain).some(rows=>!Array.isArray(rows)||!rows.length||rows.some(row=>!Array.isArray(row)||row.length<4||row.length>5||!Number.isInteger(row[0])||row[0]<0||!index(row[1],conditions.length)||!index(row[2],mask)||!row[2]||!(row[3]===0||Array.isArray(row[3])&&row[3].length&&row[3].every(n=>Number.isInteger(n)&&n>=0))||row.length===5&&typeof row[4]!=='string'))))return false;
     if(!cityConnections||typeof cityConnections!=='object'||Object.values(cityConnections).some(row=>!flatReferences(row,0,3,[conditions.length,values.length,values.length])||!row.length))return false;
@@ -61,7 +63,7 @@ export function createDuplicateIndex(data){
   if(!validDuplicates(data))throw new Error('Invalid duplicate-train packet');
   const days=data.binding.dates.length,{sources,conditions,fields,values,profiles}=data,rows=new Map(Object.entries(data.edges));
   for(const pair of data.pairs)rows.set('pair:'+JSON.stringify([sources[pair[0]],pair[1],pair[2]===1,data.geometryStatuses[pair[3]]]),pair.slice(5));
-  const journeys=new Map(Object.entries(data.journeys)),uncertain=new Map(Object.entries(data.uncertain||{})),cities=new Map(Object.entries(data.cityConnections)),logical=new Map();
+  const journeys=new Map(Object.entries(data.journeys)),partial=new Map(Object.entries(data.partial||{})),uncertain=new Map(Object.entries(data.uncertain||{})),cities=new Map(Object.entries(data.cityConnections)),logical=new Map();
   // A logical through service and its drawn connection share one list of copied dates.
   for(const row of data.logical||[]){logical.set(row[0],row.slice(2));logical.set(row[1],row.slice(2));}
   let active=conditions.map(()=>true),selection=null,selected=null,revision=1;
@@ -145,43 +147,28 @@ export function createDuplicateIndex(data){
   function journey(row){
     if(row?.availabilityOnly===true)return logicalRow(row);
     // A row this index already reduced is never reduced again.
-    const known=row&&typeof row.id==='string'&&!row._countedOnce,entries=known?journeys.get(row.id)||[]:[],shown=known?uncertain.get(row.id)||[]:[];
-    if(!entries.length&&!shown.length)return row;
+    const known=row&&typeof row.id==='string'&&!row._countedOnce,entries=known?journeys.get(row.id)||[]:[],parts=known?partial.get(row.id)||[]:[],shown=known?uncertain.get(row.id)||[]:[];
+    if(!entries.length&&!parts.length&&!shown.length)return row;
     const cached=journeyCache.get(row);if(cached&&cached.revision===revision)return cached.value;
-    const movement=zeros(),pass=zeros(),runs=new Map(),runIds=new Map(),labels=new Map(),passLabels=new Map(),conditionIds=new Set();
-    for(const[run,condition,mask,passMask,label,runId]of entries){
-      if(!active[condition])continue;conditionIds.add(condition);
-      const known=runs.get(run)||[0,0];known[0]|=mask;known[1]|=passMask;runs.set(run,known);if(runId)runIds.set(runId,known);
-      for(let day=0;day<days;day++){
-        if(mask>>day&1){movement[day]++;if(label){if(!labels.has(label))labels.set(label,zeros());labels.get(label)[day]++;}}
-        if(passMask>>day&1){pass[day]++;if(label){if(!passLabels.has(label))passLabels.set(label,zeros());passLabels.get(label)[day]++;}}
-      }
-    }
-    let value=row;
-    if(conditionIds.size){
-      // The published row stays at hand for readers that need to know how its runs were split (through-continuations.js).
-      value={...row,_countedOnce:true,_published:row};
-      for(const[key,vector]of Object.entries(row)){
-        if(key!=='daily'&&!key.endsWith('Daily')||key.endsWith('ExampleDaily')||!countVector(vector,days))continue;
-        const minus=MOVEMENT.has(key)?movement:pass;value[key]=vector.map((n,day)=>Math.max(0,n-minus[day]));
-        if(weeklyKey(key)in row)value[weeklyKey(key)]=total(value[key]);
-      }
-      const trains=subtract=>(row.publicTrains||[]).map(train=>{const minus=subtract.get(train.label);if(!minus||!countVector(train.daily,days))return train;const daily=train.daily.map((n,day)=>Math.max(0,n-minus[day]));return{...train,daily,...('weekly'in train?{weekly:total(daily)}:{})};});
-      if(Array.isArray(row.publicTrains))value.publicTrains=trains(labels);
-      value._duplicateRuns=runs;value._duplicateRunIds=runIds;value._duplicateSources=keepers(conditionIds);
-      // Runs whose pass status still counts, although another feed's line
-      // carries the train: the pass view keeps them and their train numbers.
-      if(countVector(row.daily,days)&&pass.some((n,day)=>n!==movement[day])){
-        value._passDaily=row.daily.map((n,day)=>Math.max(0,n-pass[day]));
-        value._passJourney={...value,daily:value._passDaily,...(Array.isArray(row.publicTrains)?{publicTrains:trains(passLabels)}:{})};
-      }
+    const whole=entries.filter(([,condition])=>active[condition]).map(([run,condition,mask,passMask,label,runId])=>({run,condition,mask,passMask,label,runId}));
+    let value=whole.length?leaveOut(row,whole,days,keepers(whole.map(entry=>entry.condition))):row;
+    // A fuller run than the kept one (a whole train beside one feed's half)
+    // is a copy only between the kept run's calls. Which of its trains are
+    // left out depends on the stops asked about (duplicateScope); where the
+    // kept run calls at every stop, they are left out everywhere.
+    const between=parts.filter(([,condition])=>active[condition]).map(([run,condition,mask,passMask,covered,label,runId])=>({run,condition,mask,passMask,label,runId,covered:covered===0?null:new Set(covered)}));
+    if(between.length){
+      const everywhere=between.filter(entry=>!entry.covered);
+      if(everywhere.length)value=leaveOut(value,everywhere,days,keepers(everywhere.map(entry=>entry.condition)));
+      else if(value===row)value={...row,_countedOnce:true,_published:row};
+      value._duplicatePartial={entries:between.filter(entry=>entry.covered),days,keepers:list=>keepers(list.map(entry=>entry.condition))};
     }
     // A kept run with uncertain pass status, where another selected feed's
     // included copy shows the same train: on the stops that copy covers, the
     // train is the included one and this run is not listed as uncertain.
     const elsewhere=shown.filter(([,condition])=>active[condition]).map(([run,,mask,covered,runId])=>({run,mask,covered:covered===0?null:new Set(covered),runId:runId||null}));
     if(elsewhere.length){
-      if(value===row)value={...row,_countedOnce:true};
+      if(value===row)value={...row,_countedOnce:true,_published:row};
       value._duplicateUncertain=elsewhere;
       Object.assign(value,uncertainLost(elsewhere.filter(entry=>!entry.covered),days));
     }
@@ -236,6 +223,37 @@ export function createDuplicateIndex(data){
     select,metrics,countedOn,journey,journeyList,logicalEdges,cityRow,cityRows,sharedTrains};
 }
 
+// Leave dated runs out of one source pattern: fewer trains in every counter,
+// fewer train numbers, and the runs to leave out of lists. `row` can be a
+// pattern that was reduced before; a date already left out is not taken twice.
+function leaveOut(row,list,days,sourceNames){
+  const zeros=()=>Array(days).fill(0),movement=zeros(),pass=zeros(),labels=new Map(),passLabels=new Map();
+  const runs=new Map(row._duplicateRuns||[]),runIds=new Map(row._duplicateRunIds||[]),added=new Map();
+  for(const entry of list){const known=added.get(entry.run)||{mask:0,passMask:0,label:entry.label,runId:entry.runId};known.mask|=entry.mask;known.passMask|=entry.passMask;added.set(entry.run,known);}
+  for(const[run,{mask,passMask,label,runId}]of added){
+    const before=runs.get(run)||[0,0],fresh=mask&~before[0],freshPass=passMask&~before[1],now=[before[0]|mask,before[1]|passMask];
+    runs.set(run,now);if(runId)runIds.set(runId,now);
+    for(let day=0;day<days;day++){
+      if(fresh>>day&1){movement[day]++;if(label){if(!labels.has(label))labels.set(label,zeros());labels.get(label)[day]++;}}
+      if(freshPass>>day&1){pass[day]++;if(label){if(!passLabels.has(label))passLabels.set(label,zeros());passLabels.get(label)[day]++;}}
+    }
+  }
+  // The published row stays at hand for readers that need to know how its runs were split (through-continuations.js).
+  const value={...row,_countedOnce:true,_published:row._published||row};
+  for(const[key,vector]of Object.entries(row)){
+    if(key!=='daily'&&!key.endsWith('Daily')||key.endsWith('ExampleDaily')||!countVector(vector,days))continue;
+    const minus=MOVEMENT.has(key)?movement:pass;value[key]=vector.map((n,day)=>Math.max(0,n-minus[day]));
+    if(weeklyKey(key)in row)value[weeklyKey(key)]=total(value[key]);
+  }
+  const trains=(published,subtract)=>(published||[]).map(train=>{const minus=subtract.get(train.label);if(!minus||!countVector(train.daily,days))return train;const daily=train.daily.map((n,day)=>Math.max(0,n-minus[day]));return{...train,daily,...('weekly'in train?{weekly:total(daily)}:{})};});
+  if(Array.isArray(row.publicTrains))value.publicTrains=trains(row.publicTrains,labels);
+  value._duplicateRuns=runs;value._duplicateRunIds=runIds;value._duplicateSources=[...new Set([...(row._duplicateSources||[]),...sourceNames])].sort();
+  // Runs whose pass status still counts, although another feed's line
+  // carries the train: the pass view keeps them and their train numbers.
+  if(!countVector(row._passDaily,days)&&countVector(row.daily,days)&&pass.some((n,day)=>n!==movement[day]))value._passDaily=row.daily.map((n,day)=>Math.max(0,n-pass[day]));
+  if(countVector(value._passDaily,days))value._passJourney={...value,daily:value._passDaily,...(Array.isArray(row.publicTrains)?{publicTrains:trains(row._passJourney?.publicTrains||row.publicTrains,passLabels)}:{})};
+  return value;
+}
 // Dated runs that are not shown as uncertain: per run a date mask, and a count per date.
 function uncertainLost(entries,days){
   const runs=new Map(),runIds=new Map();
@@ -253,6 +271,25 @@ export function uncertainScope(journey,positions){
   const key=positions.join(','),known=scoped.get(journey)||new Map();if(known.has(key))return known.get(key);
   const days=journey._uncertainLost.length,value={...journey,...uncertainLost(entries.filter(entry=>!entry.covered||positions.every(position=>entry.covered.has(position))),days)};
   known.set(key,value);scoped.set(journey,known);return value;
+}
+
+const between=new WeakMap();
+// A journey as seen from some of its stops. A run that is a copy between a
+// kept run's calls only (a whole train beside one feed's half of it) is left
+// out where the kept run calls at all of them, and stays elsewhere: on a
+// connection only the whole train serves, it is the one publication.
+export function duplicateScope(journey,positions){
+  const holder=journey?._duplicatePartial;let value=journey;
+  if(holder&&holder.entries.length&&Array.isArray(positions)&&positions.length){
+    const key=positions.join(','),known=between.get(journey)||new Map();
+    if(known.has(key))value=known.get(key);
+    else{
+      const covering=holder.entries.filter(entry=>positions.every(position=>entry.covered.has(position)));
+      if(covering.length)value=leaveOut(journey,covering,holder.days,holder.keepers(covering));
+      known.set(key,value);between.set(journey,known);
+    }
+  }
+  return uncertainScope(value,positions);
 }
 
 const names=list=>list.length<3?list.join(' and '):list.slice(0,-1).join(', ')+' and '+list.at(-1);
