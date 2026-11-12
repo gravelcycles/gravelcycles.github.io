@@ -1,4 +1,4 @@
-import{safeBusBase}from'./bus-delivery.js?v=7e389cc516b08c39';
+import{safeBusBase}from'./bus-delivery.js?v=28809ad252b73f13';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
@@ -105,7 +105,7 @@ export class BusRequests{
     const sha256=descriptor?.sha256||url.pathname.endsWith('/manifest.json')?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):undefined;if(descriptor?.sha256&&sha256!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');
     check();
     if(descriptor?.encoding==='gzip'||url.pathname.endsWith('.gz')){
-      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=7e389cc516b08c39');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
+      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=28809ad252b73f13');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
       else{const stream=new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip')).getReader(),chunks=[],abort=()=>{stream.cancel().catch(()=>{});};let size=0;controller.signal.addEventListener('abort',abort,{once:true});
       try{for(;;){const{done,value}=await stream.read();if(done)break;size+=value.byteLength;if(size>Math.min(limit*8,48*1024*1024)){await stream.cancel();throw new Error('Decoded bus asset exceeds memory budget');}chunks.push(value);}}finally{controller.signal.removeEventListener('abort',abort);stream.releaseLock();}
       buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}}

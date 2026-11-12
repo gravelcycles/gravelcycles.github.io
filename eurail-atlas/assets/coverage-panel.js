@@ -51,16 +51,46 @@ function carriedSection(parent,manifest,country){
    unrecognised kind is shown generically rather than dropped. */
 function isoDay(value){return typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)?observationDate(value+'T00:00:00Z'):'';}
 function dayRange(values){const days=(Array.isArray(values)?values:[]).filter(value=>isoDay(value));return days.length?(days.length===1?isoDay(days[0]):isoDay(days[0])+' to '+isoDay(days.at(-1))):'';}
+function nameList(names){const shown=names.slice(0,12);return shown.join(', ')+(names.length>12?' and '+number(names.length-12)+' more':'');}
+/* The wording of a partial hold names only what it holds, from the delivery's
+   own record (manifest.operatingTransfers.weekReplacement), and says that the
+   source's other replacement buses are drawn. Nothing is hard-coded per source
+   or week; a kind this interface does not know still reads as partial. */
+function partialHoldText(manifest,hold,subject,partKind,label){
+  const record=manifest?.operatingTransfers?.weekReplacement?.sources?.[subject],index=manifest?.operatingTransfers?.transfers;
+  /* A row suppressed as a copy of another source's bus is drawn once, as that source's row, never as this one. */
+  const own=Array.isArray(index)?index.filter(row=>row&&row.source===subject&&row.sourceSuppressionApplied!==true):null;
+  const drawn=own?own.length:Number.isFinite(Number(record?.patterns))?Number(record.patterns):null,optional=own&&own.length>0&&own.every(row=>row.alternateSource===true)?' when this alternate source is switched on':'';
+  const rest=drawn===null?'; its other replacement buses are drawn':drawn>0?'; its other '+number(drawn)+' replacement-bus pattern'+(drawn===1?' is':'s are')+' drawn'+optional:'; no other replacement bus from this source is shown this week';
+  const dates=Number(hold.heldServiceDates),datesText=hold.heldServiceDates!==null&&hold.heldServiceDates!==undefined&&Number.isFinite(dates)?' ('+number(dates)+' bus service-date'+(dates===1?'':'s')+')':'';
+  if(partKind==='unseen_route_identity'||partKind==='required_label_missing'){
+    const items=(Array.isArray(record?.unseenRouteIdentities)?record.unseenRouteIdentities:[]).filter(item=>item&&item.holdKind===partKind);
+    const names=items.map(item=>String(item.lineName||item.line||item.identity||'').trim()).filter(Boolean);
+    const count=items.length||(Number.isFinite(Number(hold.heldRoutes))?Number(hold.heldRoutes):null);
+    const routes=count===null?'Some routes':number(count)+' route'+(count===1?'':'s');
+    const why=partKind==='unseen_route_identity'?(count===1?' has':' have')+' not been reviewed for replacement buses':(count===1?' lacks':' lack')+' the publisher’s replacement label or a train number';
+    const unknown=hold.heldServiceDates===null&&items.length&&items.every(item=>item.serviceDates===null||item.serviceDates===undefined);
+    return'Replacement buses: '+label+' is partly held this week. '+routes+datesText+why+', so '+(count===1?'it is':'they are')+' not shown'+(unknown?' (their buses, if any, were not extracted)':'')+(names.length?': '+nameList(names):'')+rest+'.';
+  }
+  if(partKind==='overlap_unresolved'){
+    const ambiguous=record?.overlap?.ambiguous,names=Array.isArray(ambiguous)?ambiguous.map(item=>String(item?.line||item?.id||'').trim()).filter(Boolean):[];
+    return'Replacement buses: '+label+' is partly held this week. '+(names.length?number(names.length)+' bus pattern'+(names.length===1?'':'s'):'Some buses')+datesText+' could not be matched to exactly one bus of the recommended source, so '+(names.length===1?'it is':'they are')+' not shown'+(names.length?': '+nameList(names):'')+rest+'.';
+  }
+  return'Replacement buses: '+label+' is partly held this week'+datesText+rest+'.';
+}
 export function transferHolds(manifest,country){
   const holds=manifest?.operatingTransfers?.holds;if(!Array.isArray(holds))return[];
   const dates=Array.isArray(manifest?.dates)?manifest.dates:[],sources=new Map((manifest?.sources||[]).map(source=>[source.id,source]));
   return holds.filter(hold=>hold&&typeof hold==='object'&&(!Array.isArray(hold.deliveryDates)||!dates.length||hold.deliveryDates.length===dates.length&&hold.deliveryDates.every((date,index)=>date===dates[index]))).map(hold=>{
-    const context=typeof hold.context==='string'?hold.context:'',prefix=['replacement_backfill:','replacement_week:'].find(value=>context.startsWith(value)),subject=prefix?context.slice(prefix.length):context;
+    const context=typeof hold.context==='string'?hold.context:'',prefix=['replacement_backfill:','replacement_week:'].find(value=>context.startsWith(value)),rest=prefix?context.slice(prefix.length):context;
+    /* replacement_week:<source>:<kind> is a partial hold of one kind inside a source whose other rows are drawn. */
+    const cut=prefix==='replacement_week:'?rest.indexOf(':'):-1,subject=cut>0?rest.slice(0,cut):rest,partKind=cut>0?rest.slice(cut+1):'';
     const source=sources.get(subject),label=source?.name||subject||'an unnamed replacement-bus review',holdCountry=source?.country||'';
     const lastVerified=typeof hold.lastVerified==='string'&&hold.lastVerified?(isoDay(hold.lastVerified)||hold.lastVerified):'',reviewed=dayRange(hold.reviewedDates),transfers=Array.isArray(hold.transferIds)?hold.transferIds.length:null;
     const since=lastVerified?'; last verified '+lastVerified:reviewed?'; last reviewed for '+reviewed:'',queued=Number(hold.heldServiceDates);
     let kind,text;
-    if(hold.decision==='recorded_carry'){kind='recorded_carry';text='Replacement buses: no verified data this week for '+label+(lastVerified?'; last verified '+lastVerified:'')+'.';}
+    if(partKind){kind='part_'+partKind;text=partialHoldText(manifest,hold,subject,partKind,label);}
+    else if(hold.decision==='recorded_carry'){kind='recorded_carry';text='Replacement buses: no verified data this week for '+label+(lastVerified?'; last verified '+lastVerified:'')+'.';}
     else if(hold.status==='partly_held'&&Number.isFinite(queued)&&queued>0){kind='partly_held';text='Replacement buses: '+number(queued)+' bus service-date'+(queued===1?'':'s')+' for '+label+' this week '+(queued===1?'is':'are')+' awaiting review and not shown; the rest are drawn.';}
     else if(hold.holdKind==='unregistered_source'){kind='unregistered_source';text='Replacement buses: '+label+' has not been reviewed for replacement buses, so none are shown from it this week.';}
     else if(!hold.decision&&typeof hold.holdKind==='string'&&hold.holdKind&&transfers>0&&hold.status!=='partly_held'){
@@ -80,7 +110,7 @@ export function transferHolds(manifest,country){
 function transferHoldSection(parent,manifest,country){
   const rows=transferHolds(manifest,country);if(!rows.length)return;
   const area=node('section','coverage-section coverage-transfer-holds');area.appendChild(node('h3','','Replacement buses held this week'));
-  area.appendChild(node('p','','Replacement buses listed here are not drawn, because no verified data covers them for this week. This does not establish that the railway is open or that no buses run; check the operator.'));
+  area.appendChild(node('p','','The replacement buses each line names are not drawn, because no verified data covers them for this week; a partly held source draws its other replacement buses. This does not establish that the railway is open or that no buses run; check the operator.'));
   const list=node('ul','coverage-carried-list');
   for(const row of rows){const item=node('li','');item.append(node('span','',row.text+(country||!row.country?'':' · '+row.country)));if(row.reason){const details=node('details','coverage-small');details.append(node('summary','','Recorded reason'),node('p','',row.reason));item.appendChild(details);}list.appendChild(item);}
   area.appendChild(list);parent.appendChild(area);

@@ -25,6 +25,11 @@ export function transitPointerBase(pointer){
 
 export function intersects(a,b){return Array.isArray(a)&&a.length===4&&a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];}
 export function transitCount(route,day,dates){const i=dates.indexOf(day);return day==='all'?(route.dates||[]).reduce((n,v)=>n+(Number(v)||0),0):i<0?0:Number(route.dates?.[i])||0;}
+// Estimated-headway lines (transit_data/headway.py): the feed's headway windows
+// (frequencies.txt, exact_times=0) per service date. A count of stated windows, never
+// of trips: it decides only whether the line is drawn on that date, never a total.
+export function transitHeadwayWindows(route,day,dates){const v=route?.headwayDays;if(!Array.isArray(v))return 0;const i=dates.indexOf(day);return day==='all'?v.reduce((n,x)=>n+(Number(x)||0),0):i<0?0:Number(v[i])||0;}
+export function transitRuns(route,day,dates){return transitCount(route,day,dates)>0||transitHeadwayWindows(route,day,dates)>0;}
 
 // Viewport selection: nearest regions/packets first, inside explicit budgets.
 export function selectEntries(rows,bounds,limit,budgets={bytes:Infinity,decoded:Infinity}){
@@ -38,7 +43,7 @@ export function selectEntries(rows,bounds,limit,budgets={bytes:Infinity,decoded:
 export function visibleRoutes(packets,{modes,day,dates,bounds},limit=TRANSIT_LIMITS.routes){
   const seen=new Map();let limited=false;
   for(const p of packets)for(const r of p.routes||[]){
-    if(seen.has(r.id)||!modes.has(r.mode)||!intersects(r.bbox,bounds)||transitCount(r,day,dates)<=0)continue;
+    if(seen.has(r.id)||!modes.has(r.mode)||!intersects(r.bbox,bounds)||!transitRuns(r,day,dates))continue;
     if(seen.size>=limit){limited=true;break;}
     seen.set(r.id,r);
   }
@@ -54,11 +59,11 @@ const dayCount=(dates,day,all)=>day==='all'?(dates||[]).reduce((n,v)=>n+(Number(
 export function overviewSelection(overview,{modes,day,dates,bounds,zoom}){
   const cities=[],lines=[],keep=new Set();
   (overview?.cities||[]).forEach((c,i)=>{
-    const shown=Object.entries(c.modes||{}).filter(([m,v])=>modes.has(m)&&dayCount(v.dates,day,dates)>0);
+    const shown=Object.entries(c.modes||{}).filter(([m,v])=>modes.has(m)&&(dayCount(v.dates,day,dates)>0||dayCount(v.headwayDays,day,dates)>0));
     if(!shown.length||!intersects(c.bbox,bounds))return;
     keep.add(i);cities.push({...c,index:i,shownModes:shown.map(([m])=>m),patterns:shown.reduce((n,[,v])=>n+(v.patterns||0),0),lineCount:shown.reduce((n,[,v])=>n+(v.lines||0),0)});
   });
-  if(zoom>=OVERVIEW_LINE_ZOOM)for(const l of overview?.lines||[])if(keep.has(l.city)&&modes.has(l.mode)&&dayCount(l.dates,day,dates)>0)lines.push(l);
+  if(zoom>=OVERVIEW_LINE_ZOOM)for(const l of overview?.lines||[])if(keep.has(l.city)&&modes.has(l.mode)&&(dayCount(l.dates,day,dates)>0||dayCount(l.headwayDays,day,dates)>0))lines.push(l);
   return{cities,lines};
 }
 // A build from before the overview product (or while its overview cannot load):
@@ -207,8 +212,9 @@ export class TransitLayer{
       for(const s of stops.values())this.L.circleMarker([s.lat,s.lon],{renderer:this.renderer,radius:2.5,color:'#222',weight:1,fillColor:'#fff',fillOpacity:1,interactive:false}).addTo(this.group);
     }
     const byMode={};for(const r of routes)byMode[r.mode]=(byMode[r.mode]||0)+1;
-    this.status((limited||picked.limited?'Partial view: zoom in or filter. ':'')+(routes.length?Object.entries(byMode).map(([m,n])=>`${n} ${TRANSIT_MODE_STYLE[m]?.label||m} route patterns`).join(' · '):'No selected city transit in this view on this date.'));
-    return{routes:routes.length,byMode,limited:limited||picked.limited};
+    const estimated=routes.filter(r=>transitHeadwayWindows(r,this.day,this.dates)>0).length;
+    this.status((limited||picked.limited?'Partial view: zoom in or filter. ':'')+(routes.length?Object.entries(byMode).map(([m,n])=>`${n} ${TRANSIT_MODE_STYLE[m]?.label||m} route patterns`).join(' · ')+(estimated?` (${estimated} from estimated headways)`:''):'No selected city transit in this view on this date.'));
+    return{routes:routes.length,byMode,limited:limited||picked.limited,estimated};
   }
   async loadOverview(){
     // Fetched once per activation, only when a wide view first needs it; hash-checked against the manifest.
@@ -253,11 +259,45 @@ export class TransitLayer{
   status(text){this.onStatus?.(text);}
 }
 
-// Departures of one pattern on one service date, from native clocks (agency timezone).
+// Timed departures of one pattern on one service date, from native clocks (agency timezone).
+// A template with exact windows (exact_times=1) runs at start, start+headway, … before end, as
+// GTFS defines; a headway window (exact_times=0) is not a timed departure and is never listed.
 export function departures(detail,day){
   const out=[];
-  for(const t of detail.trips){if(!t.serviceDates.includes(day)||t.clockStartSeconds==null)continue;const first=detail.clockProfiles[t.clockProfile][0];const s=t.clockStartSeconds+(first[1]??first[0]??0);out.push({trip:t.sourceTripId,seconds:s,headsign:t.headsign});}
+  for(const t of detail.trips){
+    if(!t.serviceDates.includes(day)||t.clockStartSeconds==null)continue;
+    const freqs=t.frequencies||[];
+    if(freqs.length){for(const f of freqs)if(f.exactTimes===1)for(let s=f.startSeconds;s<f.endSeconds;s+=f.headwaySeconds)out.push({trip:t.sourceTripId,seconds:s,headsign:t.headsign});continue;}
+    const first=detail.clockProfiles[t.clockProfile][0];const s=t.clockStartSeconds+(first[1]??first[0]??0);out.push({trip:t.sourceTripId,seconds:s,headsign:t.headsign});
+  }
   return out.sort((a,b)=>a.seconds-b.seconds);
+}
+// The feed's headway windows (exact_times=0; for a converted feed, the converter's restatement) of one pattern on one service date, as stated.
+export function headwayWindows(detail,day){
+  const out=[];
+  for(const t of detail.trips||[]){if(!t.serviceDates?.includes(day))continue;for(const f of t.frequencies||[])if(f.exactTimes!==1)out.push({trip:t.sourceTripId,headsign:t.headsign,start:f.startSeconds,end:f.endSeconds,headway:f.headwaySeconds});}
+  return out.sort((a,b)=>a.start-b.start||a.end-b.end||String(a.trip).localeCompare(String(b.trip)));
+}
+export function headwayMinutes(seconds){const m=seconds/60;return seconds<60?`${seconds} s`:Number.isInteger(m)?`${m} min`:`${m.toFixed(1)} min`;}
+// The spans the windows cover: windows that touch or overlap are joined, a gap between
+// windows starts a new span. Each span keeps the range of headways stated inside it.
+export function headwaySpans(windows){
+  const spans=[];
+  for(const w of [...windows].sort((a,b)=>a.start-b.start||a.end-b.end)){
+    const last=spans[spans.length-1];
+    if(last&&w.start<=last.end){last.end=Math.max(last.end,w.end);last.lo=Math.min(last.lo,w.headway);last.hi=Math.max(last.hi,w.headway);}
+    else spans.push({start:w.start,end:w.end,lo:w.headway,hi:w.headway});
+  }
+  return spans;
+}
+// One sentence per day: for each span of windows, the range of stated headways and its
+// start and end. A gap between windows is never bridged: each span is stated on its own.
+// An estimate, labelled with its basis; it is not a number of trips.
+export function headwaySummary(windows){
+  if(!windows.length)return'';
+  const every=s=>s.lo===s.hi?headwayMinutes(s.lo):headwayMinutes(s.lo).replace(' min','')+'–'+headwayMinutes(s.hi);
+  const spans=headwaySpans(windows);
+  return`${spans.map(s=>`about every ${every(s)}, ${clock(s.start)}–${clock(s.end)}`).join('; ')}${spans.length>1?' (no service stated between these spans)':''}, estimated from the feed's headway windows`;
 }
 export function clock(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${h>=24?' (+1)':''}`;}
 
@@ -278,6 +318,10 @@ export function transitHeldLines(manifest){
   for(const s of manifest?.sources||[])for(const h of s.heldLines||[])
     out.push({sourceId:s.id,source:s.name||s.id,operator:h.operator||'',label:h.label||h.sourceRouteId,reason:h.reason||'Held after review.',whole:!h.otherRowsOfLineAdmitted,tripDates:Number(h.tripServiceDates)||0});
   return out.sort((a,b)=>Number(b.whole)-Number(a.whole)||b.tripDates-a.tripDates||a.operator.localeCompare(b.operator)||String(a.label).localeCompare(String(b.label)));
+}
+
+export function transitEstimatedLines(manifest){
+  return(manifest?.sources||[]).flatMap(s=>((s.estimatedHeadway||{}).lines||[]).filter(l=>l.basis!=='timed').map(l=>`${l.label||l.sourceRouteId} (${l.operator||s.name||s.id})`));
 }
 
 export function transitCredits(manifest){
@@ -310,17 +354,32 @@ export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
   return`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
     (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
     `<p class="helper">Counts are scheduled source records per mode, separate from trains and buses. Coverage is partial; pass inclusion is unknown. White centre dashes mark lines that are partly held or also shown as trains.</p>`+
+    (transitEstimatedLines(document).length?`<p class="helper transit-estimate">Some lines (${esc(transitEstimatedLines(document).join(', '))}) are drawn from the feed's headway windows, not timed trips: their panels show the windows as estimates, and they are not counted as recorded departures.</p>`:'')+
     ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
     (transitFallbackSources(document).length?`<details class="transit-held transit-fallback"><summary>Sources shown from an earlier archive (${transitFallbackSources(document).length.toLocaleString()})</summary><ul>${transitFallbackSources(document).map(f=>`<li><strong>${esc(f.name)}</strong> · archive retrieved ${esc(f.retrievedAt)}<br><span>${esc(f.reason)}</span></li>`).join('')}</ul></details>`:'')+
     (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary><ul>${heldRows}</ul>${held.length>heldLimit?`<p class="helper">${(held.length-heldLimit).toLocaleString()} more held route rows are listed in the transit manifest.</p>`:''}</details>`:'')+
     `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.dataUpdated?.date?` · Data last updated ${esc(c.dataUpdated.date)}`:''}${retrieved[c.sourceId]?.retrievedAt?` · Archive retrieved ${esc(retrieved[c.sourceId].retrievedAt)}`:''}${retrieved[c.sourceId]?.ageException?`<br><span>Older archive shown by recorded exception: ${esc(retrieved[c.sourceId].ageException)}</span>`:''}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice||document.databaseOffer?.path?`<p class="helper">${document.odblNotice?esc(document.odblNotice):''}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;
 }
 
+const dayName=d=>{const t=new Date(d+'T12:00:00Z');return isNaN(t)?d:t.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});};
+// The panel for a line admitted as estimated headway (detail.basis): the basis label and the
+// stated windows per day; timed trips of a mixed line are shown separately, never added.
+function headwayHTML(detail,day){
+  const h=detail.headway||{},days=day==='all'?(detail.trips||[]).flatMap(t=>t.serviceDates||[]).filter((d,i,a)=>a.indexOf(d)===i).sort():[day];
+  const blocks=days.map(d=>{const w=headwayWindows(detail,d),timed=departures(detail,d).length;
+    if(!w.length&&!timed)return'';
+    const rows=w.map(x=>`<li>${esc(clock(x.start))}–${esc(clock(x.end))} · about every ${esc(headwayMinutes(x.headway))}${x.headsign?` · towards ${esc(x.headsign)}`:''}</li>`).join('');
+    return`<div class="transit-headway-day"><p><strong>${esc(dayName(d))}</strong>: ${w.length?`<span class="transit-estimate">Estimated service: ${esc(headwaySummary(w))}.</span>`:'No headway windows on this day.'}</p>`+
+      (detail.basis==='mixed'||timed?`<p>${timed?`${timed.toLocaleString()} timed departures recorded on this day (exact times; listed separately from the estimate)`:'No timed departures recorded on this day'}.</p>`:'')+
+      (rows?`<details class="transit-windows"><summary>Headway windows as stated (${w.length.toLocaleString()})</summary><ul>${rows}</ul></details>`:'')+'</div>';}).join('');
+  return`<p class="transit-estimate-basis"><strong>${detail.basis==='mixed'?'Mixed: estimated headways and timed trips.':'Estimated headways.'}</strong> ${esc(h.label||'')}</p>`+(blocks||`<p>No service on ${esc(day==='all'?'these days':dayName(day))}.</p>`);
+}
+
 export function transitDetailHTML(detail,day){
-  const style=TRANSIT_MODE_STYLE[detail.mode]||{label:detail.mode},p=detail.provenance||{},list=departures(detail,day);
-  return`<button class="close-button" id="transitDetailClose" aria-label="Close city transit line">×</button><p class="eyebrow">${esc(style.label)} · CITY TRANSIT</p><h3>${esc(detail.label||detail.sourceRouteId)}</h3><p>${esc(detail.operator||'Operator unavailable')}</p>`+
+  const style=TRANSIT_MODE_STYLE[detail.mode]||{label:detail.mode},p=detail.provenance||{},estimated=detail.basis==='estimated_headway'||detail.basis==='mixed',list=estimated?[]:departures(detail,day);
+  return`<button class="close-button" id="transitDetailClose" aria-label="Close city transit line">×</button><p class="eyebrow">${esc(style.label)} · CITY TRANSIT${estimated?' · ESTIMATED HEADWAY':''}</p><h3>${esc(detail.label||detail.sourceRouteId)}</h3><p>${esc(detail.operator||'Operator unavailable')}</p>`+
     (detail.partlyHeld?`<p class="transit-hold">${esc(detail.partlyHeld.note)}</p>`:'')+
     (detail.alsoShownAsTrain?`<p class="helper">The train layer also shows this line (${esc(detail.alsoShownAsTrain.railRoute||'')}); it is not counted twice in either layer's totals.</p>`:'')+
-    `<p>${list.length.toLocaleString()} recorded departures on ${esc(day)} · ${esc(detail.countBasis||'')}</p><p class="helper">${esc(detail.geometryWarning||'')} Eurail / Interrail inclusion: unknown.</p>`+
+    (estimated?headwayHTML(detail,day):`<p>${list.length.toLocaleString()} recorded departures on ${esc(day)} · ${esc(detail.countBasis||'')}</p>`)+`<p class="helper">${esc(detail.geometryWarning||'')} Eurail / Interrail inclusion: unknown.</p>`+
     `<p class="helper">${esc(p.attribution||'')} · ${link(p.licenceUrl,LICENCE_NAMES[p.licence]||p.licence||'Licence')} · ${link(p.sourcePage,'Source')}</p>`;
 }

@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=7e389cc516b08c39';
-import{contextSelectionKey,contextCountryVisible,restoreContextFocus}from'./context-scope.js?v=7e389cc516b08c39';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=28809ad252b73f13';
+import{contextSelectionKey,contextCountryVisible,restoreContextFocus}from'./context-scope.js?v=28809ad252b73f13';
 
 export function relevantTransfers(summary,view){
   const{zoom,bounds,dates,day='all',sources=null,mode='frequency',schematic=true,representedInMainServiceLayer=[]}=view;
@@ -8,8 +8,10 @@ export function relevantTransfers(summary,view){
   // match, including when no fee categories or No extras are selected.
   if(effectivePass(view)||summary?.schemaVersion!==1||zoom<(summary.minimumZoom||4)||!Array.isArray(bounds)||bounds.length!==4||!serviceVisible({serviceMode:'temporary_replacement_bus'},view)||schematic===false)return[];
   const selected=selectedDays(day,dates),represented=new Set(representedInMainServiceLayer);
+  // A row suppressed as the same bus as a row of the recommended source is
+  // drawn once, as that row, also when its alternate source is switched on.
   return(summary.transfers||[]).filter(row=>{
-    const b=row.bounds;return contextCountryVisible(row,view)&&row.representedInMainServiceLayer!==true&&!represented.has(row.id)&&row.temporary!==false&&(mode!=='italy'||row.countries?.includes('Italy'))&&(!sources||!row.source||sources.has(row.source))&&Array.isArray(b)&&b.length===4&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3]&&
+    const b=row.bounds;return contextCountryVisible(row,view)&&row.representedInMainServiceLayer!==true&&!represented.has(row.id)&&row.sourceSuppressionApplied!==true&&row.temporary!==false&&(mode!=='italy'||row.countries?.includes('Italy'))&&(!sources||!row.source||sources.has(row.source))&&Array.isArray(b)&&b.length===4&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3]&&
       selected.some(index=>dates[index]>=row.startDate&&dates[index]<=row.endDate&&(row.frequencyKnown===false?row.activeDates?.includes(dates[index]):(Number(row.daily?.[index])||0)>0));
   });
 }
