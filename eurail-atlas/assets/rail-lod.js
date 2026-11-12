@@ -1,4 +1,4 @@
-import{segmentDistanceSquared}from'./atlas-core.js?v=5c0681e9ac459be1';
+import{segmentDistanceSquared}from'./atlas-core.js?v=ade479ba8cd5edfe';
 
 const worlds=new WeakMap();
 
