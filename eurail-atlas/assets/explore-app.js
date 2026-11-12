@@ -1,6 +1,6 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=18e7ea9f6c5b7ed8';
-import{css,fmt,esc}from'./explore-ui.js?v=18e7ea9f6c5b7ed8';
-import{makeLabels}from'./explore-labels.js?v=18e7ea9f6c5b7ed8';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=299398a3681b3f03';
+import{css,fmt,esc,exploreHash}from'./explore-ui.js?v=299398a3681b3f03';
+import{makeLabels}from'./explore-labels.js?v=299398a3681b3f03';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -82,16 +82,18 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=18e7ea9f6c5b7ed8':name==='reach'?'./explore-reach.js?v=18e7ea9f6c5b7ed8':name==='speed'?'./explore-speed.js?v=18e7ea9f6c5b7ed8':'./explore-more.js?v=18e7ea9f6c5b7ed8');
+    const module=await import(name==='motion'?'./explore-motion.js?v=299398a3681b3f03':name==='reach'?'./explore-reach.js?v=299398a3681b3f03':name==='speed'?'./explore-speed.js?v=299398a3681b3f03':'./explore-more.js?v=299398a3681b3f03');
     return views[name]=module.create(ctx);
   }
   async function route(){
-    const name=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'motion';
+    // #<view> or #<view>/<section>: a section is an element id inside that view (More panels).
+    const[requested,section]=exploreHash(location.hash),name=VIEWS.includes(requested)?requested:'motion';
     document.querySelectorAll('.x-tab').forEach(a=>{if(a.dataset.view===name)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     current?.deactivate?.();ctx.hideTooltip();
     const isMap=name!=='more';$('mapView').hidden=!isMap;$('moreView').hidden=isMap;
     if(isMap){$('panelTitle').textContent=TITLES[name];document.querySelectorAll('.x-view-panel').forEach(p=>p.hidden=p.dataset.for!==name);map.invalidateSize();layer.resize();}
     current=await view(name);current.activate?.();dirty=true;
+    if(section){const target=document.getElementById(section),root=$(name==='more'?'moreView':'panel');if(target&&root?.contains(target))requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}
     document.title=`Euro Rail — ${name==='more'?'More views':TITLES[name]}`;
   }
   window.addEventListener('hashchange',route);

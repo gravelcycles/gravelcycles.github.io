@@ -20,3 +20,6 @@ export function attachStationSearch(input,list,search,onPick){
 
 export function fillDaySelect(select,dates,selected){select.innerHTML=dates.map(d=>`<option value="${d.index}"${d.index===selected?' selected':''}>${esc(d.label)}</option>`).join('');}
 
+
+// Explore links: #<view> or #<view>/<section> (a section is an element id in that view).
+export function exploreHash(hash){const[view='',section='']=String(hash||'').replace(/^#/,'').split('/');return[view,/^[A-Za-z][\w-]{0,40}$/.test(section)?section:''];}

@@ -1,16 +1,16 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=18e7ea9f6c5b7ed8';
-import{serviceSleepHTML}from'./sleep-service.js?v=18e7ea9f6c5b7ed8';
-import{replacementHTML}from'./replacement-service.js?v=18e7ea9f6c5b7ed8';
-import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=18e7ea9f6c5b7ed8';
-import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=18e7ea9f6c5b7ed8';
-import{supplementalRouteGroups,publishedJourneys}from'./supplemental-availability.js?v=18e7ea9f6c5b7ed8';
-import{runSelectionId}from'./native-public-numbers.js?v=18e7ea9f6c5b7ed8';
-import{hasClockCoverageGaps}from'./clock-coverage.js?v=18e7ea9f6c5b7ed8';
-import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=18e7ea9f6c5b7ed8';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,sumDays,publicTrainLabels,stationMapPoint}from'./atlas-core.js?v=299398a3681b3f03';
+import{serviceSleepHTML}from'./sleep-service.js?v=299398a3681b3f03';
+import{replacementHTML}from'./replacement-service.js?v=299398a3681b3f03';
+import{callPermissionNote,continuationAvailabilityNote,continuationPolicyText}from'./through-continuations.js?v=299398a3681b3f03';
+import{callId,groupSegmentRoutes,journeyDaily,sourceServiceDesignations,formatClock,routeRuns,policyJourneysForSelection,serviceDates,runDisplayClockTimes,runUsesStationTimezones}from'./train-services.js?v=299398a3681b3f03';
+import{supplementalRouteGroups,publishedJourneys}from'./supplemental-availability.js?v=299398a3681b3f03';
+import{runSelectionId}from'./native-public-numbers.js?v=299398a3681b3f03';
+import{hasClockCoverageGaps}from'./clock-coverage.js?v=299398a3681b3f03';
+import{withheldClockNoticeHTML,loadClockNotices,clockNoticesSettled}from'./clock-notice.js?v=299398a3681b3f03';
 
 const dayText=dates=>dates.map(date=>new Date(date+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'})).join(' · ');
 
-export function setupTrainInspector({getState,getDates,getJourneys,station,sourceName,loadTimetables,onFocus,onBack,onRetry,onStation,getSupplementalKey=()=>null,loadSupplementalAvailability,getNumberMetadataStatus=()=>({}),onRetryNumberMetadata}){
+export function setupTrainInspector({getState,getDates,getJourneys,station,sourceName,loadTimetables,onFocus,onBack,onRetry,onStation,getSupplementalKey=()=>null,loadSupplementalAvailability,getNumberMetadataStatus=()=>({}),onRetryNumberMetadata,onGroups=null}){
   let edgeId='',routeKey='',trainLabel='',runId='',generation=0,loading=false,failure=false,timetable=null,groups=[],listScroll=0,cityRouteLimit=80,stretchKeys=null;
   let supplemental=null,supplementalKey=null,supplementalController=null,supplementalLoading=false,supplementalError=false,supplementalGeneration=0;
   const name=id=>station(id).name||'Recorded station';
@@ -46,7 +46,7 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     const published=publishedJourneys(journeys);ensureSupplemental(published);
     const normalGroups=edge._supplementalOnly?[]:edge.cityGroups||groupSegmentRoutes(journeys,edge,state,dates);let extraGroups=[];
     try{extraGroups=supplementalRouteGroups(published,edge,state,dates,supplemental);}catch{supplementalError=true;}
-    groups=[...normalGroups,...extraGroups];
+    groups=[...normalGroups,...extraGroups];onGroups?.(groups);
     if(routeKey&&!currentGroup()){routeKey='';trainLabel='';runId='';generation++;onBack();}
     const group=currentGroup();root.className='segment-trains';
     const sleepMarkup=group=>serviceSleepHTML(group,item=>sumDays(item,state.day,dates));
@@ -96,5 +96,5 @@ export function setupTrainInspector({getState,getDates,getJourneys,station,sourc
     document.querySelector('#segmentTrains .stretch-route-list [data-route-index]')?.focus({preventScroll:true});
     return true;
   }
-  return{render,reset,back,pickRoutes,get groups(){return groups;},get focused(){return!!routeKey;}};
+  return{render,reset,back,pickRoutes,get groups(){return groups;},get focused(){return!!routeKey;},get routeKey(){return routeKey;}};
 }

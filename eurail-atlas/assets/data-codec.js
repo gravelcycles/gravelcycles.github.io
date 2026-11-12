@@ -7,7 +7,7 @@ export async function decodeJSONBytes(input,reportTextBytes){
   if(bytes.length>=2&&bytes[0]===0x1f&&bytes[1]===0x8b){
     let text;
     if(typeof DecompressionStream==='function'){const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));text=await new Response(stream).text();}
-    else{const{gunzip}=await import('./gunzip.js?v=18e7ea9f6c5b7ed8');text=new TextDecoder().decode(gunzip(bytes));}
+    else{const{gunzip}=await import('./gunzip.js?v=299398a3681b3f03');text=new TextDecoder().decode(gunzip(bytes));}
     reportTextBytes?.(text.length*2);return JSON.parse(text);
   }
   const text=new TextDecoder().decode(bytes);reportTextBytes?.(text.length*2);return JSON.parse(text);

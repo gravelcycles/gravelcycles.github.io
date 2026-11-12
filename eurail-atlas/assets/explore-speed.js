@@ -1,8 +1,8 @@
 // Speed: every hop between consecutive stops, coloured by scheduled
 // straight-line speed for one day's trains.
-import{CATEGORY_LABELS,haversineKm}from'./explore-data.js?v=18e7ea9f6c5b7ed8';
-import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=18e7ea9f6c5b7ed8';
-import{capFramePadding}from'./frame-padding.js?v=18e7ea9f6c5b7ed8';
+import{CATEGORY_LABELS,haversineKm}from'./explore-data.js?v=299398a3681b3f03';
+import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=299398a3681b3f03';
+import{capFramePadding}from'./frame-padding.js?v=299398a3681b3f03';
 
 const $=id=>document.getElementById(id);
 const BANDS=[[60,'Under 60','--s6'],[90,'60–90','--s5'],[120,'90–120','--s4'],[160,'120–160','--s3'],[200,'160–200','--s2'],[1e9,'200+ km/h','--accent']];
