@@ -139,7 +139,7 @@ export class TransitLayer{
     if(first.kind!=='transit_atlas_manifest')throw new Error('Unsupported transit data format');
     this.manifest=first;this.hold=null;
     if(!this.modesChosen)this.modes=new Set(this.manifest.modes||['tram','metro']);
-    this.dates=this.manifest.dates;this.day=this.dates.includes(this.day)?this.day:defaultDay(this.dates);
+    this.dates=this.manifest.dates;this.day=this.day==='all'||this.dates.includes(this.day)?this.day:defaultDay(this.dates);
     this.catalogue=await this.requests.json(this.manifest.tiles.catalogue,'transit_atlas_tile_catalogue');
     this.overview=null;
     this.refresh=()=>this.draw();this.map.on('moveend zoomend',this.refresh);
