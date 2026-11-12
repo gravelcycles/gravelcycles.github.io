@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,serviceVisible,effectivePass}from'./atlas-core.js?v=1db9ee4e69a277e5';
-import{contextCountryVisible}from'./context-scope.js?v=1db9ee4e69a277e5';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,serviceVisible,effectivePass}from'./atlas-core.js?v=f8cc78f67d7df99a';
+import{contextCountryVisible}from'./context-scope.js?v=f8cc78f67d7df99a';
 
 // Reviewed links between adjacent border stations. Each national timetable
 // ends the train at its own border station and neither publishes the leg in

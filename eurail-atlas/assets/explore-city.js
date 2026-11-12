@@ -1,7 +1,7 @@
 // City figures for More views: the hub cities of a delivery, the hourly tide
 // of trains into and out of each, and the fastest journey between each pair.
-import{haversineKm,clockUtcOffset}from'./explore-data.js?v=1db9ee4e69a277e5';
-import{dayConnections,makeFastestSearch}from'./explore-scan.js?v=1db9ee4e69a277e5';
+import{haversineKm,clockUtcOffset}from'./explore-data.js?v=f8cc78f67d7df99a';
+import{dayConnections,makeFastestSearch}from'./explore-scan.js?v=f8cc78f67d7df99a';
 
 const LABELS={zurich:'Zürich','istanbul-halkali':'Istanbul',krakow:'Kraków',poznan:'Poznań',wroclaw:'Wrocław',gdansk:'Gdańsk',klaipeda:'Klaipėda'};
 export const hubLabel=key=>LABELS[key]||key.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');

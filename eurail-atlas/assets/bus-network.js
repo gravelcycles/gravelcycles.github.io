@@ -1,5 +1,5 @@
-import{BusRequests,validBusDocument,foldBusText}from'./bus-core.js?v=1db9ee4e69a277e5';
-import{FREQUENCY_BREAKS,FREQUENCY_COLORS}from'./atlas-core.js?v=1db9ee4e69a277e5';
+import{BusRequests,validBusDocument,foldBusText}from'./bus-core.js?v=f8cc78f67d7df99a';
+import{FREQUENCY_BREAKS,FREQUENCY_COLORS}from'./atlas-core.js?v=f8cc78f67d7df99a';
 
 // Spatial network tiles: every published path segment in the viewport, with the
 // scheduled trips that use it. Unlike the identity-ordered native packets, a
