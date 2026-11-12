@@ -1,6 +1,6 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=299398a3681b3f03';
-import{css,fmt,esc,exploreHash}from'./explore-ui.js?v=299398a3681b3f03';
-import{makeLabels}from'./explore-labels.js?v=299398a3681b3f03';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=8eeddc2d0b1f1115';
+import{css,fmt,esc,exploreHash}from'./explore-ui.js?v=8eeddc2d0b1f1115';
+import{makeLabels}from'./explore-labels.js?v=8eeddc2d0b1f1115';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -82,7 +82,7 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=299398a3681b3f03':name==='reach'?'./explore-reach.js?v=299398a3681b3f03':name==='speed'?'./explore-speed.js?v=299398a3681b3f03':'./explore-more.js?v=299398a3681b3f03');
+    const module=await import(name==='motion'?'./explore-motion.js?v=8eeddc2d0b1f1115':name==='reach'?'./explore-reach.js?v=8eeddc2d0b1f1115':name==='speed'?'./explore-speed.js?v=8eeddc2d0b1f1115':'./explore-more.js?v=8eeddc2d0b1f1115');
     return views[name]=module.create(ctx);
   }
   async function route(){

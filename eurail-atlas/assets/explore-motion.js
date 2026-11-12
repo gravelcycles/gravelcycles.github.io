@@ -1,6 +1,6 @@
 // Europe in motion: every timed train at its scheduled position for one day.
-import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=299398a3681b3f03';
-import{fillDaySelect,esc,fmt}from'./explore-ui.js?v=299398a3681b3f03';
+import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=8eeddc2d0b1f1115';
+import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=8eeddc2d0b1f1115';
 
 const $=id=>document.getElementById(id);
 const RAD=Math.PI/180,KM_PER_WORLD=40075.016/256,TRAIL=10,MAX_ACTIVE=60000;
@@ -22,7 +22,7 @@ export function create(ctx){
   const T_ALL=data.trips,tripPattern=new Uint32Array(T_ALL),tripCat=new Uint8Array(T_ALL);
   for(let t=0;t<T_ALL;t++){const p=data.profilePattern[data.tripProfile[t]];tripPattern[t]=p;tripCat[t]=data.journeys.patternCategory[p];}
   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const state={day:3,T:8*60,rate:5,playing:!reduced,mode:'category',cats:[true,true,true,true],trails:true,selected:-1,follow:false};
+  const state={day:3,T:8*60,rate:selectFastest($('motionRate'))??5,playing:!reduced,mode:'category',cats:[true,true,true,true],trails:true,selected:-1,follow:false};
   let colors=[],lastTime=0,active=0,spark=null;
   const ax=new Float32Array(MAX_ACTIVE),ay=new Float32Array(MAX_ACTIVE),at=new Uint32Array(MAX_ACTIVE);
   const out={x:0,y:0,speed:0,dx:0,dy:0,moving:false,progress:0};

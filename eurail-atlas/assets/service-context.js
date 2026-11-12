@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc,capFramePadding}from'./atlas-core.js?v=299398a3681b3f03';
-import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=299398a3681b3f03';
+import{selectedDays,escapeHTML as esc,capFramePadding}from'./atlas-core.js?v=8eeddc2d0b1f1115';
+import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=8eeddc2d0b1f1115';
 
 export function contextVisible(state){return state.closedCorridors===true;}
 

@@ -18,6 +18,10 @@ export function attachStationSearch(input,list,search,onPick){
   input.addEventListener('focus',()=>{if(input.value)input.select();});
 }
 
+// The fastest option of a speed <select> (largest numeric value); it becomes the
+// selected option, so the control and the animation start at the same speed.
+export function selectFastest(select){let best=null;for(const o of select?.options||[]){const v=+o.value;if(Number.isFinite(v)&&(!best||v>+best.value))best=o;}if(best)select.value=best.value;return best?+best.value:null;}
+
 export function fillDaySelect(select,dates,selected){select.innerHTML=dates.map(d=>`<option value="${d.index}"${d.index===selected?' selected':''}>${esc(d.label)}</option>`).join('');}
 
 
