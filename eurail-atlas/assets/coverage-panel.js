@@ -44,6 +44,48 @@ function carriedSection(parent,manifest,country){
   area.appendChild(list);
 }
 
+/* Replacement-bus holds: a reviewed replacement-bus context that does not
+   cover this week is recorded in manifest.operatingTransfers.holds. Its buses
+   are not drawn; the drawer says so in plain words, built only from the hold's
+   own fields. A hold for another delivery's dates is never shown here, and an
+   unrecognised kind is shown generically rather than dropped. */
+function isoDay(value){return typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)?observationDate(value+'T00:00:00Z'):'';}
+function dayRange(values){const days=(Array.isArray(values)?values:[]).filter(value=>isoDay(value));return days.length?(days.length===1?isoDay(days[0]):isoDay(days[0])+' to '+isoDay(days.at(-1))):'';}
+export function transferHolds(manifest,country){
+  const holds=manifest?.operatingTransfers?.holds;if(!Array.isArray(holds))return[];
+  const dates=Array.isArray(manifest?.dates)?manifest.dates:[],sources=new Map((manifest?.sources||[]).map(source=>[source.id,source]));
+  return holds.filter(hold=>hold&&typeof hold==='object'&&(!Array.isArray(hold.deliveryDates)||!dates.length||hold.deliveryDates.length===dates.length&&hold.deliveryDates.every((date,index)=>date===dates[index]))).map(hold=>{
+    const context=typeof hold.context==='string'?hold.context:'',prefix=['replacement_backfill:','replacement_week:'].find(value=>context.startsWith(value)),subject=prefix?context.slice(prefix.length):context;
+    const source=sources.get(subject),label=source?.name||subject||'an unnamed replacement-bus review',holdCountry=source?.country||'';
+    const lastVerified=typeof hold.lastVerified==='string'&&hold.lastVerified?(isoDay(hold.lastVerified)||hold.lastVerified):'',reviewed=dayRange(hold.reviewedDates),transfers=Array.isArray(hold.transferIds)?hold.transferIds.length:null;
+    const since=lastVerified?'; last verified '+lastVerified:reviewed?'; last reviewed for '+reviewed:'',queued=Number(hold.heldServiceDates);
+    let kind,text;
+    if(hold.decision==='recorded_carry'){kind='recorded_carry';text='Replacement buses: no verified data this week for '+label+(lastVerified?'; last verified '+lastVerified:'')+'.';}
+    else if(hold.status==='partly_held'&&Number.isFinite(queued)&&queued>0){kind='partly_held';text='Replacement buses: '+number(queued)+' bus service-date'+(queued===1?'':'s')+' for '+label+' this week '+(queued===1?'is':'are')+' awaiting review and not shown; the rest are drawn.';}
+    else if(hold.holdKind==='unregistered_source'){kind='unregistered_source';text='Replacement buses: '+label+' has not been reviewed for replacement buses, so none are shown from it this week.';}
+    else if(!hold.decision&&typeof hold.holdKind==='string'&&hold.holdKind&&transfers>0&&hold.status!=='partly_held'){
+      /* A hold that names its rows holds those rows only: other rows of the same source can still be drawn. */
+      const held=new Set(hold.transferIds.map(String)),index=manifest?.operatingTransfers?.transfers,scopeEnd=isoDay(hold.recordedScopeEndDate);
+      const others=subject&&Array.isArray(index)?index.filter(row=>row&&row.source===subject&&!held.has(String(row.id))).length:null;
+      kind='named_rows';text='Replacement buses: '+number(transfers)+' replacement'+(transfers===1?'':'s')+' for '+label+(reviewed?' reviewed for '+reviewed:scopeEnd?' reviewed up to '+scopeEnd:'')+' await'+(transfers===1?'s':'')+' a review for this week, so '+(transfers===1?'it is':'they are')+' not shown'+(lastVerified?'; last verified '+lastVerified:'')
+        +(others===null?'':others>0?'; '+number(others)+' other replacement'+(others===1?'':'s')+' from this source '+(others===1?'is':'are')+' drawn':'; no other replacement from this source is shown this week')+'.';
+    }
+    else if(typeof hold.holdKind==='string'&&hold.holdKind&&hold.status!=='partly_held'){kind='week_held';text='Replacement buses: no verified data this week for '+label+since+'.';}
+    else if(!hold.decision&&transfers!==null){kind='renewal';text='Replacement buses: '+number(transfers)+' replacement'+(transfers===1?'':'s')+' for '+label+(reviewed?' reviewed for '+reviewed:'')+' await'+(transfers===1?'s':'')+' a review for this week, so '+(transfers===1?'it is':'they are')+' not shown'+(lastVerified?'; last verified '+lastVerified:'')+'.';}
+    else if(!hold.decision&&!hold.holdKind&&reviewed){kind='week_bound';text='Replacement buses: the review for '+label+' covers '+reviewed+' only, so its replacement buses are not shown this week'+(lastVerified?'; last verified '+lastVerified:'')+'.';}
+    else{kind='other';text='Replacement buses: held this week for '+label+since+'.';}
+    return{context,kind,label,country:holdCountry,text,reason:typeof hold.reason==='string'?hold.reason:''};
+  }).filter(row=>!country||row.country===country);
+}
+function transferHoldSection(parent,manifest,country){
+  const rows=transferHolds(manifest,country);if(!rows.length)return;
+  const area=node('section','coverage-section coverage-transfer-holds');area.appendChild(node('h3','','Replacement buses held this week'));
+  area.appendChild(node('p','','Replacement buses listed here are not drawn, because no verified data covers them for this week. This does not establish that the railway is open or that no buses run; check the operator.'));
+  const list=node('ul','coverage-carried-list');
+  for(const row of rows){const item=node('li','');item.append(node('span','',row.text+(country||!row.country?'':' · '+row.country)));if(row.reason){const details=node('details','coverage-small');details.append(node('summary','','Recorded reason'),node('p','',row.reason));item.appendChild(details);}list.appendChild(item);}
+  area.appendChild(list);parent.appendChild(area);
+}
+
 export function countryCoverageSummary(row,audience='public'){
   if(!row)return{label:'Coverage not certified',detail:'A country inventory is unavailable for this snapshot. Missing lines do not establish that no trains run.',tone:'unknown'};
   const statuses={
@@ -69,7 +111,7 @@ export function setupCoverage(options){
   hooks=options||{};
   if(controller)return controller;
   const dialog=$('coverageDialog'),button=$('coverageButton'),select=$('coverageCountry');
-  if(!dialog||!button||!select)return{open:async()=>{},refresh:async()=>{},refreshViewport:()=>{},getCountrySummary:async country=>({country,...countryCoverageSummary(null)})};
+  if(!dialog||!button||!select)return{open:async()=>{},openCountry:async()=>false,refresh:async()=>{},refreshViewport:()=>{},getCountrySummary:async country=>({country,...countryCoverageSummary(null)})};
   const eyebrow=dialog.querySelector('.eyebrow'),intro=dialog.querySelector('.coverage-intro'),publicEyebrow=eyebrow?.textContent,publicIntro=intro?.textContent;
   function audience(){const declared=hooks.getManifest?.()?.publication?.audience;return declared==='private'||(!declared&&(census?.audience==='private'||census?.kind==='private_personal_rail_coverage'))?'private':'public';}
   async function ensure(){
@@ -118,6 +160,7 @@ export function setupCoverage(options){
       if(typeof hooks.onShowSources==='function'){const show=node('button','coverage-country-card','Show '+row.country+' sources');show.type='button';show.onclick=()=>{hooks.onShowSources(visibility.hidden);renderCountry(row);};area.appendChild(show);}
     }
     carriedSection(body,hooks.getManifest?.(),row.country);
+    transferHoldSection(body,hooks.getManifest?.(),row.country);
     for(const source of hooks.getManifest?.()?.sources||[])if(source.timetableObservation?.kind==='historical_base_snapshot'&&(source.country===row.country||row.publicDomesticSources?.includes(source.id)))section(body,'Historical base timetable',observationDetails(source,hooks.getManifest?.()));
     if(summary.policyGap)section(body,'Eurail policy gap','Pass inclusion needs review. Zero included map connections does not establish that Eurail excludes this country or its trains.');
     if(row.heldHomeSourceCount>0){const area=section(body,privateEdition?'Acquired but not in this personal snapshot':'Acquired but withheld from this public edition',privateEdition?'These timetable feeds were acquired but are not included in this personal snapshot. Their absence does not establish that their trains are unavailable.':'These timetable feeds are acquired, but their inclusion is restricted by the current publication policy. This is a dataset publication gap, not a statement that their trains are unavailable.');const list=node('ul');for(const name of row.omittedFeedNames||[])list.appendChild(node('li','',String(name)));area.appendChild(list);}
@@ -142,6 +185,7 @@ export function setupCoverage(options){
     body.replaceChildren();
     if(!rows.length){paragraph(body,privateEdition?'Missing snapshot data does not mean there is no train service. Check an operator timetable before planning a journey.':'Missing public data does not mean there is no train service. Check an operator timetable before planning a journey.');return;}
     carriedSection(body,manifest,'');
+    transferHoldSection(body,manifest,'');
     const grid=node('div','coverage-country-list');
     for(const row of rows){const summary=countryCoverageSummary(row,audience()),item=node('button','coverage-country-card');item.type='button';item.append(node('strong','',row.country),node('span','',summary.label+(summary.policyGap?' · Eurail review':'')));item.onclick=()=>{select.value=row.country;renderCountry(row);};grid.appendChild(item);}body.appendChild(grid);
   }
@@ -149,8 +193,17 @@ export function setupCoverage(options){
     if(!dialog.open)dialog.showModal();$('coverageBody').replaceChildren(node('p','','Reading snapshot coverage…'));
     await ensure();render();if(country&&selectedRows().some(row=>row.country===country)){select.value=country;render();}
   }
+  // coverage=<name> from a link: open at that country only when it is listed; an unknown
+  // name opens nothing (resolves false) so the caller can drop it. With no census rows
+  // to check against, behave as open().
+  async function openCountry(country){
+    if(!country)return open().then(()=>true);
+    await ensure();const rows=selectedRows();
+    if(rows.length&&!rows.some(row=>row.country===country))return false;
+    await open(country);return true;
+  }
   select.onchange=render;button.onclick=()=>open();$('closeCoverage').onclick=()=>dialog.close();
   dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}});
-  controller={open,refreshViewport,refresh:async()=>{refreshViewport();census=null;censusKey=null;pending=null;if(dialog.open){await ensure();render();}},getCountrySummary:async country=>{await ensure();const row=selectedRows().find(row=>row.country===country),summary=countryCoverageSummary(row,audience());return{country,...summary,row,shortText:country+': '+summary.label.toLowerCase()+'.'};}};
+  controller={open,openCountry,refreshViewport,refresh:async()=>{refreshViewport();census=null;censusKey=null;pending=null;if(dialog.open){await ensure();render();}},getCountrySummary:async country=>{await ensure();const row=selectedRows().find(row=>row.country===country),summary=countryCoverageSummary(row,audience());return{country,...summary,row,shortText:country+': '+summary.label.toLowerCase()+'.'};}};
   return controller;
 }

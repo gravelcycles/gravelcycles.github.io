@@ -27,3 +27,16 @@ export function fillDaySelect(select,dates,selected){select.innerHTML=dates.map(
 
 // Explore links: #<view> or #<view>/<section> (a section is an element id in that view).
 export function exploreHash(hash){const[view='',section='']=String(hash||'').replace(/^#/,'').split('/');return[view,/^[A-Za-z][\w-]{0,40}$/.test(section)?section:''];}
+// #<view>/<section>: keep the section at the top while the panels above it are still
+// rendering. Scroll now, then on each frame scroll again whenever the section has moved
+// (content above grew or shrank). Stops at the first user input (wheel, touch, pointer,
+// key), when stop() is called (the next hash change), or after `timeout` ms.
+export function holdSectionInView(target,{timeout=10000,win=globalThis}={}){
+  const EVENTS=['wheel','touchstart','pointerdown','keydown'];let stopped=false,frame=0,top=null;
+  const scroll=()=>{target.scrollIntoView({block:'start'});top=target.getBoundingClientRect().top;};
+  const tick=()=>{if(stopped)return;const now=target.getBoundingClientRect().top;if(top===null||Math.abs(now-top)>1)scroll();frame=win.requestAnimationFrame(tick);};
+  const stop=()=>{if(stopped)return;stopped=true;win.cancelAnimationFrame?.(frame);win.clearTimeout(timer);for(const type of EVENTS)win.removeEventListener?.(type,stop,true);};
+  for(const type of EVENTS)win.addEventListener?.(type,stop,{capture:true,passive:true});
+  const timer=win.setTimeout(stop,timeout);frame=win.requestAnimationFrame(tick);
+  return stop;
+}

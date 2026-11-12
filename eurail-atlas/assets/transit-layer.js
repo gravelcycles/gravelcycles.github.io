@@ -13,6 +13,15 @@ export const TRANSIT_MODE_STYLE=Object.freeze({
   cable_tram:{label:'Cable tram',color:'#c8102e',weight:3,dash:'4 2'},
   monorail:{label:'Monorail',color:'#1f4fbf',weight:3.5,dash:'10 3'}});
 const HASH=/^[a-f0-9]{64}$/;
+// The layer's bytes may live in a data repository: transit-data/manifest.json is then a
+// pointer (docs/DATA_LAYERS_OUTSIDE_PAGES.md). Only this exact shape is followed: the raw
+// host, an allowed repository, a full commit and the manifest's own hash in the path.
+const POINTER_BASE=/^https:\/\/raw\.githubusercontent\.com\/gravelcycles\/eurail-transit-data(?:-[0-9]+)?\/[a-f0-9]{40}\/snapshots\/([a-f0-9]{64})\/$/;
+export function transitPointerBase(pointer){
+  const base=pointer?.delivery?.baseUrl,sha=pointer?.manifest?.sha256,match=typeof base==='string'?POINTER_BASE.exec(base):null;
+  if(pointer?.schemaVersion!==1||pointer.kind!=='transit_atlas_pointer'||!match||match[1]!==sha||pointer.manifest.path!=='manifest.json')throw new Error('Unsupported transit pointer');
+  return{base,manifest:{path:'manifest.json',sha256:sha}};
+}
 
 export function intersects(a,b){return Array.isArray(a)&&a.length===4&&a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];}
 export function transitCount(route,day,dates){const i=dates.indexOf(day);return day==='all'?(route.dates||[]).reduce((n,v)=>n+(Number(v)||0),0):i<0?0:Number(route.dates?.[i])||0;}
@@ -91,19 +100,30 @@ export function cityZoom(boundsZoom,minimumZoom){return Math.max(minimumZoom,Mat
 
 async function sha256Hex(bytes){const d=await crypto.subtle.digest('SHA-256',bytes);return[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');}
 
+// A serving host that accepts the connection and then sends nothing would leave "Loading…" up
+// for ever. Each object gets this long (request and body); after it the request is aborted and
+// fails like any unavailable object, so start-up ends with the usual "not available" message.
+export const TRANSIT_TIMEOUT_MS=20000;
 export class TransitRequests{
-  constructor(base,fetcher=globalThis.fetch.bind(globalThis)){this.base=new URL(base,globalThis.document?.baseURI||globalThis.location?.href);this.fetcher=fetcher;this.controller=new AbortController();this.cache=new Map();}
+  constructor(base,fetcher=globalThis.fetch.bind(globalThis),timeoutMs=TRANSIT_TIMEOUT_MS){this.timeoutMs=timeoutMs;this.base=new URL(base,globalThis.document?.baseURI||globalThis.location?.href);this.fetcher=fetcher;this.controller=new AbortController();this.cache=new Map();}
   abort(){this.controller.abort();this.controller=new AbortController();this.cache.clear();}
   async json(descriptorOrPath,kind){
     const desc=typeof descriptorOrPath==='string'?{path:descriptorOrPath}:descriptorOrPath;
     const url=new URL(desc.path,this.base);
     if(url.origin!==this.base.origin||!url.pathname.startsWith(this.base.pathname))throw new Error('Transit asset outside its base');
     if(this.cache.has(url.href))return this.cache.get(url.href);
-    const signal=this.controller.signal;
+    const outer=this.controller.signal,own=new AbortController(),signal=own.signal;
+    const stop=()=>own.abort();
+    if(outer.aborted)own.abort();else outer.addEventListener('abort',stop,{once:true});
     const promise=(async()=>{
-      const response=await this.fetcher(url.href,{signal,credentials:'same-origin'});
-      if(!response.ok)throw new Error('Transit asset unavailable');
-      const raw=new Uint8Array(await response.arrayBuffer());
+      let timer,raw;
+      const late=new Promise((_,reject)=>{timer=setTimeout(()=>{own.abort();reject(new Error('Transit asset timed out'));},this.timeoutMs);});
+      try{
+        raw=await Promise.race([late,(async()=>{
+          const response=await this.fetcher(url.href,{signal,credentials:'same-origin'});
+          if(!response.ok)throw new Error('Transit asset unavailable');
+          return new Uint8Array(await response.arrayBuffer());})()]);
+      }finally{clearTimeout(timer);outer.removeEventListener('abort',stop);}
       if(desc.sha256){if(!HASH.test(desc.sha256)||await sha256Hex(raw)!==desc.sha256)throw new Error('Transit asset hash mismatch');}
       let text;
       if(desc.path.endsWith('.gz')){const stream=new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'));text=await new Response(stream).text();}
@@ -120,20 +140,28 @@ export class TransitRequests{
 
 // Leaflet layer. L is the page's Leaflet global; nothing is fetched until enable().
 export class TransitLayer{
-  constructor(map,{base='transit-data/',L=globalThis.L,onSelect=null,onStatus=null,fetcher}={}){
+  constructor(map,{base='transit-data/',L=globalThis.L,onSelect=null,onStatus=null,fetcher,timeoutMs=TRANSIT_TIMEOUT_MS}={}){this.timeoutMs=timeoutMs;
     this.map=map;this.L=L;this.base=base;this.onSelect=onSelect;this.onStatus=onStatus;this.fetcher=fetcher;
     this.enabled=false;this.modes=new Set(['tram','metro']);this.day=null;this.generation=0;this.group=null;
   }
   async enable(){
     if(this.enabled)return;
-    this.enabled=true;this.requests=new TransitRequests(this.base,this.fetcher);
+    this.enabled=true;this.requests=new TransitRequests(this.base,this.fetcher,this.timeoutMs);
     this.renderer=this.L.canvas({padding:0.2});
     // City markers are SVG: the rail station hit-test gives painted station dots
     // precedence over an SVG path but takes every tap inside its tolerance halo
     // from a canvas, which would make markers at main stations untappable.
     if(this.map.getPane&&!this.map.getPane('transitCities'))this.map.createPane('transitCities').style.zIndex=450;
     this.cityRenderer=this.L.svg?this.L.svg({pane:'transitCities',padding:0.2}):this.renderer;this.group=this.L.layerGroup().addTo(this.map);
-    const first=await this.requests.json('manifest.json');
+    let first=await this.requests.json('manifest.json');
+    // A pointer: read the hash-checked manifest and everything after it from the pinned base.
+    this.pointer=null;
+    if(first.kind==='transit_atlas_pointer'){
+      const target=transitPointerBase(first);this.pointer=first;
+      this.requests.abort();this.requests=new TransitRequests(target.base,this.fetcher,this.timeoutMs);
+      first=await this.requests.json(target.manifest,'transit_atlas_manifest');
+      if(!this.enabled)return;
+    }
     // A recorded hold (its week has passed, or its sources changed) draws nothing and says why.
     if(first.kind==='transit_atlas_hold'){this.hold=first;this.status(first.message);return;}
     if(first.kind!=='transit_atlas_manifest')throw new Error('Unsupported transit data format');
@@ -256,10 +284,26 @@ export function transitCredits(manifest){
   return(manifest?.credits||[]).map(c=>({...c,licenceName:LICENCE_NAMES[c.licence]||c.licence}));
 }
 
+// Sources shown from an archive already held because this week's download kept failing
+// (transit_data/weekly.py): named with that archive's own retrieval date, never as fresh.
+export function transitFallbackSources(manifest){
+  return(manifest?.sources||[]).filter(s=>s.archiveRetrieval?.kind==='fallback')
+    .map(s=>({sourceId:s.id,name:s.name||s.id,retrievedAt:String(s.archiveRetrieval.retrievedAt||'').slice(0,10),reason:s.archiveRetrieval.reason||''}));
+}
+
+// Every source's archive retrieval date (sources[].retrievedAt), so an older archive is
+// never implied to be this week's; a cached archive shown under a recorded exception says so.
+export function transitRetrievalDates(manifest){
+  const out={};
+  for(const s of manifest?.sources||[])out[s.id]={retrievedAt:String(s.retrievedAt||'').slice(0,10),ageException:s.archiveRetrieval?.ageException||''};
+  return out;
+}
+
 export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
   if(!document)return'';
   if(document.kind==='transit_atlas_hold')return`<p class="transit-hold"><strong>Held.</strong> ${esc(document.message)}</p>`;
   const week=document.serviceWeek||{},credits=transitCredits(document),held=transitHeldLines(document),whole=held.filter(h=>h.whole);
+  const retrieved=transitRetrievalDates(document);
   const swiss=credits.some(c=>c.licence==='Swiss-ODmCH-Terms');
   const heldRows=held.slice(0,heldLimit).map(h=>`<li><strong>${esc(h.label)}</strong> · ${esc(h.operator||h.source)}${h.whole?' · <em>whole line held</em>':' · part of line held'}<br><span>${esc(h.reason)}</span></li>`).join('');
   const days=(document.dates||[]).map(d=>`<option value="${esc(d)}"${d===day?' selected':''}>${esc(new Date(d+'T12:00:00Z').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}))}</option>`).join('');
@@ -267,8 +311,9 @@ export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
     (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
     `<p class="helper">Counts are scheduled source records per mode, separate from trains and buses. Coverage is partial; pass inclusion is unknown. White centre dashes mark lines that are partly held or also shown as trains.</p>`+
     ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
+    (transitFallbackSources(document).length?`<details class="transit-held transit-fallback"><summary>Sources shown from an earlier archive (${transitFallbackSources(document).length.toLocaleString()})</summary><ul>${transitFallbackSources(document).map(f=>`<li><strong>${esc(f.name)}</strong> · archive retrieved ${esc(f.retrievedAt)}<br><span>${esc(f.reason)}</span></li>`).join('')}</ul></details>`:'')+
     (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary><ul>${heldRows}</ul>${held.length>heldLimit?`<p class="helper">${(held.length-heldLimit).toLocaleString()} more held route rows are listed in the transit manifest.</p>`:''}</details>`:'')+
-    `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.dataUpdated?.date?` · Data last updated ${esc(c.dataUpdated.date)}`:''}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice||document.databaseOffer?.path?`<p class="helper">${document.odblNotice?esc(document.odblNotice):''}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;
+    `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.dataUpdated?.date?` · Data last updated ${esc(c.dataUpdated.date)}`:''}${retrieved[c.sourceId]?.retrievedAt?` · Archive retrieved ${esc(retrieved[c.sourceId].retrievedAt)}`:''}${retrieved[c.sourceId]?.ageException?`<br><span>Older archive shown by recorded exception: ${esc(retrieved[c.sourceId].ageException)}</span>`:''}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice||document.databaseOffer?.path?`<p class="helper">${document.odblNotice?esc(document.odblNotice):''}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;
 }
 
 export function transitDetailHTML(detail,day){

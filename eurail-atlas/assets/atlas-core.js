@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=8eeddc2d0b1f1115';
-import{edgeInScope}from'./project-scope.js?v=8eeddc2d0b1f1115';
-import{continuationMetrics}from'./through-continuations.js?v=8eeddc2d0b1f1115';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=7e389cc516b08c39';
+import{edgeInScope}from'./project-scope.js?v=7e389cc516b08c39';
+import{continuationMetrics}from'./through-continuations.js?v=7e389cc516b08c39';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -13,7 +13,7 @@ export const PASS_MODES=new Set(['eurail','italy']);
 export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
 // capFramePadding lives in its own small module so the Explore page can use
 // it without loading the atlas core.
-export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=8eeddc2d0b1f1115';
+export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=7e389cc516b08c39';
 // Station, city and country names are folded repeatedly (catalogue, hub ranking,
 // search). Remember results; the bound keeps free-text queries from growing it.
 const normalized=new Map();
@@ -82,10 +82,33 @@ export function stationDisplayMode(state){return state.stations===false||state.s
 // City transit (an optional layer with its own week): transit=1 switches it on;
 // transitday keeps an explicitly chosen transit day (an ISO date or 'all'). A date
 // outside the layer's current week falls back to its default day when it loads.
-// A focused route under a selected connection or station: route=<routeLinkId(group key)>.
-// The key is the route's full identity (source, snapshot, operator, mode, calls), so a
-// link from another delivery simply matches nothing and is ignored.
+// A focused route under a selected connection or station: route=<id>.
+// Links are written with a delivery-stable id: routeLinkId(routeStableKey(group key)),
+// which drops the source snapshot hash and, for routes with no recorded operator, the
+// trip id. What remains is source id, operator, agency flag, mode and the ordered
+// canonical station ids of the calls, so the link survives a new delivery in which that
+// route still exists. It does not survive a change of canonical station ids (a station
+// repartition) or of the operator name; then it matches nothing and is dropped cleanly.
+// When two routes in the current list share a stable key (operatorless trips with the
+// same calls), the older delivery-bound id routeLinkId(group key) is written instead.
+// Both forms are accepted when a link is read (linkedRoute).
 export function routeLinkId(key){let h1=0xdeadbeef,h2=0x41c6ce57;const s=String(key||'');for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);}
+export function routeStableKey(key){
+  let row;try{row=JSON.parse(String(key||''));}catch{return'';}
+  if(!Array.isArray(row)||row.length!==6||!Array.isArray(row[5]))return'';
+  const[source,,operator,agency,mode,calls]=row;
+  return JSON.stringify(['route-v2',source,Array.isArray(operator)?operator[0]:operator,agency,mode,calls]);
+}
+export function routeLinkIdFor(key,groups=[]){
+  const stable=routeStableKey(key);if(!stable)return routeLinkId(key);
+  return groups.some(row=>row.key!==key&&routeStableKey(row.key)===stable)?routeLinkId(key):routeLinkId(stable);
+}
+export function linkedRoute(id,groups=[]){
+  if(!id)return null;
+  const exact=groups.find(row=>routeLinkId(row.key)===id);if(exact)return exact;
+  const stable=groups.filter(row=>{const key=routeStableKey(row.key);return key&&routeLinkId(key)===id;});
+  return stable.length===1?stable[0]:null;
+}
 export function routeParam(value){const v=String(value||'');return/^[0-9a-z]{4,12}$/.test(v)?v:'';}
 // About (methodDialog) opened from a link: about=1 opens it at the top, about=<name>
 // at a section. Names are stable link anchors; 'new' is reserved for the What's new

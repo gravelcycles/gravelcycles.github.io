@@ -1,6 +1,6 @@
 // Europe in motion: every timed train at its scheduled position for one day.
-import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=8eeddc2d0b1f1115';
-import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=8eeddc2d0b1f1115';
+import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=7e389cc516b08c39';
+import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=7e389cc516b08c39';
 
 const $=id=>document.getElementById(id);
 const RAD=Math.PI/180,KM_PER_WORLD=40075.016/256,TRAIL=10,MAX_ACTIVE=60000;
