@@ -11,7 +11,7 @@ async function inflate(bytes){
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-  const{gunzip}=await import('./gunzip.js?v=28809ad252b73f13');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=1db9ee4e69a277e5');return gunzip(bytes);
 }
 async function fetchBytes(url,onProgress){
   const response=await fetch(url);
@@ -74,6 +74,8 @@ export function weekdayIndex(dates){const at=new Array(7).fill(-1);dates.forEach
 // Name of the delivery's shared clock, read from its manifest sentence
 // ("Minutes after 00:00 CEST (UTC+2) on each date"): CET in a winter week.
 export function clockName(manifest){return(/00:00 ([A-Z]{2,5}) \(UTC/.exec(manifest?.clock||'')||[])[1]||'CET';}
+// Minutes the shared clock runs ahead of UTC, from the same sentence: 60 for CET.
+export function clockUtcOffset(manifest){const m=/\(UTC([+\-−])(\d{1,2})(?::(\d{2}))?\)/.exec(manifest?.clock||'');return m?(m[1]==='+'?1:-1)*(+m[2]*60+(+m[3]||0)):60;}
 
 // Calls of one trip: station rows and minutes on the delivery's shared clock.
 export function tripCalls(data,trip){

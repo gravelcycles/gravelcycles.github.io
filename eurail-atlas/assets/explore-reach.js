@@ -1,10 +1,11 @@
 // Reach: earliest arrival at every station from a chosen origin and time,
 // by connection scan over one day's timed trains, with walking transfers.
-import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=28809ad252b73f13';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=28809ad252b73f13';
+import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=1db9ee4e69a277e5';
+import{footLinks,dayConnections,CHANGE,INF}from'./explore-scan.js?v=1db9ee4e69a277e5';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=1db9ee4e69a277e5';
 
 const $=id=>document.getElementById(id);
-const CHANGE=5,WALK_M=700,INF=1e9,BANDS=6;
+const BANDS=6;
 const RAMP=['--r1','--r2','--r3','--r4','--r5','--r6'];
 
 export function create(ctx){
@@ -13,28 +14,7 @@ export function create(ctx){
   const coarse=window.matchMedia?.('(pointer:coarse)').matches;
   let conn=null,result=null,colors=[],shown=[],busy=false;
 
-  // Walking links between stations under 700 m, from a coarse lat/lon grid.
-  const foot=Array.from({length:N},()=>[]);
-  {const grid=new Map(),key=(a,b)=>a*100000+b;
-    for(let i=0;i<N;i++){const k=key(Math.floor(S.lat[i]/0.01),Math.floor(S.lon[i]/0.015));if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);}
-    for(let i=0;i<N;i++){const gy=Math.floor(S.lat[i]/0.01),gx=Math.floor(S.lon[i]/0.015);
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)for(const j of grid.get(key(gy+dy,gx+dx))||[]){if(j===i)continue;const m=haversineKm(S.lat[i],S.lon[i],S.lat[j],S.lon[j])*1000;if(m<WALK_M)foot[i].push(j,Math.round(m/75)+2);}}}
-
-  // Connections (one per hop) for the chosen day, sorted by departure.
-  function buildConnections(day){
-    const lo=data.dayStart[day],hi=data.dayStart[day+1];let count=0;
-    for(let t=lo;t<hi;t++){const p=data.tripProfile[t];count+=data.profileStart[p+1]-data.profileStart[p]-1;}
-    const from=new Uint16Array(count),to=new Uint16Array(count),dep=new Int16Array(count),arr=new Int16Array(count),trip=new Uint32Array(count),call=new Uint16Array(count);
-    let c=0;
-    for(let t=lo;t<hi;t++){const p=data.tripProfile[t],pat=data.profilePattern[p],ps=data.patternStart[pat],b=data.profileStart[p],n=data.profileStart[p+1]-b,s0=data.tripStart[t];
-      for(let i=0;i<n-1;i++){from[c]=data.patternStation[ps+i];to[c]=data.patternStation[ps+i+1];dep[c]=s0+data.profileDep[b+i];arr[c]=s0+data.profileArr[b+i+1];trip[c]=t;call[c]=i;c++;}}
-    // Counting sort by departure minute.
-    const minDep=-1440,span=5761,counts=new Uint32Array(span+1);for(let i=0;i<count;i++)counts[dep[i]-minDep+1]++;for(let i=1;i<=span;i++)counts[i]+=counts[i-1];
-    const order=new Uint32Array(count);for(let i=0;i<count;i++)order[counts[dep[i]-minDep]++]=i;
-    const pick=(src,Type)=>{const out=new Type(count);for(let i=0;i<count;i++)out[i]=src[order[i]];return out;};
-    const passBlocked=new Uint8Array(hi-lo);for(let t=lo;t<hi;t++){const pc=data.journeys.patternPass[data.profilePattern[data.tripProfile[t]]];passBlocked[t-lo]=pc===1||pc===3?1:0;}
-    return{lo,hi,count,from:pick(from,Uint16Array),to:pick(to,Uint16Array),dep:pick(dep,Int16Array),arr:pick(arr,Int16Array),trip:pick(trip,Uint32Array),call:pick(call,Uint16Array),passBlocked};
-  }
+  const foot=footLinks(data);
 
   function scan(){
     const C=conn,origins=state.origin.stations,t0=state.t0,limit=t0+state.maxH*60;
@@ -68,7 +48,7 @@ export function create(ctx){
   function recompute(){
     if(!state.origin)return;busy=true;$('reachStats').textContent='Working out every journey…';
     setTimeout(()=>{
-      if(!conn||conn.day!==state.day){conn=buildConnections(state.day);conn.day=state.day;}
+      conn=dayConnections(data,state.day);
       const started=performance.now();result=scan();
       const limit=state.maxH*60;let reached=0,countries=new Set(),far=-1,farKm=0;const o=state.origin.stations[0];
       for(let i=0;i<N;i++){const m=result.ea[i]-state.t0;if(m<=limit&&!result.origins.has(i)){reached++;countries.add(S.country[i]);const km=haversineKm(S.lat[o],S.lon[o],S.lat[i],S.lon[i]);if(km>farKm){farKm=km;far=i;}}}

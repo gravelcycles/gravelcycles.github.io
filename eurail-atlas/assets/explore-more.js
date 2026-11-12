@@ -1,18 +1,26 @@
 // More views: station rhythm (dials and hourly heartbeat), clock-face league,
-// country wake-up curves, weekend service, corridor strings, border crossings
-// and the city-pair league, all derived from one chosen day.
-import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=28809ad252b73f13';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=28809ad252b73f13';
+// country wake-up curves, weekend service, commuter tides, corridor strings,
+// border crossings, the city-pair league and slow neighbours, all derived
+// from one chosen day.
+import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=1db9ee4e69a277e5';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=1db9ee4e69a277e5';
+import{hubCities,cityTides,neighbourSearch,MIN_CITY_TRAINS,NEIGHBOUR_FROM}from'./explore-city.js?v=1db9ee4e69a277e5';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];
 const WAKE_COUNTRIES=['Germany','Great Britain','France','Switzerland','Italy','Poland','Spain','Czechia','Netherlands','Austria','Sweden','Romania'];
 const cap=s=>s.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+// Slow neighbours: straight-line speed bands, slowest first.
+const SPEED_LABELS=['Under 40','40–60','60–90','90–130','130+ km/h'],SPEED_TOKENS=['--v1','--v2','--v3','--v4','--v5'];
+const speedBand=v=>v<40?0:v<60?1:v<90?2:v<130?3:4;
+const duration=m=>`${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}`;
+const changes=n=>n<=1?'direct':`${n-1} change${n>2?'s':''}`;
+const signed=v=>(v>0.004?'+':v<-0.004?'−':'')+Math.abs(Math.round(v*100))+'%';
 
 export function create(ctx){
   const{data,search}=ctx,S=data.stations,J=data.journeys;
-  const state={day:3,stations:[],corridor:null};
-  let day=null;
+  const state={day:3,stations:[],corridor:null},cities=hubCities(data);
+  let day=null,tides=null;
   // First word of each line label, used to group departures into services.
   const lineTokens=new Map(),patternToken=new Uint32Array(J.rows.length);
   J.rows.forEach((row,p)=>{const tok=(row[0]||'').split(/\s+/)[0]||'';if(!lineTokens.has(tok))lineTokens.set(tok,lineTokens.size);patternToken[p]=lineTokens.get(tok);});
@@ -37,6 +45,11 @@ export function create(ctx){
     <div class="x-card"><div class="x-minis" id="wakeMinis"></div></div>
     <div class="x-card"><h3>Weekend service against a midweek day</h3><div class="x-scroll" id="weekendChart"></div><p class="x-note">Scheduled trips on Saturday and Sunday as a share of the Tuesday–Thursday average.${data.dates.some(d=>d.date==='2026-11-01')?" Sunday 1 November was also All Saints' Day in much of Europe.":''}</p></div></section>
 
+  <section id="tides"><div class="eyebrow">City</div><h2>Commuter tides</h2>
+    <p>Trains arriving in each city from outside it (bars above the line) and leaving it (bars below), hour by hour on the city's own clock. The orange line is the difference: above the middle the city is filling with trains, below it is emptying.</p>
+    <div class="x-card"><div class="x-minis" id="tideMinis"></div><div class="x-legend"><span><i style="background:var(--s3)"></i>Arriving</span><span><i style="background:var(--s5)"></i>Leaving</span><span><i class="line" style="background:var(--accent)"></i>Arriving minus leaving</span><span>The twelve busiest cities</span></div></div>
+    <div class="x-card"><h3>Morning pull and evening release</h3><div class="x-scroll" id="tideChart"></div><p class="x-note" id="tideNote"></p></div></section>
+
   <section id="corridor"><div class="eyebrow">Corridor</div><h2>Corridor strings</h2>
     <p>Stations down the side, the day across, one line per train. Steeper lines are faster trains; crossings are where trains meet.</p>
     <div class="x-card"><div class="x-row">
@@ -54,6 +67,12 @@ export function create(ctx){
   <section id="pairs"><div class="eyebrow">City</div><h2>City-pair league</h2>
     <p>Major cities with a direct train between them: straight-line distance against the fastest direct journey. Circle size is direct trains that day.</p>
     <div class="x-card"><div class="x-scroll" id="pairsChart"></div><div class="x-legend"><span>Dashed guides mark 200 and 80 km/h in a straight line</span></div></div></section>
+
+  <section id="neighbours"><div class="eyebrow">City</div><h2>Slow neighbours</h2>
+    <p>Cities that are close on the map but far apart by train. Each line joins two major cities and is coloured by the fastest journey of the day between them, changes included, as a straight-line speed.</p>
+    <div class="x-card"><div class="x-row"><label class="x-field"><span>Distance between the cities</span><select id="nbRange"><option value="300">100 to 300 km</option><option value="500" selected>100 to 500 km</option><option value="800">100 to 800 km</option></select></label><p class="x-note" id="nbStatus" role="status"></p></div>
+      <div class="x-split"><div class="x-nbmap" id="nbMap"></div><div class="x-nbside"><h3>Slowest pairs</h3><ol class="x-rank" id="nbList"></ol></div></div>
+      <div class="x-legend" id="nbLegend"></div><p class="x-note" id="nbNote"></p></div></section>
   </div>`;
 
   // ---- Per-day aggregates -------------------------------------------------
@@ -125,6 +144,26 @@ export function create(ctx){
     $('weekendChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="Weekend service as a share of midweek by country">${g}</svg><div class="x-legend"><span><i style="background:var(--c3)"></i>Sunday</span><span><i style="background:var(--c2)"></i>Saturday</span></div>`;
   }
 
+  // ---- Commuter tides ----------------------------------------------------
+  function renderTides(){
+    tides=cityTides(data,state.day,cities);
+    const big=tides.filter(t=>t.arrivals>=300),hours=h=>String(h).padStart(2,'0')+':00';
+    $('tideMinis').innerHTML=[...big].sort((a,b)=>b.arrivals-a.arrivals).slice(0,12).map(t=>{
+      const W=168,H=72,mid=36,bw=W/24;let mx=1;for(let h=0;h<24;h++)mx=Math.max(mx,t.arrive[h],t.leave[h]);const k=(mid-4)/mx;let up='',down='',line='',hits='';
+      for(let h=0;h<24;h++){const a=t.arrive[h]*k,l=t.leave[h]*k,x=(h*bw+.5).toFixed(1),w=(bw-1).toFixed(1);
+        up+=`<rect x="${x}" y="${(mid-a).toFixed(1)}" width="${w}" height="${a.toFixed(1)}"/>`;down+=`<rect x="${x}" y="${mid}" width="${w}" height="${l.toFixed(1)}"/>`;
+        line+=`${h?'L':'M'}${((h+.5)*bw).toFixed(1)} ${(mid-(t.arrive[h]-t.leave[h])*k).toFixed(1)}`;
+        hits+=`<rect x="${(h*bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"><title>${esc(t.city.name)}, ${hours(h)}: ${t.arrive[h]} arriving, ${t.leave[h]} leaving</title></rect>`;}
+      return`<div class="x-mini"><svg viewBox="0 0 ${W} ${H+12}" role="img" aria-label="Trains arriving in and leaving ${esc(t.city.name)} through the day"><g fill="var(--s3)">${up}</g><g fill="var(--s5)">${down}</g><line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--line)"/><path d="${line}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>${[0,6,12,18,24].map(h=>`<text x="${Math.min(W-6,Math.max(6,h/24*W))}" y="${H+10}" font-size="8" text-anchor="middle">${h}</text>`).join('')}${hits}</svg><b>${esc(t.city.name)}</b><span>morning ${signed(t.morning)} · evening ${signed(t.evening)}</span></div>`;}).join('');
+    const ranked=[...big].sort((a,b)=>(b.morning-b.evening)-(a.morning-a.evening)),rows=ranked.slice(0,16),rest=ranked.slice(16).sort((a,b)=>b.arrivals-a.arrivals);
+    const narrow=$('tideChart').clientWidth<520,W=narrow?Math.max(300,$('tideChart').clientWidth):720,rh=19,ml=narrow?96:130,H=rows.length*rh+34,span=.35,x=v=>ml+(Math.max(-span,Math.min(span,v))+span)/(2*span)*(W-ml-20);let g='';
+    for(const t of narrow?[-.3,-.15,0,.15,.3]:[-.3,-.2,-.1,0,.1,.2,.3])g+=`<line x1="${x(t)}" x2="${x(t)}" y1="8" y2="${H-22}" stroke="var(${t?'--line':'--muted'})"/><text x="${x(t)}" y="${H-8}" font-size="11" text-anchor="middle">${signed(t)}</text>`;
+    rows.forEach((t,i)=>{const y=14+i*rh,dot=(v,token,when)=>`<circle cx="${x(v)}" cy="${y}" r="4.5" fill="var(${token})" stroke="var(--panel)" stroke-width="2"><title>${esc(t.city.name)}: ${when} ${signed(v)} of arriving trains</title></circle>`;
+      g+=`<text x="${ml-8}" y="${y+4}" font-size="11.5" text-anchor="end" style="fill:var(--ink)">${esc(t.city.name)}</text><line x1="${x(t.evening)}" x2="${x(t.morning)}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/>${dot(t.evening,'--c4','16:00–20:00')}${dot(t.morning,'--c3','06:00–10:00')}`;});
+    $('tideChart').innerHTML=rows.length?`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="Morning and evening balance of arriving and leaving trains by city">${g}</svg><div class="x-legend"><span><i style="background:var(--c3)"></i>06:00–10:00</span><span><i style="background:var(--c4)"></i>16:00–20:00</span></div>`:'';
+    $('tideNote').textContent=`Trains arriving minus trains leaving, as a share of the trains arriving in those hours. A train passing through counts once in and once out, so only trains that start, end or wait in the city move the balance. Cities with fewer than 300 arrivals that day are left out.`+(rest.length?` The other ${rest.length} cities are flatter; the busiest of them, ${rest[0].city.name}, is at ${signed(rest[0].morning)} in the morning and ${signed(rest[0].evening)} in the evening.`:'');
+  }
+
   // ---- Corridor strings --------------------------------------------------
   function renderCorridor(){
     const c=state.corridor;if(!c?.from||!c?.to){$('corrChart').innerHTML='';return;}
@@ -172,7 +211,60 @@ export function create(ctx){
     $('pairsChart').innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" style="${slim?'':'min-width:620px;'}max-width:100%;height:auto" role="img" aria-label="City pairs: distance against fastest direct journey">${g}</svg><p class="x-note">${fmt(rows.length)} city pairs with a direct train. Fastest: ${fast.map(r=>`${esc(r[0])}–${esc(r[1])} ${fmt(r[2]/(r[3]/60))} km/h`).join(', ')}.</p>`;
   }
 
-  function renderAll(){$('moreStatus').textContent='Working out the day…';setTimeout(()=>{computeDay();renderRhythm();renderCountries();renderCorridor();renderBorders();renderPairs();$('moreStatus').textContent=`Figures for ${data.dates[state.day].label}.`;},20);}
+  // ---- Slow neighbours ---------------------------------------------------
+  // The search runs a city at a time once the section is near the screen, so
+  // the page stays usable on a phone.
+  const nb={day:-1,token:0,visible:!window.IntersectionObserver,search:null,rows:null};
+  let land=null,landRequest=null;
+  const loadLand=()=>landRequest||(landRequest=fetch(new URL('countries.geojson',import.meta.url)).then(r=>r.json()).then(g=>{land=g;}).catch(()=>{}));
+  function startNeighbours(){
+    if(!nb.visible||!tides||nb.day===state.day)return;
+    nb.day=state.day;nb.rows=null;const token=++nb.token,found=nb.search=neighbourSearch(data,state.day,cities,tides);
+    $('nbMap').innerHTML='';$('nbList').innerHTML='';$('nbNote').textContent='';$('nbStatus').textContent='Working out journeys…';
+    const step=()=>{
+      if(token!==nb.token)return;
+      const began=performance.now();let more=true;while(more&&performance.now()-began<40)more=found.next();
+      if(more){$('nbStatus').textContent=`Working out journeys: ${found.done} of ${found.total} cities…`;setTimeout(step,0);return;}
+      nb.rows=found.pairs();loadLand().then(()=>{if(token===nb.token)renderNeighbours();});
+    };
+    setTimeout(step,30);
+  }
+  function renderNeighbours(){
+    if(!nb.rows)return;
+    const max=+$('nbRange').value,rows=nb.rows.filter(r=>r.km>=100&&r.km<=max),found=rows.filter(r=>r.journey).sort((a,b)=>a.speed-b.speed),missing=rows.filter(r=>!r.journey),top=found.slice(0,12);
+    const pair=r=>`${esc(r.a.name)} – ${esc(r.b.name)}`,id=r=>`${r.a.index}-${r.b.index}`;
+    // A Mercator frame around the cities in the search.
+    const mercY=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+    let w=Infinity,e=-Infinity,so=Infinity,n=-Infinity;for(const c of nb.search.included){w=Math.min(w,c.lon);e=Math.max(e,c.lon);so=Math.min(so,c.lat);n=Math.max(n,c.lat);}
+    w-=2;e+=2;so-=1.5;n+=1.5;
+    const W=640,k=W/((e-w)*Math.PI/180),H=Math.round((mercY(n)-mercY(so))*k),X=lon=>(lon-w)*Math.PI/180*k,Y=lat=>(mercY(n)-mercY(lat))*k;
+    let coast='';
+    for(const feature of land?.features||[]){const geom=feature.geometry;if(!geom)continue;
+      for(const poly of geom.type==='MultiPolygon'?geom.coordinates:[geom.coordinates]){const ring=poly[0];let d='',lx=NaN,ly=NaN,inside=false;
+        for(const [lon,lat] of ring){if(lat>84||lat<-84)continue;const x=X(lon),y=Y(lat);if(x>=0&&x<=W&&y>=0&&y<=H)inside=true;if(Math.abs(x-lx)+Math.abs(y-ly)<1.2)continue;d+=(d?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);lx=x;ly=y;}
+        if(inside&&d)coast+=d+'Z';}}
+    const widths=[2.8,2.1,1.3,1,1],alpha=[.95,.85,.55,.5,.5];let lines='';
+    for(const r of missing)lines+=`<line x1="${X(r.a.lon).toFixed(1)}" y1="${Y(r.a.lat).toFixed(1)}" x2="${X(r.b.lon).toFixed(1)}" y2="${Y(r.b.lat).toFixed(1)}" stroke="var(--muted)" stroke-dasharray="3 4"><title>${pair(r)}: ${fmt(r.km)} km apart, no journey found on this day</title></line>`;
+    for(let i=found.length-1;i>=0;i--){const r=found[i],b=speedBand(r.speed),j=r.journey,from=cities[j.from];
+      lines+=`<line data-pair="${id(r)}" x1="${X(r.a.lon).toFixed(1)}" y1="${Y(r.a.lat).toFixed(1)}" x2="${X(r.b.lon).toFixed(1)}" y2="${Y(r.b.lat).toFixed(1)}" stroke="var(${SPEED_TOKENS[b]})" stroke-width="${widths[b]}" stroke-opacity="${alpha[b]}"><title>${pair(r)}: ${fmt(r.km)} km apart, fastest ${duration(j.minutes)} (${changes(j.trains)}), leaving ${esc(from.name)} at ${clockLabel(j.depart+tides[from.index].shift).slice(0,5)}, ${fmt(r.speed)} km/h</title></line>`;}
+    // Name the cities of the slowest pairs, slowest first, wherever a name fits
+    // beside its dot without covering another name.
+    const named=new Set(),placed=[];for(const r of top){named.add(r.a);named.add(r.b);}
+    let dots='',labels='';
+    for(const c of nb.search.included)dots+=`<circle cx="${X(c.lon).toFixed(1)}" cy="${Y(c.lat).toFixed(1)}" r="${named.has(c)?3:2}"><title>${esc(c.name)}</title></circle>`;
+    for(const c of named){const x=X(c.lon),y=Y(c.lat),tw=c.name.length*6.1+4,th=13;
+      for(const [dx,dy] of [[5,-5],[-5-tw,-5],[5,th],[-5-tw,th],[-tw/2,-9],[-tw/2,th+5]]){const box=[x+dx,y+dy-th+2,x+dx+tw,y+dy+3];
+        if(box[0]<0||box[2]>W||box[1]<0||box[3]>H||placed.some(q=>box[0]<q[2]&&box[2]>q[0]&&box[1]<q[3]&&box[3]>q[1]))continue;
+        placed.push(box);labels+=`<text x="${(x+dx+2).toFixed(1)}" y="${(y+dy).toFixed(1)}" font-size="11" style="fill:var(--ink);stroke:var(--land);stroke-width:3;paint-order:stroke">${esc(c.name)}</text>`;break;}}
+    $('nbMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Map of city pairs coloured by the fastest journey between them"><rect width="${W}" height="${H}" fill="var(--sea)"/><path d="${coast}" fill="var(--land)" stroke="var(--coast)" stroke-width=".6"/><g stroke-linecap="round">${lines}</g><g fill="var(--ink)" stroke="var(--land)" stroke-width="1">${dots}</g>${labels}</svg>`;
+    $('nbList').innerHTML=top.map(r=>`<li><button type="button" data-pair="${id(r)}"><b>${pair(r)}</b><span>${fmt(r.km)} km · ${duration(r.journey.minutes)} · ${changes(r.journey.trains)}</span><span class="v">${fmt(r.speed)} km/h</span></button></li>`).join('');
+    $('nbLegend').innerHTML=SPEED_LABELS.map((l,i)=>`<span><i class="line" style="background:var(${SPEED_TOKENS[i]})"></i>${l}</span>`).join('')+(missing.length?'<span><i class="line" style="background:var(--muted)"></i>Dashed: no journey found</span>':'');
+    $('nbStatus').textContent=found.length?`${fmt(found.length)} city pairs on ${data.dates[state.day].label}. Half are slower than ${fmt(found[found.length>>1].speed)} km/h in a straight line.`:'No city pairs in this range.';
+    const left=nb.search.left.map(c=>c.name);
+    $('nbNote').textContent=`The quicker direction is shown, for journeys starting at ${clockLabel(NEIGHBOUR_FROM)} Central European Time or later. Waits at changes count, the wait for the first train does not. Distances are straight lines between city centres. Countries without published clock times are missing, so a journey that would use their trains shows as slower than it is.`+(left.length?` Left out with fewer than ${MIN_CITY_TRAINS} timed trains leaving that day: ${left.join(', ')}.`:'');
+  }
+
+  function renderAll(){$('moreStatus').textContent='Working out the day…';setTimeout(()=>{computeDay();renderRhythm();renderCountries();renderTides();renderCorridor();renderBorders();renderPairs();$('moreStatus').textContent=`Figures for ${data.dates[state.day].label}.`;nb.day=-1;nb.token++;startNeighbours();},20);}
 
   fillDaySelect($('moreDay'),data.dates,state.day);
   $('moreDay').addEventListener('change',e=>{state.day=+e.target.value;renderAll();});
@@ -192,6 +284,11 @@ export function create(ctx){
     if(!text&&e.target.closest('svg'))for(const r of [5,10])for(let a=0;a<8&&!text;a++)text=label(document.elementFromPoint(e.clientX+Math.cos(a*.785)*r,e.clientY+Math.sin(a*.785)*r));
     clearTimeout(readoutTimer);readout.hidden=!text;if(text){readout.textContent=text;readoutTimer=setTimeout(()=>{readout.hidden=true;},6000);}
   });
+  $('nbRange').addEventListener('change',renderNeighbours);
+  $('nbList').addEventListener('click',e=>{const button=e.target.closest('button[data-pair]');if(!button)return;const on=!button.classList.contains('on');
+    $('neighbours').querySelectorAll('.on').forEach(el=>el.classList.remove('on'));
+    if(on){button.classList.add('on');const line=$('nbMap').querySelector(`line[data-pair="${button.dataset.pair}"]`);if(line){line.classList.add('on');line.parentNode.append(line);}}});
+  if(window.IntersectionObserver)new IntersectionObserver(entries=>{nb.visible=entries.some(entry=>entry.isIntersecting);startNeighbours();},{root:$('moreView'),rootMargin:'400px'}).observe($('neighbours'));
   let rendered=false;
   return{activate(){if(!rendered){rendered=true;renderAll();}},draw(){},onTheme(){}};
 }

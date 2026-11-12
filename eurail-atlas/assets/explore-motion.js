@@ -1,6 +1,7 @@
 // Europe in motion: every timed train at its scheduled position for one day.
-import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName}from'./explore-data.js?v=28809ad252b73f13';
-import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=28809ad252b73f13';
+import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName,clockUtcOffset}from'./explore-data.js?v=1db9ee4e69a277e5';
+import{solarInstant,sinElevation,lightBand,darkness}from'./explore-sun.js?v=1db9ee4e69a277e5';
+import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=1db9ee4e69a277e5';
 
 const $=id=>document.getElementById(id);
 const RAD=Math.PI/180,KM_PER_WORLD=40075.016/256,TRAIL=10,MAX_ACTIVE=60000;
@@ -14,8 +15,11 @@ const MODES={
   speed:{legend:['Under 60','60–100','100–140','140–200','200+ km/h','Standing'],tokens:['--s4','--s3','--s2','--s1','--accent','--c-neutral'],ramp:true},
   length:{legend:['Under 50','50–150','150–400','400–800','800+ km'],tokens:['--s4','--s3','--s2','--s1','--accent'],ramp:true},
   progress:{legend:['Just left','','Halfway','','Nearly there'],tokens:['--s4','--s3','--s2','--s1','--accent'],ramp:true},
+  daylight:{legend:['In daylight','In twilight','In the dark'],tokens:['--sun','--dusk','--night']},
 };
 const PASS_ORDER=[0,1,3,2]; // data pass class -> legend slot
+const SHADE_CELL=10; // night shading is worked out on a coarse grid and smoothed
+const hm=m=>`${Math.floor(m/60)} h ${String(Math.round(m)%60).padStart(2,'0')}`;
 
 export function create(ctx){
   const{data,map,layer}=ctx,S=data.stations;
@@ -26,6 +30,12 @@ export function create(ctx){
   let colors=[],lastTime=0,active=0,spark=null;
   const ax=new Float32Array(MAX_ACTIVE),ay=new Float32Array(MAX_ACTIVE),at=new Uint32Array(MAX_ACTIVE);
   const out={x:0,y:0,speed:0,dx:0,dy:0,moving:false,progress:0};
+  // The delivery's clock is one zone for the whole map; the sun needs UTC.
+  const clockOffset=clockUtcOffset(data.manifest);
+  const instant=T=>Date.parse(data.dates[state.day].date+'T00:00:00Z')+(T-clockOffset)*6e4;
+  let sun=null;const shade={canvas:null,key:''};
+  // Sine of the sun's elevation at a position in z0 Web Mercator world units.
+  const light=o=>{const v=Math.PI*(1-2*o.y/256);return sinElevation(sun,Math.tanh(v),1/Math.cosh(v),o.x/256*360-180);};
 
   // Position of trip t at minute T, in z0 Web Mercator world units.
   function locate(t,T,o=out){
@@ -47,11 +57,15 @@ export function create(ctx){
       case'pass':return PASS_ORDER[data.journeys.patternPass[tripPattern[t]]];
       case'direction':{if(!o.moving)return 4;const a=Math.atan2(-o.dy,o.dx)/RAD;return a>=45&&a<135?0:a>=-45&&a<45?1:a>=-135&&a<-45?2:3;}
       case'speed':{if(!o.moving)return 5;const v=o.speed;return v<60?0:v<100?1:v<140?2:v<200?3:4;}
+      case'daylight':return lightBand(light(o));
       case'length':{const km=data.journeys.patternKm[tripPattern[t]];return km<50?0:km<150?1:km<400?2:km<800?3:4;}
       default:return Math.min(4,Math.floor(o.progress*5));
     }
   }
-  function readColors(){colors=MODES[state.mode].tokens.map(ctx.css);}
+  let shadeColor=[16,28,64],shadeStrength=.3;
+  function readColors(){colors=MODES[state.mode].tokens.map(ctx.css);shade.key='';
+    const hex=/^#([0-9a-f]{6})$/i.exec(ctx.css('--shade'));if(hex)shadeColor=[0,2,4].map(i=>parseInt(hex[1].slice(i,i+2),16));
+    shadeStrength=parseFloat(ctx.css('--shade-strength'))||.3;}
   function legend(){const m=MODES[state.mode];$('motionLegend').innerHTML=m.legend.map((label,i)=>label?`<span><i style="background:var(${m.tokens[i]})"></i>${esc(label)}</span>`:'').join('');}
 
   const range=()=>[data.dayStart[state.day],data.dayStart[state.day+1]];
@@ -70,13 +84,36 @@ export function create(ctx){
     const x=state.T/1440*w;g.strokeStyle=ctx.css('--accent');g.lineWidth=2;g.beginPath();g.moveTo(x,0);g.lineTo(x,h-12);g.stroke();
   }
 
+  // Minutes of a trip, sampled once a minute, with the sun above the horizon.
+  function daylightMinutes(t,from,to){
+    const o={},keep=sun;let lit=0;
+    for(let T=from;T<to;T++){sun=solarInstant(instant(T+.5));locate(t,T+.5,o);if(lightBand(light(o))===0)lit++;}
+    sun=keep;return lit;
+  }
+  // Night and twilight as a soft shade over the map, for the minute shown.
+  function drawShade(g,tr,W,H){
+    const cols=Math.ceil(W/SHADE_CELL),rows=Math.ceil(H/SHADE_CELL),key=[Math.floor(state.T),state.day,tr.z,Math.round(tr.ox),Math.round(tr.oy),W,H].join();
+    if(key!==shade.key){
+      shade.key=key;if(!shade.canvas)shade.canvas=document.createElement('canvas');
+      if(shade.canvas.width!==cols||shade.canvas.height!==rows){shade.canvas.width=cols;shade.canvas.height=rows;}
+      const sg=shade.canvas.getContext('2d'),image=sg.createImageData(cols,rows),px=image.data,cosHour=new Float64Array(cols);
+      const [r,gr,b]=shadeColor,world=256*tr.scale;
+      for(let i=0;i<cols;i++){const lon=((i+.5)*SHADE_CELL+tr.ox)/world*360-180;cosHour[i]=Math.cos(((sun.solarMinutes+4*lon)/4-180)*RAD);}
+      for(let j=0,k=0;j<rows;j++){const v=Math.PI*(1-2*((j+.5)*SHADE_CELL+tr.oy)/world),sinLat=Math.tanh(v)*sun.sinDec,cosLat=sun.cosDec/Math.cosh(v);
+        for(let i=0;i<cols;i++,k+=4){px[k]=r;px[k+1]=gr;px[k+2]=b;px[k+3]=Math.round(255*shadeStrength*darkness(sinLat+cosLat*cosHour[i]));}}
+      sg.putImageData(image,0,0);
+    }
+    g.imageSmoothingEnabled=true;g.drawImage(shade.canvas,0,0,cols*SHADE_CELL,rows*SHADE_CELL);
+  }
+
   function selectedPanel(){
     const box=$('motionSelected');if(state.selected<0){box.hidden=true;return;}
     const info=tripInfo(data,state.selected),first=info.calls[0],last=info.calls[info.calls.length-1],km=data.journeys.patternKm[info.pattern];
-    box.hidden=false;
+    box.hidden=false;const lit=daylightMinutes(state.selected,first.dep,last.arr);
     box.innerHTML=`<h3>${esc(info.title)}</h3><div class="meta">${esc(info.operator)}</div>
       <div>${esc(info.from)} ${clockLabel(first.dep)} → ${esc(info.to)} ${clockLabel(last.arr)}</div>
       <div class="meta">${info.calls.length} stops · ${fmt(km)} km in a straight line · ${esc(CATEGORY_LABELS[info.category])} · ${esc(PASS_LABELS[info.pass])}</div>
+      ${last.arr>first.dep?`<div class="meta">In daylight for ${hm(lit)} of its ${hm(last.arr-first.dep)}</div>`:''}
       <div class="actions"><button class="x-button" type="button" id="motionFollow">${state.follow?'Stop following':'Follow this train'}</button><button class="x-button" type="button" id="motionClear">Clear</button></div>`;
     $('motionFollow').onclick=()=>{state.follow=!state.follow;selectedPanel();ctx.requestDraw();};
     $('motionClear').onclick=()=>{state.selected=-1;state.follow=false;selectedPanel();ctx.requestDraw();};
@@ -86,16 +123,18 @@ export function create(ctx){
     if(state.playing&&lastTime){state.T+=(time-lastTime)/1000*state.rate;if(state.T>=1440)state.T-=1440;}
     lastTime=state.playing?time:0;
     const tr=layer.transform(),W=layer.width,H=layer.height,g=layer.begin(),z=tr.z,sc=tr.scale;
-    const X=x=>x*sc-tr.ox,Y=y=>y*sc-tr.oy;
+    const X=x=>x*sc-tr.ox,Y=y=>y*sc-tr.oy,byLight=state.mode==='daylight';
+    if(byLight){sun=solarInstant(instant(state.T));drawShade(g,tr,W,H);}
     if(z>=7.5){g.fillStyle=ctx.css('--station');const r=z>=10?1.6:1;for(let i=0;i<S.N;i++){const x=X(S.mx[i]),y=Y(S.my[i]);if(x>-4&&y>-4&&x<W+4&&y<H+4)g.fillRect(x-r,y-r,2*r,2*r);}}
     if(state.selected>=0){const calls=tripInfo(data,state.selected).calls;g.strokeStyle=ctx.css('--route-hi');g.lineWidth=2.5;g.globalAlpha=.75;g.beginPath();calls.forEach((c,i)=>{const x=X(S.mx[c.station]),y=Y(S.my[c.station]);i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();g.globalAlpha=1;
       g.fillStyle=ctx.css('--panel');g.strokeStyle=ctx.css('--route-hi');g.lineWidth=1.5;for(const c of calls){const x=X(S.mx[c.station]),y=Y(S.my[c.station]);g.beginPath();g.arc(x,y,3,0,6.283);g.fill();g.stroke();}}
     const [lo,hi]=range(),T=state.T,K=colors.length,buckets=Array.from({length:K},()=>[]),trails=Array.from({length:K},()=>[]);
-    const back={x:0,y:0,speed:0,dx:0,dy:0,moving:false,progress:0};active=0;let total=0;
+    const back={x:0,y:0,speed:0,dx:0,dy:0,moving:false,progress:0};active=0;let total=0,lit=0;
     for(let t=lo;t<hi;t++){
       if(data.tripStart[t]>T||data.tripEnd[t]<T||!state.cats[tripCat[t]])continue;total++;
-      locate(t,T);const x=X(out.x),y=Y(out.y);if(x<-30||y<-30||x>W+30||y>H+30)continue;
-      const k=slot(t,out);buckets[k].push(x,y);
+      locate(t,T);let k=-1;if(byLight){k=slot(t,out);if(k===0)lit++;}
+      const x=X(out.x),y=Y(out.y);if(x<-30||y<-30||x>W+30||y>H+30)continue;
+      if(k<0)k=slot(t,out);buckets[k].push(x,y);
       if(state.trails&&T-data.tripStart[t]>0){locate(t,Math.max(data.tripStart[t],T-TRAIL),back);trails[k].push(X(back.x),Y(back.y),x,y);}
       if(active<MAX_ACTIVE){ax[active]=x;ay[active]=y;at[active]=t;active++;}
     }
@@ -106,7 +145,7 @@ export function create(ctx){
       locate(state.selected,T);const x=X(out.x),y=Y(out.y);g.strokeStyle=ctx.css('--route-hi');g.lineWidth=3;g.beginPath();g.arc(x,y,r+5,0,6.283);g.stroke();
       if(state.follow&&(Math.abs(x-W/2)>2||Math.abs(y-H/2)>2))map.panTo(unproject(out.x,out.y),{animate:false});
     }
-    $('motionClock').textContent=clockLabel(T)+' '+clockName(data.manifest);$('motionCount').textContent=`${fmt(total)} trains moving`;
+    $('motionClock').textContent=clockLabel(T)+' '+clockName(data.manifest);$('motionCount').textContent=`${fmt(total)} trains moving`+(byLight&&total?` · ${Math.round(lit/total*100)}% in daylight`:'');
     const slider=$('motionTime');if(document.activeElement!==slider)slider.value=Math.floor(T);
     if(state.playing)drawSpark();
   }
