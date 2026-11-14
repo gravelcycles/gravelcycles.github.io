@@ -143,9 +143,32 @@ export class TransitRequests{
   }
 }
 
+// The layer's own week against today (UTC), with the same rule as the release
+// (transit_data/publication.py week_state): "current" while today is on or before
+// the week's last date, "past" up to TRANSIT_PAST_WEEK_GRACE_DAYS days after it (shown
+// with a notice naming the week as past, never as current), then "expired" (held,
+// nothing drawn). The week comes from the delivery's own serviceWeek, never a fixed date.
+export const TRANSIT_PAST_WEEK_GRACE_DAYS=14;
+const isoDay=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?Date.parse(String(value)+'T00:00:00Z'):NaN;
+export function transitToday(now=new Date()){return now.toISOString().slice(0,10);}
+export function transitWeekState(document,today=transitToday()){
+  const week=document?.serviceWeek||{},first=week.first,last=week.last,end=isoDay(last),day=isoDay(today);
+  if(!Number.isFinite(end)||!Number.isFinite(day)||!Number.isFinite(isoDay(first)))return{state:'unknown',first,last,daysSinceEnd:null};
+  const daysSinceEnd=Math.round((day-end)/86400000);
+  return{state:daysSinceEnd<=0?'current':daysSinceEnd<=TRANSIT_PAST_WEEK_GRACE_DAYS?'past':'expired',first,last,daysSinceEnd};
+}
+export function transitPastWeekMessage(week){
+  return`This city transit timetable is for ${week.first} to ${week.last}, which has passed. It is shown until a newer week is built; it is not the current timetable.`;
+}
+export function transitExpiredHold(document,week){
+  return{schemaVersion:1,kind:'transit_atlas_hold',state:'held',reason:'service_week_passed',serviceWeek:{first:week.first,last:week.last},
+    sourceIds:(document?.sources||[]).map(s=>s.id),
+    message:`City transit is held: its timetable week ${week.first} to ${week.last} ended more than ${TRANSIT_PAST_WEEK_GRACE_DAYS} days ago. It returns when it is rebuilt for a current week.`};
+}
+
 // Leaflet layer. L is the page's Leaflet global; nothing is fetched until enable().
 export class TransitLayer{
-  constructor(map,{base='transit-data/',L=globalThis.L,onSelect=null,onStatus=null,fetcher,timeoutMs=TRANSIT_TIMEOUT_MS}={}){this.timeoutMs=timeoutMs;
+  constructor(map,{base='transit-data/',L=globalThis.L,onSelect=null,onStatus=null,fetcher,timeoutMs=TRANSIT_TIMEOUT_MS,today=null}={}){this.timeoutMs=timeoutMs;this.today=today;
     this.map=map;this.L=L;this.base=base;this.onSelect=onSelect;this.onStatus=onStatus;this.fetcher=fetcher;
     this.enabled=false;this.modes=new Set(['tram','metro']);this.day=null;this.generation=0;this.group=null;
   }
@@ -170,6 +193,10 @@ export class TransitLayer{
     // A recorded hold (its week has passed, or its sources changed) draws nothing and says why.
     if(first.kind==='transit_atlas_hold'){this.hold=first;this.status(first.message);return;}
     if(first.kind!=='transit_atlas_manifest')throw new Error('Unsupported transit data format');
+    // A past week is shown with its notice; once it ended more than the grace period ago it is held here too.
+    const week=transitWeekState(first,this.today||transitToday());
+    if(week.state==='expired'){this.hold=transitExpiredHold(first,week);this.manifest=null;this.pastWeek=null;this.status(this.hold.message);return;}
+    this.pastWeek=week.state==='past'?week:null;
     this.manifest=first;this.hold=null;
     if(!this.modesChosen)this.modes=new Set(this.manifest.modes||['tram','metro']);
     this.dates=this.manifest.dates;this.day=this.day==='all'||this.dates.includes(this.day)?this.day:defaultDay(this.dates);
@@ -256,7 +283,7 @@ export class TransitLayer{
     this.map.flyTo(bounds.getCenter(),cityZoom(this.map.getBoundsZoom(bounds),this.manifest.minimumZoom));
   }
   async select(route){if(!this.enabled)return null;const detail=await this.requests.json(route.detail,'transit_atlas_detail');this.onSelect?.(detail,this.day);return detail;}
-  status(text){this.onStatus?.(text);}
+  status(text){this.onStatus?.(this.pastWeek&&this.manifest?`Past week ${this.pastWeek.first} to ${this.pastWeek.last}, not current. ${text}`:text);}
 }
 
 // Timed departures of one pattern on one service date, from native clocks (agency timezone).
@@ -335,6 +362,21 @@ export function transitFallbackSources(manifest){
     .map(s=>({sourceId:s.id,name:s.name||s.id,retrievedAt:String(s.archiveRetrieval.retrievedAt||'').slice(0,10),reason:s.archiveRetrieval.reason||''}));
 }
 
+// Days of the transit week a source's own published timetable does not cover
+// (manifest sources[].horizon.unavailableDates: the publisher's calendar ends
+// inside the week). Its lines draw on the other days only; never shown as a gap
+// in service.
+export function transitUnavailableSources(manifest){
+  return(manifest?.sources||[]).filter(s=>(s.horizon?.unavailableDates||[]).length)
+    .map(s=>({sourceId:s.id,name:s.name||s.id,dates:[...s.horizon.unavailableDates].sort(),publisherEnd:String(s.horizon.publisherEnd||'')}));
+}
+function unavailableHTML(document){
+  const rows=transitUnavailableSources(document);
+  if(!rows.length)return'';
+  const day=d=>{const t=new Date(d+'T12:00:00Z');return isNaN(t)?d:t.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});};
+  return`<div class="helper transit-unavailable" role="note"><p><strong>Not in the publisher's timetable for part of this week</strong> (${rows.length.toLocaleString()} ${rows.length===1?'source':'sources'}): these lines are drawn only on the other days.</p><ul>${rows.map(r=>`<li><strong>${esc(r.name)}</strong> · no timetable published for ${esc(r.dates.map(day).join(', '))}${r.publisherEnd?` (the publisher's timetable ends ${esc(day(r.publisherEnd))})`:''}</li>`).join('')}</ul></div>`;
+}
+
 // Every source's archive retrieval date (sources[].retrievedAt), so an older archive is
 // never implied to be this week's; a cached archive shown under a recorded exception says so.
 export function transitRetrievalDates(manifest){
@@ -356,18 +398,22 @@ function heldListHTML(held){
   return`<p class="helper">All ${held.length.toLocaleString()} held lines, grouped by operator (${groups.length.toLocaleString()}). Open an operator to see its lines and the reason each is held.</p>`+
     `<div class="transit-held-groups">${groups.map(g=>`<details class="transit-held-group"><summary>${esc(g.operator)} (${g.lines.length.toLocaleString()}${g.whole===g.lines.length?', none drawn':g.whole?`, ${g.whole.toLocaleString()} not drawn`:''})</summary><ul>${g.lines.map(row).join('')}</ul></details>`).join('')}</div>`;
 }
-export function transitPanelHTML(document,{day=null}={}){
+export function transitPanelHTML(document,{day=null,today=null}={}){
   if(!document)return'';
   if(document.kind==='transit_atlas_hold')return`<p class="transit-hold"><strong>Held.</strong> ${esc(document.message)}</p>`;
+  const weekState=transitWeekState(document,today||transitToday());
+  if(weekState.state==='expired')return transitPanelHTML(transitExpiredHold(document,weekState));
+  const pastNotice=weekState.state==='past'?`<p class="transit-hold transit-past-week" role="status"><strong>Past week.</strong> ${esc(transitPastWeekMessage(weekState))}</p>`:'';
   const week=document.serviceWeek||{},credits=transitCredits(document),held=transitHeldLines(document),whole=held.filter(h=>h.whole);
   const retrieved=transitRetrievalDates(document);
   const swiss=credits.some(c=>c.licence==='Swiss-ODmCH-Terms');
   const days=(document.dates||[]).map(d=>`<option value="${esc(d)}"${d===day?' selected':''}>${esc(new Date(d+'T12:00:00Z').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}))}</option>`).join('');
-  return`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
+  return pastNotice+`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
     (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
     `<p class="helper">Counts are scheduled source records per mode, separate from trains and buses. Coverage is partial; pass inclusion is unknown. White centre dashes mark lines that are partly held or also shown as trains.</p>`+
     (transitEstimatedLines(document).length?`<p class="helper transit-estimate">Some lines (${esc(transitEstimatedLines(document).join(', '))}) are drawn from the feed's headway windows, not timed trips: their panels show the windows as estimates, and they are not counted as recorded departures.</p>`:'')+
     ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
+    unavailableHTML(document)+
     (transitFallbackSources(document).length?`<details class="transit-held transit-fallback"><summary>Sources shown from an earlier archive (${transitFallbackSources(document).length.toLocaleString()})</summary><ul>${transitFallbackSources(document).map(f=>`<li><strong>${esc(f.name)}</strong> · archive retrieved ${esc(f.retrievedAt)}<br><span>${esc(f.reason)}</span></li>`).join('')}</ul></details>`:'')+
     (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary>${heldListHTML(held)}</details>`:'')+
     `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.dataUpdated?.date?` · Data last updated ${esc(c.dataUpdated.date)}`:''}${retrieved[c.sourceId]?.retrievedAt?` · Archive retrieved ${esc(retrieved[c.sourceId].retrievedAt)}`:''}${retrieved[c.sourceId]?.ageException?`<br><span>Older archive shown by recorded exception: ${esc(retrieved[c.sourceId].ageException)}</span>`:''}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice||document.databaseOffer?.path?`<p class="helper">${document.odblNotice?esc(document.odblNotice):''}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;

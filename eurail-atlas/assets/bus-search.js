@@ -1,8 +1,8 @@
-import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=7680dcecb189b99c';
+import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=26cbf7d5ff745682';
 
 // Source indexes are admitted by the aggregate byte budgets, largest inventory first; `sources` is only a
 // sanity bound on fan-out. A count cut by bbox-centre distance once excluded the dominant national source.
-export const BUS_SEARCH_LIMITS=Object.freeze({sources:64,partitions:6,wireBytes:2*1024*1024,decodedBytes:12*1024*1024,catalogueBytes:1024*1024,indexBytes:1024*1024,packetBytes:512*1024});
+export const BUS_SEARCH_LIMITS=Object.freeze({sources:64,partitions:6,wireBytes:2*1024*1024,decodedBytes:12*1024*1024,catalogueBytes:1024*1024,indexBytes:1024*1024,indexPartBytes:256*1024,packetBytes:512*1024});
 const distance=(box,bounds)=>!box||!bounds?0:((box[0]+box[2]-bounds[0]-bounds[2])/2)**2+((box[1]+box[3]-bounds[1]-bounds[3])/2)**2;
 const visible=(row,bounds)=>Array.isArray(row.bbox)&&intersects(row.bbox,bounds);
 // Stopping patterns expected inside the map area if a row's patterns were spread evenly over its box.
@@ -51,6 +51,22 @@ function readerScope(requests,reader){const epoch=requests.epochs?.get(reader)||
 export function busBloomQuery(text){const grams=new Set(),positions=new Set();for(const token of foldBusText(text).trim().split(/\s+/)){const points=[...token],n=points.length>=3?3:2;for(let i=0;i<=points.length-n;i++)grams.add(points.slice(i,i+n).join(''));}for(const gram of grams){const bytes=new TextEncoder().encode(gram);for(const seed of[2166136261,0x9e3779b9,0x85ebca6b]){let hash=seed;for(const byte of bytes)hash=Math.imul(hash^byte,16777619)>>>0;positions.add(hash%16384);}}return[...positions];}
 export function busBloomMayMatch(bloom,positions){if(!bloom||bloom.version!==1||bloom.algorithm!=='fnv1a-utf8-2or3gram')return true;if(bloom.bits!==16384)throw new Error('Unsupported bus search routing bitmap');const raw=atob(bloom.data);if(raw.length!==2048)throw new Error('Invalid bus search routing bitmap');return positions.every(i=>raw.charCodeAt(i>>3)&(1<<(i&7)));}
 
+// A source index is one file (version 1) or, for a source too large for one bounded file, a small root
+// (version 2) naming parts: runs of partition rows with the area and countries they cover, and lookup rows
+// by the first hex digit of their prefix. The rows are the same either way; only the parts a scope can
+// match are fetched.
+export function validBusSourceIndex(value,sourceId){
+  if(value?.kind!=='bus_atlas_source_search'||(value.schemaVersion!==1&&value.schemaVersion!==2))throw new Error('Unsupported bus data format');
+  if(value.sourceId!==sourceId)throw new Error('Bus search source mismatch');
+  if(value.schemaVersion===2&&(!Array.isArray(value.partitionParts)||!Array.isArray(value.lookupParts)||'partitions' in value||'lookups' in value))throw new Error('Invalid partitioned bus search index');
+  return value;
+}
+function validIndexPart(value,sourceId,part){
+  validBusDocument(value,'bus_atlas_source_search_part');
+  if(value.sourceId!==sourceId||value.part!==part||!Array.isArray(value[part]))throw new Error('Invalid bus search index part');
+  return value;
+}
+
 export class BusSearch{
   constructor(requests,manifest,{limits=BUS_SEARCH_LIMITS}={}){this.requests=requests;this.manifest=manifest;this.limits=limits;this.catalogue=null;}
   async catalogueFor(reader='search',load=(d,o)=>this.requests.load(d,{...o,reader})){
@@ -68,9 +84,16 @@ export class BusSearch{
     }
     const match=/^([a-z0-9_-]+):([a-f0-9]{24})$/.exec(id);if(!match)return null;
     const catalogue=await this.catalogueFor(reader,load);check();const source=catalogue.sources.find(s=>s.sourceId===match[1]);if(!source)return null;
-    const index=validBusDocument(await load(source.index,{reader,limit:this.limits.indexBytes}),'bus_atlas_source_search');
-    if(index.sourceId!==source.sourceId)throw new Error('Bus search source mismatch');
-    const lookups=(index.lookups||[]).filter(p=>/^[a-f0-9]{2,24}$/.test(p.prefix)&&match[2].startsWith(p.prefix));
+    const index=validBusSourceIndex(await load(source.index,{reader,limit:this.limits.indexBytes}),source.sourceId);
+    let rows=index.lookups||[];
+    if(index.schemaVersion===2){
+      const parts=index.lookupParts.filter(p=>/^[a-f0-9]{1,24}$/.test(p.prefix)&&match[2].startsWith(p.prefix));
+      if(parts.length>1)throw new Error('Ambiguous bus route lookup');if(!parts.length)return null;
+      const part=validIndexPart(await load(parts[0],{reader,limit:this.limits.indexPartBytes}),source.sourceId,'lookups');
+      if(part.prefix!==parts[0].prefix)throw new Error('Invalid bus search index part');
+      rows=part.lookups;
+    }
+    const lookups=rows.filter(p=>/^[a-f0-9]{2,24}$/.test(p.prefix)&&match[2].startsWith(p.prefix));
     if(lookups.length>1)throw new Error('Ambiguous bus route lookup');if(!lookups.length)return null;
     const packet=validBusDocument(await load(lookups[0],{reader,limit:this.limits.packetBytes}),'bus_atlas_route_lookup');
     if(packet.sourceId!==source.sourceId||!Array.isArray(packet.routes)||packet.routes.length>512)throw new Error('Invalid bus route lookup');
@@ -93,13 +116,25 @@ export class BusSearch{
     const sources=catalogue.sources.filter(s=>(!filters.source||s.sourceId===filters.source)&&(scope!=='country'||s.countries?.includes(country))&&(scope!=='area'||(visible(s,bounds)&&(!extentOf(s)||intersects(extentOf(s),bounds)))))
       .sort((a,b)=>(b.patterns||0)-(a.patterns||0)||distance(a.bbox,bounds)-distance(b.bbox,bounds)||a.sourceId.localeCompare(b.sourceId));
     const reserve=Math.min(this.limits.packetBytes,this.limits.wireBytes/4);
-    let limited=sources.length>this.limits.sources,searchedSources=0;const candidates=[];
+    let limited=sources.length>this.limits.sources,searchedSources=0,unreadIndexParts=0;const candidates=[];
     for(const source of sources.slice(0,this.limits.sources)){
       if(quota.wire+(source.index?.bytes||0)>this.limits.wireBytes-reserve||!quota.add(source.index)){limited=true;continue;}
-      const index=validBusDocument(await load(source.index,{reader,limit:this.limits.indexBytes}),'bus_atlas_source_search');
-      if(index.sourceId!==source.sourceId)throw new Error('Bus search source mismatch');
+      const index=validBusSourceIndex(await load(source.index,{reader,limit:this.limits.indexBytes}),source.sourceId);
       searchedSources++;
-      for(const partition of index.partitions||[]){if(!busBloomMayMatch(partition.termBloom,terms))continue;if(scope==='area'&&!visible(partition,bounds))continue;if(scope==='country'&&!partition.countries?.includes(country))continue;candidates.push({...partition,sourceId:source.sourceId});}
+      let partitions=index.partitions||[];
+      if(index.schemaVersion===2){
+        // A part whose recorded area or countries cannot meet the scope holds no row that could; skip it unread.
+        const wanted=[];
+        for(const part of index.partitionParts){
+          if(scope==='area'&&!visible(part,bounds))continue;
+          if(scope==='country'&&!part.countries?.includes(country))continue;
+          if(quota.wire+(part.bytes||0)>this.limits.wireBytes-reserve||!quota.add(part)){limited=true;unreadIndexParts++;continue;}
+          wanted.push(part);
+        }
+        const parts=await Promise.all(wanted.map(async part=>validIndexPart(await load(part,{reader,limit:this.limits.indexPartBytes}),source.sourceId,'partitions')));
+        partitions=parts.flatMap(part=>part.partitions);
+      }
+      for(const partition of partitions){if(!busBloomMayMatch(partition.termBloom,terms))continue;if(scope==='area'&&!visible(partition,bounds))continue;if(scope==='country'&&!partition.countries?.includes(country))continue;candidates.push({...partition,sourceId:source.sourceId});}
     }
     const apportioned=apportionBusPartitions(candidates,bounds,this.limits.partitions,partition=>quota.add(partition),extentOf),selected=apportioned.selected;
     if(apportioned.limited)limited=true;
@@ -114,9 +149,9 @@ export class BusSearch{
     }
     const rows=searchBusRoutes(found,text,filters,dates,41);
     // Say how much was read: a bounded search that found nothing has not established that nothing runs.
-    const area=scope==='area'?'this map area':scope==='source'?'the selected source':country,partial=selected.length<candidates.length||searchedSources<sources.length;
-    return{rows,limited:limited||rows.length>40,scope:partial?`${area} (${selected.length} of ${candidates.length} candidate packets from ${searchedSources} of ${sources.length} sources searched; more matches may exist)`:area,
-      area,partial,loadedPartitions:selected.length,availablePartitions:candidates.length,sourceCount:searchedSources,availableSources:sources.length,
+    const area=scope==='area'?'this map area':scope==='source'?'the selected source':country,partial=selected.length<candidates.length||searchedSources<sources.length||unreadIndexParts>0;
+    return{rows,limited:limited||rows.length>40,scope:partial?`${area} (${selected.length} of ${candidates.length} candidate packets from ${searchedSources} of ${sources.length} sources searched${unreadIndexParts?`, ${unreadIndexParts} index part${unreadIndexParts>1?'s':''} not read`:''}; more matches may exist)`:area,
+      area,partial,loadedPartitions:selected.length,availablePartitions:candidates.length,sourceCount:searchedSources,availableSources:sources.length,unreadIndexParts,
       searchedPatterns:selected.reduce((n,row)=>n+(row.patterns||0),0),candidatePatterns:candidates.reduce((n,row)=>n+(row.patterns||0),0),wireBytes:quota.wire,decodedBytes:quota.decoded};
   }
 }
