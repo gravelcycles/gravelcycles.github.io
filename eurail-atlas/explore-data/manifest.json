@@ -1,104 +1,108 @@
 {
  "schemaVersion": 1,
  "kind": "rail_explore_delivery",
- "sourceManifestSha256": "1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c",
- "sourceReleaseId": "source-composition-52560f6a0829394647",
+ "sourceManifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+ "sourceReleaseId": "20261114T061018386833Z-2026-11-15",
  "dates": [
-  "2026-11-01",
-  "2026-11-02",
-  "2026-11-03",
-  "2026-11-04",
-  "2026-11-05",
-  "2026-11-06",
-  "2026-11-07"
+  "2026-11-15",
+  "2026-11-16",
+  "2026-11-17",
+  "2026-11-18",
+  "2026-11-19",
+  "2026-11-20",
+  "2026-11-21"
  ],
  "clock": "Minutes after 00:00 CET (UTC+1) on each date",
  "files": {
   "stations": "stations.json.gz",
   "journeys": "journeys.json.gz",
   "summary": "summary.json.gz",
-  "timetable": "timetable.bin.gz",
-  "ideas": "ideas.js"
+  "timetable": "timetable.bin.gz"
  },
  "counts": {
-  "stations": 30379,
-  "journeys": 61602,
-  "profiles": 124765,
+  "stations": 32485,
+  "journeys": 60506,
+  "profiles": 117711,
   "days": {
-   "2026-11-01": {
-    "trips": 115878
+   "2026-11-15": {
+    "trips": 125540
    },
-   "2026-11-02": {
-    "trips": 164408
+   "2026-11-16": {
+    "trips": 176564
    },
-   "2026-11-03": {
-    "trips": 165545
+   "2026-11-17": {
+    "trips": 174813
    },
-   "2026-11-04": {
-    "trips": 165635
+   "2026-11-18": {
+    "trips": 176745
    },
-   "2026-11-05": {
-    "trips": 165388
+   "2026-11-19": {
+    "trips": 177033
    },
-   "2026-11-06": {
-    "trips": 166447
+   "2026-11-20": {
+    "trips": 178239
    },
-   "2026-11-07": {
-    "trips": 138619
+   "2026-11-21": {
+    "trips": 147601
    }
   }
  },
  "skipped": {
-  "journeys_with_unlocated_stations": 104,
+  "journeys_without_calls": 2,
   "runs_without_complete_clocks": 7
  },
  "deduplication": {
   "rule": "A run is dropped when all its calls appear, in order and within a minute, in a run from another source on the same date; of two equal copies the run starting in its own feed country is kept.",
   "droppedTripsByDate": {
-   "2026-11-01": 3747,
-   "2026-11-02": 5605,
-   "2026-11-03": 5586,
-   "2026-11-04": 5584,
-   "2026-11-05": 5605,
-   "2026-11-06": 5665,
-   "2026-11-07": 4285
+   "2026-11-15": 4297,
+   "2026-11-16": 6126,
+   "2026-11-17": 6061,
+   "2026-11-18": 6122,
+   "2026-11-19": 6127,
+   "2026-11-20": 6186,
+   "2026-11-21": 4743
   },
-  "droppedTrips": 36077,
+  "droppedTrips": 39662,
   "sourcePairs": [
    [
     "ch_gtfs_2026",
     "fr_sncf",
-    15281
+    16458
    ],
    [
     "ch_gtfs_2026",
     "de_rv",
-    3630
+    4158
    ],
    [
     "cz_czptt",
     "de_rv",
-    1609
+    1508
    ],
    [
     "de_rv",
     "ch_gtfs_2026",
-    1493
+    1505
    ],
    [
     "fr_idfm",
     "fr_sncf",
-    1173
-   ],
-   [
-    "es_renfe_cercanias_transitous",
-    "es_renfe_ld",
-    1061
+    1300
    ],
    [
     "de_rv",
     "cz_czptt",
-    1045
+    1123
+   ],
+   [
+    "it_trenitalia_nap",
+    "it_liguria_trenitalia_tper_gtfs",
+    1098
+   ],
+   [
+    "es_renfe_cercanias_transitous",
+    "es_renfe_ld",
+    1021
    ],
    [
     "ch_gtfs_2026",
@@ -108,47 +112,47 @@
    [
     "fr_sncf",
     "ch_gtfs_2026",
-    908
-   ],
-   [
-    "at_mvo_rail_transitous",
-    "de_rv",
-    742
+    912
    ],
    [
     "es_renfe_ld",
     "es_renfe_cercanias_transitous",
-    697
-   ],
-   [
-    "de_fv",
-    "ch_gtfs_2026",
-    602
+    691
    ],
    [
     "ch_gtfs_2026",
     "it_trenord",
-    583
+    682
    ],
    [
     "at_mvo_rail_transitous",
+    "de_rv",
+    660
+   ],
+   [
     "de_fv",
-    475
+    "ch_gtfs_2026",
+    623
    ],
    [
     "cz_czptt",
     "pl_polish_trains",
-    471
+    479
    ],
    [
     "de_rv",
     "at_mvo_rail_transitous",
-    469
+    468
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "de_fv",
+    451
    ],
    [
     "fr_sncf",
     "fr_idfm",
-    411
+    421
    ],
    [
     "at_mvo_rail_transitous",
@@ -156,45 +160,36 @@
     348
    ],
    [
-    "at_mvo_rail_transitous",
-    "cz_czptt",
-    313
-   ],
-   [
     "cz_czptt",
     "at_mvo_rail_transitous",
-    305
+    324
    ]
   ]
  },
  "assets": {
   "stations.json.gz": {
-   "sha256": "b8e7ca0982c7fb6ec82e05ea60943e477bffe6960b156404a092b7eedcac8f2b",
-   "bytes": 482572,
-   "contentBytes": 1271436,
+   "sha256": "02da69de42009e54047b958ce187990fbd67e5587f6bd20fcfb94878ce621e8a",
+   "bytes": 512765,
+   "contentBytes": 1355612,
    "encoding": "gzip"
   },
   "journeys.json.gz": {
-   "sha256": "5419ca6b4c60b4827800d553907b78a0ab1dc8fac1b3f8b0544ab14eed06d46e",
-   "bytes": 360524,
-   "contentBytes": 2768727,
+   "sha256": "3e9171b466d7f45389343ee27a4d1c81f0e9c00565af82d55aee5ab62f3c019a",
+   "bytes": 387807,
+   "contentBytes": 2744745,
    "encoding": "gzip"
   },
   "timetable.bin.gz": {
-   "sha256": "be936c27af2567397c4250d494dd51719d5098c692cc2c4daae69b1431af7ca8",
-   "bytes": 4414684,
-   "contentBytes": 19256560,
+   "sha256": "f034c77e8cb900d41fc55706c12c94ebfe46a39ab64a6b67e8b70bfd806f85da",
+   "bytes": 4501333,
+   "contentBytes": 19568698,
    "encoding": "gzip"
   },
   "summary.json.gz": {
-   "sha256": "8da0dfb2153be78f08f0c0099e7e40bd15248cf314462529bfabe85566e7cb39",
-   "bytes": 714,
-   "contentBytes": 1373,
+   "sha256": "b0191947c3c62e2944241f02db728021f03df1db65bd6d6e35caea9942b84567",
+   "bytes": 761,
+   "contentBytes": 1468,
    "encoding": "gzip"
-  },
-  "ideas.js": {
-   "sha256": "4e66781a4a5fc990c00dbc299dcbd4d32dac018ba05988c8efc52dccb32878f3",
-   "bytes": 2230448
   }
  },
  "methodology": {
@@ -207,7 +202,7 @@
  "attribution": {
   "countryContext": "Explicit display-only geometry; original provider attribution applies.",
   "countryEvidence": "Eurostat/GISCO 2024; © EuroGeographics for administrative boundaries; analytical station-country evidence. Display basemap remains Natural Earth.",
-  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and attributed OSM feature distribution",
+  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and OpenStreetMap France extracts and attributed OSM feature distribution",
   "stationNames": "Trainline EU Stations contributors; underlying OpenStreetMap and attributed open station references; SBB Infrastruktur / BAV / swisstopo service-point register",
   "timetables": "Individual source licences and original publisher attribution apply; see sources."
  }

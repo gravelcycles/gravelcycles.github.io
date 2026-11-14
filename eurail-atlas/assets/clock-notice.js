@@ -1,4 +1,4 @@
-import{escapeHTML as esc}from'./atlas-core.js?v=f8cc78f67d7df99a';
+import{escapeHTML as esc}from'./atlas-core.js?v=a613641732ab9825';
 
 // Explains withheld clock times for a source whose reviewed publication scope
 // does not include its individual timetable. `status` is the source's entry in

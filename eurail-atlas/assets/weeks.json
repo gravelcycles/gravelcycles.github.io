@@ -1,0 +1,80 @@
+{
+ "boundTo": {
+  "layer": "rail",
+  "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2"
+ },
+ "contractVersions": [
+  1
+ ],
+ "kind": "euro_rail_weeks_index",
+ "layers": {
+  "bus": {
+   "archived": []
+  },
+  "rail": {
+   "archived": [
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 807204864,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "ac47baa63c689b69d70a09583be2d445c86152e1e1a7d5d4777c81b7aeaeaf9c",
+      "location": {
+       "baseUrl": "https://raw.githubusercontent.com/gravelcycles/eurail-rail-data/ec40c226090c03327a073c56c5d57d811f7d7529/archives/rail/1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c/",
+       "commit": "ec40c226090c03327a073c56c5d57d811f7d7529",
+       "host": "raw.githubusercontent.com",
+       "kind": "github-raw",
+       "path": "archives/rail/1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c/",
+       "repository": "gravelcycles/eurail-rail-data"
+      },
+      "manifest": {
+       "bytes": 2274146,
+       "name": "archive-manifest.json",
+       "sha256": "77ed1662130f1a257a7e4eb139cb703850941506f8fb44470b647cda141bd307"
+      },
+      "parts": 49
+     },
+     "bytes": 796431442,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-01",
+      "last": "2026-11-07"
+     },
+     "layer": "rail",
+     "manifestSha256": "1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c",
+     "notKeptPublicly": [],
+     "objects": 7862,
+     "publishedFrom": {
+      "commit": "3edbd78adfba1bb02e4fcefd47f63c92931f36e0",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "f8cc78f67d7df99a"
+     },
+     "releaseId": "source-composition-52560f6a0829394647",
+     "visibility": "public"
+    }
+   ],
+   "current": {
+    "contractVersions": [
+     1
+    ],
+    "dates": {
+     "first": "2026-11-15",
+     "last": "2026-11-21"
+    },
+    "location": {
+     "kind": "pages-tree",
+     "path": "data/"
+    },
+    "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "releaseId": "20261114T061018386833Z-2026-11-15"
+   }
+  },
+  "transit": {
+   "archived": []
+  }
+ },
+ "schemaVersion": 1
+}

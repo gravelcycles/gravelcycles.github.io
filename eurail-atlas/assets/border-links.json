@@ -2,15 +2,15 @@
  "schemaVersion": 1,
  "format": "rail-atlas-border-links-v1",
  "kind": "reviewed_border_station_links",
- "releaseId": "source-composition-52560f6a0829394647",
+ "releaseId": "20261114T061018386833Z-2026-11-15",
  "dates": [
-  "2026-11-01",
-  "2026-11-02",
-  "2026-11-03",
-  "2026-11-04",
-  "2026-11-05",
-  "2026-11-06",
-  "2026-11-07"
+  "2026-11-15",
+  "2026-11-16",
+  "2026-11-17",
+  "2026-11-18",
+  "2026-11-19",
+  "2026-11-20",
+  "2026-11-21"
  ],
  "geometryStatus": "schematic_border_link",
  "countUnit": "matched_dated_train_pairs",
@@ -23,12 +23,12 @@
  "meaning": "Reviewed adjacent border stations whose publishers each end the train at their own station. A labelled straight link is drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. It adds no call, station identity, pass status or train beyond the matched pairs, and does not establish an in-seat through ride.",
  "links": [
   {
-   "id": "4df8c4f21ec691ed06",
+   "id": "5c7ce23ab8423078a9",
    "reviewId": "si-it-sezana-villa-opicina-2026-11-11",
    "pairId": "6199caf534be98dc3a",
    "throughService": "Ljubljana – Villa Opicina – Trieste Centrale / Udine",
    "a": {
-    "id": "6e961c091628a8f35b",
+    "id": "e894d9f02eceb6e370",
     "name": "Sežana",
     "source": "si_dujpp_official",
     "country": "Slovenia",
@@ -36,7 +36,7 @@
     "lat": 45.704041
    },
    "b": {
-    "id": "1782c7c478b9e0e824",
+    "id": "d06a0d14723dd2606f",
     "name": "VILLA OPICINA",
     "source": "it_trenitalia_nap",
     "country": "Italy",
@@ -77,18 +77,18 @@
    "matches": [
     {
      "arrival": {
-      "journey": "24f20dc5d2dca8d858",
+      "journey": "0c733041f4d73b9f16",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž1896",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
       "number": "1896"
      },
      "departure": {
-      "journey": "283d74e0cc90e99386",
+      "journey": "ea1aa5cabcf4c5e1b7",
       "source": "it_trenitalia_nap",
-      "snapshot": "536e31cd4088ea694f8ef24807eb5fc91ab9d16c25d1fccddd704141b9d3d90d",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
       "line": "0083_REG",
       "operator": "TRENITALIA",
       "train": "1896",
@@ -112,18 +112,18 @@
     },
     {
      "arrival": {
-      "journey": "528155de5b8acf9e4f",
+      "journey": "7587ead944335863b0",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž1824",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
       "number": "1824"
      },
      "departure": {
-      "journey": "a3d0e2395371df5d78",
+      "journey": "a1d5872284ab2f55e2",
       "source": "it_trenitalia_nap",
-      "snapshot": "536e31cd4088ea694f8ef24807eb5fc91ab9d16c25d1fccddd704141b9d3d90d",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
       "line": "0083_REG",
       "operator": "TRENITALIA",
       "train": "1824",
@@ -137,9 +137,44 @@
       1,
       1,
       1,
+      0
+     ],
+     "weekly": 6,
+     "handoffMinutes": [
+      30.0,
+      30.0
+     ]
+    },
+    {
+     "arrival": {
+      "journey": "7587ead944335863b0",
+      "source": "si_dujpp_official",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
+      "line": "Ž1824",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1824"
+     },
+     "departure": {
+      "journey": "ea1aa5cabcf4c5e1b7",
+      "source": "it_trenitalia_nap",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "1824",
+      "number": "1824"
+     },
+     "evidence": "train_number_and_clock",
+     "daily": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
       1
      ],
-     "weekly": 7,
+     "weekly": 1,
      "handoffMinutes": [
       30.0,
       30.0
@@ -163,12 +198,12 @@
    "validThrough": "2026-12-12"
   },
   {
-   "id": "3339deaed5a6bdaec0",
+   "id": "807abf5fecd2497f33",
    "reviewId": "si-it-sezana-villa-opicina-2026-11-11",
    "pairId": "6199caf534be98dc3a",
    "throughService": "Ljubljana – Villa Opicina – Trieste Centrale / Udine",
    "a": {
-    "id": "1782c7c478b9e0e824",
+    "id": "d06a0d14723dd2606f",
     "name": "VILLA OPICINA",
     "source": "it_trenitalia_nap",
     "country": "Italy",
@@ -176,7 +211,7 @@
     "lat": 45.693937
    },
    "b": {
-    "id": "6e961c091628a8f35b",
+    "id": "e894d9f02eceb6e370",
     "name": "Sežana",
     "source": "si_dujpp_official",
     "country": "Slovenia",
@@ -217,18 +252,18 @@
    "matches": [
     {
      "arrival": {
-      "journey": "72f287d8b730007318",
+      "journey": "854c77eb2ac0c834ce",
       "source": "it_trenitalia_nap",
-      "snapshot": "536e31cd4088ea694f8ef24807eb5fc91ab9d16c25d1fccddd704141b9d3d90d",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
       "line": "0083_REG",
       "operator": "TRENITALIA",
       "train": "1825",
       "number": "1825"
      },
      "departure": {
-      "journey": "f98a7c92cef9e9180c",
+      "journey": "7ecf18d107d88d5bcf",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž1825",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
@@ -252,18 +287,18 @@
     },
     {
      "arrival": {
-      "journey": "cdcadc399d51179816",
+      "journey": "377912eb37f549ad0e",
       "source": "it_trenitalia_nap",
-      "snapshot": "536e31cd4088ea694f8ef24807eb5fc91ab9d16c25d1fccddd704141b9d3d90d",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
       "line": "0083_REG",
       "operator": "TRENITALIA",
       "train": "1899",
       "number": "1899"
      },
      "departure": {
-      "journey": "7361c8b9c93b8dbee5",
+      "journey": "0c25de8758708dba0f",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž1897",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
@@ -277,9 +312,44 @@
       1,
       1,
       1,
+      0
+     ],
+     "weekly": 6,
+     "handoffMinutes": [
+      38.0,
+      38.0
+     ]
+    },
+    {
+     "arrival": {
+      "journey": "854c77eb2ac0c834ce",
+      "source": "it_trenitalia_nap",
+      "snapshot": "9dc4b52d113095edd3d44c9bb01f7b7532b3e811a91dc7f96739136c117ea135",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "16202",
+      "number": "16202"
+     },
+     "departure": {
+      "journey": "0c25de8758708dba0f",
+      "source": "si_dujpp_official",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
+      "line": "Ž1897",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1897"
+     },
+     "evidence": "clock",
+     "daily": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
       1
      ],
-     "weekly": 7,
+     "weekly": 1,
      "handoffMinutes": [
       38.0,
       38.0
@@ -303,12 +373,12 @@
    "validThrough": "2026-12-12"
   },
   {
-   "id": "529bbb0e13100aa9d7",
+   "id": "919588d141af33623f",
    "reviewId": "si-hr-ilirska-bistrica-sapjane-2026-11-11",
    "pairId": "311356594fdd76716f",
    "throughService": "Ljubljana – Ilirska Bistrica – Šapjane – Rijeka",
    "a": {
-    "id": "3ceac7f9251fc3023b",
+    "id": "7d89590f120ce9308d",
     "name": "Ilirska Bistrica",
     "source": "si_dujpp_official",
     "country": "Slovenia",
@@ -316,7 +386,7 @@
     "lat": 45.569166
    },
    "b": {
-    "id": "e13d81ed5720b06536",
+    "id": "bc1a52db13b5174100",
     "name": "Šapjane",
     "source": "hr_hz",
     "country": "Croatia",
@@ -357,18 +427,18 @@
    "matches": [
     {
      "arrival": {
-      "journey": "b78ba48a1b6fb5174e",
+      "journey": "a32f4b0fc9faac2bb4",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž481",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
       "number": "481"
      },
      "departure": {
-      "journey": "1ee8cd369a6bf67c05",
+      "journey": "6943f6e7eb9cdfbf41",
       "source": "hr_hz",
-      "snapshot": "bc970d7fc935d30122d72b574f7e70fbfa189d948e6ffb7619dec04491f75896",
+      "snapshot": "7f85d8601fc3251a268d55d305f34539cbeb0c9d837fad489069af67543458ad",
       "line": "481",
       "operator": "HŽ Putnicki prijevoz",
       "train": "481",
@@ -404,12 +474,12 @@
    "validThrough": "2026-12-12"
   },
   {
-   "id": "9e5ea10816afca2916",
+   "id": "7dd73e547023f12559",
    "reviewId": "si-hr-ilirska-bistrica-sapjane-2026-11-11",
    "pairId": "311356594fdd76716f",
    "throughService": "Ljubljana – Ilirska Bistrica – Šapjane – Rijeka",
    "a": {
-    "id": "e13d81ed5720b06536",
+    "id": "bc1a52db13b5174100",
     "name": "Šapjane",
     "source": "hr_hz",
     "country": "Croatia",
@@ -417,7 +487,7 @@
     "lat": 45.47665
    },
    "b": {
-    "id": "3ceac7f9251fc3023b",
+    "id": "7d89590f120ce9308d",
     "name": "Ilirska Bistrica",
     "source": "si_dujpp_official",
     "country": "Slovenia",
@@ -458,18 +528,18 @@
    "matches": [
     {
      "arrival": {
-      "journey": "5f2162e9fb8d131336",
+      "journey": "57364df5bc77dabd3c",
       "source": "hr_hz",
-      "snapshot": "bc970d7fc935d30122d72b574f7e70fbfa189d948e6ffb7619dec04491f75896",
+      "snapshot": "7f85d8601fc3251a268d55d305f34539cbeb0c9d837fad489069af67543458ad",
       "line": "480",
       "operator": "HŽ Putnicki prijevoz",
       "train": "480",
       "number": "480"
      },
      "departure": {
-      "journey": "5e3bb006cf5e8084f7",
+      "journey": "e521b6b69afb02c054",
       "source": "si_dujpp_official",
-      "snapshot": "833fed2995fb8eee644f7f1d492bcd5e8c5abdbddd86825890271259095664d8",
+      "snapshot": "35b194955592339cbb13be292974dd44d3f90e56828c34487e6e811b77b14f1a",
       "line": "Ž480",
       "operator": "SŽ - Potniški promet d.o.o.",
       "train": null,
