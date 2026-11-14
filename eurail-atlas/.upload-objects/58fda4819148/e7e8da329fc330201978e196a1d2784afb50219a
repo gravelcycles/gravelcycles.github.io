@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="theme-color" content="#153238">
+  <meta name="description" content="Explore a week of European train timetables: every train in motion, how far you can get, how fast the network runs.">
+  <title>Euro Rail — Explore the data</title>
+  <link rel="stylesheet" href="leaflet.css?v=a613641732ab9825">
+  <link rel="stylesheet" href="explore.css?v=a613641732ab9825">
+  <script>
+  // Show script failures on the page: a phone has no console to read them from.
+  (function(){var shown=false;function report(text){if(shown)return;shown=true;var show=function(){var box=document.getElementById('problem');if(!box)return;box.textContent='Something went wrong on this page ('+String(text).slice(0,160)+'). Reload, or tell us what it says.';box.hidden=false;};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',show);else show();}
+  window.exploreReport=report;
+  window.addEventListener('error',function(e){if(e.message)report(e.message+(e.filename?' @'+e.filename.split('/').pop()+':'+e.lineno:''));else if(e.target&&e.target.src)report('could not load '+e.target.src.split('/').pop());},true);
+  window.addEventListener('unhandledrejection',function(e){report(e.reason&&e.reason.message||e.reason);});})();
+  </script>
+  <script defer src="leaflet.js?v=a613641732ab9825"></script>
+  <script type="module" src="explore-app.js?v=a613641732ab9825"></script>
+</head>
+<body>
+  <header class="x-header">
+    <a class="x-brand" href="../" aria-label="Back to the Euro Rail map">
+      <svg class="x-brand-mark" viewBox="0 0 36 36" aria-hidden="true"><path d="M7 6v11c0 7 22 2 22 13M29 6v9c0 7-22 5-22 15"/><circle cx="7" cy="7" r="3"/><circle cx="29" cy="7" r="3"/><circle cx="18" cy="20" r="3"/></svg>
+      <span><strong>Euro Rail</strong><small>Explore the data</small></span>
+    </a>
+    <nav class="x-tabs" aria-label="Explore views">
+      <a class="x-tab" href="#motion" data-view="motion" aria-label="Europe in motion"><span class="x-long">Europe in motion</span><span class="x-short">Motion</span></a>
+      <a class="x-tab" href="#reach" data-view="reach">Reach</a>
+      <a class="x-tab" href="#speed" data-view="speed">Speed</a>
+      <a class="x-tab" href="#more" data-view="more">More views</a>
+      <a class="x-tab" href="explore-ideas.html">Ideas lab</a>
+    </nav>
+    <a class="x-back" href="../">Atlas ↗</a>
+  </header>
+
+  <main class="x-main">
+    <section class="x-map-view" id="mapView" aria-label="Map">
+      <div id="map" class="x-map"></div>
+      <canvas id="layer" class="x-layer" aria-hidden="true"></canvas>
+
+      <aside class="x-panel" id="panel" aria-label="Controls">
+        <div class="x-panel-head">
+          <h1 id="panelTitle">Europe in motion</h1>
+          <button class="x-icon-button" id="panelToggle" type="button" aria-expanded="true" aria-controls="panelBody" aria-label="Hide controls">–</button>
+        </div>
+        <div id="panelBody" class="x-panel-body">
+
+          <label class="x-switch x-names"><input type="checkbox" id="placeNames" checked> City and station names</label>
+          <div class="x-view-panel" data-for="motion">
+            <p class="x-lede">Every timed passenger train, at its scheduled position. Dots move in straight lines between stops.</p>
+            <div class="x-clock-row x-keep">
+              <button class="x-button x-play" id="motionPlay" type="button">Pause</button>
+              <output class="x-clock" id="motionClock">08:00</output>
+              <output class="x-count" id="motionCount"></output>
+            </div>
+            <canvas class="x-spark" id="motionSpark" height="56" aria-label="Trains in motion through the day; click to jump to a time"></canvas>
+            <label class="x-field"><span>Time</span><input type="range" id="motionTime" min="0" max="1439" step="1" value="480"></label>
+            <div class="x-grid2">
+              <label class="x-field"><span>Day</span><select id="motionDay"></select></label>
+              <label class="x-field"><span>Speed</span><select id="motionRate"><option value="2">1 h in 30 s</option><option value="5" selected>1 h in 12 s</option><option value="15">1 h in 4 s</option><option value="40">1 h in 1.5 s</option></select></label>
+            </div>
+            <label class="x-field"><span>Colour by</span><select id="motionColor">
+              <option value="category">Service type</option>
+              <option value="speed">Current speed</option>
+              <option value="pass">Eurail pass access</option>
+              <option value="direction">Direction of travel</option>
+              <option value="length">Trip length</option>
+              <option value="progress">Progress through the trip</option>
+              <option value="daylight">Daylight</option>
+            </select></label>
+            <fieldset class="x-checks" id="motionCategories"><legend>Show</legend></fieldset>
+            <label class="x-switch"><input type="checkbox" id="motionTrails" checked> Trails (last 10 minutes)</label>
+            <div class="x-legend" id="motionLegend"></div>
+            <div class="x-selected" id="motionSelected" hidden></div>
+          </div>
+
+          <div class="x-view-panel" data-for="reach" hidden>
+            <p class="x-lede">Leave a station at a chosen time and take any train, changing wherever the timetable allows. Stations are coloured by the earliest arrival.</p>
+            <div class="x-search">
+              <label class="x-field"><span>From</span><input id="reachFrom" type="search" autocomplete="off" spellcheck="false" placeholder="City or station" aria-controls="reachFromList" aria-autocomplete="list"></label>
+              <ul class="x-suggest" id="reachFromList" role="listbox" hidden></ul>
+            </div>
+            <div class="x-grid2">
+              <label class="x-field"><span>Day</span><select id="reachDay"></select></label>
+              <label class="x-field"><span>Leave at</span><select id="reachTime"></select></label>
+            </div>
+            <label class="x-field"><span>Show up to <output id="reachMaxLabel">6 h</output></span><input type="range" id="reachMax" min="1" max="24" step="1" value="6"></label>
+            <label class="x-field"><span>Trains</span><select id="reachMode">
+              <option value="all">All trains</option>
+              <option value="pass">Skip trains needing a reservation or not on the pass</option>
+            </select></label>
+            <div class="x-legend x-keep" id="reachLegend"></div>
+            <p class="x-stat" id="reachStats"></p>
+            <div class="x-selected" id="reachJourney" hidden></div>
+            <p class="x-note">Five-minute minimum change; walking links between stations under 700 m. No metro or local bus. Countries without published clock times are blank.</p>
+          </div>
+
+          <div class="x-view-panel" data-for="speed" hidden>
+            <p class="x-lede">Every hop between consecutive stops, coloured by scheduled speed in a straight line between the two stations.</p>
+            <div class="x-grid2">
+              <label class="x-field"><span>Day</span><select id="speedDay"></select></label>
+              <label class="x-field"><span>Colour by</span><select id="speedMetric"><option value="best">Fastest train</option><option value="typical">Typical train</option></select></label>
+            </div>
+            <fieldset class="x-checks" id="speedCategories"><legend>Trains</legend></fieldset>
+            <label class="x-field"><span>At least <output id="speedMinLabel">1</output> trains a day</span><input type="range" id="speedMin" min="1" max="60" step="1" value="1"></label>
+            <div class="x-legend x-keep" id="speedLegend"></div>
+            <h2 class="x-subhead">Fastest hops in view</h2>
+            <ol class="x-toplist" id="speedTop"></ol>
+            <p class="x-note">Straight-line distance over scheduled time, so curving lines read slower than the train runs. Hops above 330 km/h are treated as location errors and hidden.</p>
+          </div>
+        </div>
+      </aside>
+
+      <div class="x-tooltip" id="tooltip" role="status" hidden></div>
+      <div class="x-loading" id="loading" role="status"><strong>Loading the week's timetable</strong><span id="loadingDetail">Every timed train of the published week</span><span class="x-bar"><i id="loadingBar"></i></span></div>
+      <div class="x-error" id="error" role="alert" hidden><strong>The timetable could not be loaded.</strong><p id="errorDetail">Check your connection and reload the page.</p></div>
+    </section>
+
+    <section class="x-more" id="moreView" aria-label="More views" hidden></section>
+    <p class="x-problem" id="problem" role="alert" hidden></p>
+  </main>
+</body>
+</html>
