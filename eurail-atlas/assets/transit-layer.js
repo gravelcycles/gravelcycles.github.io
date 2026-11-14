@@ -343,13 +343,25 @@ export function transitRetrievalDates(manifest){
   return out;
 }
 
-export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
+// Every held line stays reachable: grouped by operator (a city's operator in practice),
+// each group collapsed with its own count, never cut to a first few.
+export function transitHeldGroups(held){
+  const groups=new Map();
+  for(const h of held){const key=h.operator||h.source;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(h);}
+  return[...groups].map(([operator,lines])=>({operator,lines,whole:lines.filter(h=>h.whole).length})).sort((a,b)=>a.operator.localeCompare(b.operator));
+}
+function heldListHTML(held){
+  const groups=transitHeldGroups(held);
+  const row=h=>`<li><strong>${esc(h.label)}</strong> · ${esc(h.operator||h.source)}${h.whole?' · <em>whole line held</em>':' · part of line held'}<br><span>${esc(h.reason)}</span></li>`;
+  return`<p class="helper">All ${held.length.toLocaleString()} held lines, grouped by operator (${groups.length.toLocaleString()}). Open an operator to see its lines and the reason each is held.</p>`+
+    `<div class="transit-held-groups">${groups.map(g=>`<details class="transit-held-group"><summary>${esc(g.operator)} (${g.lines.length.toLocaleString()}${g.whole===g.lines.length?', none drawn':g.whole?`, ${g.whole.toLocaleString()} not drawn`:''})</summary><ul>${g.lines.map(row).join('')}</ul></details>`).join('')}</div>`;
+}
+export function transitPanelHTML(document,{day=null}={}){
   if(!document)return'';
   if(document.kind==='transit_atlas_hold')return`<p class="transit-hold"><strong>Held.</strong> ${esc(document.message)}</p>`;
   const week=document.serviceWeek||{},credits=transitCredits(document),held=transitHeldLines(document),whole=held.filter(h=>h.whole);
   const retrieved=transitRetrievalDates(document);
   const swiss=credits.some(c=>c.licence==='Swiss-ODmCH-Terms');
-  const heldRows=held.slice(0,heldLimit).map(h=>`<li><strong>${esc(h.label)}</strong> · ${esc(h.operator||h.source)}${h.whole?' · <em>whole line held</em>':' · part of line held'}<br><span>${esc(h.reason)}</span></li>`).join('');
   const days=(document.dates||[]).map(d=>`<option value="${esc(d)}"${d===day?' selected':''}>${esc(new Date(d+'T12:00:00Z').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}))}</option>`).join('');
   return`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
     (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
@@ -357,7 +369,7 @@ export function transitPanelHTML(document,{heldLimit=40,day=null}={}){
     (transitEstimatedLines(document).length?`<p class="helper transit-estimate">Some lines (${esc(transitEstimatedLines(document).join(', '))}) are drawn from the feed's headway windows, not timed trips: their panels show the windows as estimates, and they are not counted as recorded departures.</p>`:'')+
     ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
     (transitFallbackSources(document).length?`<details class="transit-held transit-fallback"><summary>Sources shown from an earlier archive (${transitFallbackSources(document).length.toLocaleString()})</summary><ul>${transitFallbackSources(document).map(f=>`<li><strong>${esc(f.name)}</strong> · archive retrieved ${esc(f.retrievedAt)}<br><span>${esc(f.reason)}</span></li>`).join('')}</ul></details>`:'')+
-    (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary><ul>${heldRows}</ul>${held.length>heldLimit?`<p class="helper">${(held.length-heldLimit).toLocaleString()} more held route rows are listed in the transit manifest.</p>`:''}</details>`:'')+
+    (held.length?`<details class="transit-held"><summary>Held lines (${held.length.toLocaleString()}${whole.length?`, ${whole.length.toLocaleString()} not drawn at all`:''})</summary>${heldListHTML(held)}</details>`:'')+
     `<details class="transit-credits" open><summary>Transit sources & credits (${credits.length})</summary>${swiss?'<p>Timetable data: <a href="https://opentransportdata.swiss/" target="_blank" rel="noopener noreferrer">opentransportdata.swiss</a></p>':''}<ul>${credits.map(c=>`<li>${esc(c.attribution)} · ${link(c.licenceUrl,c.licenceName)} · ${link(c.sourcePage,'Source')}${c.dataUpdated?.date?` · Data last updated ${esc(c.dataUpdated.date)}`:''}${retrieved[c.sourceId]?.retrievedAt?` · Archive retrieved ${esc(retrieved[c.sourceId].retrievedAt)}`:''}${retrieved[c.sourceId]?.ageException?`<br><span>Older archive shown by recorded exception: ${esc(retrieved[c.sourceId].ageException)}</span>`:''}${c.licenceNotice?`<br><span class="silent-licence">${esc(c.licenceNotice.label)}. ${esc(c.licenceNotice.takedown)}</span>`:''}</li>`).join('')}</ul>${document.odblNotice||document.databaseOffer?.path?`<p class="helper">${document.odblNotice?esc(document.odblNotice):''}${document.databaseOffer?.path?` ${link(new URL('transit-data/'+document.databaseOffer.path,globalThis.document?.baseURI||'https://example.invalid/').href,'Modified database offer')}`:''}</p>`:''}</details>`;
 }
 

@@ -1,7 +1,7 @@
 // City figures for More views: the hub cities of a delivery, the hourly tide
 // of trains into and out of each, and the fastest journey between each pair.
-import{haversineKm,clockUtcOffset}from'./explore-data.js?v=a613641732ab9825';
-import{dayConnections,makeFastestSearch}from'./explore-scan.js?v=a613641732ab9825';
+import{haversineKm,clockUtcOffset}from'./explore-data.js?v=7680dcecb189b99c';
+import{dayConnections,makeFastestSearch}from'./explore-scan.js?v=7680dcecb189b99c';
 
 const LABELS={zurich:'Zürich','istanbul-halkali':'Istanbul',krakow:'Kraków',poznan:'Poznań',wroclaw:'Wrocław',gdansk:'Gdańsk',klaipeda:'Klaipėda'};
 export const hubLabel=key=>LABELS[key]||key.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
@@ -56,6 +56,11 @@ export const NEIGHBOUR_MAX_KM=800;
 // Cities with fewer trains leaving than this have too little of their
 // timetable published with clock times to be judged.
 export const MIN_CITY_TRAINS=100;
+// A journey with this many changes or more is marked indirect in its own row: its
+// straight-line speed may say little about the trains; why it needs the changes is not known.
+// Only the journey's change count is used; nothing is known here about seas or mountains.
+export const INDIRECT_CHANGES=3;
+export const indirectChanges=trains=>{const n=Math.max(0,(Number(trains)||0)-1);return n>=INDIRECT_CHANGES?n:0;};
 
 // Fastest journey of the day between every pair of cities up to 800 km apart,
 // changes included, taking the quicker direction. Returns a stepper: call

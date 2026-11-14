@@ -2,9 +2,9 @@
 // country wake-up curves, weekend service, commuter tides, corridor strings,
 // border crossings, the city-pair league and slow neighbours, all derived
 // from one chosen day.
-import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=a613641732ab9825';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=a613641732ab9825';
-import{hubCities,cityTides,neighbourSearch,MIN_CITY_TRAINS,NEIGHBOUR_FROM}from'./explore-city.js?v=a613641732ab9825';
+import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=7680dcecb189b99c';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=7680dcecb189b99c';
+import{hubCities,cityTides,neighbourSearch,MIN_CITY_TRAINS,NEIGHBOUR_FROM,INDIRECT_CHANGES,indirectChanges}from'./explore-city.js?v=7680dcecb189b99c';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];
@@ -257,11 +257,11 @@ export function create(ctx){
         if(box[0]<0||box[2]>W||box[1]<0||box[3]>H||placed.some(q=>box[0]<q[2]&&box[2]>q[0]&&box[1]<q[3]&&box[3]>q[1]))continue;
         placed.push(box);labels+=`<text x="${(x+dx+2).toFixed(1)}" y="${(y+dy).toFixed(1)}" font-size="11" style="fill:var(--ink);stroke:var(--land);stroke-width:3;paint-order:stroke">${esc(c.name)}</text>`;break;}}
     $('nbMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Map of city pairs coloured by the fastest journey between them"><rect width="${W}" height="${H}" fill="var(--sea)"/><path d="${coast}" fill="var(--land)" stroke="var(--coast)" stroke-width=".6"/><g stroke-linecap="round">${lines}</g><g fill="var(--ink)" stroke="var(--land)" stroke-width="1">${dots}</g>${labels}</svg>`;
-    $('nbList').innerHTML=top.map(r=>`<li><button type="button" data-pair="${id(r)}"><b>${pair(r)}</b><span>${fmt(r.km)} km · ${duration(r.journey.minutes)} · ${changes(r.journey.trains)}</span><span class="v">${fmt(r.speed)} km/h</span></button></li>`).join('');
+    $('nbList').innerHTML=top.map(r=>`<li><button type="button" data-pair="${id(r)}"><b>${pair(r)}</b><span>${fmt(r.km)} km · ${duration(r.journey.minutes)} · ${indirectChanges(r.journey.trains)?`<em class="x-indirect" title="${indirectChanges(r.journey.trains)} changes: this is the fastest journey found, and it needs that many changes. Possible reasons include a route round a sea or mountains, few trains across a border, or missing clock times">indirect: ${indirectChanges(r.journey.trains)} changes</em>`:changes(r.journey.trains)}</span><span class="v">${fmt(r.speed)} km/h</span></button></li>`).join('');
     $('nbLegend').innerHTML=SPEED_LABELS.map((l,i)=>`<span><i class="line" style="background:var(${SPEED_TOKENS[i]})"></i>${l}</span>`).join('')+(missing.length?'<span><i class="line" style="background:var(--muted)"></i>Dashed: no journey found</span>':'');
     $('nbStatus').textContent=found.length?`${fmt(found.length)} city pairs on ${data.dates[state.day].label}. Half are slower than ${fmt(found[found.length>>1].speed)} km/h in a straight line.`:'No city pairs in this range.';
     const left=nb.search.left.map(c=>c.name);
-    $('nbNote').textContent=`The quicker direction is shown, for journeys starting at ${clockLabel(NEIGHBOUR_FROM)} Central European Time or later. Waits at changes count, the wait for the first train does not. Distances are straight lines between city centres. Countries without published clock times are missing, so a journey that would use their trains shows as slower than it is.`+(left.length?` Left out with fewer than ${MIN_CITY_TRAINS} timed trains leaving that day: ${left.join(', ')}.`:'');
+    $('nbNote').textContent=`The quicker direction is shown, for journeys starting at ${clockLabel(NEIGHBOUR_FROM)} Central European Time or later. Waits at changes count, the wait for the first train does not. Distances are straight lines between city centres. Pairs whose fastest journey found needs ${INDIRECT_CHANGES} or more changes are marked indirect, with the number of changes; the speed is that of the fastest journey found with them. Possible reasons, not known from these data, include a route round a sea or mountains, few trains across a border, or missing clock times. Countries without published clock times are missing, so a journey that would use their trains shows as slower than it is.`+(left.length?` Left out with fewer than ${MIN_CITY_TRAINS} timed trains leaving that day: ${left.join(', ')}.`:'');
   }
 
   function renderAll(){$('moreStatus').textContent='Working out the day…';setTimeout(()=>{computeDay();renderRhythm();renderCountries();renderTides();renderCorridor();renderBorders();renderPairs();$('moreStatus').textContent=`Figures for ${data.dates[state.day].label}.`;nb.day=-1;nb.token++;startNeighbours();},20);}

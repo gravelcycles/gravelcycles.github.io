@@ -1,7 +1,7 @@
 // Europe in motion: every timed train at its scheduled position for one day.
-import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName,clockUtcOffset}from'./explore-data.js?v=a613641732ab9825';
-import{solarInstant,sinElevation,lightBand,darkness}from'./explore-sun.js?v=a613641732ab9825';
-import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=a613641732ab9825';
+import{CATEGORY_LABELS,PASS_LABELS,tripInfo,clockLabel,clockName,clockUtcOffset}from'./explore-data.js?v=7680dcecb189b99c';
+import{solarInstant,sinElevation,lightBand,darkness}from'./explore-sun.js?v=7680dcecb189b99c';
+import{fillDaySelect,selectFastest,esc,fmt}from'./explore-ui.js?v=7680dcecb189b99c';
 
 const $=id=>document.getElementById(id);
 const RAD=Math.PI/180,KM_PER_WORLD=40075.016/256,TRAIL=10,MAX_ACTIVE=60000;
@@ -156,7 +156,7 @@ export function create(ctx){
     const info=tripInfo(data,t),o=locate(t,state.T,{});let next=info.calls.find(c=>c.arr>=state.T)||info.calls[info.calls.length-1];
     ctx.tooltip(`<b>${esc(info.title)}</b> · ${esc(info.operator)}<br>${esc(info.from)} → ${esc(info.to)}<br>${o.moving?`${fmt(o.speed)} km/h · next ${esc(S.names[next.station])} ${clockLabel(next.arr)}`:`At ${esc(S.names[next.station])}`}`,p.x,p.y);
   }
-  function onClick(p){const t=nearest(p);state.selected=t;state.follow=false;selectedPanel();if(t>=0)ctx.reveal($('motionSelected'));ctx.requestDraw();}
+  function onClick(p){const t=nearest(p);state.selected=t;state.follow=false;selectedPanel();if(t>=0)ctx.reveal($('motionSelected'));ctx.requestDraw();return t>=0;}
 
   // Controls
   fillDaySelect($('motionDay'),data.dates,state.day);

@@ -1,4 +1,4 @@
-import{safeBusBase}from'./bus-delivery.js?v=a613641732ab9825';
+import{safeBusBase}from'./bus-delivery.js?v=7680dcecb189b99c';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
@@ -60,6 +60,8 @@ export function busBoardingScopeNote(source){
 export function displayClock(clock,seconds){if(typeof clock==='string'&&/^\d{1,3}:\d\d(?::\d\d)?$/.test(clock)){const [h,m]=clock.split(':').map(Number);return`${String(h%24).padStart(2,'0')}:${String(m).padStart(2,'0')}${h>=24?' +'+Math.floor(h/24)+'d':''}`;}if(Number.isFinite(seconds)){const h=Math.floor(seconds/3600);return`${String(h%24).padStart(2,'0')}:${String(Math.floor(seconds/60)%60).padStart(2,'0')}${h>=24?' +'+Math.floor(h/24)+'d':''}`;}return'—';}
 export function validBusDocument(value,kind){if(value?.schemaVersion!==1||value.kind!==kind)throw new Error('Unsupported bus data format');return value;}
 const aborted=()=>new DOMException('Stale bus request','AbortError');
+// A detail pack is one JSON header line followed by exact original record bytes.
+export function splitDetailPack(buffer){const newline=buffer.indexOf(10);if(newline<1)throw new Error('Invalid bus detail pack');return{header:JSON.parse(new TextDecoder().decode(buffer.subarray(0,newline))),body:buffer.subarray(newline+1)};}
 export class BusRequests{
   constructor(base,{fetcher=globalThis.fetch,maximumBytes=BUS_LIMITS.cacheBytes,concurrency=3,requireHashes=false,detailsBaseUrl=null,sharedPool=null}={}){this.base=new URL(base);this.detailsBase=detailsBaseUrl===null?null:safeBusBase(detailsBaseUrl);this.requireHashes=requireHashes||this.detailsBase!==null;this.fetcher=fetcher.bind(globalThis);this.pool=sharedPool||{maximumBytes,concurrency:Math.max(1,concurrency),epochs:new Map(),cache:new Map(),cacheBytes:0,flights:new Map(),readers:new Map(),queue:[],active:0};for(const key of['maximumBytes','concurrency','epochs','cache','cacheBytes','flights','readers','queue','active'])Object.defineProperty(this,key,{get:()=>this.pool[key],set:value=>{this.pool[key]=value;}});}
   cancel(reader){this.epochs.set(reader,(this.epochs.get(reader)||0)+1);for(const call of [...this.readers.get(reader)||[]]){this.detach(call);call.reject(aborted());}}
@@ -77,20 +79,21 @@ export class BusRequests{
   validateSize(descriptor,wireBytes,bytes){if(Number.isInteger(descriptor?.bytes)&&descriptor.bytes!==wireBytes)throw new Error('Bus asset byte count mismatch');if(Number.isInteger(descriptor?.uncompressedBytes)&&descriptor.uncompressedBytes!==bytes)throw new Error('Bus decoded byte count mismatch');}
   pump(){while(this.active<this.concurrency&&this.queue.length){const flight=this.queue.shift();if(!flight.calls.size)continue;this.active++;this.read(flight).then(value=>this.settle(flight,null,value),error=>this.settle(flight,error)).finally(()=>{this.active--;this.pump();});}}
   settle(flight,error,value){if(this.flights.get(flight.flightKey)===flight)this.flights.delete(flight.flightKey);for(const call of [...flight.calls]){this.detach(call);if(error)call.reject(error);else call.resolve(value);}}
-  async load(descriptor,{reader='viewport',limit=4*1024*1024}={}){
+  async load(descriptor,{reader='viewport',limit=4*1024*1024,format=null}={}){
+    if(format!==null&&format!=='detail-pack')throw new Error('Unsupported bus asset format');
     const url=this.assetURL(descriptor);
     if(this.requireHashes&&(!/^[a-f0-9]{64}$/.test(descriptor?.sha256||'')||!Number.isSafeInteger(descriptor?.bytes)||descriptor.bytes<1))throw new Error('Remote bus asset requires a checksum descriptor');
     if(descriptor?.bytes>limit)throw new Error('Bus asset exceeds download budget');
-    const key=url.href+':'+(descriptor?.sha256||'');if(this.cache.has(key)){const entry=this.cache.get(key);if(entry.wireBytes>limit)throw new Error('Bus asset exceeds download budget');if(entry.bytes>Math.min(limit*8,48*1024*1024))throw new Error('Decoded bus asset exceeds memory budget');this.validateSize(descriptor,entry.wireBytes,entry.bytes);this.cache.delete(key);this.cache.set(key,entry);return entry.value;}
+    const key=url.href+':'+(descriptor?.sha256||'')+(format?':'+format:'');if(this.cache.has(key)){const entry=this.cache.get(key);if(entry.wireBytes>limit)throw new Error('Bus asset exceeds download budget');if(entry.bytes>Math.min(limit*8,48*1024*1024))throw new Error('Decoded bus asset exceeds memory budget');this.validateSize(descriptor,entry.wireBytes,entry.bytes);this.cache.delete(key);this.cache.set(key,entry);return entry.value;}
     // Independent readers share one immutable download. Cancelling a viewport
     // must not abort another reader inspecting the same source packet.
     const flightKey=key+':'+JSON.stringify([limit,descriptor?.bytes,descriptor?.uncompressedBytes,descriptor?.encoding]);let flight=this.flights.get(flightKey),created=false;
-    if(!flight){created=true;flight={flightKey,key,url,descriptor,limit,controller:new AbortController(),calls:new Set()};this.flights.set(flightKey,flight);}
+    if(!flight){created=true;flight={flightKey,key,url,descriptor,limit,format,controller:new AbortController(),calls:new Set()};this.flights.set(flightKey,flight);}
     const result=new Promise((resolve,reject)=>{const call={reader,flight,resolve,reject};flight.calls.add(call);if(!this.readers.has(reader))this.readers.set(reader,new Set());this.readers.get(reader).add(call);});
     if(created){this.queue.push(flight);this.pump();}return result;
   }
   async read(flight){
-    const{url,descriptor,limit,controller,key}=flight;const check=()=>{if(controller.signal.aborted||!flight.calls.size)throw aborted();};check();
+    const{url,descriptor,limit,controller,key,format}=flight;const check=()=>{if(controller.signal.aborted||!flight.calls.size)throw aborted();};check();
     // A checksum-bound packet is immutable and verified below, so the HTTP cache may answer without a
     // revalidation round trip. The manifest and any unhashed load still revalidate on every read.
     const immutable=/^[a-f0-9]{64}$/.test(descriptor?.sha256||'')&&!url.pathname.endsWith('/manifest.json');
@@ -105,14 +108,14 @@ export class BusRequests{
     const sha256=descriptor?.sha256||url.pathname.endsWith('/manifest.json')?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):undefined;if(descriptor?.sha256&&sha256!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');
     check();
     if(descriptor?.encoding==='gzip'||url.pathname.endsWith('.gz')){
-      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=a613641732ab9825');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
+      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=7680dcecb189b99c');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
       else{const stream=new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip')).getReader(),chunks=[],abort=()=>{stream.cancel().catch(()=>{});};let size=0;controller.signal.addEventListener('abort',abort,{once:true});
       try{for(;;){const{done,value}=await stream.read();if(done)break;size+=value.byteLength;if(size>Math.min(limit*8,48*1024*1024)){await stream.cancel();throw new Error('Decoded bus asset exceeds memory budget');}chunks.push(value);}}finally{controller.signal.removeEventListener('abort',abort);stream.releaseLock();}
       buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}}
     }
     check();
     if(Number.isInteger(descriptor?.uncompressedBytes)&&descriptor.uncompressedBytes!==buffer.byteLength)throw new Error('Bus decoded byte count mismatch');
-    const value=JSON.parse(new TextDecoder().decode(buffer));check();if(buffer.byteLength<=this.maximumBytes){this.cacheBytes-=this.cache.get(key)?.bytes||0;this.cache.delete(key);this.cache.set(key,{value,bytes:buffer.byteLength,wireBytes,sha256});this.cacheBytes+=buffer.byteLength;while(this.cacheBytes>this.maximumBytes){const first=this.cache.keys().next().value;this.cacheBytes-=this.cache.get(first).bytes;this.cache.delete(first);}}
+    const value=format==='detail-pack'?splitDetailPack(buffer):JSON.parse(new TextDecoder().decode(buffer));check();if(buffer.byteLength<=this.maximumBytes){this.cacheBytes-=this.cache.get(key)?.bytes||0;this.cache.delete(key);this.cache.set(key,{value,bytes:buffer.byteLength,wireBytes,sha256});this.cacheBytes+=buffer.byteLength;while(this.cacheBytes>this.maximumBytes){const first=this.cache.keys().next().value;this.cacheBytes-=this.cache.get(first).bytes;this.cache.delete(first);}}
     return value;
   }
 }

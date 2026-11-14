@@ -1,6 +1,6 @@
-import{loadExplore,makeStationSearch}from'./explore-data.js?v=a613641732ab9825';
-import{css,fmt,esc,exploreHash,holdSectionInView}from'./explore-ui.js?v=a613641732ab9825';
-import{makeLabels}from'./explore-labels.js?v=a613641732ab9825';
+import{loadExplore,makeStationSearch}from'./explore-data.js?v=7680dcecb189b99c';
+import{css,fmt,esc,exploreHash,holdSectionInView}from'./explore-ui.js?v=7680dcecb189b99c';
+import{makeLabels}from'./explore-labels.js?v=7680dcecb189b99c';
 
 const $=id=>document.getElementById(id);
 const VIEWS=['motion','reach','speed','more'];
@@ -42,7 +42,7 @@ async function main(){
   const phone=window.matchMedia('(max-width:760px)');
   let dirty=true,current=null,views={},data=null,drawFailed=false,labels=null,showNames=true;
 
-  $('panelToggle').addEventListener('click',()=>{const panel=$('panel'),open=panel.classList.toggle('collapsed');$('panelToggle').setAttribute('aria-expanded',String(!open));$('panelToggle').textContent=open?'+':'–';$('panelToggle').setAttribute('aria-label',open?'Show controls':'Hide controls');});
+  $('panelToggle').addEventListener('click',()=>{const panel=$('panel'),open=panel.classList.toggle('collapsed');if(!open)ctx.hideTooltip();$('panelToggle').setAttribute('aria-expanded',String(!open));$('panelToggle').textContent=open?'+':'–';$('panelToggle').setAttribute('aria-label',open?'Show controls':'Hide controls');});
   map.on('move zoom',()=>{ctx.hideTooltip();dirty=true;});
   map.on('resize',()=>{layer.resize();dirty=true;});
   // In-app browsers and rotating phones can size the page after it loads without a window resize,
@@ -57,7 +57,11 @@ async function main(){
   let touched=0;$('map').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')touched=performance.now();},true);
   map.on('mouseout',()=>{if(performance.now()-touched>1200)ctx.hideTooltip();});
   // A tap has no hover, so a click also shows the readout a pointer would get.
-  map.on('click',e=>{current?.onClick?.(e.containerPoint);current?.onMove?.(e.containerPoint);});
+  // But when a tap opens a selected-item panel that is on screen, the panel is the readout:
+  // the dark tooltip would only sit beside it (views report a pick by returning true).
+  map.on('click',e=>{const picked=current?.onClick?.(e.containerPoint);
+    if(picked&&performance.now()-touched<1200&&!$('panel').classList.contains('collapsed'))ctx.hideTooltip();
+    else current?.onMove?.(e.containerPoint);});
   // On phones the panel is a bottom sheet: lift it while typing so the keyboard cannot cover the field.
   $('panel').addEventListener('focusin',e=>{if(e.target.matches('input[type=search]')){$('panel').classList.add('typing');e.target.closest('.x-search')?.scrollIntoView({block:'start'});}});
   $('panel').addEventListener('focusout',e=>{if(e.target.matches('input[type=search]'))setTimeout(()=>$('panel').classList.remove('typing'),150);});
@@ -82,7 +86,7 @@ async function main(){
 
   async function view(name){
     if(views[name])return views[name];
-    const module=await import(name==='motion'?'./explore-motion.js?v=a613641732ab9825':name==='reach'?'./explore-reach.js?v=a613641732ab9825':name==='speed'?'./explore-speed.js?v=a613641732ab9825':'./explore-more.js?v=a613641732ab9825');
+    const module=await import(name==='motion'?'./explore-motion.js?v=7680dcecb189b99c':name==='reach'?'./explore-reach.js?v=7680dcecb189b99c':name==='speed'?'./explore-speed.js?v=7680dcecb189b99c':'./explore-more.js?v=7680dcecb189b99c');
     return views[name]=module.create(ctx);
   }
   let stopSectionHold=null,routeTicket=0;

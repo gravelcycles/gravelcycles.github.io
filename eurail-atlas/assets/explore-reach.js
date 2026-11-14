@@ -1,8 +1,8 @@
 // Reach: earliest arrival at every station from a chosen origin and time,
 // by connection scan over one day's timed trains, with walking transfers.
-import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=a613641732ab9825';
-import{footLinks,dayConnections,CHANGE,INF}from'./explore-scan.js?v=a613641732ab9825';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=a613641732ab9825';
+import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=7680dcecb189b99c';
+import{footLinks,dayConnections,CHANGE,INF}from'./explore-scan.js?v=7680dcecb189b99c';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=7680dcecb189b99c';
 
 const $=id=>document.getElementById(id);
 const BANDS=6;
@@ -92,7 +92,7 @@ export function create(ctx){
   function nearest(p){let best=-1,bd=100;for(let k=0;k<shown.length;k+=3){const d=(shown[k]-p.x)**2+(shown[k+1]-p.y)**2;if(d<bd){bd=d;best=shown[k+2];}}return best;}
   function onMove(p){const s=nearest(p);if(s<0||!result)return ctx.hideTooltip();const m=result.ea[s]-state.t0,legs=journey(s),trains=legs.filter(l=>!l.walk).length;
     ctx.tooltip(`<b>${esc(S.names[s])}</b><br>Arrive ${clockLabel(result.ea[s])} · ${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min<br>${trains<=1?'Direct train':`${trains-1} change${trains>2?'s':''}`} · ${coarse?'shown below':'click for the route'}`,p.x,p.y);}
-  function onClick(p){const s=nearest(p);state.target=s;showJourney();if(s>=0)ctx.reveal($('reachJourney'));ctx.requestDraw();}
+  function onClick(p){const s=nearest(p);state.target=s;showJourney();if(s>=0)ctx.reveal($('reachJourney'));ctx.requestDraw();return s>=0;}
 
   function setOrigin(entry){state.origin=entry;state.target=-1;$('reachFrom').value=entry.name;
     const xs=entry.stations;if(xs.length){let la=0,lo=0;for(const s of xs){la+=S.lat[s];lo+=S.lon[s];}ctx.map.panTo([la/xs.length,lo/xs.length],{animate:false});

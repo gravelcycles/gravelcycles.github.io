@@ -1,6 +1,6 @@
 // Deployment configuration is trusted same-origin UI data, never a shared-link URL.
 const HASH=/^[a-f0-9]{64}$/;
-const DISPLAY=[['busNetwork','catalogue'],['busDuplicates','duplicates']],DERIVATIVES=[['busAtlasOverview','catalogue'],['busGeometry','manifest'],...DISPLAY];
+const DISPLAY=[['busNetwork','catalogue'],['busDuplicates','duplicates']],DERIVATIVES=[['busAtlasOverview','catalogue'],['busGeometry','manifest'],['detailPacks','catalogue'],...DISPLAY];
 function boundDerivative(value,key,sha){
   const descriptor=value?.[key];
   return value?.busManifestSha256===sha&&HASH.test(descriptor?.sha256||'')&&Number.isSafeInteger(descriptor?.bytes)&&descriptor.bytes>=1&&descriptor.bytes<=3*1024*1024&&Number.isSafeInteger(descriptor?.uncompressedBytes)&&descriptor.uncompressedBytes>=1&&descriptor.uncompressedBytes<=16*1024*1024&&descriptor.encoding==='gzip';
@@ -11,6 +11,18 @@ export function safeBusBase(value,pageURL=globalThis.location?.href){
   const development=base.protocol==='http:'&&base.origin===page.origin&&['localhost','127.0.0.1','[::1]'].includes(base.hostname);
   if((base.protocol!=='https:'&&!development)||base.username||base.password||base.search||base.hash||!base.pathname.endsWith('/'))throw new Error('Invalid public bus asset base');
   return base;
+}
+// Detail packs are read from the prefix their pointer names: the delivery's
+// own prefix, or a second prefix that is exactly an immutable snapshot of this
+// manifest in a public repository at a full commit id (never a branch or tag).
+// Which repositories may be named is decided when the pointer is published
+// (config/bus-delivery-repositories.json); every pack is hash-checked here.
+const PACK_SNAPSHOT=/^https:\/\/raw\.githubusercontent\.com\/[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*\/[a-f0-9]{40}\/snapshots\/([a-f0-9]{64})\/$/;
+export function detailPackPrefix(value,base,manifestSha){
+  const href=String(value);
+  if(href===new URL(base).href)return'manifest';
+  const match=PACK_SNAPSHOT.exec(href);
+  return match&&match[1]===manifestSha?'second':null;
 }
 export function resolveBusDelivery(configuration,localBase,pageURL=globalThis.location?.href){
   const local=safeBusBase(localBase,pageURL);
@@ -25,6 +37,10 @@ export function resolveBusDelivery(configuration,localBase,pageURL=globalThis.lo
     const value=configuration[name];
     if(!boundDerivative(value,key,manifest.sha256))throw new Error('Invalid bus derivative binding');
     derivatives[name]={...value,assetBaseUrl:safeBusBase(value.assetBaseUrl,pageURL).href};
+  }
+  if(derivatives.detailPacks){
+    if(details)throw new Error('Bus detail packs replace the separate details base');
+    if(!detailPackPrefix(derivatives.detailPacks.assetBaseUrl,base,manifest.sha256))throw new Error('Bus detail packs are outside the delivery prefix');
   }
   return{baseURL:base,detailsBaseURL:details,manifest,requireHashes:true,sourceIds,...derivatives};
 }
