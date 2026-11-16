@@ -1,0 +1,214 @@
+{
+ "schemaVersion": 1,
+ "kind": "about_visuals",
+ "note": "Clips recorded from this site by scripts/capture_about_visuals.cjs; each names the inputs it shows. Map tiles in the clips © OpenStreetMap contributors.",
+ "visuals": [
+  {
+   "id": "line",
+   "state": "shown",
+   "inputs": {
+    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "rail": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
+   },
+   "sizes": {
+    "desktop": {
+     "width": 640,
+     "height": 400,
+     "frames": 5,
+     "durationMs": 8000,
+     "quality": 0.5,
+     "clip": {
+      "path": "line-desktop-b84a0c4e5bd9.webp",
+      "bytes": 99952,
+      "sha256": "b84a0c4e5bd9e3eb8e328a44500a2ab38944db6537e33297dea93ace1a476924"
+     },
+     "poster": {
+      "path": "line-desktop-poster-61d6a271c52d.webp",
+      "bytes": 45964,
+      "sha256": "61d6a271c52d01351526c8b2b08cd4a8df5787f71d0355cc8f2bf19a7b3bf970"
+     },
+     "alt": "Clicking a railway line near Zürich HB opens a panel for Meilen ↕ Zürich Stadelhofen that lists the routes and trains on it.",
+     "link": "?view=frequency&edge=pair%3A%5B%22ch_gtfs_2026%22%2C%2279304220df1ac4dd7a%22%2Ctrue%2C%22inferred%22%5D&lat=47.378&lon=8.540&z=11.00"
+    },
+    "phone": {
+     "width": 300,
+     "height": 510,
+     "frames": 5,
+     "durationMs": 8000,
+     "quality": 0.5,
+     "clip": {
+      "path": "line-phone-52f6a85b7172.webp",
+      "bytes": 55514,
+      "sha256": "52f6a85b71728b8a99c082f72d4f24f7842211e50c3d28589591b2e482c32c96"
+     },
+     "poster": {
+      "path": "line-phone-poster-bc2fb73e996e.webp",
+      "bytes": 25932,
+      "sha256": "bc2fb73e996e2b4a4cb9f5043de711d6506587ce001f35e069bcd0bcc14bcc99"
+     },
+     "alt": "Tapping a railway line near Zürich HB opens a panel for Meilen ↕ Zürich Stadelhofen that lists the routes and trains on it.",
+     "link": "?view=frequency&key=0&edge=pair%3A%5B%22ch_gtfs_2026%22%2C%2279304220df1ac4dd7a%22%2Ctrue%2C%22inferred%22%5D&lat=47.378&lon=8.540&z=11.00"
+    }
+   }
+  },
+  {
+   "id": "station",
+   "state": "shown",
+   "inputs": {
+    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "rail": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
+   },
+   "sizes": {
+    "desktop": {
+     "width": 640,
+     "height": 400,
+     "frames": 2,
+     "durationMs": 4100,
+     "quality": 0.5,
+     "clip": {
+      "path": "station-desktop-dc57f8033658.webp",
+      "bytes": 83264,
+      "sha256": "dc57f8033658dc884a2d068a44b34574fa77ea44a81a065eeb8141aa961c6210"
+     },
+     "poster": {
+      "path": "station-desktop-poster-1a30b7f08948.webp",
+      "bytes": 45950,
+      "sha256": "1a30b7f08948ae7e45b21df27eafef2515ba0df253c0c504d3af46af44bbbff7"
+     },
+     "alt": "Clicking the Zürich HB station dot opens its panel; the routes that call there stay coloured on the map.",
+     "link": "?view=frequency&station=48a431d0bf0bd8c47f&lat=47.378&lon=8.540&z=11.00"
+    },
+    "phone": {
+     "width": 300,
+     "height": 510,
+     "frames": 4,
+     "durationMs": 6600,
+     "quality": 0.5,
+     "clip": {
+      "path": "station-phone-4ebc1e68a11c.webp",
+      "bytes": 58706,
+      "sha256": "4ebc1e68a11cef3dd2693aad402083d02fff4b77b87777351584f4ee9aae70d0"
+     },
+     "poster": {
+      "path": "station-phone-poster-c62d24e61a16.webp",
+      "bytes": 26448,
+      "sha256": "c62d24e61a16865d5405017bce0b89a10cedf101fad5aca70e9b8ff5e47b4c35"
+     },
+     "alt": "Tapping the Zürich HB station dot opens its panel; the routes that call there stay coloured on the map, shown after Show on map.",
+     "link": "?view=frequency&key=0&station=48a431d0bf0bd8c47f&lat=47.378&lon=8.540&z=11.00"
+    }
+   }
+  },
+  {
+   "id": "route",
+   "state": "shown",
+   "inputs": {
+    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "rail": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
+   },
+   "sizes": {
+    "desktop": {
+     "width": 640,
+     "height": 400,
+     "frames": 3,
+     "durationMs": 5800,
+     "quality": 0.5,
+     "clip": {
+      "path": "route-desktop-8bc1d6105642.webp",
+      "bytes": 74830,
+      "sha256": "8bc1d6105642ca794c629cf7a7dd29e3f480f2908ac202131b5760661a366327"
+     },
+     "poster": {
+      "path": "route-desktop-poster-a2bc8f3fa69d.webp",
+      "bytes": 39054,
+      "sha256": "a2bc8f3fa69dbc2b9cf2e3baec1327e5a61ec2be5c07ad98b8d18d77a0d590fa"
+     },
+     "alt": "With Zürich HB selected, choosing the route Rapperswil SG → Niederweningen highlights its full path on the map and lists its train numbers; choosing train 19518 shows its scheduled departures.",
+     "link": "?view=frequency&station=48a431d0bf0bd8c47f&route=a9eitp2wub&lat=47.394&lon=8.898&z=10.00"
+    },
+    "phone": {
+     "width": 300,
+     "height": 510,
+     "frames": 3,
+     "durationMs": 5800,
+     "quality": 0.5,
+     "clip": {
+      "path": "route-phone-f92ed8c30478.webp",
+      "bytes": 21112,
+      "sha256": "f92ed8c30478f057ca449a050c022ef27f32fb939d5e2ac8d1084cf9124f07af"
+     },
+     "poster": {
+      "path": "route-phone-poster-81594ad775b7.webp",
+      "bytes": 10258,
+      "sha256": "81594ad775b7e8a5109b77367c4d6dd9ecdaf18909cbb993f5e6dec7cee50977"
+     },
+     "alt": "With Zürich HB selected, choosing the route Rapperswil SG → Niederweningen highlights its full path on the map and lists its train numbers; choosing train 19518 shows its scheduled departures.",
+     "link": "?view=frequency&key=0&station=48a431d0bf0bd8c47f&route=a9eitp2wub&lat=47.089&lon=8.612&z=8.50"
+    }
+   }
+  },
+  {
+   "id": "transit",
+   "state": "held",
+   "reason": "the City transit layer is not published with this site (missing); the City transit layer is not published with this site (missing)",
+   "inputs": {
+    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "rail": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "transit": "3d729a5e2ee4453401fa85fa1b4530881919c952a5b610ee0a6985e8a787fddd",
+    "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
+   }
+  },
+  {
+   "id": "explore",
+   "state": "shown",
+   "inputs": {
+    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "explore": "a355245c8a5d2b0fbcd9deba9474510df74c8263ce3cce020d5f62ce1bbb1f80",
+    "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
+   },
+   "sizes": {
+    "desktop": {
+     "width": 640,
+     "height": 400,
+     "frames": 5,
+     "durationMs": 3280,
+     "quality": 0.5,
+     "clip": {
+      "path": "explore-desktop-ce3805fad733.webp",
+      "bytes": 121802,
+      "sha256": "ce3805fad733fbc74ceb763712ad829f8eccb5d9e9c229601a694fb46f69fe6c"
+     },
+     "poster": {
+      "path": "explore-desktop-poster-71c0187ed6c2.webp",
+      "bytes": 27710,
+      "sha256": "71c0187ed6c28537e2b6d10d6835ad497c745804d0034e60ab0a91166709e410"
+     },
+     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:31 CET to 09:49 CET.",
+     "link": "assets/explore.html#motion"
+    },
+    "phone": {
+     "width": 300,
+     "height": 510,
+     "frames": 5,
+     "durationMs": 3280,
+     "quality": 0.5,
+     "clip": {
+      "path": "explore-phone-93999580eaa3.webp",
+      "bytes": 78294,
+      "sha256": "93999580eaa3bf625a4f42d287552d3463729108aa5811abb212e37d3444045e"
+     },
+     "poster": {
+      "path": "explore-phone-poster-383585e746ac.webp",
+      "bytes": 17386,
+      "sha256": "383585e746ac88d8a3d86cefbb8fe08be19bd74ed6ceba519bad2adc4703345c"
+     },
+     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:22 CET to 09:54 CET.",
+     "link": "assets/explore.html#motion"
+    }
+   }
+  }
+ ]
+}
