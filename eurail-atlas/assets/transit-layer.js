@@ -13,6 +13,25 @@ export const TRANSIT_MODE_STYLE=Object.freeze({
   cable_tram:{label:'Cable tram',color:'#c8102e',weight:3,dash:'4 2'},
   monorail:{label:'Monorail',color:'#1f4fbf',weight:3.5,dash:'10 3'}});
 const HASH=/^[a-f0-9]{64}$/;
+// A source whose terms require its official line colours (register lineColours
+// "publisher_required"; Sofia art. 7(4)) carries the publisher's route_color on
+// every route row. Only an exact #RRGGBB is drawn; anything else falls back to the
+// mode colour (the build and the audit refuse such rows, so this never shows).
+const ROUTE_COLOUR=/^#[0-9A-F]{6}$/;
+export function transitLineColour(route){const c=route?.routeColor;return typeof c==='string'&&ROUTE_COLOUR.test(c)?c:null;}
+// Readable label text on a publisher colour when the feed gives no route_text_color:
+// black or white by the colour's relative luminance (WCAG), never a fixed white.
+export function transitTextColour(route){
+  const own=transitLineColour({routeColor:route?.routeTextColor});if(own)return own;
+  const bg=transitLineColour(route);if(!bg)return null;
+  const lin=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;};
+  const [r,g,b]=[1,3,5].map(i=>lin(parseInt(bg.slice(i,i+2),16)));
+  const L=0.2126*r+0.7152*g+0.0722*b;
+  return (L+0.05)/0.05>=1.05/(L+0.05)?'#000000':'#FFFFFF';
+}
+export function transitStrokeColour(route,mode){return transitLineColour(route)||(TRANSIT_MODE_STYLE[mode||route?.mode]||TRANSIT_MODE_STYLE.tram).color;}
+// Credits of the sources drawn in their publisher's line colours, for the legend.
+export function transitPublisherColourSources(manifest){return(manifest?.sources||[]).filter(s=>s.lineColours==='publisher_required').map(s=>s.publisher||s.name||s.id);}
 // The layer's bytes may live in a data repository: transit-data/manifest.json is then a
 // pointer (docs/DATA_LAYERS_OUTSIDE_PAGES.md). Only this exact shape is followed: the raw
 // host, an allowed repository, a full commit and the manifest's own hash in the path.
@@ -228,7 +247,7 @@ export class TransitLayer{
     routes.sort((a,b)=>order.indexOf(a.mode)-order.indexOf(b.mode));
     for(const r of routes){
       const s=TRANSIT_MODE_STYLE[r.mode]||TRANSIT_MODE_STYLE.tram;
-      const line=this.L.polyline(r.coordinates.map(([lon,lat])=>[lat,lon]),{renderer:this.renderer,color:s.color,weight:s.weight,dashArray:r.geometry==='schematic'?'3 5':s.dash,opacity:0.9,interactive:true});
+      const line=this.L.polyline(r.coordinates.map(([lon,lat])=>[lat,lon]),{renderer:this.renderer,color:transitStrokeColour(r),weight:s.weight,dashArray:r.geometry==='schematic'?'3 5':s.dash,opacity:0.9,interactive:true});
       line.on('click',()=>this.select(r));line.addTo(this.group);
       // Partly held lines and lines the train layer also shows get a thin white centre dash.
       if(r.partlyHeld||r.alsoShownAsTrain)this.L.polyline(line.getLatLngs(),{renderer:this.renderer,color:'#ffffff',weight:1,dashArray:'2 6',opacity:0.95,interactive:false}).addTo(this.group);
@@ -259,11 +278,11 @@ export class TransitLayer{
     const q=overview.quantum||1e-4,order=['ferry','aerial_lift','funicular','rack_railway','tram','cable_tram','monorail','metro'];
     // One canvas path per city and mode (not per line): about a fifth of the layers at zoom 6.
     const merged=new Map();
-    for(const l of lines){const key=l.city+'|'+l.mode;if(!merged.has(key))merged.set(key,{city:l.city,mode:l.mode,paths:[]});merged.get(key).paths.push(...l.paths);}
+    for(const l of lines){const colour=transitLineColour({routeColor:l.color}),key=l.city+'|'+l.mode+'|'+(colour||'');if(!merged.has(key))merged.set(key,{city:l.city,mode:l.mode,colour,paths:[]});merged.get(key).paths.push(...l.paths);}
     const groups=[...merged.values()].sort((a,b)=>order.indexOf(a.mode)-order.indexOf(b.mode));
     for(const g of groups){
       const s=TRANSIT_MODE_STYLE[g.mode]||TRANSIT_MODE_STYLE.tram,city=overview.cities[g.city];
-      const line=this.L.polyline(g.paths.map(p=>decodePath(p,q)),{renderer:this.renderer,color:s.color,weight:Math.max(1.5,s.weight*(zoom>=8?0.7:0.5)),dashArray:s.dash,opacity:0.85,interactive:true});
+      const line=this.L.polyline(g.paths.map(p=>decodePath(p,q)),{renderer:this.renderer,color:g.colour||s.color,weight:Math.max(1.5,s.weight*(zoom>=8?0.7:0.5)),dashArray:s.dash,opacity:0.85,interactive:true});
       line.on('click',()=>this.openCity(city));line.addTo(this.group);
     }
     for(const c of cities){
@@ -411,6 +430,7 @@ export function transitPanelHTML(document,{day=null,today=null}={}){
   return pastNotice+`<p class="transit-week"><strong>${esc(week.label||'')}</strong> — separate from the rail map's dates. ${esc(week.note||'')}</p>`+
     (days?`<label class="select-label" for="transitDay"><span>Transit day</span><select id="transitDay">${days}<option value="all"${day==='all'?' selected':''}>All days of the week</option></select></label>`:'')+
     `<p class="helper">Counts are scheduled source records per mode, separate from trains and buses. Coverage is partial; pass inclusion is unknown. White centre dashes mark lines that are partly held or also shown as trains.</p>`+
+    (transitPublisherColourSources(document).length?`<p class="helper transit-publisher-colours">Line colours as published by ${esc(transitPublisherColourSources(document).join('; '))} (their terms require the official line colours); line weight and dashes still show the mode. Other sources' lines use the mode colours.</p>`:'')+
     (transitEstimatedLines(document).length?`<p class="helper transit-estimate">Some lines (${esc(transitEstimatedLines(document).join(', '))}) are drawn from the feed's headway windows, not timed trips: their panels show the windows as estimates, and they are not counted as recorded departures.</p>`:'')+
     ((document.heldSources||[]).length?`<details class="transit-held"><summary>Sources held this week (${document.heldSources.length.toLocaleString()}): not drawn</summary><ul>${document.heldSources.map(h=>`<li><strong>${esc(h.sourceId)}</strong> · ${esc(h.reason)}</li>`).join('')}</ul></details>`:'')+
     unavailableHTML(document)+
@@ -435,7 +455,7 @@ function headwayHTML(detail,day){
 
 export function transitDetailHTML(detail,day){
   const style=TRANSIT_MODE_STYLE[detail.mode]||{label:detail.mode},p=detail.provenance||{},estimated=detail.basis==='estimated_headway'||detail.basis==='mixed',list=estimated?[]:departures(detail,day);
-  return`<button class="close-button" id="transitDetailClose" aria-label="Close city transit line">×</button><p class="eyebrow">${esc(style.label)} · CITY TRANSIT${estimated?' · ESTIMATED HEADWAY':''}</p><h3>${esc(detail.label||detail.sourceRouteId)}</h3><p>${esc(detail.operator||'Operator unavailable')}</p>`+
+  return`<button class="close-button" id="transitDetailClose" aria-label="Close city transit line">×</button><p class="eyebrow">${esc(style.label)} · CITY TRANSIT${estimated?' · ESTIMATED HEADWAY':''}</p><h3>${transitLineColour(detail)?`<span class="transit-line-swatch" style="background:${transitLineColour(detail)};color:${transitTextColour(detail)}">${esc(detail.label||detail.sourceRouteId)}</span>`:esc(detail.label||detail.sourceRouteId)}</h3><p>${esc(detail.operator||'Operator unavailable')}</p>`+
     (detail.partlyHeld?`<p class="transit-hold">${esc(detail.partlyHeld.note)}</p>`:'')+
     (detail.alsoShownAsTrain?`<p class="helper">The train layer also shows this line (${esc(detail.alsoShownAsTrain.railRoute||'')}); it is not counted twice in either layer's totals.</p>`:'')+
     (estimated?headwayHTML(detail,day):`<p>${list.length.toLocaleString()} recorded departures on ${esc(day)} · ${esc(detail.countBasis||'')}</p>`)+`<p class="helper">${esc(detail.geometryWarning||'')} Eurail / Interrail inclusion: unknown.</p>`+

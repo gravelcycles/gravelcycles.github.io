@@ -1,6 +1,6 @@
 /* Physical sections retain contribution cohorts, never a fabricated source or
  * passenger endpoint. These are estimated scheduled source traversals. */
-import{worldPoint}from'./atlas-core.js?v=26cbf7d5ff745682';
+import{worldPoint}from'./atlas-core.js?v=a931df85b57ad64c';
 export const PHYSICAL_HEAT_FORMAT='rail-atlas-physical-heat-v1';
 export const isPhysicalSection=row=>row?.kind==='physical_section';
 

@@ -3,7 +3,7 @@
 // click on a highlighted stroke chooses among those groups only. A click on a
 // greyed line, empty map or a physical Traffic section keeps the normal
 // behaviour (the caller decides that before asking here).
-import{matchesFocus}from'./route-focus.js?v=26cbf7d5ff745682';
+import{matchesFocus}from'./route-focus.js?v=a931df85b57ad64c';
 
 // The painted winner decides whether the click is a station-route pick: it must
 // itself be highlighted. Other highlighted rows under the pointer widen the
