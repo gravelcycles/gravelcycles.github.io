@@ -3,7 +3,7 @@
 // list is `whats-new.json`, which the build generates for every release from
 // the release entries (rail_data/whats_new.py, reports/releases/) and the
 // publisher binds to them. It is requested only when About opens.
-import{escapeHTML as esc}from'./atlas-core.js?v=a931df85b57ad64c';
+import{escapeHTML as esc}from'./atlas-core.js?v=9318403da791630a';
 
 export const WHATS_NEW_FORMAT='euro-rail-whats-new-v1';
 // The direct link is ?about=new: the About parameter and this element id are

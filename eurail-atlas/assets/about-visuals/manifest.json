@@ -7,7 +7,7 @@
    "id": "line",
    "state": "shown",
    "inputs": {
-    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "ui": "62867f0f14565191b64b1561e678023017884efdad6713a5005c21400fe43ad4",
     "rail": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
     "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
    },
@@ -19,14 +19,14 @@
      "durationMs": 8000,
      "quality": 0.5,
      "clip": {
-      "path": "line-desktop-d8c4b068bb7b.webp",
-      "bytes": 100082,
-      "sha256": "d8c4b068bb7b353746c6f238a686a9a4db1c6467f4ffd8758ddd7f66e54c06d8"
+      "path": "line-desktop-ab3c8c145966.webp",
+      "bytes": 100086,
+      "sha256": "ab3c8c14596649573a98bbbeac7d08f0c42bd5ecf01e4936eee99a927398b89c"
      },
      "poster": {
-      "path": "line-desktop-poster-62969c947413.webp",
-      "bytes": 45960,
-      "sha256": "62969c947413fe517c1f7f692df7069fb0a2b89b1d33cfba4918d462906b25fc"
+      "path": "line-desktop-poster-eb6a4696a67c.webp",
+      "bytes": 46058,
+      "sha256": "eb6a4696a67cc3ba24165c1b05885b874a76220bcc9353fa4fa2d48740afd240"
      },
      "alt": "Clicking a railway line near Zürich HB opens a panel for Meilen ↕ Zürich Stadelhofen that lists the routes and trains on it.",
      "link": "?view=frequency&edge=pair%3A%5B%22ch_gtfs_2026%22%2C%2279304220df1ac4dd7a%22%2Ctrue%2C%22inferred%22%5D&lat=47.378&lon=8.540&z=11.00"
@@ -38,14 +38,14 @@
      "durationMs": 8000,
      "quality": 0.5,
      "clip": {
-      "path": "line-phone-912be1610129.webp",
-      "bytes": 55944,
-      "sha256": "912be161012921b370667280b2801729ecdfa613cc861351b272e989659110e3"
+      "path": "line-phone-3cda8233d411.webp",
+      "bytes": 55884,
+      "sha256": "3cda8233d411f01249d1c4e01b6e82154f145d6a3e8951b3c5fabfc96609e95d"
      },
      "poster": {
-      "path": "line-phone-poster-76480bc04775.webp",
-      "bytes": 26362,
-      "sha256": "76480bc047750a962ed531f97138a6e7182b920dc28d2d5879d905ec4e927b48"
+      "path": "line-phone-poster-bd585d3f32e9.webp",
+      "bytes": 26302,
+      "sha256": "bd585d3f32e96172ab080e9acf77bd464c9fdc93a2db2f9cc81cb28a99d1352d"
      },
      "alt": "Tapping a railway line near Zürich HB opens a panel for Meilen ↕ Zürich Stadelhofen that lists the routes and trains on it.",
      "link": "?view=frequency&key=0&edge=pair%3A%5B%22ch_gtfs_2026%22%2C%2279304220df1ac4dd7a%22%2Ctrue%2C%22inferred%22%5D&lat=47.378&lon=8.540&z=11.00"
@@ -56,7 +56,7 @@
    "id": "station",
    "state": "shown",
    "inputs": {
-    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "ui": "62867f0f14565191b64b1561e678023017884efdad6713a5005c21400fe43ad4",
     "rail": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
     "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
    },
@@ -68,14 +68,14 @@
      "durationMs": 4100,
      "quality": 0.5,
      "clip": {
-      "path": "station-desktop-fbb5f9833916.webp",
-      "bytes": 83312,
-      "sha256": "fbb5f9833916b0cdada82d58a5ae197e6a0f4701d0def6e1cee79b843ec74ff5"
+      "path": "station-desktop-4b0f6ebf1b71.webp",
+      "bytes": 83320,
+      "sha256": "4b0f6ebf1b711a561de36268f428054b32f83e2eaf39bad066d953ad998991c1"
      },
      "poster": {
-      "path": "station-desktop-poster-0c4510b4ef41.webp",
-      "bytes": 45988,
-      "sha256": "0c4510b4ef416298b25d4e80fc892319df272c55b8b2a2846e6ed8a935935165"
+      "path": "station-desktop-poster-5b3800141143.webp",
+      "bytes": 46004,
+      "sha256": "5b38001411437a5020e3b14c2a419d4bb54de4d4dc3404ad20b9848dc959a016"
      },
      "alt": "Clicking the Zürich HB station dot opens its panel; the routes that call there stay coloured on the map.",
      "link": "?view=frequency&station=48a431d0bf0bd8c47f&lat=47.378&lon=8.540&z=11.00"
@@ -87,14 +87,14 @@
      "durationMs": 6600,
      "quality": 0.5,
      "clip": {
-      "path": "station-phone-891d05a4926a.webp",
-      "bytes": 58148,
-      "sha256": "891d05a4926a26c5259fdff2bee36784cbbb668f8039c7133e2ed304e6ec0311"
+      "path": "station-phone-acf05391a195.webp",
+      "bytes": 58456,
+      "sha256": "acf05391a195c691f1d3b82845ca213471bfe55104838f17bc78a42c82df3789"
      },
      "poster": {
-      "path": "station-phone-poster-e4e37f0bc902.webp",
-      "bytes": 25940,
-      "sha256": "e4e37f0bc90218b5d86fa20c23f1ba5133ee8020c4842dbcb96ab4632cea309b"
+      "path": "station-phone-poster-fd0e9b68fa76.webp",
+      "bytes": 26230,
+      "sha256": "fd0e9b68fa7632bab8a1f7962aeca3d417cc4855ddf1106c9e5708bbcd9114ab"
      },
      "alt": "Tapping the Zürich HB station dot opens its panel; the routes that call there stay coloured on the map, shown after Show on map.",
      "link": "?view=frequency&key=0&station=48a431d0bf0bd8c47f&lat=47.378&lon=8.540&z=11.00"
@@ -105,7 +105,7 @@
    "id": "route",
    "state": "shown",
    "inputs": {
-    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "ui": "62867f0f14565191b64b1561e678023017884efdad6713a5005c21400fe43ad4",
     "rail": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
     "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
    },
@@ -117,14 +117,14 @@
      "durationMs": 5800,
      "quality": 0.5,
      "clip": {
-      "path": "route-desktop-a89dda65b63a.webp",
-      "bytes": 75046,
-      "sha256": "a89dda65b63a44ef1a7a97bf677944762e0e3a6848ee1d16bbb0d22121339cad"
+      "path": "route-desktop-65dec7df299f.webp",
+      "bytes": 77184,
+      "sha256": "65dec7df299fd3f4e8b9006dfe6d9c9a032fddff60704bc8ee05b727544951d0"
      },
      "poster": {
-      "path": "route-desktop-poster-f75e778df042.webp",
-      "bytes": 39072,
-      "sha256": "f75e778df04240be3a88da3516a2f6f3fa3da2a7c4444e555589193f4f679c6f"
+      "path": "route-desktop-poster-777f639b7cd7.webp",
+      "bytes": 39126,
+      "sha256": "777f639b7cd7f02110bde5f4756e5a0aef5de44ab59c601224e23e742aee294c"
      },
      "alt": "With Zürich HB selected, choosing the route Rapperswil SG → Niederweningen highlights its full path on the map and lists its train numbers; choosing train 19518 shows its scheduled departures.",
      "link": "?view=frequency&station=48a431d0bf0bd8c47f&route=a9eitp2wub&lat=47.394&lon=8.898&z=10.00"
@@ -154,7 +154,7 @@
    "id": "transit",
    "state": "shown",
    "inputs": {
-    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "ui": "62867f0f14565191b64b1561e678023017884efdad6713a5005c21400fe43ad4",
     "rail": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
     "transit": "3d729a5e2ee4453401fa85fa1b4530881919c952a5b610ee0a6985e8a787fddd",
     "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
@@ -167,14 +167,14 @@
      "durationMs": 7000,
      "quality": 0.5,
      "clip": {
-      "path": "transit-desktop-7c7ac75b9e83.webp",
-      "bytes": 94564,
-      "sha256": "7c7ac75b9e834a577ac0ed4dd9b1974daff1bd9813964991293cb03222e0f29d"
+      "path": "transit-desktop-cc1183a0f966.webp",
+      "bytes": 127526,
+      "sha256": "cc1183a0f9661a9d97a998358b448fece7eeb30f6460a2ffd404fd0cf6f2167c"
      },
      "poster": {
-      "path": "transit-desktop-poster-2294cebe6ebc.webp",
-      "bytes": 44840,
-      "sha256": "2294cebe6ebcf35df962a2043a5c0933d47b37d655249cc2dc112049c85010e6"
+      "path": "transit-desktop-poster-473caff228a5.webp",
+      "bytes": 47540,
+      "sha256": "473caff228a582a9169a187392173dde64d31a36f67917a770a8c77791e0b647"
      },
      "alt": "Opening Filters and switching on Trams & metros under City transit adds the city lines around Zürich to the map (6 Funicular route patterns · 217 Tram route patterns in view).",
      "link": "?view=frequency&transit=1&lat=47.376&lon=8.540&z=12.50"
@@ -186,14 +186,14 @@
      "durationMs": 7000,
      "quality": 0.5,
      "clip": {
-      "path": "transit-phone-43bfce8b145d.webp",
-      "bytes": 70194,
-      "sha256": "43bfce8b145dfe907db5fbe9d67dfc50114a6523d291dff673169faf6526beb4"
+      "path": "transit-phone-dd8b71e6fa47.webp",
+      "bytes": 70184,
+      "sha256": "dd8b71e6fa47af5bffc859fcbf49d247952310555bb7c71a09f3ced19a655a2e"
      },
      "poster": {
-      "path": "transit-phone-poster-cbe10acc6ea5.webp",
-      "bytes": 27724,
-      "sha256": "cbe10acc6ea5806a30f33e9439309edfeea1df2d2a1f842024de0a41730bf43a"
+      "path": "transit-phone-poster-78757ea3e94d.webp",
+      "bytes": 27632,
+      "sha256": "78757ea3e94d2556d82a63b5273a636977b8f5c0d2791dd0be4ac43a0871e6a2"
      },
      "alt": "Opening Filters and switching on Trams & metros under City transit adds the city lines around Zürich to the map (6 Funicular route patterns · 211 Tram route patterns in view).",
      "link": "?view=frequency&key=0&transit=1&lat=47.376&lon=8.540&z=12.50"
@@ -204,7 +204,7 @@
    "id": "explore",
    "state": "shown",
    "inputs": {
-    "ui": "ef8f4586f1322ea12f07ba842a38bca09938a43be23afdf52fb15fea3e434a63",
+    "ui": "62867f0f14565191b64b1561e678023017884efdad6713a5005c21400fe43ad4",
     "explore": "39af9c4d07185b35cc9f413f131c4c2a2b52281c935fb40f7bd6c02eaf4af6c7",
     "generator": "b1c74d739b334774a8720cafbb4051a901b4754e6c6daa63cbff288a37aef086"
    },
@@ -216,16 +216,16 @@
      "durationMs": 3280,
      "quality": 0.5,
      "clip": {
-      "path": "explore-desktop-867a18f9c88e.webp",
-      "bytes": 121172,
-      "sha256": "867a18f9c88e24fc4e65e3563a810806b76b5ff2e474009f020cc9abd02cea79"
+      "path": "explore-desktop-d75ccd629e7a.webp",
+      "bytes": 121708,
+      "sha256": "d75ccd629e7a4b35ef73e259b34da292438e120f40473b69d125bae9b47c2be9"
      },
      "poster": {
-      "path": "explore-desktop-poster-849dfe9e205d.webp",
-      "bytes": 27516,
-      "sha256": "849dfe9e205d661c3d2e5c9bcea2e5adb3d2a4bdeeb99ea407dbe6769c76a530"
+      "path": "explore-desktop-poster-6844eb673c7d.webp",
+      "bytes": 27366,
+      "sha256": "6844eb673c7dc7a3961933c578a1d0394e19c7444b62c09023acc8c959240b57"
      },
-     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:25 CET to 09:38 CET.",
+     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:26 CET to 09:42 CET.",
      "link": "assets/explore.html#motion"
     },
     "phone": {
@@ -235,16 +235,16 @@
      "durationMs": 3280,
      "quality": 0.5,
      "clip": {
-      "path": "explore-phone-8d934c1f12e1.webp",
-      "bytes": 78538,
-      "sha256": "8d934c1f12e1dcc5f9ebbed6fd301ac537d532ebe29f74a06c02af09109b664e"
+      "path": "explore-phone-b2f67c48eb00.webp",
+      "bytes": 78104,
+      "sha256": "b2f67c48eb00db33bfda850af1f354eb0393e1dc62a7c72e1492635312d43a17"
      },
      "poster": {
-      "path": "explore-phone-poster-730390442b2f.webp",
-      "bytes": 17536,
-      "sha256": "730390442b2f72442c780d0cca17bb928a50a1301cd18ec00607ba75cfc57cf0"
+      "path": "explore-phone-poster-0da863e36028.webp",
+      "bytes": 17690,
+      "sha256": "0da863e36028bd07ad2af47c66e57b58b1b51bf51d2871a23a08871d911b4397"
      },
-     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:30 CET to 09:53 CET.",
+     "alt": "Explore, Europe in motion: a dot for every timed train moves across the map while the clock runs from 08:33 CET to 10:03 CET.",
      "link": "assets/explore.html#motion"
     }
    }

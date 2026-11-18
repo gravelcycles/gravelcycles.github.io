@@ -1,6 +1,6 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=a931df85b57ad64c';
-import{edgeInScope}from'./project-scope.js?v=a931df85b57ad64c';
-import{continuationMetrics}from'./through-continuations.js?v=a931df85b57ad64c';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=9318403da791630a';
+import{edgeInScope}from'./project-scope.js?v=9318403da791630a';
+import{continuationMetrics}from'./through-continuations.js?v=9318403da791630a';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -13,7 +13,7 @@ export const PASS_MODES=new Set(['eurail','italy']);
 export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]], ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
 // capFramePadding lives in its own small module so the Explore page can use
 // it without loading the atlas core.
-export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=a931df85b57ad64c';
+export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=9318403da791630a';
 // Station, city and country names are folded repeatedly (catalogue, hub ranking,
 // search). Remember results; the bound keeps free-text queries from growing it.
 const normalized=new Map();
@@ -113,7 +113,7 @@ export function routeParam(value){const v=String(value||'');return/^[0-9a-z]{4,1
 // About (methodDialog) opened from a link: about=1 opens it at the top, about=<name>
 // at a section. Names are stable link anchors; 'new' is reserved for the What's new
 // list (element id aboutWhatsNew) and opens About at the top until that list exists.
-export const ABOUT_SECTIONS=Object.freeze({guide:'aboutGuide',play:'aboutPlay',sources:'aboutSources',new:'aboutWhatsNew',methods:'generatedMethods',downloads:'publicDownloads'});
+export const ABOUT_SECTIONS=Object.freeze({guide:'aboutGuide',play:'aboutPlay',sources:'aboutSources',new:'aboutWhatsNew',weeks:'aboutWeeks',methods:'generatedMethods',downloads:'publicDownloads'});
 export function aboutParam(value){const v=String(value||'');return v==='1'||Object.hasOwn(ABOUT_SECTIONS,v)?v:'';}
 // Coverage dialog: coverage=1, or coverage=<country name as listed there>.
 export function coverageParam(value){const v=String(value||'').slice(0,60);return v==='1'||/^[\p{L}][\p{L} .'’()-]*$/u.test(v)?v:'';}
