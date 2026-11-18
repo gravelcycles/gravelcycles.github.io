@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Eurail Map Uploader accesses, uses, stores and shares Google user data, and how to revoke access or delete retained copies.">
+  <title>Privacy policy — Eurail Map Uploader</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><a href="./">Eurail Map Uploader</a><nav aria-label="Main"><a href="privacy.html" aria-current="page">Privacy</a><a href="terms.html">Terms</a><a href="mailto:eurailmaxxer@gmail.com">Contact</a></nav></header>
+  <main>
+    <p class="eyebrow">Effective 18 November 2026</p>
+    <h1>Privacy policy</h1>
+    <p>This policy covers Eurail Map Uploader and its related owner-operated Google Drive helpers. The developer and privacy contact is <a href="mailto:eurailmaxxer@gmail.com">eurailmaxxer@gmail.com</a>. The application is a personal tool currently operated for the developer's own account.</p>
+    <h2>Data we access</h2>
+    <p>The application uses Google OAuth to obtain permission to access Google Drive. It checks the signed-in account's email address to confirm the intended owner. It receives OAuth access and refresh credentials, and processes file names, identifiers, folder relationships, checksums and other metadata needed for the requested operations.</p>
+    <p>The map uploader uses <code>https://www.googleapis.com/auth/drive.file</code> to create and manage files created by or explicitly opened with the app. The separate full-Drive helper uses <code>https://www.googleapis.com/auth/drive</code>, which permits access to all Drive files within the signed-in account's permissions. That grant can support listing, reading, downloading, creating, updating, organizing or deleting files when the owner requests those tasks.</p>
+    <h2>How data is used</h2>
+    <p>Data is used to authenticate the intended account, stage map exports, check uploads, maintain project backups, and carry out file-management tasks requested by the owner, including through owner-authorized automation or assistants. Credentials are used to call Google APIs and renew access. The application does not collect Google passwords.</p>
+    <h2>Storage and security</h2>
+    <p>Credentials are retained in private files on the owner's computer or in private secret settings or credential files in an owner-approved execution environment. Local credential files written by the helpers use owner-only permissions. Google API requests use HTTPS. Downloaded project files and backups may remain on the owner's computer or in owner-approved cloud storage. Upload records may retain file identifiers, hashes and operation results.</p>
+    <p>The owner may deliberately provision credentials to a private cloud runtime or an authorized assistant to perform requested work. The public website and public source repositories do not receive or contain those credentials. Credentials should not be posted in public pages, repositories or ordinary chat messages.</p>
+    <h2>Sharing and limited use</h2>
+    <p>Google processes authentication requests and Drive file operations. Owner-approved hosting, storage or assistant providers may process the credentials or file data necessary for tasks the owner authorizes. Files are shared or published only at the owner's direction; the map uploader itself does not change Drive sharing permissions.</p>
+    <p>Google user data is not sold, provided to data brokers, used for advertising, or used to develop, improve or train generalized artificial intelligence or machine-learning models. Access to and use of Google user data is limited to the application's disclosed, owner-directed functionality.</p>
+    <p>Eurail Map Uploader's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+    <h2>Retention, revocation and deletion</h2>
+    <p>Credentials and operational records are retained while needed for the owner's requested workflow, until the owner removes them or requests deletion. Downloaded files and backups remain until the owner deletes the retained copies. There is no automatic deletion schedule.</p>
+    <p>You can revoke the application's Google access at <a href="https://myaccount.google.com/connections">Google Account connections</a>. Revocation prevents further authorized API access but does not delete files already uploaded to Drive or copies already downloaded. To remove those, delete the relevant Drive files, local files and backups, and remove credential copies from every execution environment or secret store where you placed them.</p>
+    <p>For access or deletion help, contact <a href="mailto:eurailmaxxer@gmail.com">eurailmaxxer@gmail.com</a>. A deletion request covers retained data under the developer's control; copies independently retained by the account owner must also be removed by that owner.</p>
+    <h2>This website</h2>
+    <p>These informational pages contain no application analytics, advertising or tracking scripts and do not run the OAuth sign-in flow. GitHub Pages hosts them and processes visitor information such as IP addresses for service and security purposes, as described in the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub Privacy Statement</a>. Google's own services are subject to <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</p>
+    <h2>Policy changes</h2>
+    <p>Updates will be published on this page with a revised effective date. Any material change to the handling of Google user data will be disclosed before that new use begins, with additional consent where required.</p>
+  </main>
+  <footer><nav aria-label="Legal"><a href="./">Application home</a><a href="terms.html">Terms of service</a></nav><p>Independent personal project. Not affiliated with or endorsed by Eurail, Interrail or Google.</p></footer>
+</body>
+</html>
