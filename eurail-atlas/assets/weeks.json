@@ -1,7 +1,7 @@
 {
  "boundTo": {
   "layer": "rail",
-  "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2"
+  "manifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69"
  },
  "contractVersions": [
   1
@@ -54,12 +54,68 @@
      },
      "releaseId": "source-composition-52560f6a0829394647",
      "visibility": "public"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 495972864,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "443e8d0f9ca0f2b47867a4ed2e7ca363c08150cedd9791d1e5ad130f07607def",
+      "location": {
+       "kind": "private",
+       "store": "private-drive-folder"
+      },
+      "manifest": {
+       "bytes": 992891,
+       "name": "archive-manifest.json",
+       "sha256": "f8657fc7166392008c0272ba506a682919d7ca5de1ebcec538d16344b7987d55"
+      },
+      "parts": 30
+     },
+     "bytes": 487816092,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+     "notKeptPublicly": [
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 3757,
+     "publishedFrom": {
+      "commit": "c9bd7e1736c2793d335d6e977d8c56e43992b329",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "a931df85b57ad64c"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
     }
    ],
    "current": {
     "contractVersions": [
      1
     ],
+    "correction": {
+     "correctionRecordSha256": "779e3d861aa82d17560e58a1b806de4fd3f1c3b8a15bee1f8ad2417de31ecc98",
+     "correctsManifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+     "product": "geometry"
+    },
     "dates": {
      "first": "2026-11-15",
      "last": "2026-11-21"
@@ -68,7 +124,7 @@
      "kind": "pages-tree",
      "path": "data/"
     },
-    "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+    "manifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
     "releaseId": "20261114T061018386833Z-2026-11-15"
    }
   },
