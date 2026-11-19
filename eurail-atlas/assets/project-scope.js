@@ -8,8 +8,16 @@ export function edgeInScope(edge,state){
   return!edge._directionEdges?.length||edge._directionEdges.some(row=>edgeInScope(row,state));
 }
 export function applyProjectScope(state,scope){
-  for(const[key,field]of[['excludedStationIds','scopeExcludedStationIds'],['excludedEdgeIds','scopeExcludedEdgeIds'],['excludedHubIds','scopeExcludedHubIds']])state[field]=new Set(scope?.schemaVersion===1?scope[key]||[]:[]);
-  state.scopeRevision=(state.scopeRevision||0)+1;
+  // The revision invalidates cached styles. Re-applying identical sets (the
+  // start-up manifest replaced by its complete copy) keeps it, so a large
+  // view is not restyled and repainted for an unchanged scope.
+  let changed=state.scopeRevision===undefined;
+  for(const[key,field]of[['excludedStationIds','scopeExcludedStationIds'],['excludedEdgeIds','scopeExcludedEdgeIds'],['excludedHubIds','scopeExcludedHubIds']]){
+    const next=new Set(scope?.schemaVersion===1?scope[key]||[]:[]),previous=state[field];
+    if(!(previous instanceof Set)||previous.size!==next.size||[...next].some(id=>!previous.has(id)))changed=true;
+    state[field]=next;
+  }
+  if(changed)state.scopeRevision=(state.scopeRevision||0)+1;
   for(const field of['from','to','station'])if(state[field]&&!stationInScope({id:state[field]},state))state[field]='';
   if(state.scopeExcludedEdgeIds.has(state.edge))state.edge='';
 }

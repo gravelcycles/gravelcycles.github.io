@@ -1,4 +1,5 @@
-import{normalize}from'./atlas-core.js?v=9318403da791630a';
+import{normalize}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{latinSpellings}from'./transliterate.js?v=133f74a0e1b8e2bc';
 
 // Canonical places are a display/lookup layer. Journey calls and rail geometry
 // continue to use the original source station IDs and boarding locations.
@@ -7,7 +8,12 @@ export function stationSources(station){return station?.sources?.length?[...new 
 export function stationSourceSelected(station,state={}){return !state.sources||stationSources(station).some(source=>state.sources.has(source));}
 export function stationSourceLabel(station,sourceName){return stationSources(station).map(sourceName).join(' · ');}
 // Built on first search, not for all 44,000 stations while the map is loading.
-export function stationSearchText(station){return station._search||(station._search=[station._name||normalize(station.name),...(station.aliases||[]).map(normalize),normalize(station.country)].join(' '));}
+// Names in Cyrillic or Greek also carry their Latin spellings (transliterate.js).
+export function stationSearchText(station){
+  if(station._search)return station._search;
+  const names=[station._name||normalize(station.name),...(station.aliases||[]).map(normalize)];
+  return station._search=[...names,...names.flatMap(latinSpellings),normalize(station.country)].join(' ');
+}
 
 // Boarding modes come from explicit source evidence. Identical stop names can
 // still describe different places to board, especially a replacement bus.

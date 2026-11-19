@@ -5,12 +5,14 @@
 // browsed on the map; past weeks are archived for restore
 // (docs/RAIL_WEEKS_ARCHIVE.md). A corrected week (a derived patch,
 // docs/RAIL_PATCH_RELEASE.md) is listed after the week it corrects, and the
-// original is labelled "original, superseded".
+// original is labelled "original, superseded"; a correction that a later one
+// replaced reads "correction of <base>, superseded by ..."; the current week,
+// when it is a correction, reads "Current (correction of <base>)".
 //
 // ?week=<hex prefix of at least 8 characters> names a week. The current week
 // needs nothing; any other answer is a dismissable notice that never blocks
 // the map. A missing or unreadable weeks.json shows no section and no notice.
-import{escapeHTML as esc}from'./atlas-core.js?v=9318403da791630a';
+import{escapeHTML as esc}from'./atlas-core.js?v=133f74a0e1b8e2bc';
 
 export const WEEKS_KIND='euro_rail_weeks_index';
 export const ABOUT_ANCHOR='aboutWeeks';
@@ -59,23 +61,31 @@ function sources(row){return(row.notKeptPublicly||[]).map(item=>typeof item==='s
 
 export function rowHTML(row,data,chain){
   const rail=data.layers.rail,isCurrent=row===rail.current,next=chain.get(row.manifestSha256),notes=[];
-  if(isCurrent)notes.push('<strong>On the map now.</strong>');
-  if(row.correction){
-    const product=typeof row.correction.product==='string'?row.correction.product:'a derived product';
-    notes.push(`Published again with its ${esc(product)} corrected; it replaces week <code>${esc(short(row.correction.correctsManifestSha256))}</code>.`);
-    if(isCurrent)notes.push('<a class="weeks-record" href="assets/startup/correction.json">Correction record ↗</a>');
+  const base=row.correction?`<code>${esc(short(row.correction.correctsManifestSha256))}</code>`:'';
+  const product=row.correction&&typeof row.correction.product==='string'?row.correction.product:'a derived product';
+  if(isCurrent){
+    if(row.correction){
+      notes.push(`<strong>Current</strong> (correction of ${base}): published again with its ${esc(product)} corrected.`);
+      notes.push('<a class="weeks-record" href="assets/startup/correction.json">Correction record ↗</a>');
+    }else notes.push('<strong>On the map now.</strong>');
   }
   if(next){
-    const end=latest(row,chain);
-    notes.push(`<span class="weeks-superseded">Original, superseded</span> by ${end===rail.current?'the corrected week on the map':`week <code>${esc(short(end.manifestSha256))}</code>`}.`);
+    const end=latest(row,chain),by=end===rail.current?'the corrected week on the map':`week <code>${esc(short(end.manifestSha256))}</code>`;
+    // A row that is itself a correction is not an original: name what it corrected.
+    notes.push(row.correction?`<span class="weeks-superseded">Correction of ${base}, superseded</span> by ${by}.`
+      :`<span class="weeks-superseded">Original, superseded</span> by ${by}.`);
+  }else if(row.correction&&!isCurrent){
+    notes.push(`Correction of ${base}: published again with its ${esc(product)} corrected.`);
   }
   if(!isCurrent){
     if(row.visibility==='private'){
       const names=sources(row);
-      notes.push(`Archived privately${names.length?` (not kept publicly: ${names.map(esc).join(', ')})`:''}.`);
+      // Internal source ids mean nothing to a traveller: count them, and keep
+      // the ids in a tooltip for anyone checking the record.
+      notes.push(names.length?`<span class="weeks-private" title="${esc('Not kept publicly: '+names.join(', '))}">Archived privately, because ${names.length===1?'one of its sources':`${names.length} of its sources`} may not be republished.</span>`:'Archived privately.');
     }else{
       const href=archiveHref(row);
-      notes.push(href?`<a class="weeks-archive" href="${esc(href)}" rel="noopener noreferrer" target="_blank">Archive ↗</a> for restore.`:'Archived for restore.');
+      notes.push(href?`Archived: <a class="weeks-archive" href="${esc(href)}" rel="noopener noreferrer" target="_blank">download the data ↗</a>.`:'Archived.');
     }
   }
   return`<li class="weeks-row${isCurrent?' weeks-current':''}" data-week="${esc(short(row.manifestSha256))}"><p class="weeks-when"><strong>${esc(datesLabel(row.dates))}</strong> <code>${esc(short(row.manifestSha256))}</code></p><p class="weeks-notes">${notes.join(' ')}</p></li>`;
@@ -89,7 +99,7 @@ export function weeksHTML(data){
   const rail=data.layers.rail,chain=correctionChain(data);
   const rows=[rail.current,...[...rail.archived].reverse()];
   return`<ol class="weeks-list">${rows.map(row=>rowHTML(row,data,chain)).join('')}</ol>`
-    +'<p class="helper weeks-helper">Only the week on the map can be browsed here. Past weeks are archived for restore.</p>';
+    +'<p class="helper weeks-helper">Only the week on the map can be browsed here. Earlier weeks are kept as archives.</p>';
 }
 
 // ?week= accepts a lowercase or uppercase hex prefix of at least 8 characters.

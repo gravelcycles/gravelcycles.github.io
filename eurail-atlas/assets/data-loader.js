@@ -1,6 +1,8 @@
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=9318403da791630a';
-import{decodeJSONBytes}from'./data-codec.js?v=9318403da791630a';
-import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=9318403da791630a';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=133f74a0e1b8e2bc';
+import{decodeJSONBytes}from'./data-codec.js?v=133f74a0e1b8e2bc';
+import{queryStationPanelJourneys}from'./station-panel.js?v=133f74a0e1b8e2bc';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=133f74a0e1b8e2bc';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=133f74a0e1b8e2bc';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 let loaderSequence=0;
@@ -20,7 +22,7 @@ export function createPageHydrator(load,process){
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=9318403da791630a',import.meta.url);
+      const url=new URL('./data-worker.js?v=133f74a0e1b8e2bc',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
@@ -58,7 +60,9 @@ export class AtlasDataLoader{
     if(message.op==='journeys')return queryJourneys(message.urls,message.from,message.to,{signal});
     if(message.op==='edgeJourneys')return queryEdgeJourneys(message.urls,message.directions,{signal});
     if(message.op==='stationJourneys')return queryStationJourneys(message.urls,message.stationIds,{signal});
+    if(message.op==='stationPanelJourneys')return queryStationPanelJourneys(message.url,message.runs,message.stationIds,{signal});
     if(message.op==='decode')return decodeJSONBytes(message.bytes).then(data=>prepareLoadedData(data).data);
+    if(message.op==='physicalDisplay')return fetchPhysicalDisplay(message.url,{signal}).then(transport=>unpackPhysicalTransfer(transport.data,{signal}));
     return readJSON(message.url,{fresh:message.fresh,signal}).then(data=>prepareLoadedData(data).data);
   }
   request(message,{signal}={}){
@@ -74,7 +78,9 @@ export class AtlasDataLoader{
   }
   load(url,{fresh=false,signal}={}){return this.request({op:'load',url,fresh},{signal});}
   decode(bytes,options={}){return this.request({op:'decode',bytes},options);}
+  loadPhysicalDisplay(url,options={}){return this.request({op:'physicalDisplay',url},options);}
   findJourneys(urls,from,to,options={}){return this.request({op:'journeys',urls,from:[...from],to:[...to]},options);}
   findEdgeJourneys(urls,directions,options={}){return this.request({op:'edgeJourneys',urls,directions},options);}
   findStationJourneys(urls,stationIds,options={}){return this.request({op:'stationJourneys',urls,stationIds:[...stationIds]},options);}
+  findStationPanelJourneys(url,runs,stationIds,options={}){return this.request({op:'stationPanelJourneys',url,runs,stationIds:[...stationIds]},options);}
 }

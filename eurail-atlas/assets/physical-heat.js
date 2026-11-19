@@ -1,13 +1,13 @@
 /* Physical sections retain contribution cohorts, never a fabricated source or
  * passenger endpoint. These are estimated scheduled source traversals. */
-import{worldPoint}from'./atlas-core.js?v=9318403da791630a';
+import{worldPoint}from'./atlas-core.js?v=133f74a0e1b8e2bc';
 export const PHYSICAL_HEAT_FORMAT='rail-atlas-physical-heat-v1';
 export const isPhysicalSection=row=>row?.kind==='physical_section';
 
 function vector(value){
   return Array.isArray(value)&&value.length===7&&value.every(n=>Number.isSafeInteger(n)&&n>=0);
 }
-function validateCohorts(cohorts){
+export function validateCohorts(cohorts){
   if(!Array.isArray(cohorts))throw new Error('Invalid physical rail contribution set');
   for(const c of cohorts){
     if(typeof c.source!=='string'||!c.source||!['included','conditional','excluded','not_included','unknown','discount','conflicting_reference'].includes(c.inclusion)||c.serviceMode&&!['train','rail'].includes(c.serviceMode)||c.reviewedIncluded!==undefined&&typeof c.reviewedIncluded!=='boolean'||c.conditionalEligible!==undefined&&typeof c.conditionalEligible!=='boolean'||!vector(c.daily)||!vector(c.forwardDaily)||!vector(c.reverseDaily)||c.daily.some((n,i)=>n!==c.forwardDaily[i]+c.reverseDaily[i]))throw new Error('Invalid physical rail contribution dates or directions');

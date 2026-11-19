@@ -1,4 +1,4 @@
-import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=9318403da791630a';
+import{BUS_LIMITS,busMatches,foldBusText,intersects,searchBusRoutes,validBusDocument,viewportTiles}from'./bus-core.js?v=133f74a0e1b8e2bc';
 
 // Source indexes are admitted by the aggregate byte budgets, largest inventory first; `sources` is only a
 // sanity bound on fan-out. A count cut by bbox-centre distance once excluded the dominant national source.

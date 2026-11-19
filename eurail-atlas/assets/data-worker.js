@@ -1,8 +1,10 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=9318403da791630a';
-import{decodeDisplay}from'./display-codec.js?v=9318403da791630a';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=9318403da791630a';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=9318403da791630a';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=9318403da791630a';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=133f74a0e1b8e2bc';
+import{queryStationPanelJourneys}from'./station-panel.js?v=133f74a0e1b8e2bc';
+import{decodeDisplay}from'./display-codec.js?v=133f74a0e1b8e2bc';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=133f74a0e1b8e2bc';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=133f74a0e1b8e2bc';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=133f74a0e1b8e2bc';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -77,11 +79,24 @@ const JOURNEY_CACHE_BYTES=64*1024*1024;let journeyCacheBytes=0;
 let fetching=0;const fetchQueue=[];
 function pump(){while(fetching<3&&fetchQueue.length){const task=fetchQueue.shift();if(task.signal?.aborted){task.reject(abortError());continue;}fetching++;task.run().then(task.resolve,task.reject).finally(()=>{fetching--;pump();});}}
 function abortError(){return new DOMException('Data request cancelled','AbortError');}
+// Static hosting occasionally answers a packet with a transient 5xx or drops
+// the connection. Retry those a bounded number of times before reporting a
+// failure; 4xx answers and cancellations are final.
+export async function fetchWithTransientRetry(url,options={},{attempts=3,delay=400,fetcher=globalThis.fetch}={}){
+  for(let attempt=1;;attempt++){
+    let response;
+    try{response=await fetcher(url,options);}
+    catch(error){if(error?.name==='AbortError'||options.signal?.aborted||attempt>=attempts)throw error;}
+    if(response&&(response.status<500||attempt>=attempts))return response;
+    await new Promise(resolve=>setTimeout(resolve,delay*attempt));
+    if(options.signal?.aborted)throw abortError();
+  }
+}
 export function readJSON(url,{fresh=false,signal}={}){
   return new Promise((resolve,reject)=>{
     if(signal?.aborted){reject(abortError());return;}
     const task={signal,resolve,reject,run:async()=>{
-      const response=await fetch(url,{cache:fresh?'no-cache':'default',signal});
+      const response=await fetchWithTransientRetry(url,{cache:fresh?'no-cache':'default',signal});
       if(!response.ok)throw new Error('HTTP '+response.status+' for '+new URL(url).pathname);
       let decoded=0;const data=await decodeJSONResponse(response,size=>{decoded=size;});
       if(data&&typeof data==='object')decodedSizes.set(data,decoded);return data;
@@ -183,7 +198,11 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
     if(!Number.isInteger(message?.id))return;
     const controller=new AbortController();controllers.set(message.id,controller);
     try{
-      if(message.op==='load'||message.op==='decode'){
+      if(message.op==='physicalDisplay'){
+        // Already the transport: typed columns and the shared profiles.
+        const transport=await fetchPhysicalDisplay(message.url,{signal:controller.signal});
+        if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result:transport.data},transport.transfer);
+      }else if(message.op==='load'||message.op==='decode'){
         const result=prepareLoadedData(message.op==='decode'?await decodeJSONBytes(message.bytes):await readJSON(message.url,{fresh:message.fresh,signal:controller.signal}));
         if(!controller.signal.aborted){const transport=packPhysicalTransfer(result.data)||result;globalThis.postMessage({id:message.id,result:transport.data},transport.transfer);}
       }else if(message.op==='journeys'){
@@ -194,6 +213,9 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else if(message.op==='stationJourneys'){
         const result=await queryStationJourneys(message.urls,message.stationIds,{signal:controller.signal});
+        if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
+      }else if(message.op==='stationPanelJourneys'){
+        const result=await queryStationPanelJourneys(message.url,message.runs,message.stationIds,{signal:controller.signal});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else throw new Error('Unsupported data-worker request');
     }catch(error){globalThis.postMessage({id:message.id,error:{name:error.name,message:error.message}});}

@@ -1,9 +1,9 @@
 // Native Canvas paint and rasterization may take hundreds of milliseconds on
 // software graphics. Keeping those operations here leaves input/rAF responsive.
-import{quantizedRailPrimitives}from'./rail-primitives.js?v=9318403da791630a';
-import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=9318403da791630a';
+import{quantizedRailPrimitives}from'./rail-primitives.js?v=133f74a0e1b8e2bc';
+import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=133f74a0e1b8e2bc';
 let canvas,context,paths=[],epoch=null,geometry=null,routeCount=0,basePixels=null,baseFrequencies=null,baseKey=null,baselineGroups=null,scratch,scratchContext;
-const styleGroups=new Map(),groupPaths=new Map(),bitmapCache=new RasterBitmapCache();
+const styleGroups=new Map(),groupPaths=new Map(),bitmapCache=new RasterBitmapCache(),overviewGroups=new Map();
 function pathFor(world){const path=new Path2D();path.moveTo(world[0],world[1]);for(let i=2;i<world.length;i+=2)path.lineTo(world[i],world[i+1]);return path;}
 function groupsFor(message){
   const key=message.styleKey+'|'+message.reviewOn+'|'+(geometry?.compact?message.view.scale:'');
@@ -62,6 +62,26 @@ globalThis.onmessage=event=>{
       geometry={coordinates:message.coordinates,offsets:message.offsets,compact:message.compactPrimitives===true};routeCount=message.offsets.length-1;
       paths=Array(routeCount);if(!geometry.compact)for(let i=0;i<routeCount;i++)paths[i]=pathFor(message.coordinates.subarray(message.offsets[i],message.offsets[i+1]));
       epoch=message.epoch;basePixels=null;baseFrequencies=null;baseKey=null;baselineGroups=null;bitmapCache.clear();styleGroups.clear();groupPaths.clear();return;
+    }
+    // The Traffic overview (physical-heat-overview.js): precomputed primitives
+    // drawn by a dedicated instance of this worker before any section exists.
+    if(message.op==='overviewData'){overviewGroups.set(message.key,message.groups.map(group=>{const path=new Path2D();for(let i=0;i<group.lines.length;i+=4){path.moveTo(group.lines[i],group.lines[i+1]);path.lineTo(group.lines[i+2],group.lines[i+3]);}return{...group,path};}));while(overviewGroups.size>2)overviewGroups.delete(overviewGroups.keys().next().value);return;}
+    if(message.op==='overviewPaint'){
+      const groups=overviewGroups.get(message.key),view=message.view,dpr=view.dpr||1,width=Math.round(view.width*dpr),height=Math.round(view.height*dpr);
+      if(!groups)throw new Error('Traffic overview data missing');
+      if(!(width>0&&height>0&&width<=8192&&height<=8192&&width*height<=6010000))throw new Error('Raster size exceeds bitmap budget');
+      if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
+      context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,width,height);
+      const left=view.centerX*view.scale-view.width/2,top=view.centerY*view.scale-view.height/2;
+      context.setTransform(dpr*view.scale,0,0,dpr*view.scale,-left*dpr,-top*dpr);context.lineCap='round';context.lineJoin='round';context.setLineDash([]);context.globalAlpha=1;
+      for(const group of groups){
+        context.strokeStyle=group.color;context.lineWidth=group.width/view.scale;context.stroke(group.path);
+        const radius=group.width/2/view.scale,dots=new Path2D();
+        for(let i=0;i<group.dots.length;i+=2){const x=group.dots[i],y=group.dots[i+1];dots.moveTo(x+radius,y);dots.arc(x,y,radius,0,Math.PI*2);}
+        context.fillStyle=group.color;context.fill(dots);
+      }
+      context.setTransform(1,0,0,1,0,0);context.getImageData(0,0,1,1);
+      const bitmap=canvas.transferToImageBitmap();globalThis.postMessage({op:'overviewPainted',id:message.id,bitmap},[bitmap]);return;
     }
     if(message.op!=='paint')return;
     if(message.epoch!==epoch)throw new Error('Raster geometry epoch mismatch');

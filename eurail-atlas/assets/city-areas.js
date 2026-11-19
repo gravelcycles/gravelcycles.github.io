@@ -1,5 +1,6 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=9318403da791630a';
-import{countryMatches}from'./explorer-core.js?v=9318403da791630a';
+import{normalize,validMapLocation}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{countryMatches}from'./explorer-core.js?v=133f74a0e1b8e2bc';
+import{latinSpellings}from'./transliterate.js?v=133f74a0e1b8e2bc';
 
 const searchIndex=new WeakMap();
 const countryAliases={'The Netherlands':'Netherlands','Bosnia and Herzegovina':'Bosnia-Herzegovina'};
@@ -10,8 +11,9 @@ export function cityAreaOptions(cities,query,limit=4){
   if(!searchIndex.has(cities))searchIndex.set(cities,cities.map(city=>[
     city,[...new Set([city.name,...(city.aliases||[])].map(normalize))]
   ]));
+  const keys=[key,...latinSpellings(key)];
   return searchIndex.get(cities).flatMap(([city,names])=>
-    names.some(name=>name.startsWith(key))?[{city,exact:names.includes(key)}]:[]
+    names.some(name=>keys.some(value=>name.startsWith(value)))?[{city,exact:keys.some(value=>names.includes(value))}]:[]
   ).sort((a,b)=>Number(b.exact)-Number(a.exact)||b.city.population-a.city.population||a.city.id.localeCompare(b.city.id))
     .slice(0,limit).map(({city})=>({...city,isCityArea:true}));
 }
@@ -35,4 +37,21 @@ export function cityAreaStationIds(city,stations){
     if(validMapLocation(lon,lat)&&Math.hypot((lon-city.lon)*scale,lat-city.lat)<=radius)ids.push(station.id);
   }
   return ids;
+}
+
+// Whether any recorded station inside a city area has scheduled service in
+// the current view (all trains, or Eurail-included trains when a pass view or
+// filter is active). A station without a weekly figure counts as served, so a
+// city is only marked when every member positively records none.
+export function cityAreaHasService(city,stations,{pass=false,inScope=()=>true}={}){
+  const radius=cityAreaRadius(city)/111.32,scale=Math.cos(city.lat*Math.PI/180);
+  const country=countryAliases[city.country]||city.country;
+  for(const station of stations){
+    if(!countryMatches(station.country,country)||!inScope(station))continue;
+    const [lon,lat]=station.sourceOriginalPosition||[station.lon,station.lat];
+    if(!validMapLocation(lon,lat)||Math.hypot((lon-city.lon)*scale,lat-city.lat)>radius)continue;
+    const weekly=pass?station.eurailWeekly:station.weekly;
+    if(!Number.isFinite(weekly)||weekly>0)return true;
+  }
+  return false;
 }

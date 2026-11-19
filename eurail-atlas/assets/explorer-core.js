@@ -1,6 +1,6 @@
-import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,CHARGE_MASKS}from'./atlas-core.js?v=9318403da791630a';
-import{journeyDaily,selectCityJourneyContexts,runLeftOut}from'./train-services.js?v=9318403da791630a';
-import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=9318403da791630a';
+import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,edgeCount,dashedAlignment,CHARGE_MASKS}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{journeyDaily,selectCityJourneyContexts,runLeftOut}from'./train-services.js?v=133f74a0e1b8e2bc';
+import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=133f74a0e1b8e2bc';
 
 const countryKeys=new Map();
 function countryKey(country){if(!countryKeys.has(country))countryKeys.set(country,normalize(country));return countryKeys.get(country);}
@@ -74,7 +74,66 @@ function displayShapeKey(text){
   for(let i=0;i<text.length;i++){const n=text.charCodeAt(i);a=Math.imul(a^n,16777619);b=Math.imul(b^n,3266489909);}
   return(a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');
 }
-export function cityConnectionEdges(document,state,dates){
+// Zoomed out (overview), Hubs draws one stroke per city pair along its
+// busiest recorded route with a complete, solid railway path and styles it by the city-pair total: both
+// directions, every route variant and every source the current filters keep,
+// after the duplicate rule already applied to the rows above. A row drawn as
+// several geometry parts (gaps in its railway path) still counts once. Each
+// overview stroke carries all of the pair's rows, so the stroke colour, the
+// inspector count and the listed services agree. Zoomed in, the owner's
+// route-specific counts apply unchanged (AGENTS.md, 4 November cleanup): one
+// stroke per retained railway route and source, counted separately.
+const CITY_PAIR_FIELDS=['daily','eurailDaily','boardableDaily','eurailBoardableDaily','conditionalDaily','conditionalBoardableDaily','reviewedEurailDaily','reviewedEurailBoardableDaily','reviewedConditionalDaily','reviewedConditionalBoardableDaily'];
+function cityRowKey(row){return JSON.stringify([row.source,row.snapshot,row.id,row.primary!==false,row._cityGeometryDates||null]);}
+function sumCityRows(rows,state,dates){let total=0;for(const row of rows)total+=edgeCount(row,state,dates);return total;}
+export function cityPairEdges(rows,state,dates,overview=false){
+  if(!overview)return aggregateMapPairs(rows);
+  const pairs=new Map();
+  for(const row of rows){
+    let pair=pairs.get(row._cityPairKey);
+    if(!pair){pair={unique:new Map(),geometries:new Map(),paths:new Map()};pairs.set(row._cityPairKey,pair);}
+    const key=cityRowKey(row);if(!pair.unique.has(key))pair.unique.set(key,row);
+    let geometry=pair.geometries.get(row._cityGeometryKey);
+    if(!geometry){geometry={coords:row.coords,statuses:new Set(),rows:new Map(),paths:new Set()};pair.geometries.set(row._cityGeometryKey,geometry);}
+    for(const status of row.railGeometryStatuses||[])geometry.statuses.add(status);
+    if(!geometry.rows.has(key))geometry.rows.set(key,row);geometry.paths.add(row._cityPathKey);
+    let path=pair.paths.get(row._cityPathKey);if(!path){path=new Map();path.clean=true;pair.paths.set(row._cityPathKey,path);}if(!path.has(key))path.set(key,row);
+    if(row.railGeometryMissingLegs||dashedAlignment(row))path.clean=false;
+  }
+  const result=[];
+  for(const[pairKey,pair]of pairs){
+    const members=[...pair.unique.values()];
+    let geometries=[...pair.geometries.entries()];
+    if(pair.paths.size>1){
+      // The busiest route whose railway path is complete and drawn solid;
+      // only when no route qualifies, the busiest route as recorded.
+      let best=null,bestScore=null;
+      for(const[pathKey,path]of[...pair.paths.entries()].sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0)){const score=[path.clean?1:0,sumCityRows(path.values(),state,dates)];if(!bestScore||score[0]>bestScore[0]||score[0]===bestScore[0]&&score[1]>bestScore[1]){best=pathKey;bestScore=score;}}
+      geometries=geometries.filter(([,geometry])=>geometry.paths.has(best));
+    }
+    // Sum with the same field rules as an ordinary map pair; members keep
+    // their own source, snapshot and journey identities for the inspector.
+    const total=aggregateMapPairs(members.map(row=>({...row,source:'city-pair',mapPairId:pairKey,primary:true,geometryStatus:'city'})))[0];
+    for(const field of CITY_PAIR_FIELDS)if(!Array.isArray(total[field]))total[field]=null;
+    const partial=members.some(row=>row.railGeometryMissingLegs);
+    for(const[geometryKey,geometry]of geometries){
+      const variant=[...geometry.rows.values()];
+      const edge=prepareEdge({...total,_world:undefined,_bbox:undefined,_pointCount:undefined,straightJumpKm:undefined,
+        id:'city-pair:'+pairKey+':'+geometryKey,mapPairId:JSON.stringify([JSON.parse(pairKey),geometryKey]),
+        source:members[0].source,primary:members.some(row=>row.primary!==false),
+        availabilityOnly:members.every(row=>row.availabilityOnly===true)||undefined,
+        throughConnection:members.every(row=>row.throughConnection)||undefined,
+        availabilityJourneyId:undefined,_contextSpan:undefined,
+        geometryStatus:partial?'retained_city_railway_partial':'retained_city_railway',
+        coords:geometry.coords,railGeometryStatuses:[...geometry.statuses],
+        _directionEdges:members,_cityPairSources:[...new Set(members.map(row=>row.source))].sort(),
+        _cityOverview:{geometryKey,routes:pair.paths.size,rows:variant}});
+      if(edge)result.push(edge);
+    }
+  }
+  return result;
+}
+export function cityConnectionEdges(document,state,dates,{overview=false}={}){
   if(!document)return[];
   const limit=[50,100,250,500].includes(state.hubCount)?state.hubCount:100;
   const cities=new Map(document.cities.filter(city=>city.rank<=limit).map(city=>[city.id,city]));
@@ -118,6 +177,7 @@ export function cityConnectionEdges(document,state,dates){
         const signature=JSON.stringify(part.ids),reversed=JSON.stringify([...part.ids].reverse().map(([id,direction])=>[id,1-direction]));
         const geometryKey=displayShapeKey(signature<reversed?signature:reversed);
         const edge=prepareEdge({...route,a:a.id,b:b.id,_cityConnection:true,_stationIds:route.sourceStations,
+          _cityPairKey:JSON.stringify([a.id,b.id].sort()),_cityGeometryKey:geometryKey,_cityPathKey:JSON.stringify(path.legs||[]),
           country:a.country,countries:[...new Set([a.country,b.country])],
           mapPairId:JSON.stringify([[a.id,b.id].sort(),geometryKey]),
           railGeometryMissingLegs:path.missingLegs||0,railGeometryPartCount:parts.length,
@@ -128,7 +188,7 @@ export function cityConnectionEdges(document,state,dates){
       }
     }
   }
-  return aggregateMapPairs(rows).map(edge=>({...edge,
+  return cityPairEdges(rows,state,dates,overview).map(edge=>({...edge,
     railGeometryMissingLegs:Math.max(...edge._directionEdges.map(row=>row.railGeometryMissingLegs)),
     railGeometryPartCount:Math.max(...edge._directionEdges.map(row=>row.railGeometryPartCount)),
     railGeometryStatuses:[...new Set(edge._directionEdges.flatMap(row=>row.railGeometryStatuses))],
