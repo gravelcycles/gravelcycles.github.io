@@ -2,7 +2,7 @@
 // reads only the chunks that hold a call at the station, by HTTP range from one
 // blob, instead of every journey part that touches it. The index is valid only
 // beside the delivery it names; anything else falls back to the journey parts.
-import{decodeJSONBytes}from'./data-codec.js?v=133f74a0e1b8e2bc';
+import{decodeJSONBytes}from'./data-codec.js?v=74d4cff64f55e256';
 
 export const STATION_PANEL_KIND='station_panel_journey_index';
 export function stationPanelURL(name='station-panel.json'){const url=new URL('./'+name,import.meta.url);url.search=new URL(import.meta.url).search;return url.href;}
@@ -44,18 +44,20 @@ async function readRun(url,run,signal,fetcher){
   for(const length of run.members){parts.push({offset:run.offset+at,bytes:bytes.subarray(at,at+length)});at+=length;}
   return parts;
 }
-export async function queryStationPanelJourneys(url,runs,stationIds,{signal,fetcher=globalThis.fetch}={}){
+export async function queryStationPanelJourneys(url,runs,stationIds,{signal,fetcher=globalThis.fetch,onProgress}={}){
   const ids=new Set(stationIds),matches=new Map(),pending=[];
   for(const run of runs){
     let at=run.offset;const missing=run.members.some(length=>{const hit=decoded.has(url+'#'+at);at+=length;return!hit;});
     if(missing)pending.push(run);else{let offset=run.offset;for(const length of run.members){collect(decoded.get(url+'#'+offset).journeys);offset+=length;}}
   }
   function collect(journeys){for(const journey of journeys)if((journey.stops||[]).some(call=>ids.has(Array.isArray(call)?call[0]:call.id)))matches.set(JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]),journey);}
+  const total=runs.reduce((sum,run)=>sum+run.members.length,0);let done=total-pending.reduce((sum,run)=>sum+run.members.length,0);onProgress?.(done,total);
   for(let start=0;start<pending.length;start+=4){
     const batches=await Promise.all(pending.slice(start,start+4).map(run=>readRun(url,run,signal,fetcher)));
     for(const parts of batches)for(const part of parts){
       let cost=0;const data=await decodeJSONBytes(part.bytes,size=>{cost=size*3;});
       const journeys=Array.isArray(data?.journeys)?data.journeys:[];remember(url+'#'+part.offset,journeys,cost);collect(journeys);
+      onProgress?.(++done,total);
     }
     if(signal?.aborted)throw new DOMException('Data request cancelled','AbortError');
   }

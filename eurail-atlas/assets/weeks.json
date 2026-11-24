@@ -164,6 +164,65 @@
      },
      "releaseId": "20261114T061018386833Z-2026-11-15",
      "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 528622592,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "cbbb0b632816354a7f2d1304e9031daf6a65349c6473d088473d9997cabf5d87",
+      "location": {
+       "kind": "private",
+       "store": "private-drive-folder"
+      },
+      "manifest": {
+       "bytes": 1092730,
+       "name": "archive-manifest.json",
+       "sha256": "94bcb7f5cde6595972a1b0c96b6075c7863ed60493019a656c288cea038b75ef"
+      },
+      "parts": 32
+     },
+     "bytes": 520047982,
+     "contractVersions": [
+      1
+     ],
+     "correction": {
+      "correctionRecordSha256": "db7ad7b049ac17e174ec3c653c00525c095637a724d4c19f53273f2a579f418b",
+      "correctsManifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
+      "decision": "owner ask (patch the existing week for the missing rail, via planning, 18 November 2026) under the owner's patch-release decision of 17 November 2026; coordinator decisions 18 November 2026 (docs/gap-closure/DECISIONS.md)",
+      "patchReportSha256": "fa0cdf2d1f2a968583195997a4a7c7916acdd30b858fc158e747d1642cd978b1",
+      "product": "geometry",
+      "reason": "Dashed railway drawn where an inferred rail path was missing; re-derived from the same products with reviewed station anchors (5 stations, 20 connections) and a reviewed routing via (Manchester Ordsall Chord, 2 connections). 22 connections now follow inferred railway; the other dashed connections stay dashed with their reason recorded."
+     },
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
+     "notKeptPublicly": [
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 4138,
+     "publishedFrom": {
+      "commit": "b22d695ae00155c7c715013fd662cf3ae59f1a45",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "133f74a0e1b8e2bc"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
     }
    ],
    "current": {

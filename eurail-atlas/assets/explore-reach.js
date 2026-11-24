@@ -1,8 +1,8 @@
 // Reach: earliest arrival at every station from a chosen origin and time,
 // by connection scan over one day's timed trains, with walking transfers.
-import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=133f74a0e1b8e2bc';
-import{footLinks,dayConnections,CHANGE,INF}from'./explore-scan.js?v=133f74a0e1b8e2bc';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=133f74a0e1b8e2bc';
+import{tripInfo,clockLabel,haversineKm}from'./explore-data.js?v=74d4cff64f55e256';
+import{footLinks,dayConnections,CHANGE,INF}from'./explore-scan.js?v=74d4cff64f55e256';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=74d4cff64f55e256';
 
 const $=id=>document.getElementById(id);
 const BANDS=6;

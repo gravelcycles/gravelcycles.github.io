@@ -1,7 +1,7 @@
 // Load rank ranges independently. Filters reuse the retained data; increasing
 // the city limit fetches only the additional immutable ranges.
 export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
-  let document=null,indexPromise=null;
+  let document=null,indexPromise=null,failure=null;
   const loaded=new Set(),pending=new Map();
   async function index(){
     if(document)return document;
@@ -9,7 +9,7 @@ export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
       const value=await loadIndex();
       if(value.schemaVersion!==3||!Array.isArray(value.cities)||!Array.isArray(value.connectionParts))throw new Error('Unsupported city connections');
       document={...value,connections:[],railGeometry:{}};onChange(document);return document;
-    })().catch(error=>{indexPromise=null;throw error;});
+    })().catch(error=>{indexPromise=null;failure=error;throw error;});
     return indexPromise;
   }
   async function through(rank){
@@ -22,11 +22,14 @@ export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
         const seen=new Set(value.connections.map(row=>row.id));
         for(const[id,rail]of Object.entries(page.railGeometry))if(value.railGeometry[id]&&JSON.stringify(value.railGeometry[id])!==JSON.stringify(rail))throw new Error('Conflicting city railway geometry');
         for(const row of page.connections)if(seen.has(row.id))throw new Error('Duplicate city connection');else seen.add(row.id);
-        Object.assign(value.railGeometry,page.railGeometry);value.connections.push(...page.connections);loaded.add(part.url);onChange(value);
-      })().finally(()=>pending.delete(part.url)));
+        Object.assign(value.railGeometry,page.railGeometry);value.connections.push(...page.connections);loaded.add(part.url);failure=null;onChange(value);
+      })().catch(error=>{failure=error;throw error;}).finally(()=>pending.delete(part.url)));
       return pending.get(part.url);
     }));
     return value;
   }
-  return{index,through,has:rank=>!!document&&document.connectionParts.filter(part=>part.minRank<=rank).every(part=>loaded.has(part.url))};
+  // For a loading screen: the parts this city limit needs and how many are in,
+  // and the last failure (cleared by the next part that loads).
+  const progress=rank=>{if(!document)return{done:0,total:null};const parts=document.connectionParts.filter(part=>part.minRank<=rank);return{done:parts.filter(part=>loaded.has(part.url)).length,total:parts.length};};
+  return{index,through,progress,error:()=>failure,has:rank=>!!document&&document.connectionParts.filter(part=>part.minRank<=rank).every(part=>loaded.has(part.url))};
 }

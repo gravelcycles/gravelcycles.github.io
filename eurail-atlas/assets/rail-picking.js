@@ -1,6 +1,6 @@
 // Index individual visible segments, rather than a long route's entire box.
 // Segment-cell traversal is linear in the screen distance, not its box area.
-import{segmentDistanceSquared}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{segmentDistanceSquared}from'./atlas-core.js?v=74d4cff64f55e256';
 
 // Building a vertex grid on every arriving geometry chunk creates millions of
 // allocations. Bboxes are already prepared in the data worker. Hover first

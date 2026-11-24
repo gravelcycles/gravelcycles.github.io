@@ -6,8 +6,8 @@
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
  * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=133f74a0e1b8e2bc';
-import{rgb}from'./rail-gpu.js?v=133f74a0e1b8e2bc';
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=74d4cff64f55e256';
+import{rgb}from'./rail-gpu.js?v=74d4cff64f55e256';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -41,6 +41,20 @@ export function overviewVariant(state,overview){
   return!state.review&&overview.pass?'pass':null;
 }
 export function overviewMatchesState(state,overview){return overviewVariant(state,overview)==='default';}
+// Below this zoom, with the default filters and no focus, the overview is the
+// exact picture: the producer computes it with the viewer's own styling, and
+// the bench replay (reports/traffic-perf-2026-11-19/overview-exact.md) finds
+// 0 differing lines, dots or priorities against the tiles at every quarter
+// zoom from 3 to 5.75. There the viewer fetches no tiles for the view. The pass
+// view, any other filter, a focus, a closer zoom or a failed overview packet
+// loads the view's tiles as before.
+export const OVERVIEW_EXACT_BELOW_ZOOM=6;
+export function overviewIsExactFor({state,index,zoom,focused=false,error=false,failed=()=>false}){
+  if(state?.mode!=='traffic'||error||focused||!(zoom<OVERVIEW_EXACT_BELOW_ZOOM))return false;
+  if(!index||overviewVariant(state,index.overview)!=='default')return false;
+  const bucket=overviewBucketFor(zoom,overviewBuckets(index,'default'));
+  return bucket!==null&&!failed(bucket);
+}
 
 export function decodeOverview(input){
   const bytes=input instanceof Uint8Array?input:new Uint8Array(input),view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
@@ -86,7 +100,7 @@ function concatenated(arrays){let length=0;for(const a of arrays)length+=a.lengt
 export class TrafficOverviewLayer{
   constructor(map,{before=null,workerFactory}={}){
     this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=133f74a0e1b8e2bc',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
+    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=74d4cff64f55e256',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
     // Paint off the interaction thread when possible, like the train raster.
     // The worker starts only when an overview is first shown.
     this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;
@@ -117,6 +131,22 @@ export class TrafficOverviewLayer{
     canvas.hidden=false;this.paintView=view;canvas.dataset.frame=String((Number(canvas.dataset.frame)||0)+1);this.onPresent?.();
   }
   view(){const size=this.map.getSize(),zoom=this.map.getZoom(),center=this.map.project(this.map.getCenter(),0);return{width:size.x,height:size.y,zoom,scale:2**zoom,centerX:center.x,centerY:center.y};}
+  // Whether the presented overview paints anything within `radius` CSS pixels
+  // of a map container point (alpha above `alpha`). Reads back only that small
+  // square, so it is cheap enough for hover; null when nothing is presented.
+  paintedNear(point,radius=4,alpha=0){
+    const canvas=this.canvas;if(!this.visible||canvas.hidden||!canvas.width)return null;
+    const map=this.map.getContainer().getBoundingClientRect(),box=canvas.getBoundingClientRect();if(!box.width||!box.height)return null;
+    const sx=canvas.width/box.width,sy=canvas.height/box.height,size=Math.max(1,Math.ceil((2*radius+1)*sx));
+    const x=Math.round((map.left+point.x-box.left-radius)*sx),y=Math.round((map.top+point.y-box.top-radius)*sy);
+    if(!this.probe){this.probe=document.createElement('canvas');this.probeContext=this.probe.getContext('2d',{willReadFrequently:true});}
+    if(this.probe.width!==size){this.probe.width=size;this.probe.height=size;}
+    const context=this.probeContext;context.clearRect(0,0,size,size);
+    try{context.drawImage(canvas,x,y,size,size,0,0,size,size);}catch{return null;}
+    const data=context.getImageData(0,0,size,size).data;
+    for(let i=3;i<data.length;i+=4)if(data[i]>alpha)return true;
+    return false;
+  }
   show(overview){if(this.overview!==overview){this.overview=overview;this.paths.clear();this.sentKey=null;}if(!this.visible){this.visible=true;this.draw();}}
   hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.pending=null;this.canvas.hidden=true;this.paintView=null;}
   // Release the worker once the exact sections are drawn; it restarts if needed.

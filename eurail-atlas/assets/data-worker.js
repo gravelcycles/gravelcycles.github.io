@@ -1,10 +1,12 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=133f74a0e1b8e2bc';
-import{queryStationPanelJourneys}from'./station-panel.js?v=133f74a0e1b8e2bc';
-import{decodeDisplay}from'./display-codec.js?v=133f74a0e1b8e2bc';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=133f74a0e1b8e2bc';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=133f74a0e1b8e2bc';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=133f74a0e1b8e2bc';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=133f74a0e1b8e2bc';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=74d4cff64f55e256';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=74d4cff64f55e256';
+export{fetchWithTransientRetry};
+import{queryStationPanelJourneys}from'./station-panel.js?v=74d4cff64f55e256';
+import{decodeDisplay}from'./display-codec.js?v=74d4cff64f55e256';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=74d4cff64f55e256';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=74d4cff64f55e256';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=74d4cff64f55e256';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=74d4cff64f55e256';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -82,16 +84,6 @@ function abortError(){return new DOMException('Data request cancelled','AbortErr
 // Static hosting occasionally answers a packet with a transient 5xx or drops
 // the connection. Retry those a bounded number of times before reporting a
 // failure; 4xx answers and cancellations are final.
-export async function fetchWithTransientRetry(url,options={},{attempts=3,delay=400,fetcher=globalThis.fetch}={}){
-  for(let attempt=1;;attempt++){
-    let response;
-    try{response=await fetcher(url,options);}
-    catch(error){if(error?.name==='AbortError'||options.signal?.aborted||attempt>=attempts)throw error;}
-    if(response&&(response.status<500||attempt>=attempts))return response;
-    await new Promise(resolve=>setTimeout(resolve,delay*attempt));
-    if(options.signal?.aborted)throw abortError();
-  }
-}
 export function readJSON(url,{fresh=false,signal}={}){
   return new Promise((resolve,reject)=>{
     if(signal?.aborted){reject(abortError());return;}
@@ -162,8 +154,9 @@ export function findEdgeJourneys(parts,directions){
   }
   return[...matches.values()];
 }
-export async function queryEdgeJourneys(urls,directions,{signal}={}){
-  const parts=await Promise.all(urls.map(url=>journeyPart(url,signal)));
+export async function queryEdgeJourneys(urls,directions,{signal,onProgress}={}){
+  let done=0;onProgress?.(0,urls.length);
+  const parts=await Promise.all(urls.map(url=>journeyPart(url,signal).then(part=>{onProgress?.(++done,urls.length);return part;})));
   if(signal?.aborted)throw abortError();
   return findEdgeJourneys(parts,directions);
 }
@@ -177,15 +170,17 @@ export function findStationJourneys(parts,stationIds){
   for(const part of parts)collectStationJourneys(part,ids,matches);
   return[...matches.values()];
 }
-export async function queryStationJourneys(urls,stationIds,{signal}={}){
+export async function queryStationJourneys(urls,stationIds,{signal,onProgress}={}){
   const ids=new Set(stationIds),matches=new Map();
   // A city can span many parts. Keep only matching journeys after each batch,
   // allowing the bounded part cache to release old unmatched decoded rows.
   if(signal?.aborted)throw abortError();
+  onProgress?.(0,urls.length);
   for(let start=0;start<urls.length;start+=3){
     const parts=await Promise.all(urls.slice(start,start+3).map(url=>journeyPart(url,signal)));
     if(signal?.aborted)throw abortError();
     for(const part of parts)collectStationJourneys(part,ids,matches);
+    onProgress?.(Math.min(start+3,urls.length),urls.length);
   }
   return[...matches.values()];
 }
@@ -197,6 +192,7 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
     if(message?.op==='cancel'){controllers.get(message.id)?.abort();return;}
     if(!Number.isInteger(message?.id))return;
     const controller=new AbortController();controllers.set(message.id,controller);
+    const progress=(done,total)=>{if(!controller.signal.aborted)globalThis.postMessage({id:message.id,progress:{done,total}});};
     try{
       if(message.op==='physicalDisplay'){
         // Already the transport: typed columns and the shared profiles.
@@ -209,13 +205,13 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
         const result=await queryJourneys(message.urls,message.from,message.to,{signal:controller.signal});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else if(message.op==='edgeJourneys'){
-        const result=await queryEdgeJourneys(message.urls,message.directions,{signal:controller.signal});
+        const result=await queryEdgeJourneys(message.urls,message.directions,{signal:controller.signal,onProgress:progress});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else if(message.op==='stationJourneys'){
-        const result=await queryStationJourneys(message.urls,message.stationIds,{signal:controller.signal});
+        const result=await queryStationJourneys(message.urls,message.stationIds,{signal:controller.signal,onProgress:progress});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else if(message.op==='stationPanelJourneys'){
-        const result=await queryStationPanelJourneys(message.url,message.runs,message.stationIds,{signal:controller.signal});
+        const result=await queryStationPanelJourneys(message.url,message.runs,message.stationIds,{signal:controller.signal,onProgress:progress});
         if(!controller.signal.aborted)globalThis.postMessage({id:message.id,result});
       }else throw new Error('Unsupported data-worker request');
     }catch(error){globalThis.postMessage({id:message.id,error:{name:error.name,message:error.message}});}

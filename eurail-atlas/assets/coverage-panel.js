@@ -34,14 +34,66 @@ export function carriedSources(manifest,country){
     return carry?.state==='carried'&&Array.isArray(carry.lastVerifiedDates)&&carry.lastVerifiedDates.length>0&&!carry.lastVerifiedDates.some(date=>dates.has(date))&&(!country||source.country===country);
   }).map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',label:String(source.weeklyCarry.label||'Last verified in an earlier week'),reason:String(source.weeklyCarry.reason||'')}));
 }
+/* "<country> (<short name>): not shown this week · last verified <dates>".
+   The short name is the source name up to its first dash (" - ", " – ",
+   " — "), " (" or ";" qualifier;
+   a country view leaves the country out. */
+export function carriedShortName(name){const text=String(name||'').trim();const cut=text.search(/\s[-–—]\s|\s\(|;/);return cut>0?text.slice(0,cut):text;}
+export function carriedRowText(row,country){
+  const short=carriedShortName(row.name),place=country||!row.country?short:row.country+' ('+short+')';
+  const verified=String(row.label||'').replace(/^Last verified\b/,'last verified');
+  return place+': not shown this week'+(verified?' · '+verified:'');
+}
 function carriedSection(parent,manifest,country){
   const rows=carriedSources(manifest,country);if(!rows.length)return;
   const area=node('section','coverage-section coverage-carried');area.appendChild(node('h3','','Carried from an earlier week'));
   area.appendChild(node('p','',(rows.length===1?'This source':'These sources')+' could not be renewed for this week. Their trains are not drawn or counted here, because their evidence covers another week; nothing is relabelled to these dates.'));
   parent.appendChild(area);
   const list=node('ul','coverage-carried-list');
-  for(const row of rows){const item=node('li','');item.append(node('strong','',row.name),node('span','',' · '+row.label+(country?'':' · '+row.country)));if(row.reason)item.appendChild(node('p','coverage-small',row.reason));list.appendChild(item);}
+  // Plain words first: the country, the source's short name, that its trains
+  // are not shown, and the week it was last verified for, all from the
+  // delivery's own record. The recorded reason is the pipeline's wording, kept
+  // behind a closed, keyboard- and tap-accessible disclosure.
+  for(const row of rows){const item=node('li','');item.appendChild(node('span','',carriedRowText(row,country)));if(row.reason){const details=node('details','coverage-small coverage-technical');details.append(node('summary','','Technical detail'),node('p','',row.reason));item.appendChild(details);}list.appendChild(item);}
   area.appendChild(list);
+}
+
+/* Last good snapshot: a source whose download failed this week and that has a
+   reviewed opt-in is drawn from its last good snapshot, at most the reviewed
+   number of days old. The drawer says so with the snapshot's real retrieval
+   date (manifest.sources[].retainedAfterFetchFailure); nothing claims freshness. */
+export function retainedSources(manifest,country){
+  return(manifest?.sources||[]).filter(source=>source?.retainedAfterFetchFailure?.retrievedAt&&(!country||source.country===country))
+    .map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',retrievedAt:source.retainedAfterFetchFailure.retrievedAt}));
+}
+export function retainedRowText(row,country){
+  const short=carriedShortName(row.name),place=country||!row.country?short:row.country+' ('+short+')';
+  return place+': last retrieved '+observationDate(row.retrievedAt)+' (upstream download failing)';
+}
+function retainedSection(parent,manifest,country){
+  const rows=retainedSources(manifest,country);if(!rows.length)return;
+  const area=node('section','coverage-section coverage-retained');area.appendChild(node('h3','','Last good download'));
+  area.appendChild(node('p','',(rows.length===1?'This source':'These sources')+' could not be downloaded this week. '+(rows.length===1?'Its':'Their')+' trains are drawn from the last good download, shown with its date.'));
+  const list=node('ul','coverage-retained-list');
+  for(const row of rows)list.appendChild(node('li','',retainedRowText(row,country)));
+  area.appendChild(list);parent.appendChild(area);
+}
+
+/* Dated service changes: a reviewed date-level operation of this delivery (for
+   example CP's strike minimum services and held dates) is stated in the plain
+   words of its review (manifest.sources[].operatingDates.notice). */
+export function operatingDateSources(manifest,country){
+  return(manifest?.sources||[]).filter(source=>typeof source?.operatingDates?.notice==='string'&&source.operatingDates.notice&&(!country||source.country===country))
+    .map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',notice:source.operatingDates.notice,
+      heldServiceDates:Array.isArray(source.operatingDates.heldServiceDates)?source.operatingDates.heldServiceDates:[],
+      minimumServiceDates:Array.isArray(source.operatingDates.minimumServiceDates)?source.operatingDates.minimumServiceDates:[]}));
+}
+function operatingDatesSection(parent,manifest,country){
+  const rows=operatingDateSources(manifest,country);if(!rows.length)return;
+  const area=node('section','coverage-section coverage-operating-dates');area.appendChild(node('h3','','Service changes this week'));
+  const list=node('ul','coverage-operating-dates-list');
+  for(const row of rows)list.appendChild(node('li','',row.notice));
+  area.appendChild(list);parent.appendChild(area);
 }
 
 /* Replacement-bus holds: a reviewed replacement-bus context that does not
@@ -227,6 +279,8 @@ export function setupCoverage(options){
       if(typeof hooks.onShowSources==='function'){const show=node('button','coverage-country-card','Show '+row.country+' sources');show.type='button';show.onclick=()=>{hooks.onShowSources(visibility.hidden);renderCountry(row);};area.appendChild(show);}
     }
     carriedSection(body,hooks.getManifest?.(),row.country);
+    operatingDatesSection(body,hooks.getManifest?.(),row.country);
+    retainedSection(body,hooks.getManifest?.(),row.country);
     transferHoldSection(body,hooks.getManifest?.(),row.country);
     for(const source of hooks.getManifest?.()?.sources||[])if(source.timetableObservation?.kind==='historical_base_snapshot'&&(source.country===row.country||row.publicDomesticSources?.includes(source.id)))section(body,'Historical base timetable',observationDetails(source,hooks.getManifest?.()));
     if(summary.policyGap)section(body,'Eurail policy gap','Pass inclusion needs review. Zero included map connections does not establish that Eurail excludes this country or its trains.');
@@ -252,6 +306,8 @@ export function setupCoverage(options){
     body.replaceChildren();
     if(!rows.length){paragraph(body,privateEdition?'Missing snapshot data does not mean there is no train service. Check an operator timetable before planning a journey.':'Missing public data does not mean there is no train service. Check an operator timetable before planning a journey.');return;}
     carriedSection(body,manifest,'');
+    operatingDatesSection(body,manifest,'');
+    retainedSection(body,manifest,'');
     carriedJoinsSection(body,manifest);
     transferHoldSection(body,manifest,'');
     const grid=node('div','coverage-country-list');

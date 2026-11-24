@@ -12,7 +12,7 @@
 // ?week=<hex prefix of at least 8 characters> names a week. The current week
 // needs nothing; any other answer is a dismissable notice that never blocks
 // the map. A missing or unreadable weeks.json shows no section and no notice.
-import{escapeHTML as esc}from'./atlas-core.js?v=133f74a0e1b8e2bc';
+import{escapeHTML as esc}from'./atlas-core.js?v=74d4cff64f55e256';
 
 export const WEEKS_KIND='euro_rail_weeks_index';
 export const ABOUT_ANCHOR='aboutWeeks';

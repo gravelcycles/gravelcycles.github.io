@@ -37,3 +37,19 @@ export function capFramePadding(padding,size,share=MAX_FRAME_PADDING_SHARE){
   const{padding:_unused,...rest}=options;
   return{...rest,paddingTopLeft:topLeft,paddingBottomRight:bottomRight};
 }
+
+export const EUROPE_BOUNDS=[[35.1,-11.5],[61.7,45.5]];
+// A portrait phone fits EUROPE_BOUNDS by its width and the floating controls'
+// padding by its height, which pins it at the minimum zoom with the screen
+// mostly sea and Sahara. There, frame the network from Lisbon to eastern
+// Türkiye and up to eastern Finland, with light padding (controls float over the edges); landscape
+// screens keep the full box and the caller's padding.
+export const PORTRAIT_EUROPE_BOUNDS=[[36,-10],[65,44.5]];
+export function portraitFrame(size){return!!size&&size.y>size.x*1.15;}
+export function europeFrame(size,padding){return portraitFrame(size)?{bounds:PORTRAIT_EUROPE_BOUNDS,padding:{paddingTopLeft:[8,48],paddingBottomRight:[8,56]}}:{bounds:EUROPE_BOUNDS,padding};}
+// The atlas map's frame padding: room for the header, the view title and the
+// floating controls (phone: bottom sheet bar), capped by capFramePadding.
+export function atlasFramePadding({phone=false,compact=false,focus=false}={},size){
+  const top=focus?56:compact?112:64;
+  return capFramePadding({paddingTopLeft:[18,top+76],paddingBottomRight:[phone?18:72,phone?165:110]},size);
+}

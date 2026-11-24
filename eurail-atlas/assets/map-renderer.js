@@ -1,13 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=133f74a0e1b8e2bc';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=133f74a0e1b8e2bc';
-import{RouteIndex}from'./rail-picking.js?v=133f74a0e1b8e2bc';
-import{renderWorld}from'./rail-lod.js?v=133f74a0e1b8e2bc';
-import{RasterClient}from'./raster-client.js?v=133f74a0e1b8e2bc';
-import{matchesFocus}from'./route-focus.js?v=133f74a0e1b8e2bc';
-import{isPhysicalSection}from'./physical-heat.js?v=133f74a0e1b8e2bc';
-import{edgeInScope}from'./project-scope.js?v=133f74a0e1b8e2bc';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=133f74a0e1b8e2bc';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=133f74a0e1b8e2bc';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=74d4cff64f55e256';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=74d4cff64f55e256';
+import{RouteIndex}from'./rail-picking.js?v=74d4cff64f55e256';
+import{renderWorld}from'./rail-lod.js?v=74d4cff64f55e256';
+import{RasterClient}from'./raster-client.js?v=74d4cff64f55e256';
+import{matchesFocus}from'./route-focus.js?v=74d4cff64f55e256';
+import{isPhysicalSection}from'./physical-heat.js?v=74d4cff64f55e256';
+import{edgeInScope}from'./project-scope.js?v=74d4cff64f55e256';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=74d4cff64f55e256';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=74d4cff64f55e256';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -110,7 +110,7 @@ export class RailRenderer{
     map.on('move',()=>this.pan());map.on('moveend resize',()=>this.schedule());
     map.on('zoomanim',event=>this.zoomAnimation(event));map.on('zoomend',()=>{this.zoomAnimating=false;this.surface.style.transition='none';if(this.raster)this.alignBitmap(this.view());else this.surface.style.transform='';this.schedule();});
     map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge,this.pickAll(event.containerPoint.x,event.containerPoint.y,edge));});
-    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge?'pointer':'';});});
+    map.on('mousemove',event=>{this.hoverPoint=event.containerPoint;if(this.dragging||this.zoomAnimating||this.hoverFrame)return;this.hoverFrame=requestAnimationFrame(()=>{this.hoverFrame=0;if(this.dragging||this.zoomAnimating)return;const point=this.hoverPoint,edge=this.pick(point.x,point.y);map.getContainer().style.cursor=edge||this.hoverFallback?.(point)?'pointer':'';});});
     map.on('mouseout',()=>this.clearHover());map.on('dragstart',()=>{this.dragging=true;this.clearHover();});map.on('dragend',()=>{this.dragging=false;});
   }
   view(){const size=this.map.getSize(),zoom=this.map.getZoom(),center=this.map.project(this.map.getCenter(),0);return{width:size.x,height:size.y,zoom,scale:2**zoom,centerX:center.x,centerY:center.y};}
