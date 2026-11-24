@@ -1,8 +1,9 @@
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=74d4cff64f55e256';
-import{decodeJSONBytes}from'./data-codec.js?v=74d4cff64f55e256';
-import{queryStationPanelJourneys}from'./station-panel.js?v=74d4cff64f55e256';
-import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=74d4cff64f55e256';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=74d4cff64f55e256';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=cd2b5907bb9e923a';
+import{decodeJSONBytes}from'./data-codec.js?v=cd2b5907bb9e923a';
+import{queryStationPanelJourneys}from'./station-panel.js?v=cd2b5907bb9e923a';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=cd2b5907bb9e923a';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=cd2b5907bb9e923a';
+import{applyRemoteMeter}from'./net-meter.js?v=cd2b5907bb9e923a';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 let loaderSequence=0;
@@ -22,7 +23,7 @@ export function createPageHydrator(load,process){
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=74d4cff64f55e256',import.meta.url);
+      const url=new URL('./data-worker.js?v=cd2b5907bb9e923a',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
@@ -33,6 +34,8 @@ export class AtlasDataLoader{
     try{
       this.worker=this.workerFactory();
       this.worker.onmessage=event=>{
+        // Byte counts of the worker's requests, for the loading screens.
+        if(event.data?.netMeter){applyRemoteMeter(event.data.netMeter);return;}
         const response=event.data,job=this.pending.get(response?.id);if(!job)return;
         // Progress of a long query (parts or chunks read so far); not a result.
         if(response.progress){job.onProgress?.(response.progress.done,response.progress.total);return;}

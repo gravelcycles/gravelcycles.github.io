@@ -2,7 +2,7 @@
  * are snapshotted, and the decoded contribution objects remain immutable for
  * its lifetime. Shared profiles and shared cohort arrays are counted once;
  * duplicate references in an array retain their additive multiplicity. */
-import{cohortSelected}from'./physical-heat.js?v=74d4cff64f55e256';
+import{cohortSelected}from'./physical-heat.js?v=cd2b5907bb9e923a';
 
 const EMPTY=Object.freeze([]);
 const fieldFor=direction=>direction==='forward'?'forwardDaily':direction==='reverse'?'reverseDaily':'daily';

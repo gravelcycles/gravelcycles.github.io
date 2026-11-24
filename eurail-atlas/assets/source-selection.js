@@ -1,6 +1,6 @@
 // Inline startup metadata can be older than the linked source selection.
 // Only the full manifest is authoritative enough to discard unavailable IDs.
-import{HISTORICAL_DEFAULT_SOURCE_COHORTS}from'./source-default-cohorts.js?v=74d4cff64f55e256';
+import{HISTORICAL_DEFAULT_SOURCE_COHORTS}from'./source-default-cohorts.js?v=cd2b5907bb9e923a';
 
 function sameSourceSelection(selected,ids){return selected?.size===ids.length&&ids.every(id=>selected.has(id));}
 export function needsSourceRefresh(catalog, selected){

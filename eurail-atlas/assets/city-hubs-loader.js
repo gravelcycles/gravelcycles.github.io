@@ -31,5 +31,7 @@ export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
   // For a loading screen: the parts this city limit needs and how many are in,
   // and the last failure (cleared by the next part that loads).
   const progress=rank=>{if(!document)return{done:0,total:null};const parts=document.connectionParts.filter(part=>part.minRank<=rank);return{done:parts.filter(part=>loaded.has(part.url)).length,total:parts.length};};
-  return{index,through,progress,error:()=>failure,has:rank=>!!document&&document.connectionParts.filter(part=>part.minRank<=rank).every(part=>loaded.has(part.url))};
+  // The parts this city limit needs, for byte counts (null before the index).
+  const parts=rank=>document?document.connectionParts.filter(part=>part.minRank<=rank).map(part=>part.url):null;
+  return{index,through,progress,parts,error:()=>failure,has:rank=>!!document&&document.connectionParts.filter(part=>part.minRank<=rank).every(part=>loaded.has(part.url))};
 }

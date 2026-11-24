@@ -4,10 +4,10 @@
  * geometry, in spatial order. Section ids live in 256 small shards keyed by
  * two id characters; a section carries a provisional "#<display index>" id
  * until it is picked or deep linked and its real id is read from one shard. */
-import{worldPoint}from'./atlas-core.js?v=74d4cff64f55e256';
-import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=74d4cff64f55e256';
-import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=74d4cff64f55e256';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=74d4cff64f55e256';
+import{worldPoint}from'./atlas-core.js?v=cd2b5907bb9e923a';
+import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=cd2b5907bb9e923a';
+import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=cd2b5907bb9e923a';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=cd2b5907bb9e923a';
 
 export const PHYSICAL_DISPLAY_FORMAT='rail-atlas-physical-heat-display-v2';
 export const PHYSICAL_DISPLAY_INDEX='assets/physical-heat/manifest.json';
@@ -46,6 +46,12 @@ export function tilesForBounds(index,[west,south,east,north],[lon,lat]=[(west+ea
   index.tiles.list.forEach((tile,k)=>{const[a,b,c,d]=tile.bbox.map(v=>v/scale);if(c<west||a>east||d<south||b>north)return;
     const dx=Math.max(a-lon,0,lon-c),dy=Math.max(b-lat,0,lat-d);rows.push([dx*dx+dy*dy,k]);});
   return rows.sort((x,y)=>x[0]-y[0]||x[1]-y[1]).map(row=>row[1]);
+}
+// Decoded tiles to drop so at most `budget` stay loaded: never a kept tile
+// (the view, a pending tap, the selection), the least recently viewed first.
+export function tilesToEvict(loaded,{keep=new Set(),used=[],budget=Infinity}={}){
+  const excess=loaded.length-budget;if(!(excess>0))return[];
+  return loaded.filter(k=>!keep.has(k)).sort((a,b)=>(used[a]||0)-(used[b]||0)||a-b).slice(0,excess);
 }
 export function tileForDisplayIndex(index,at){
   const list=index?.tiles?.list||[];let lo=0,hi=list.length-1;
@@ -143,7 +149,7 @@ export function packPhysicalDisplay(input){
 export async function gunzipBytes(bytes){
   if(!(bytes.length>=2&&bytes[0]===0x1f&&bytes[1]===0x8b))return bytes;
   if(typeof DecompressionStream==='function')return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
-  const{gunzip}=await import('./gunzip.js?v=74d4cff64f55e256');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=cd2b5907bb9e923a');return gunzip(bytes);
 }
 export async function fetchPhysicalDisplay(url,{signal}={}){
   const response=await fetchWithTransientRetry(url,{signal});if(!response.ok)throw new Error('Traffic display packet unavailable');

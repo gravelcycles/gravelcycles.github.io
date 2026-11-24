@@ -1,12 +1,13 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=74d4cff64f55e256';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=74d4cff64f55e256';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=cd2b5907bb9e923a';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=cd2b5907bb9e923a';
+import{setMeterSink}from'./net-meter.js?v=cd2b5907bb9e923a';
 export{fetchWithTransientRetry};
-import{queryStationPanelJourneys}from'./station-panel.js?v=74d4cff64f55e256';
-import{decodeDisplay}from'./display-codec.js?v=74d4cff64f55e256';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=74d4cff64f55e256';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=74d4cff64f55e256';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=74d4cff64f55e256';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=74d4cff64f55e256';
+import{queryStationPanelJourneys}from'./station-panel.js?v=cd2b5907bb9e923a';
+import{decodeDisplay}from'./display-codec.js?v=cd2b5907bb9e923a';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=cd2b5907bb9e923a';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=cd2b5907bb9e923a';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=cd2b5907bb9e923a';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=cd2b5907bb9e923a';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -186,6 +187,7 @@ export async function queryStationJourneys(urls,stationIds,{signal,onProgress}={
 }
 
 if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope){
+  setMeterSink(list=>globalThis.postMessage({netMeter:list}));
   const controllers=new Map();
   globalThis.addEventListener('message',async event=>{
     const message=event.data;

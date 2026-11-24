@@ -2,9 +2,9 @@
 // country wake-up curves, weekend service, commuter tides, corridor strings,
 // border crossings, the city-pair league and slow neighbours, all derived
 // from one chosen day.
-import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=74d4cff64f55e256';
-import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=74d4cff64f55e256';
-import{hubCities,cityTides,neighbourSearch,MIN_CITY_TRAINS,NEIGHBOUR_FROM,INDIRECT_CHANGES,indirectChanges}from'./explore-city.js?v=74d4cff64f55e256';
+import{haversineKm,clockLabel,tripInfo,weekdayIndex}from'./explore-data.js?v=cd2b5907bb9e923a';
+import{fillDaySelect,attachStationSearch,esc,fmt}from'./explore-ui.js?v=cd2b5907bb9e923a';
+import{hubCities,cityTides,neighbourSearch,MIN_CITY_TRAINS,NEIGHBOUR_FROM,INDIRECT_CHANGES,indirectChanges}from'./explore-city.js?v=cd2b5907bb9e923a';
 
 const $=id=>document.getElementById(id);
 const DEFAULT_STATIONS=['Zürich HB','Utrecht Centraal','Wien Hbf','München Hbf','Madrid Atocha','Warszawa Centralna'];

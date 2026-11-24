@@ -2,7 +2,8 @@
 // reads only the chunks that hold a call at the station, by HTTP range from one
 // blob, instead of every journey part that touches it. The index is valid only
 // beside the delivery it names; anything else falls back to the journey parts.
-import{decodeJSONBytes}from'./data-codec.js?v=74d4cff64f55e256';
+import{decodeJSONBytes}from'./data-codec.js?v=cd2b5907bb9e923a';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=cd2b5907bb9e923a';
 
 export const STATION_PANEL_KIND='station_panel_journey_index';
 export function stationPanelURL(name='station-panel.json'){const url=new URL('./'+name,import.meta.url);url.search=new URL(import.meta.url).search;return url.href;}
@@ -44,7 +45,7 @@ async function readRun(url,run,signal,fetcher){
   for(const length of run.members){parts.push({offset:run.offset+at,bytes:bytes.subarray(at,at+length)});at+=length;}
   return parts;
 }
-export async function queryStationPanelJourneys(url,runs,stationIds,{signal,fetcher=globalThis.fetch,onProgress}={}){
+export async function queryStationPanelJourneys(url,runs,stationIds,{signal,fetcher=fetchWithTransientRetry,onProgress}={}){
   const ids=new Set(stationIds),matches=new Map(),pending=[];
   for(const run of runs){
     let at=run.offset;const missing=run.members.some(length=>{const hit=decoded.has(url+'#'+at);at+=length;return!hit;});

@@ -1,13 +1,13 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=74d4cff64f55e256';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=74d4cff64f55e256';
-import{RouteIndex}from'./rail-picking.js?v=74d4cff64f55e256';
-import{renderWorld}from'./rail-lod.js?v=74d4cff64f55e256';
-import{RasterClient}from'./raster-client.js?v=74d4cff64f55e256';
-import{matchesFocus}from'./route-focus.js?v=74d4cff64f55e256';
-import{isPhysicalSection}from'./physical-heat.js?v=74d4cff64f55e256';
-import{edgeInScope}from'./project-scope.js?v=74d4cff64f55e256';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=74d4cff64f55e256';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=74d4cff64f55e256';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=cd2b5907bb9e923a';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=cd2b5907bb9e923a';
+import{RouteIndex}from'./rail-picking.js?v=cd2b5907bb9e923a';
+import{renderWorld}from'./rail-lod.js?v=cd2b5907bb9e923a';
+import{RasterClient}from'./raster-client.js?v=cd2b5907bb9e923a';
+import{matchesFocus}from'./route-focus.js?v=cd2b5907bb9e923a';
+import{isPhysicalSection}from'./physical-heat.js?v=cd2b5907bb9e923a';
+import{edgeInScope}from'./project-scope.js?v=cd2b5907bb9e923a';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=cd2b5907bb9e923a';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=cd2b5907bb9e923a';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
@@ -227,7 +227,7 @@ export class RailRenderer{
   pathFor(edge,zoom){
     let paths=this.paths.get(edge._world);if(!paths){paths=new Map();this.paths.set(edge._world,paths);}
     const bucket=Math.ceil(zoom);if(paths.has(bucket))return paths.get(bucket);
-    const path=new Path2D(),p=renderWorld(edge._world,zoom);path.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)path.lineTo(p[i],p[i+1]);paths.set(bucket,path);if(paths.size>3)paths.delete(paths.keys().next().value);return path;
+    const path=new Path2D(),p=renderWorld(edge._world,zoom);path.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)path.lineTo(p[i],p[i+1]);paths.set(bucket,path);if(paths.size>2)paths.delete(paths.keys().next().value);return path;
   }
   drawCanvas(data,view,pixels,key){
     const ctx=this.ctx,dpr=this.dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,view.width,view.height);
@@ -241,7 +241,7 @@ export class RailRenderer{
         let group=groups.get(key);if(!group){group={path:new Path2D(),color,width,dash,priority:pixels[offset+7]};groups.set(key,group);}group.path.addPath(this.pathFor(edge,view.zoom));
       }
       cached.push([...groups.values()].sort((a,b)=>a.priority-b.priority));
-    }this.canvasGroups.set(key,cached);if(this.canvasGroups.size>4)this.canvasGroups.delete(this.canvasGroups.keys().next().value);}
+    }this.canvasGroups.set(key,cached);if(this.canvasGroups.size>3)this.canvasGroups.delete(this.canvasGroups.keys().next().value);}
     for(const groups of cached)for(const group of groups){ctx.strokeStyle=group.color;ctx.lineWidth=group.width/view.scale;ctx.lineCap=group.dash?'butt':'round';ctx.setLineDash(group.dash?[1/view.scale,5/view.scale]:[]);ctx.stroke(group.path);}
     for(const item of this.rasterHighlightItems(data)){
       ctx.strokeStyle=item.color;ctx.lineWidth=item.width/view.scale;ctx.lineCap=item.dash?'butt':'round';ctx.setLineDash(item.dash?[1/view.scale,5/view.scale]:[]);ctx.stroke(this.pathFor({_world:item.world},view.zoom));
@@ -252,7 +252,7 @@ export class RailRenderer{
     if(!this.index||this.zoomAnimating||this.wheelZooming)return null;
     const data=this.getData(),zoom=this.map.getZoom(),baseKey=this.filterKey(data,zoom),minimum=threshold(data.state.min),key=baseKey+':min:'+minimum+':selected:'+(data.selected?.id||'')+':highlighted:'+JSON.stringify([...data.highlightIds||[]]);
     if(this.pickStyleKey!==key||this.pickStyleEdges!==this.meshEdges){
-      let base=this.styleCache.get(baseKey);if(!base){base=prepareStyles(this.meshEdges,data,zoom);this.styleCache.set(baseKey,base);}
+      let base=this.styleCache.get(baseKey);if(!base){base=prepareStyles(this.meshEdges,data,zoom);this.styleCache.set(baseKey,base);if(this.styleCache.size>4)this.styleCache.delete(this.styleCache.keys().next().value);}
       const pixels=thresholdStyles(base,minimum),focusData=data.focusIds?.size?{...data,focusIds:null,state:fullRouteState(data.state)}:null;
       const focusPixels=focusData?renderStyles(this.meshEdges,focusData,zoom):null;
       this.pickStyles=new Map(this.meshEdges.map((edge,index)=>{

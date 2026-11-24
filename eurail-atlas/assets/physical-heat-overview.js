@@ -6,8 +6,8 @@
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
  * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=74d4cff64f55e256';
-import{rgb}from'./rail-gpu.js?v=74d4cff64f55e256';
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=cd2b5907bb9e923a';
+import{rgb}from'./rail-gpu.js?v=cd2b5907bb9e923a';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -41,17 +41,19 @@ export function overviewVariant(state,overview){
   return!state.review&&overview.pass?'pass':null;
 }
 export function overviewMatchesState(state,overview){return overviewVariant(state,overview)==='default';}
-// Below this zoom, with the default filters and no focus, the overview is the
-// exact picture: the producer computes it with the viewer's own styling, and
-// the bench replay (reports/traffic-perf-2026-11-19/overview-exact.md) finds
-// 0 differing lines, dots or priorities against the tiles at every quarter
-// zoom from 3 to 5.75. There the viewer fetches no tiles for the view. The pass
-// view, any other filter, a focus, a closer zoom or a failed overview packet
-// loads the view's tiles as before.
-export const OVERVIEW_EXACT_BELOW_ZOOM=6;
+// Below the delivery's largest overview bucket, with the default filters and
+// no focus, the overview is the exact picture: the producer computes it with
+// the viewer's own styling, and the bench replay
+// (reports/traffic-perf-2026-11-19/overview-exact.md) finds 0 differing lines,
+// dots or priorities against the tiles at every quarter zoom it covers. There
+// the viewer fetches no tiles for the view. The limit comes from the index:
+// zoom 6 for a packet with buckets 3-6, zoom 8 for one with buckets 3-8. The
+// pass view, any other filter, a focus, a closer zoom or a failed overview
+// packet loads the view's tiles as before.
+export function overviewExactBelowZoom(index){const buckets=overviewBuckets(index,'default');return buckets.length?buckets[buckets.length-1]:null;}
 export function overviewIsExactFor({state,index,zoom,focused=false,error=false,failed=()=>false}){
-  if(state?.mode!=='traffic'||error||focused||!(zoom<OVERVIEW_EXACT_BELOW_ZOOM))return false;
-  if(!index||overviewVariant(state,index.overview)!=='default')return false;
+  if(state?.mode!=='traffic'||error||focused||!index||!(zoom<overviewExactBelowZoom(index)))return false;
+  if(overviewVariant(state,index.overview)!=='default')return false;
   const bucket=overviewBucketFor(zoom,overviewBuckets(index,'default'));
   return bucket!==null&&!failed(bucket);
 }
@@ -100,7 +102,7 @@ function concatenated(arrays){let length=0;for(const a of arrays)length+=a.lengt
 export class TrafficOverviewLayer{
   constructor(map,{before=null,workerFactory}={}){
     this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=74d4cff64f55e256',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
+    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=cd2b5907bb9e923a',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
     // Paint off the interaction thread when possible, like the train raster.
     // The worker starts only when an overview is first shown.
     this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;
