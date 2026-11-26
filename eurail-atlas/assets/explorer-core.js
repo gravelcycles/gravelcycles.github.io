@@ -1,6 +1,6 @@
-import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,edgeCount,dashedAlignment,CHARGE_MASKS}from'./atlas-core.js?v=cd2b5907bb9e923a';
-import{journeyDaily,selectCityJourneyContexts,runLeftOut}from'./train-services.js?v=cd2b5907bb9e923a';
-import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=cd2b5907bb9e923a';
+import{normalize,prepareEdge,aggregateMapPairs,selectedDays,effectivePass,edgeCount,dashedAlignment,CHARGE_MASKS}from'./atlas-core.js?v=558576e12f906d69';
+import{journeyDaily,selectCityJourneyContexts,runLeftOut}from'./train-services.js?v=558576e12f906d69';
+import{continuationMetrics,deduplicateContinuationAvailability}from'./through-continuations.js?v=558576e12f906d69';
 
 const countryKeys=new Map();
 function countryKey(country){if(!countryKeys.has(country))countryKeys.set(country,normalize(country));return countryKeys.get(country);}
@@ -74,6 +74,21 @@ function displayShapeKey(text){
   for(let i=0;i<text.length;i++){const n=text.charCodeAt(i);a=Math.imul(a^n,16777619);b=Math.imul(b^n,3266489909);}
   return(a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');
 }
+// The Top N a city belongs to: its tier when the projection has always-included
+// cities (capitals, checklist), otherwise its population rank.
+export const cityHubTier=city=>city?.hubTier??city?.rank;
+// What a Top N choice shows, from the projection itself: "Top 50" for a
+// population-only week, "Top 50 + capitals and checklist cities (79)" otherwise.
+export function hubCountLabel(document,count,{short=false}={}){
+  const cities=document?.cities||[];
+  if(!cities.some(city=>city.hubTier))return'Top '+count;
+  return'Top '+count+(short?' + capitals (':' + capitals and checklist cities (')+cities.filter(city=>cityHubTier(city)<=count).length+')';
+}
+// Listed capitals or checklist cities with no published rail call this week.
+export function hubCitiesWithoutRailCalls(document){
+  const rows=document?.summary?.alwaysIncludedWithoutRailCalls;
+  return Array.isArray(rows)?rows.filter(row=>row&&typeof row.name==='string'):[];
+}
 // Zoomed out (overview), Hubs draws one stroke per city pair along its
 // busiest recorded route with a complete, solid railway path and styles it by the city-pair total: both
 // directions, every route variant and every source the current filters keep,
@@ -136,7 +151,7 @@ export function cityPairEdges(rows,state,dates,overview=false){
 export function cityConnectionEdges(document,state,dates,{overview=false}={}){
   if(!document)return[];
   const limit=[50,100,250,500].includes(state.hubCount)?state.hubCount:100;
-  const cities=new Map(document.cities.filter(city=>city.rank<=limit).map(city=>[city.id,city]));
+  const cities=new Map(document.cities.filter(city=>cityHubTier(city)<=limit).map(city=>[city.id,city]));
   const days=selectedDays(state.day,dates),prefix=state.hubExamples==='fast'?'fast':state.hubExamples==='overnight'?'overnight':null;
   const field=prefix?prefix+(effectivePass(state)?'Included':'')+'ExampleDaily':null;
   // Trains another selected feed also publishes are counted once (rail-duplicates.js).

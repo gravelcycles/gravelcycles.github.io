@@ -6,7 +6,7 @@
 // app.js takes a prefetched response only when its own URL is identical
 // (takeTrafficPrefetch); otherwise it fetches as before. A wrong guess costs
 // one download, never a wrong picture: every packet is still validated.
-import{europeFrame,atlasFramePadding}from'./frame-padding.js?v=cd2b5907bb9e923a';
+import{europeFrame,atlasFramePadding}from'./frame-padding.js?v=558576e12f906d69';
 
 export const TRAFFIC_INDEX_PATH='assets/physical-heat/manifest.json';
 const MOBILE_LAYOUT='(max-width:700px), (max-height:500px) and (pointer:coarse)';
@@ -66,6 +66,10 @@ function start(){
   const params=new URLSearchParams(location.search);
   if(window.busPageRedirect||window.atlasUnsupportedBrowser||window.atlasTrafficPrefetch===false||params.get('view')!=='traffic')return;
   let bootstrap;try{bootstrap=JSON.parse(document.getElementById('atlasBootstrap')?.textContent||'null');}catch{return;}
+  // On an R2 site (a rail pointer in the bootstrap) the Pages path holds no
+  // Traffic bytes, and every object must be hash-checked: app.js fetches
+  // through the R2 source instead, so there is nothing to prefetch here.
+  if(bootstrap?.railPointer)return;
   const url=trafficIndexURL(bootstrap,location.href);if(!url)return;
   const response=fetch(url,{priority:'high'});response.catch(()=>{});
   const variant=openingVariant(params),mapElement=document.getElementById('map');

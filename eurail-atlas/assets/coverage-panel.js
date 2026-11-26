@@ -64,16 +64,25 @@ function carriedSection(parent,manifest,country){
    date (manifest.sources[].retainedAfterFetchFailure); nothing claims freshness. */
 export function retainedSources(manifest,country){
   return(manifest?.sources||[]).filter(source=>source?.retainedAfterFetchFailure?.retrievedAt&&(!country||source.country===country))
-    .map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',retrievedAt:source.retainedAfterFetchFailure.retrievedAt}));
+    .map(source=>({id:source.id,name:source.name||source.id,country:source.country||'',retrievedAt:source.retainedAfterFetchFailure.retrievedAt,
+      notFetched:source.retainedAfterFetchFailure.fetchPolicy==='never'}));
 }
+/* A source not fetched this week by design (fetchPolicy 'never') reads neutrally: not refreshed, drawn
+   from the copy retrieved on its date. Only a real failed download says so. */
 export function retainedRowText(row,country){
   const short=carriedShortName(row.name),place=country||!row.country?short:row.country+' ('+short+')';
+  if(row.notFetched)return place+': not refreshed this week; drawn from the copy retrieved '+observationDate(row.retrievedAt);
   return place+': last retrieved '+observationDate(row.retrievedAt)+' (upstream download failing)';
 }
 function retainedSection(parent,manifest,country){
   const rows=retainedSources(manifest,country);if(!rows.length)return;
   const area=node('section','coverage-section coverage-retained');area.appendChild(node('h3','','Last good download'));
-  area.appendChild(node('p','',(rows.length===1?'This source':'These sources')+' could not be downloaded this week. '+(rows.length===1?'Its':'Their')+' trains are drawn from the last good download, shown with its date.'));
+  const intro=rows.every(row=>row.notFetched)
+    ?(rows.length===1?'This source was':'These sources were')+' not refreshed this week. '+(rows.length===1?'Its':'Their')+' trains are drawn from an earlier copy, shown with its date.'
+    :rows.some(row=>row.notFetched)
+      ?'These sources were not refreshed this week. Their trains are drawn from the last good copy, shown with its date.'
+      :(rows.length===1?'This source':'These sources')+' could not be downloaded this week. '+(rows.length===1?'Its':'Their')+' trains are drawn from the last good download, shown with its date.';
+  area.appendChild(node('p','',intro));
   const list=node('ul','coverage-retained-list');
   for(const row of rows)list.appendChild(node('li','',retainedRowText(row,country)));
   area.appendChild(list);parent.appendChild(area);

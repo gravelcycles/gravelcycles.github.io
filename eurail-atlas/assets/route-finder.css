@@ -1,0 +1,56 @@
+/* "Plan a trip" panel (route-finder.js). The panel is a .service-context-panel:
+   a right-hand card on desktop, a full-screen sheet on phones (mobile-sheets.js). */
+.trip-panel .trip-week{margin:4px 0 14px}
+.trip-form{display:grid;gap:10px}
+.trip-station{position:relative;display:grid;gap:4px}
+.trip-station label,.trip-when label{font-size:12px;font-weight:600;color:var(--ink-soft)}
+.trip-station input,.trip-when select,.trip-when input,.trip-inline select{min-height:40px;padding:6px 10px;border:1px solid var(--line);border-radius:5px;background:#fff;font:inherit;font-size:14px;color:var(--ink)}
+.trip-station .suggestions{position:absolute;top:100%;left:0;right:0;z-index:5;margin:2px 0 0;padding:4px 0;list-style:none;background:#fff;border:1px solid var(--line);border-radius:5px;box-shadow:var(--shadow);max-height:260px;overflow:auto}
+.trip-station .suggestions li{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;font-size:13px;cursor:pointer}
+.trip-station .suggestions li small{color:var(--muted)}
+.trip-station .suggestions li[aria-selected="true"],.trip-station .suggestions li:hover{background:#e7eeea}
+.trip-swap{justify-self:end;margin:-6px 0 -4px;font-size:12px}
+.trip-when{display:grid;grid-template-columns:1fr;gap:6px}
+.trip-when select:not([hidden]),.trip-when input:not([hidden]){width:100%}
+@media (min-width:420px){.trip-when{grid-template-columns:1fr 1fr 7em}.trip-when label{grid-column:1/-1}}
+.trip-check{display:flex;align-items:center;gap:8px;font-size:13px;min-height:32px}
+.trip-check input{width:18px;height:18px}
+.trip-inline{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.trip-more{border-top:1px solid var(--line);padding-top:8px}
+.trip-more>summary{cursor:pointer;font-size:13px;font-weight:600;min-height:32px;display:flex;align-items:center}
+.trip-more>summary span{font-weight:400;color:var(--ink-soft);margin-left:2px}
+.trip-more[open]{display:grid;gap:10px}
+.trip-pass{border:0;margin:0;padding:0;display:grid;gap:2px}
+.trip-pass legend{font-size:12px;font-weight:600;color:var(--ink-soft);padding:0}
+.trip-search{min-height:44px;font-size:15px}
+.trip-status{margin:12px 0 6px}
+.trip-status.trip-error{color:#9b2c1f}
+.trip-results{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.trip-result{border:1px solid var(--line);border-radius:6px;background:#fff}
+.trip-result.active{border-color:var(--route,#173f3b);box-shadow:0 0 0 1px var(--route,#173f3b)}
+.trip-summary{display:grid;gap:3px;width:100%;padding:10px 12px;border:0;background:none;text-align:left;font:inherit;cursor:pointer;min-height:44px}
+.trip-times{font-size:16px}
+.trip-times sup,.trip-leg-row sup{font-size:10px;margin-left:1px;color:var(--ink-soft)}
+.trip-meta{font-size:12px;color:var(--ink-soft)}
+.trip-trains{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-badge{color:#8a4b00}
+.trip-detail{padding:0 12px 10px}
+.trip-legs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.trip-leg{border-left:3px solid var(--route,#173f3b);padding:4px 0 4px 10px}
+.trip-leg-head{font-size:13px}.trip-leg-head span{color:var(--ink-soft);font-size:12px}
+.trip-leg-row{font-size:13px;line-height:1.5}.trip-leg-row b{display:inline-block;min-width:3.4em}
+.trip-leg-meta{font-size:11px;color:var(--muted)}
+.trip-change{font-size:12px;color:var(--ink-soft);padding-left:13px}
+.trip-stay{color:#25603f}
+.trip-walk{color:#5a4a1f}
+.trip-paging{display:flex;justify-content:space-between;margin:10px 0}
+.trip-notices h4{font-size:13px;margin:14px 0 4px}
+.trip-notices ul{margin:0;padding-left:18px;font-size:12px;line-height:1.55}
+.trip-scope{margin-top:14px;font-size:11px}
+/* Phones: the sheet covers the map, so a chosen journey has a button to see it,
+   and the map a chip back to the results (#tripReturn). */
+.trip-show-map{display:none;width:100%;min-height:44px;margin-top:10px}
+@media (max-width:600px){.trip-show-map{display:block}}
+.trip-loading{display:grid;gap:4px;margin:-6px 0 12px;font-size:12px;color:var(--ink-soft)}
+.trip-loading .loading-track{display:block;height:4px;border-radius:2px;background:#e3e9e5;overflow:hidden}
+.trip-loading .loading-track i{display:block;height:100%;width:0;background:var(--route,#173f3b);transition:width .3s}

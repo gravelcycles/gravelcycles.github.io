@@ -1,5 +1,7 @@
 // Load rank ranges independently. Filters reuse the retained data; increasing
-// the city limit fetches only the additional immutable ranges.
+// the city limit fetches only the additional immutable ranges. A part names
+// the Top N it belongs to (topN); older projections use their rank ranges.
+const partNeeded=(part,limit)=>(part.topN??part.minRank)<=limit;
 export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
   let document=null,indexPromise=null,failure=null;
   const loaded=new Set(),pending=new Map();
@@ -14,7 +16,7 @@ export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
   }
   async function through(rank){
     const value=await index();
-    await Promise.all(value.connectionParts.filter(part=>part.minRank<=rank).map(part=>{
+    await Promise.all(value.connectionParts.filter(part=>partNeeded(part,rank)).map(part=>{
       if(loaded.has(part.url))return;
       if(!pending.has(part.url))pending.set(part.url,(async()=>{
         const page=await loadPart(part.url);
@@ -30,8 +32,8 @@ export function createCityHubsLoader({loadIndex,loadPart,onChange=()=>{}}){
   }
   // For a loading screen: the parts this city limit needs and how many are in,
   // and the last failure (cleared by the next part that loads).
-  const progress=rank=>{if(!document)return{done:0,total:null};const parts=document.connectionParts.filter(part=>part.minRank<=rank);return{done:parts.filter(part=>loaded.has(part.url)).length,total:parts.length};};
+  const progress=rank=>{if(!document)return{done:0,total:null};const parts=document.connectionParts.filter(part=>partNeeded(part,rank));return{done:parts.filter(part=>loaded.has(part.url)).length,total:parts.length};};
   // The parts this city limit needs, for byte counts (null before the index).
-  const parts=rank=>document?document.connectionParts.filter(part=>part.minRank<=rank).map(part=>part.url):null;
-  return{index,through,progress,parts,error:()=>failure,has:rank=>!!document&&document.connectionParts.filter(part=>part.minRank<=rank).every(part=>loaded.has(part.url))};
+  const parts=rank=>document?document.connectionParts.filter(part=>partNeeded(part,rank)).map(part=>part.url):null;
+  return{index,through,progress,parts,error:()=>failure,has:rank=>!!document&&document.connectionParts.filter(part=>partNeeded(part,rank)).every(part=>loaded.has(part.url))};
 }

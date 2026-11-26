@@ -1,16 +1,16 @@
 {
  "schemaVersion": 1,
  "kind": "rail_explore_delivery",
- "sourceManifestSha256": "633a844a834142e21da4ae3b300581516d1e2f4c7d957ab59f1d2b1d5990ffb4",
- "sourceReleaseId": "20261114T061018386833Z-2026-11-15",
+ "sourceManifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
+ "sourceReleaseId": "context-replacements-89971eb9676c8241a4",
  "dates": [
-  "2026-11-15",
-  "2026-11-16",
-  "2026-11-17",
-  "2026-11-18",
-  "2026-11-19",
-  "2026-11-20",
-  "2026-11-21"
+  "2026-11-29",
+  "2026-11-30",
+  "2026-12-01",
+  "2026-12-02",
+  "2026-12-03",
+  "2026-12-04",
+  "2026-12-05"
  ],
  "clock": "Minutes after 00:00 CET (UTC+1) on each date",
  "files": {
@@ -20,89 +20,83 @@
   "timetable": "timetable.bin.gz"
  },
  "counts": {
-  "stations": 32485,
-  "journeys": 60506,
-  "profiles": 117711,
+  "stations": 32897,
+  "journeys": 59085,
+  "profiles": 114991,
   "days": {
-   "2026-11-15": {
-    "trips": 125540
+   "2026-11-29": {
+    "trips": 124757
    },
-   "2026-11-16": {
-    "trips": 176564
+   "2026-11-30": {
+    "trips": 175319
    },
-   "2026-11-17": {
-    "trips": 174813
+   "2026-12-01": {
+    "trips": 176161
    },
-   "2026-11-18": {
-    "trips": 176745
+   "2026-12-02": {
+    "trips": 176134
    },
-   "2026-11-19": {
-    "trips": 177033
+   "2026-12-03": {
+    "trips": 175795
    },
-   "2026-11-20": {
-    "trips": 178239
+   "2026-12-04": {
+    "trips": 177194
    },
-   "2026-11-21": {
-    "trips": 147601
+   "2026-12-05": {
+    "trips": 148712
    }
   }
  },
  "skipped": {
-  "journeys_without_calls": 2,
   "runs_without_complete_clocks": 7
  },
  "deduplication": {
   "rule": "A run is dropped when all its calls appear, in order and within a minute, in a run from another source on the same date; of two equal copies the run starting in its own feed country is kept.",
   "droppedTripsByDate": {
-   "2026-11-15": 4297,
-   "2026-11-16": 6126,
-   "2026-11-17": 6061,
-   "2026-11-18": 6122,
-   "2026-11-19": 6127,
-   "2026-11-20": 6186,
-   "2026-11-21": 4743
+   "2026-11-29": 3789,
+   "2026-11-30": 5705,
+   "2026-12-01": 5700,
+   "2026-12-02": 5703,
+   "2026-12-03": 5769,
+   "2026-12-04": 5822,
+   "2026-12-05": 4438
   },
-  "droppedTrips": 39662,
+  "droppedTrips": 36926,
   "sourcePairs": [
    [
     "ch_gtfs_2026",
     "fr_sncf",
-    16458
+    16075
    ],
    [
     "ch_gtfs_2026",
     "de_rv",
-    4158
+    3809
    ],
    [
     "cz_czptt",
     "de_rv",
-    1508
+    1643
    ],
    [
     "de_rv",
     "ch_gtfs_2026",
-    1505
+    1438
    ],
    [
     "fr_idfm",
     "fr_sncf",
-    1300
+    1382
    ],
    [
     "de_rv",
     "cz_czptt",
-    1123
+    1168
    ],
    [
     "it_trenitalia_nap",
     "it_liguria_trenitalia_tper_gtfs",
-    1098
-   ],
-   [
-    "es_renfe_cercanias_transitous",
-    "es_renfe_ld",
-    1021
+    1016
    ],
    [
     "ch_gtfs_2026",
@@ -110,85 +104,90 @@
     987
    ],
    [
-    "fr_sncf",
-    "ch_gtfs_2026",
-    912
-   ],
-   [
-    "es_renfe_ld",
-    "es_renfe_cercanias_transitous",
-    691
-   ],
-   [
     "ch_gtfs_2026",
     "it_trenord",
-    682
+    641
    ],
    [
     "at_mvo_rail_transitous",
     "de_rv",
-    660
+    599
    ],
    [
     "de_fv",
     "ch_gtfs_2026",
-    623
+    487
+   ],
+   [
+    "de_rv",
+    "at_mvo_rail_transitous",
+    475
+   ],
+   [
+    "de_rv",
+    "fr_sncf",
+    473
    ],
    [
     "cz_czptt",
     "pl_polish_trains",
-    479
-   ],
-   [
-    "de_rv",
-    "at_mvo_rail_transitous",
-    468
-   ],
-   [
-    "at_mvo_rail_transitous",
-    "de_fv",
-    451
+    467
    ],
    [
     "fr_sncf",
     "fr_idfm",
-    421
+    424
    ],
    [
-    "at_mvo_rail_transitous",
-    "si_dujpp_official",
-    348
+    "fr_sncf",
+    "ch_gtfs_2026",
+    419
    ],
    [
     "cz_czptt",
     "at_mvo_rail_transitous",
-    324
+    352
+   ],
+   [
+    "de_rv",
+    "nl_openov",
+    345
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "si_dujpp_official",
+    344
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "de_fv",
+    344
    ]
   ]
  },
  "assets": {
   "stations.json.gz": {
-   "sha256": "02da69de42009e54047b958ce187990fbd67e5587f6bd20fcfb94878ce621e8a",
-   "bytes": 512765,
-   "contentBytes": 1355612,
+   "sha256": "5ef38a910704555be5117fd4aaf79c0c43416a86b52adf6fc286424019f6bd3f",
+   "bytes": 518748,
+   "contentBytes": 1372206,
    "encoding": "gzip"
   },
   "journeys.json.gz": {
-   "sha256": "3e9171b466d7f45389343ee27a4d1c81f0e9c00565af82d55aee5ab62f3c019a",
-   "bytes": 387807,
-   "contentBytes": 2744745,
+   "sha256": "c737be692a8ffb1a3e87c7badb92ef904fd6cd268b81faddc6b161f2addff4b6",
+   "bytes": 381427,
+   "contentBytes": 2695279,
    "encoding": "gzip"
   },
   "timetable.bin.gz": {
-   "sha256": "f034c77e8cb900d41fc55706c12c94ebfe46a39ab64a6b67e8b70bfd806f85da",
-   "bytes": 4501333,
-   "contentBytes": 19568698,
+   "sha256": "9f226b9be9aa532f22a25d3382044330000b0e68bc8ba451002f6b0e67be4b79",
+   "bytes": 4451278,
+   "contentBytes": 19451872,
    "encoding": "gzip"
   },
   "summary.json.gz": {
-   "sha256": "b0191947c3c62e2944241f02db728021f03df1db65bd6d6e35caea9942b84567",
-   "bytes": 761,
-   "contentBytes": 1468,
+   "sha256": "d8274df1faa28e50cf2923c4d09441faa289baa121598f3c0ce13ee913718609",
+   "bytes": 816,
+   "contentBytes": 1555,
    "encoding": "gzip"
   }
  },
@@ -202,7 +201,7 @@
  "attribution": {
   "countryContext": "Explicit display-only geometry; original provider attribution applies.",
   "countryEvidence": "Eurostat/GISCO 2024; © EuroGeographics for administrative boundaries; analytical station-country evidence. Display basemap remains Natural Earth.",
-  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and OpenStreetMap France extracts and attributed OSM feature distribution",
+  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and OpenStreetMap France extracts and OpenStreetMap contributors, weekly planet dump (AWS Open Data mirror of planet.openstreetmap.org) and attributed OSM feature distribution",
   "stationNames": "Trainline EU Stations contributors; underlying OpenStreetMap and attributed open station references; SBB Infrastruktur / BAV / swisstopo service-point register",
   "timetables": "Individual source licences and original publisher attribution apply; see sources."
  }

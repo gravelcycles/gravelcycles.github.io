@@ -1,7 +1,7 @@
 {
  "boundTo": {
   "layer": "rail",
-  "manifestSha256": "633a844a834142e21da4ae3b300581516d1e2f4c7d957ab59f1d2b1d5990ffb4"
+  "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289"
  },
  "contractVersions": [
   1
@@ -84,15 +84,15 @@
      "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
      "notKeptPublicly": [
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "gr_hellenic"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "rs_srbijavoz"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "tr_rayatlas"
       }
      ],
@@ -143,15 +143,15 @@
      "manifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
      "notKeptPublicly": [
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "gr_hellenic"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "rs_srbijavoz"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "tr_rayatlas"
       }
      ],
@@ -202,15 +202,15 @@
      "manifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
      "notKeptPublicly": [
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "gr_hellenic"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "rs_srbijavoz"
       },
       {
-       "condition": "review_basis starts with \"owner_accepted_risk_decision\" and public_derivative_scope.raw_archive_download=false",
+       "condition": "not kept publicly",
        "source": "tr_rayatlas"
       }
      ],
@@ -223,27 +223,81 @@
      },
      "releaseId": "20261114T061018386833Z-2026-11-15",
      "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 532142592,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "0fd1302ff47e4f65e60f8fa8cffcbd4193404b55aca90e4598244e590371b4fd",
+      "location": {
+       "kind": "private",
+       "store": "private-r2"
+      },
+      "manifest": {
+       "bytes": 1093306,
+       "name": "archive-manifest.json",
+       "sha256": "6c7419ad6db337d415657a4dca18324b3ea1fc065df0c2e6cea686633d8bd9a7"
+      },
+      "parts": 32
+     },
+     "bytes": 523570925,
+     "contractVersions": [
+      1
+     ],
+     "correction": {
+      "correctionRecordSha256": "d6299ec4da79bf31ddb9568e2a38625af595e3257935557fa95a3df591dd29be",
+      "correctsManifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
+      "decision": "Coordinator, 24 November 2026: publish G1's display straight-jump fix (#525) on live 15–21 as a derived geometry patch, the owner having asked for the dotted lines on published weeks to be fixed; Traffic display packet with overview buckets 7-8 (#529) from the same main f2158bb2",
+      "patchReportSha256": "0510528481be4e5cd11728dba672be990f068f8a44ddc49528d8b60868729e18",
+      "product": "geometry",
+      "reason": "Map display: rail rows the viewer drew dashed only because compact-tier simplification turned a real fine railway curve into straight chords of 25 km or more (2,368 network and 710 overview rows re-simplified from their fine curves, 443 through-continuation rows rebuilt); the timetable, service and closure context and pass status are unchanged"
+     },
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "633a844a834142e21da4ae3b300581516d1e2f4c7d957ab59f1d2b1d5990ffb4",
+     "notKeptPublicly": [
+      {
+       "condition": "not kept publicly",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 4140,
+     "publishedFrom": {
+      "commit": "636c0608f0603fd7522f4df8c31b29e1b1dec354",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "cd2b5907bb9e923a"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
     }
    ],
    "current": {
     "contractVersions": [
      1
     ],
-    "correction": {
-     "correctionRecordSha256": "d6299ec4da79bf31ddb9568e2a38625af595e3257935557fa95a3df591dd29be",
-     "correctsManifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
-     "product": "geometry"
-    },
     "dates": {
-     "first": "2026-11-15",
-     "last": "2026-11-21"
+     "first": "2026-11-29",
+     "last": "2026-12-05"
     },
     "location": {
      "kind": "pages-tree",
      "path": "data/"
     },
-    "manifestSha256": "633a844a834142e21da4ae3b300581516d1e2f4c7d957ab59f1d2b1d5990ffb4",
-    "releaseId": "20261114T061018386833Z-2026-11-15"
+    "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
+    "releaseId": "context-replacements-89971eb9676c8241a4"
    }
   },
   "transit": {

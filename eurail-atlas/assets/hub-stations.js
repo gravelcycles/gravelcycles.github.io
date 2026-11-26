@@ -1,6 +1,6 @@
-import{normalize,qualifiesEdge,edgeCount,conditionalCount,effectivePass,selectedDays,serializeState,validMapLocation}from'./atlas-core.js?v=cd2b5907bb9e923a';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=cd2b5907bb9e923a';
-import{stationInScope}from'./project-scope.js?v=cd2b5907bb9e923a';
+import{normalize,qualifiesEdge,edgeCount,conditionalCount,effectivePass,selectedDays,serializeState,validMapLocation}from'./atlas-core.js?v=558576e12f906d69';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=558576e12f906d69';
+import{stationInScope}from'./project-scope.js?v=558576e12f906d69';
 
 // Existing reviewed50-city intercity station anchors, not a ridership ranking.
 // Source: config/rail-international-major-stations.json (3 Nov anchors;
@@ -60,7 +60,7 @@ export function mainHubStations(stations,cities,edges,state,dates){
       for(const id of endpointIds(row,state,dates)){
         const station=catalog.members.get(id);
         if(!station||!validMapLocation(station.lon,station.lat)||!stationInScope(station,state)||!stationSourceSelected(station,state))continue;
-        const city=assignedCity(station,catalog);if(!city||city.rank>limit||!activeCities.has(city.id))continue;
+        const city=assignedCity(station,catalog);if(!city||(city.hubTier??city.rank)>limit||!activeCities.has(city.id))continue;
         let candidates=byCity.get(city.id);if(!candidates){candidates=new Map();byCity.set(city.id,candidates);}
         const memberIds=stationMemberIds(station),anchor=memberIds.some(value=>primary.has(value))?2:memberIds.some(value=>alternatives.has(value))?1:0;
         const previous=candidates.get(station.id),candidate={station,city,anchor,name:mainName(station.name),support:Math.max(support,previous?.support||0)};

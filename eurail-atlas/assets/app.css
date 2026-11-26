@@ -21,6 +21,7 @@
 
 /* Geographic context remains navigable down to cities and streets. */
 .map-notices{position:absolute;z-index:550;top:calc(var(--toolbar-height) + 75px);left:18px;max-width:385px;pointer-events:none}.map-coverage-warning,.basemap-status{display:block;margin:0 0 6px;padding:9px 11px;border:1px solid #d8c59b;border-radius:5px;background:#fff9e9f5;color:#67522b;font-size:11px;line-height:1.45;text-align:left;box-shadow:0 2px 9px #1532380d;pointer-events:auto}.map-coverage-warning span{white-space:nowrap;text-decoration:underline;text-underline-offset:2px}.basemap-status{background:var(--panel);border-color:var(--line);color:var(--ink-soft)}
+.lite-notice{display:flex;align-items:flex-start;gap:8px}.lite-notice[hidden]{display:none}.lite-notice span{flex:1}.lite-notice-close{flex:none;margin:-3px -4px 0 0;padding:0 5px;border:0;background:none;color:inherit;font:inherit;font-size:15px;line-height:1.2;cursor:pointer}.lite-notice-close:focus-visible,.lite-status-show:focus-visible{outline:2px solid var(--accent,#0f6b62);outline-offset:2px}.lite-status-show{padding:0;border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
 @media(max-width:600px){.map-notices{left:12px;right:62px;top:calc(var(--toolbar-height) + 64px);max-width:340px}.map-coverage-warning,.basemap-status{padding:7px 9px;font-size:10px;line-height:1.4}.map-focus .map-notices{top:120px}}
 .leaflet-tile-pane{filter:saturate(1) contrast(1.08)}
 /* Leaflet blends tiles with plus-lighter; under the pane's contrast filter and a

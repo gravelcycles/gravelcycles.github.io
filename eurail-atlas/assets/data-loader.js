@@ -1,9 +1,21 @@
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=cd2b5907bb9e923a';
-import{decodeJSONBytes}from'./data-codec.js?v=cd2b5907bb9e923a';
-import{queryStationPanelJourneys}from'./station-panel.js?v=cd2b5907bb9e923a';
-import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=cd2b5907bb9e923a';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=cd2b5907bb9e923a';
-import{applyRemoteMeter}from'./net-meter.js?v=cd2b5907bb9e923a';
+import{installRailR2,DEGRADED_EVENT}from'./rail-r2.js?v=558576e12f906d69';
+
+// The data worker's rail source reports lite reads here: kept as a page-side
+// flag (for a notice set up later) and dispatched as the same DEGRADED_EVENT
+// the page's own source dispatches.
+let relayedLite=null;
+export function relayedRailLite(){return relayedLite;}
+export function relayRailDegraded(detail){
+  if(detail?.kind!=='lite')return;
+  relayedLite??=detail;
+  try{if(typeof globalThis.dispatchEvent==='function'&&typeof CustomEvent==='function')globalThis.dispatchEvent(new CustomEvent(DEGRADED_EVENT,{detail}));}catch{}
+}
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=558576e12f906d69';
+import{decodeJSONBytes}from'./data-codec.js?v=558576e12f906d69';
+import{queryStationPanelJourneys}from'./station-panel.js?v=558576e12f906d69';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=558576e12f906d69';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=558576e12f906d69';
+import{applyRemoteMeter}from'./net-meter.js?v=558576e12f906d69';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 let loaderSequence=0;
@@ -23,7 +35,7 @@ export function createPageHydrator(load,process){
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=cd2b5907bb9e923a',import.meta.url);
+      const url=new URL('./data-worker.js?v=558576e12f906d69',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
@@ -36,6 +48,7 @@ export class AtlasDataLoader{
       this.worker.onmessage=event=>{
         // Byte counts of the worker's requests, for the loading screens.
         if(event.data?.netMeter){applyRemoteMeter(event.data.netMeter);return;}
+        if(event.data?.railDegraded){relayRailDegraded(event.data.railDegraded);return;}
         const response=event.data,job=this.pending.get(response?.id);if(!job)return;
         // Progress of a long query (parts or chunks read so far); not a result.
         if(response.progress){job.onProgress?.(response.progress.done,response.progress.total);return;}
@@ -69,6 +82,12 @@ export class AtlasDataLoader{
     if(message.op==='decode')return decodeJSONBytes(message.bytes).then(data=>prepareLoadedData(data).data);
     if(message.op==='physicalDisplay')return fetchPhysicalDisplay(message.url,{signal}).then(transport=>unpackPhysicalTransfer(transport.data,{signal}));
     return readJSON(message.url,{fresh:message.fresh,signal}).then(data=>prepareLoadedData(data).data);
+  }
+  // Install a rail pointer here and in the data worker (step 2b part 2).
+  useRailR2(source){
+    installRailR2(source);this.start();
+    this.worker?.postMessage({op:'railR2',pointer:source.pointer,pagesBase:source.pagesBase});
+    return source;
   }
   request(message,{signal,onProgress}={}){
     if(signal?.aborted)return Promise.reject(aborted());

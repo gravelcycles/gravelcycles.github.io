@@ -1,6 +1,6 @@
-import{validBusDocument}from'./bus-core.js?v=cd2b5907bb9e923a';
-import{safeBusBase}from'./bus-delivery.js?v=cd2b5907bb9e923a';
-import{worldPoint}from'./atlas-core.js?v=cd2b5907bb9e923a';
+import{validBusDocument}from'./bus-core.js?v=558576e12f906d69';
+import{safeBusBase}from'./bus-delivery.js?v=558576e12f906d69';
+import{worldPoint}from'./atlas-core.js?v=558576e12f906d69';
 
 export const BUS_AGGREGATE_LIMITS=Object.freeze({wireBytes:3*1024*1024,decodedBytes:16*1024*1024,vertices:250000,segments:1000000,profiles:65536,pixels:8*1024*1024});
 const hash=/^[a-f0-9]{64}$/;

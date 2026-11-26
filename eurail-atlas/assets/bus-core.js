@@ -1,4 +1,4 @@
-import{safeBusBase}from'./bus-delivery.js?v=cd2b5907bb9e923a';
+import{safeBusBase}from'./bus-delivery.js?v=558576e12f906d69';
 // Ordinary bus records have their own source namespace, dates and counters.
 export const BUS_LIMITS=Object.freeze({minimumZoom:7,tiles:6,tileBytes:8*1024*1024,decodedTileBytes:24*1024*1024,routes:800,vertices:30000,stops:900,pickSegments:18000,cacheBytes:48*1024*1024,searchBytes:12*1024*1024});
 export const BUS_OVERVIEW_LIMITS=Object.freeze({routes:12000,vertices:250000,bytes:2*1024*1024,decodedBytes:16*1024*1024});
@@ -108,7 +108,7 @@ export class BusRequests{
     const sha256=descriptor?.sha256||url.pathname.endsWith('/manifest.json')?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):undefined;if(descriptor?.sha256&&sha256!==descriptor.sha256)throw new Error('Bus asset checksum mismatch');
     check();
     if(descriptor?.encoding==='gzip'||url.pathname.endsWith('.gz')){
-      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=cd2b5907bb9e923a');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
+      if(typeof DecompressionStream!=='function'){const{gunzip}=await import('./gunzip.js?v=558576e12f906d69');buffer=gunzip(buffer,{maxBytes:Math.min(limit*8,48*1024*1024)});}
       else{const stream=new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip')).getReader(),chunks=[],abort=()=>{stream.cancel().catch(()=>{});};let size=0;controller.signal.addEventListener('abort',abort,{once:true});
       try{for(;;){const{done,value}=await stream.read();if(done)break;size+=value.byteLength;if(size>Math.min(limit*8,48*1024*1024)){await stream.cancel();throw new Error('Decoded bus asset exceeds memory budget');}chunks.push(value);}}finally{controller.signal.removeEventListener('abort',abort);stream.releaseLock();}
       buffer=new Uint8Array(size);let offset=0;for(const chunk of chunks){buffer.set(chunk,offset);offset+=chunk.length;}}
@@ -120,7 +120,7 @@ export class BusRequests{
   }
 }
 
-// SILENT licence class (publisher states no licence). Takedown requests go to
-// the public Pages repository's issue tracker (coordinator decision, 11 Nov 2026).
-export const SILENT_TAKEDOWN_CONTACT='https://github.com/gravelcycles/gravelcycles.github.io/issues';
-export function silentLicenceNotice(notice){if(!notice||typeof notice!=='object'||notice.class!=='SILENT'||notice.takedown!==true)return null;return{label:'licence: none stated',takedown:`Publisher wants this removed? Open an issue at ${SILENT_TAKEDOWN_CONTACT}`};}
+export const NO_LICENCE_STATED_TEXT='No licence stated by the publisher. Shown with attribution and a link to the source.';
+// A source whose publisher states no licence: {kind:'no_licence_stated'}, or the older
+// {class:'SILENT',...} form. The viewer shows only its own fixed text, never text from the data.
+export function noLicenceNotice(notice){if(!notice||typeof notice!=='object'||Array.isArray(notice))return null;return notice.kind==='no_licence_stated'||notice.class==='SILENT'?NO_LICENCE_STATED_TEXT:null;}

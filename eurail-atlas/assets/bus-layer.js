@@ -1,11 +1,11 @@
-import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote,silentLicenceNotice}from'./bus-core.js?v=cd2b5907bb9e923a';
-import{resolveBusDelivery}from'./bus-delivery.js?v=cd2b5907bb9e923a';
-import{BusCanvas}from'./bus-canvas.js?v=cd2b5907bb9e923a';
-import{BusDataClient}from'./bus-data-client.js?v=cd2b5907bb9e923a';
-import{BUS_OVERVIEW}from'./bus-overview.js?v=cd2b5907bb9e923a';
-import{setupBusGeography}from'./bus-geography.js?v=cd2b5907bb9e923a';
-import{FREQUENCY_COLORS,FREQUENCY_LABELS}from'./atlas-core.js?v=cd2b5907bb9e923a';
-import{busFrequencyBand}from'./bus-network.js?v=cd2b5907bb9e923a';
+import{BUS_LIMITS,validBusDocument,busMatches,busCount,busEstimate,activeBusTrips,busTripClock,permissionText,displayClock,busQualityNote,busBoardingScopeNote,noLicenceNotice}from'./bus-core.js?v=558576e12f906d69';
+import{resolveBusDelivery}from'./bus-delivery.js?v=558576e12f906d69';
+import{BusCanvas}from'./bus-canvas.js?v=558576e12f906d69';
+import{BusDataClient}from'./bus-data-client.js?v=558576e12f906d69';
+import{BUS_OVERVIEW}from'./bus-overview.js?v=558576e12f906d69';
+import{setupBusGeography}from'./bus-geography.js?v=558576e12f906d69';
+import{FREQUENCY_COLORS,FREQUENCY_LABELS}from'./atlas-core.js?v=558576e12f906d69';
+import{busFrequencyBand}from'./bus-network.js?v=558576e12f906d69';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id),safeURL=value=>{try{const u=new URL(value);return['https:','http:'].includes(u.protocol)?u.href:null;}catch{return null;}};
 const licenceText=source=>{const v=source.licence||source.license;return typeof v==='string'?v:v?.name||'';};
@@ -29,7 +29,7 @@ export function geometryAttributionMarkup(provenance){if(typeof provenance?.attr
 
 const qualityMarkup=source=>{const note=busQualityNote(source);return note?`<p class="bus-quality-note">${esc(note)}</p>`:'';};
 const sourceNotesMarkup=source=>{const note=busBoardingScopeNote(source);return qualityMarkup(source)+(note?`<p class="bus-boarding-note">${esc(note)}</p>`:'');};
-const silentLicenceMarkup=source=>{const notice=silentLicenceNotice(source?.licenceNotice);return notice?`<p class="silent-licence helper">${esc(notice.label)}. ${esc(notice.takedown)}</p>`:'';};
+const silentLicenceMarkup=source=>{const notice=noLicenceNotice(source?.licenceNotice);return notice?`<p class="silent-licence helper">${esc(notice)}</p>`:'';};
 
 export function createBusLayer({map,baseURL=new URL('../bus-data/',import.meta.url),delivery=null,initial={},onChange=()=>{},onOpen=()=>{},countryOverview=null,places=null,localRouting=null,network=null,duplicates=null,onGeography=()=>{}}){
   let active=false,session=0,manifest=null,coverageData=null,requests=null,canvas=null,stops=[],visible=[],selected=null,selectedNative=null,geometryFineRequested=null,geometryRun=0,overview=false,aggregate=null,networkScene=null,hereHit=null,hereLine=null,viewportRetry=0,geometryConfigured=false,deliveryProducts=null,operatorRows=[],viewportRun=0,searchRun=0,detailRun=0,viewTimer=0,searchTimer=0,query='',cityRouteIds=null,callPage=0,tripPage=0,disposed=false,sourcePage=0,duplicateNotice=null;

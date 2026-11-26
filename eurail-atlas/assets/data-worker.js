@@ -1,13 +1,14 @@
-import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=cd2b5907bb9e923a';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=cd2b5907bb9e923a';
-import{setMeterSink}from'./net-meter.js?v=cd2b5907bb9e923a';
+import{RailR2,installRailR2,weekCacheKey}from'./rail-r2.js?v=558576e12f906d69';
+import{decodeJSONResponse,decodeJSONBytes}from'./data-codec.js?v=558576e12f906d69';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=558576e12f906d69';
+import{setMeterSink}from'./net-meter.js?v=558576e12f906d69';
 export{fetchWithTransientRetry};
-import{queryStationPanelJourneys}from'./station-panel.js?v=cd2b5907bb9e923a';
-import{decodeDisplay}from'./display-codec.js?v=cd2b5907bb9e923a';
-import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=cd2b5907bb9e923a';
-import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=cd2b5907bb9e923a';
-import{packPhysicalTransfer}from'./physical-transfer.js?v=cd2b5907bb9e923a';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=cd2b5907bb9e923a';
+import{queryStationPanelJourneys}from'./station-panel.js?v=558576e12f906d69';
+import{decodeDisplay}from'./display-codec.js?v=558576e12f906d69';
+import{prepareEdge,normalize,journeyMatchesEdge,worldPoint}from'./atlas-core.js?v=558576e12f906d69';
+import{PHYSICAL_HEAT_FORMAT,decodePhysicalHeat}from'./physical-heat.js?v=558576e12f906d69';
+import{packPhysicalTransfer}from'./physical-transfer.js?v=558576e12f906d69';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=558576e12f906d69';
 
 // Keep geometry as transferable numeric buffers. Sending the original nested
 // coordinate arrays as well would make structured cloning stall the UI thread.
@@ -103,7 +104,8 @@ export function readJSON(url,{fresh=false,signal}={}){
 }
 async function journeyPart(url,signal){
   if(signal?.aborted)throw abortError();
-  if(journeyParts.has(url)){const cached=journeyParts.get(url);journeyParts.delete(url);journeyParts.set(url,cached);return shareJourneyPart(url,cached,signal);}
+  const key=weekCacheKey(url);
+  if(journeyParts.has(key)){const cached=journeyParts.get(key);journeyParts.delete(key);journeyParts.set(key,cached);return shareJourneyPart(key,cached,signal);}
   // A station/edge change may cancel one lookup while another is reading the
   // same country part. Give the shared download its own lifetime; one caller
   // must not abort another caller's request or poison its cached promise.
@@ -113,13 +115,13 @@ async function journeyPart(url,signal){
     // A conservative estimate covers text plus parsed arrays/objects. Large
     // parts still answer this lookup but are not retained after it completes.
     cached.cost=(decodedSizes.get(data)||0)*3;
-    if(journeyParts.get(url)===cached){journeyCacheBytes+=cached.cost;trimJourneyCache();}
+    if(journeyParts.get(key)===cached){journeyCacheBytes+=cached.cost;trimJourneyCache();}
     return data;
-  }).catch(error=>{cached.settled=true;removeJourneyPart(url,cached);throw error;});
-  journeyParts.set(url,cached);
+  }).catch(error=>{cached.settled=true;removeJourneyPart(key,cached);throw error;});
+  journeyParts.set(key,cached);
   // Two decoded country parts are enough for an ordinary cross-border lookup.
   // Other files can be fetched again; visited regions must not accumulate forever.
-  trimJourneyCache();return shareJourneyPart(url,cached,signal);
+  trimJourneyCache();return shareJourneyPart(key,cached,signal);
 }
 function shareJourneyPart(url,cached,signal){
   return new Promise((resolve,reject)=>{
@@ -192,6 +194,14 @@ if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalSco
   globalThis.addEventListener('message',async event=>{
     const message=event.data;
     if(message?.op==='cancel'){controllers.get(message.id)?.abort();return;}
+    // The main thread installs the rail pointer before its first data request;
+    // messages are ordered, so every later fetch in this worker goes through it.
+    if(message?.op==='railR2'){
+      const source=new RailR2(message.pointer,{pagesBase:message.pagesBase});
+      // This source's events stay in the worker: report a lite read to the page.
+      source.onDegraded(detail=>{if(detail.kind==='lite')globalThis.postMessage({railDegraded:detail});});
+      installRailR2(source);return;
+    }
     if(!Number.isInteger(message?.id))return;
     const controller=new AbortController();controllers.set(message.id,controller);
     const progress=(done,total)=>{if(!controller.signal.aborted)globalThis.postMessage({id:message.id,progress:{done,total}});};
