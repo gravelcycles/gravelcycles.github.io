@@ -1,7 +1,7 @@
 // Route finder worker: owns the route-finder timetable for the session and
 // answers {id, method, args} messages with {id, result} or {id, error}.
 // Created only when the route finder opens (assets/route-finder.js).
-import{createService}from'./route-finder-service.js?v=558576e12f906d69';
+import{createService}from'./route-finder-service.js?v=59f1bc0be76aaba9';
 
 let service=null,base='';
 const gunzip=async bytes=>{
@@ -9,7 +9,7 @@ const gunzip=async bytes=>{
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     return new Response(stream).arrayBuffer();
   }
-  const{gunzip:inflate}=await import('./gunzip.js?v=558576e12f906d69');const out=inflate(bytes);
+  const{gunzip:inflate}=await import('./gunzip.js?v=59f1bc0be76aaba9');const out=inflate(bytes);
   return out.buffer.slice(out.byteOffset,out.byteOffset+out.byteLength);
 };
 // Bytes as they arrive, posted to the page a few times a second: the panel

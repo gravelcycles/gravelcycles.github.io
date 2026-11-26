@@ -2,9 +2,9 @@
 // reads only the chunks that hold a call at the station, by HTTP range from one
 // blob, instead of every journey part that touches it. The index is valid only
 // beside the delivery it names; anything else falls back to the journey parts.
-import{decodeJSONBytes}from'./data-codec.js?v=558576e12f906d69';
-import{gunzip,sha256Hex,weekCacheKey,activeRailR2}from'./rail-r2.js?v=558576e12f906d69';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=558576e12f906d69';
+import{decodeJSONBytes}from'./data-codec.js?v=59f1bc0be76aaba9';
+import{gunzip,sha256Hex,weekCacheKey,activeRailR2}from'./rail-r2.js?v=59f1bc0be76aaba9';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=59f1bc0be76aaba9';
 
 export const STATION_PANEL_KIND='station_panel_journey_index';
 export function stationPanelURL(name='station-panel.json'){const url=new URL('./'+name,import.meta.url);url.search=new URL(import.meta.url).search;return url.href;}

@@ -3,12 +3,22 @@
 // tests drive it directly with a file reader. Every answer says what was not
 // searched (held week, sources without times, replacement buses without
 // times) so the panel never presents a partial answer as complete.
-import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten}from'./route-finder-engine.js?v=558576e12f906d69';
+import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten}from'./route-finder-engine.js?v=59f1bc0be76aaba9';
 
 export const KIND='route_finder_timetable';
 // The week files every search reads, in the order open() decodes them.
 const SEARCH=['stations.json.gz','journeys.json.gz','patterns.bin.gz','profiles.bin.gz','links.bin.gz','footpaths.json.gz'];
 const fold=text=>String(text||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+// How well a folded station name matches a folded query, best first, or -1:
+// the whole name, its start, a word start, anywhere, and last each word typed
+// starting a word of the name ("paris est" finds "paris gare de l est").
+export function stationScore(name,q){
+  if(name===q)return 0;if(name.startsWith(q))return 1;if(name.includes(' '+q))return 2;if(name.includes(q))return 3;
+  const words=q.split(' ').filter(Boolean);if(words.length<2)return -1;
+  const parts=name.split(' ');
+  return words.every(w=>parts.some(p=>p.startsWith(w)))?4:-1;
+}
+export const foldStationName=text=>fold(text);
 
 // fetchBytes(name, tag) -> Promise<Uint8Array> of the published file (gzip
 // as published); `tag` is absent for index.json (always revalidated) and the
@@ -54,8 +64,10 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   function searchStations(query,limit=8){
     requireBuilt();const q=fold(query);if(!q)return[];
     const scored=[];
-    for(let i=0;i<folded.length;i++){const f=folded[i];let score=-1;
-      if(f===q)score=0;else if(f.startsWith(q))score=1;else if(f.includes(' '+q))score=2;else if(f.includes(q))score=3;
+    for(let i=0;i<folded.length;i++){
+      // No country: no known local clock, so no boarding there (rail_data/route_finder.py).
+      if(!stations.countries[stations.country[i]])continue;
+      const score=stationScore(folded[i],q);
       if(score>=0)scored.push([score,calls[i],i]);}
     scored.sort((a,b)=>a[0]-b[0]||b[1]-a[1]||a[2]-b[2]);
     return scored.slice(0,limit).map(([,,i])=>station(i));
