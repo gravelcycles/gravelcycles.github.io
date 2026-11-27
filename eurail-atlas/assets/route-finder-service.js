@@ -3,12 +3,16 @@
 // tests drive it directly with a file reader. Every answer says what was not
 // searched (held week, sources without times, replacement buses without
 // times) so the panel never presents a partial answer as complete.
-import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten}from'./route-finder-engine.js?v=59f1bc0be76aaba9';
+import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten}from'./route-finder-engine.js?v=5761aa9a9e34405b';
+import{latinSpellings}from'./transliterate.js?v=5761aa9a9e34405b';
 
 export const KIND='route_finder_timetable';
 // The week files every search reads, in the order open() decodes them.
 const SEARCH=['stations.json.gz','journeys.json.gz','patterns.bin.gz','profiles.bin.gz','links.bin.gz','footpaths.json.gz'];
-const fold=text=>String(text||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+// Letters of every script are kept: Bulgarian, Serbian and Greek stations are
+// often published only in Cyrillic or Greek (27 Nov: 1,168 of them could not be
+// found when only a-z was kept).
+const fold=text=>String(text||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 // How well a folded station name matches a folded query, best first, or -1:
 // the whole name, its start, a word start, anywhere, and last each word typed
 // starting a word of the name ("paris est" finds "paris gare de l est").
@@ -45,7 +49,9 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
     // footpaths.json is absent from a packet built before reviewed footpaths existed.
     const[st,jo,pa,pr,li,fo]=await Promise.all(SEARCH.map((n,i)=>i===5?(index.files[n]?json(n):Promise.resolve({pairs:[]})):i<2?json(n):file(n)));
     stations=st;week=decodeWeek({stations:st,journeys:jo,patterns:pa,profiles:pr,links:li,footpaths:fo.pairs});
-    folded=st.names.map(fold);
+    // Each name with its Latin spellings (transliterate.js: letters, never place
+    // names), so "Sofia" finds София and "Београд" finds Beograd. Search only.
+    folded=st.names.map(name=>{const f=fold(name),latin=latinSpellings(f);return latin.length?[f,...latin]:f;});
     // How many timetable patterns call at each station: ranks bigger stations first in the search.
     calls=new Uint32Array(st.names.length);for(let i=0;i<week.patternStation.length;i++)calls[week.patternStation[i]]++;
     return summary();
@@ -62,12 +68,13 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
 
   // Station names by folded prefix (then word prefix, then substring).
   function searchStations(query,limit=8){
-    requireBuilt();const q=fold(query);if(!q)return[];
+    requireBuilt();const q=fold(query);if(!q)return[];const qs=[q,...latinSpellings(q)];
     const scored=[];
     for(let i=0;i<folded.length;i++){
       // No country: no known local clock, so no boarding there (rail_data/route_finder.py).
       if(!stations.countries[stations.country[i]])continue;
-      const score=stationScore(folded[i],q);
+      const names=folded[i];let score=-1;
+      for(const name of typeof names==='string'?[names]:names)for(const v of qs){const x=stationScore(name,v);if(x>=0&&(score<0||x<score))score=x;}
       if(score>=0)scored.push([score,calls[i],i]);}
     scored.sort((a,b)=>a[0]-b[0]||b[1]-a[1]||a[2]-b[2]);
     return scored.slice(0,limit).map(([,,i])=>station(i));

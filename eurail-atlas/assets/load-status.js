@@ -73,6 +73,22 @@ export function describePanel({loading,label,done=0,total=null,step=null}){
 // The panel load in progress. Each begin() returns its own load as a token:
 // a superseded request (the same station tapped again) can neither update nor
 // end the newer one, even when both share a key.
+// A station panel's own reads need only the manifest and the station's ids, so
+// they start while the station list is still loading, not after it (a slow phone
+// spends most of the wait on the list). When the list is in already, the parts
+// are read with their progress shown.
+export async function readWhileListing({listed,readList,readParts}){
+  if(listed)return readParts(true);
+  const found=readParts(false);found.catch(()=>{});
+  await readList();return found;
+}
+// Wait for pending panel loads before lower-priority reads, but never longer
+// than `ms`: a stuck panel must not hold map detail back.
+export function settleWithin(pending,ms){
+  if(!pending.size)return Promise.resolve();
+  let timer;
+  return Promise.race([Promise.all(pending),new Promise(resolve=>{timer=setTimeout(resolve,ms);})]).finally(()=>clearTimeout(timer));
+}
 export class PanelLoads{
   constructor(){this.current=null;}
   begin(label,key,now=Date.now()){const load=this.current={label,key,done:0,total:null,step:null,items:null,since:now};return load;}
