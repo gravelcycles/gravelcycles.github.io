@@ -1,4 +1,4 @@
-import{FREQUENCY_BREAKS,FREQUENCY_COLORS,FREQUENCY_LABELS,threshold,frequencyBand,frequencyStateForMinimum,exactFrequencyMinimum}from'./atlas-core.js?v=af6ecd556b560479';
+import{FREQUENCY_BREAKS,FREQUENCY_COLORS,FREQUENCY_LABELS,threshold,frequencyBand,frequencyStateForMinimum,exactFrequencyMinimum}from'./atlas-core.js?v=a8efea473ec2c6f7';
 
 export function frequencyMinimumDescription(value,unit='services'){
   const minimum=threshold(value);

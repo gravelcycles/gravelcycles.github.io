@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=af6ecd556b560479';
-import{contextSelectionKey,contextCountryVisible,restoreContextFocus}from'./context-scope.js?v=af6ecd556b560479';
+import{selectedDays,escapeHTML as esc,formatNumber as fmt,normalize,serviceVisible,effectivePass,threshold}from'./atlas-core.js?v=a8efea473ec2c6f7';
+import{contextSelectionKey,contextCountryVisible,restoreContextFocus}from'./context-scope.js?v=a8efea473ec2c6f7';
 
 export function relevantTransfers(summary,view){
   const{zoom,bounds,dates,day='all',sources=null,mode='frequency',schematic=true,representedInMainServiceLayer=[]}=view;

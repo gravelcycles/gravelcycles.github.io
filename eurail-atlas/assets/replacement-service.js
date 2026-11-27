@@ -1,4 +1,4 @@
-import{escapeHTML as esc,formatNumber,isTemporaryReplacement,approximateAlignment}from'./atlas-core.js?v=af6ecd556b560479';
+import{escapeHTML as esc,formatNumber,isTemporaryReplacement,approximateAlignment}from'./atlas-core.js?v=a8efea473ec2c6f7';
 
 export function replacementRailCorridor(row){return isTemporaryReplacement(row)&&row.geometryRole==='replacement_rail_corridor'&&!approximateAlignment(row);}
 

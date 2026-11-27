@@ -1,5 +1,5 @@
-import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=af6ecd556b560479';
-import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=af6ecd556b560479';
+import{selectedDays,escapeHTML as esc}from'./atlas-core.js?v=a8efea473ec2c6f7';
+import{contextSelectionKey,contextCountryVisible,createContextCountryResolver,restoreContextFocus}from'./context-scope.js?v=a8efea473ec2c6f7';
 
 export function relevantInfrastructure(summary,view){
   const{zoom,bounds,dates,day='all',physicalRailways=false}=view;

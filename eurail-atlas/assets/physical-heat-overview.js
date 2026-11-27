@@ -6,8 +6,8 @@
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
  * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=af6ecd556b560479';
-import{rgb}from'./rail-gpu.js?v=af6ecd556b560479';
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=a8efea473ec2c6f7';
+import{rgb}from'./rail-gpu.js?v=a8efea473ec2c6f7';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -102,7 +102,7 @@ function concatenated(arrays){let length=0;for(const a of arrays)length+=a.lengt
 export class TrafficOverviewLayer{
   constructor(map,{before=null,workerFactory}={}){
     this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=af6ecd556b560479',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
+    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=a8efea473ec2c6f7',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
     // Paint off the interaction thread when possible, like the train raster.
     // The worker starts only when an overview is first shown.
     this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;
@@ -117,16 +117,23 @@ export class TrafficOverviewLayer{
     return canvas;
   }
   fallback(){
-    this.worker?.terminate();this.worker=null;this.useWorker=false;const previous=this.canvas,canvas=this.makeCanvas('2d');previous.replaceWith(canvas);this.canvas=canvas;this.sentKey=null;this.draw();
+    this.worker?.terminate();this.worker=null;this.useWorker=false;this.pending=null;this.redraw=false;const previous=this.canvas,canvas=this.makeCanvas('2d');previous.replaceWith(canvas);this.canvas=canvas;this.sentKey=null;this.draw();
   }
   receive(message){
     if(message?.op==='error'){this.fallback();return;}
     if(message?.op!=='overviewPainted')return;
-    const job=this.pending;if(!job||job.id!==message.id||!this.visible){message.bitmap?.close();return;}
-    this.pending=null;const view=this.view();
-    if(view.zoom!==job.view.zoom){message.bitmap.close();this.draw();return;}
+    // One paint is in flight at a time. Its frame is always shown, placed on the current view by pan() (scaled if
+    // the zoom moved meanwhile), and a newer view is painted next. Before, any frame but the newest request's was
+    // discarded and every request was queued in the worker, so a phone whose address bar resized the map during
+    // load showed no Traffic lines at all until the resizing stopped and the backlog drained (owner, 27 November).
+    const job=this.pending;if(!job||job.id!==message.id){message.bitmap?.close();return;}
+    this.pending=null;
+    if(!this.visible){message.bitmap?.close();this.redraw=false;return;}
+    // A frame of the other variant (all sources or Eurail-included only) is never shown for this one.
+    if(job.pass!==this.overview?.pass){message.bitmap?.close();this.redraw=false;this.draw();return;}
     this.canvas.width=message.bitmap.width;this.canvas.height=message.bitmap.height;this.context.transferFromImageBitmap(message.bitmap);
     this.present(job.view);this.pan();
+    if(this.redraw){this.redraw=false;this.draw();}
   }
   present(view){
     const canvas=this.canvas;canvas.style.width=view.width+'px';canvas.style.height=view.height+'px';canvas.style.transition='none';canvas.style.transform='';
@@ -159,7 +166,7 @@ export class TrafficOverviewLayer{
     if(this.lastPaint&&this.canvas.width&&previous?.pass===overview.pass){this.paintView=this.lastPaint;this.canvas.style.transition='none';this.canvas.hidden=false;this.pan();}
     this.draw();
   }
-  hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.pending=null;this.canvas.hidden=true;this.lastPaint=this.paintView||this.lastPaint;this.paintView=null;}
+  hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.redraw=false;this.canvas.hidden=true;this.lastPaint=this.paintView||this.lastPaint;this.paintView=null;}
   // Release the worker once the exact sections are drawn; it restarts if needed.
   release(){this.hide();this.worker?.terminate();this.worker=null;this.sentKey=null;}
   pathsFor(zoom){
@@ -178,7 +185,8 @@ export class TrafficOverviewLayer{
     if(this.useWorker&&!this.worker){try{this.worker=this.createWorker();this.worker.onmessage=event=>this.receive(event.data);this.worker.onerror=event=>{event.preventDefault?.();this.fallback();};}catch{this.fallback();return;}}
     if(this.worker){
       if(this.sentKey!==key){this.worker.postMessage({op:'overviewData',key,groups:groups.map(g=>({color:g.color,width:g.width,lines:g.lines,dots:g.dots}))});this.sentKey=key;}
-      const id=++this.sequence;this.pending={id,view};this.worker.postMessage({op:'overviewPaint',id,key,view:{...view,dpr}});return;
+      if(this.pending){this.redraw=true;return;}
+      const id=++this.sequence;this.pending={id,view,pass:this.overview.pass};this.worker.postMessage({op:'overviewPaint',id,key,view:{...view,dpr}});return;
     }
     const canvas=this.canvas;if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
     const context=this.context;context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,width,height);

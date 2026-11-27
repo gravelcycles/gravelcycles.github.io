@@ -1,4 +1,4 @@
-import{installRailR2,DEGRADED_EVENT}from'./rail-r2.js?v=af6ecd556b560479';
+import{installRailR2,DEGRADED_EVENT}from'./rail-r2.js?v=a8efea473ec2c6f7';
 
 // The data worker's rail source reports lite reads here: kept as a page-side
 // flag (for a notice set up later) and dispatched as the same DEGRADED_EVENT
@@ -10,12 +10,12 @@ export function relayRailDegraded(detail){
   relayedLite??=detail;
   try{if(typeof globalThis.dispatchEvent==='function'&&typeof CustomEvent==='function')globalThis.dispatchEvent(new CustomEvent(DEGRADED_EVENT,{detail}));}catch{}
 }
-import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=af6ecd556b560479';
-import{decodeJSONBytes}from'./data-codec.js?v=af6ecd556b560479';
-import{queryStationPanelJourneys}from'./station-panel.js?v=af6ecd556b560479';
-import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=af6ecd556b560479';
-import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=af6ecd556b560479';
-import{applyRemoteMeter}from'./net-meter.js?v=af6ecd556b560479';
+import{prepareLoadedData,readJSON,queryJourneys,queryEdgeJourneys,queryStationJourneys}from'./data-worker.js?v=a8efea473ec2c6f7';
+import{decodeJSONBytes}from'./data-codec.js?v=a8efea473ec2c6f7';
+import{queryStationPanelJourneys}from'./station-panel.js?v=a8efea473ec2c6f7';
+import{isPhysicalTransfer,unpackPhysicalTransfer}from'./physical-transfer.js?v=a8efea473ec2c6f7';
+import{fetchPhysicalDisplay}from'./physical-heat-display.js?v=a8efea473ec2c6f7';
+import{applyRemoteMeter}from'./net-meter.js?v=a8efea473ec2c6f7';
 
 function aborted(){return new DOMException('Data request cancelled','AbortError');}
 let loaderSequence=0;
@@ -35,7 +35,7 @@ export function createPageHydrator(load,process){
 export class AtlasDataLoader{
   constructor({workerFactory}={}){
     this.workerFactory=workerFactory||(()=>{
-      const url=new URL('./data-worker.js?v=af6ecd556b560479',import.meta.url);
+      const url=new URL('./data-worker.js?v=a8efea473ec2c6f7',import.meta.url);
       url.search=new URL(import.meta.url).search;
       return new Worker(url,{type:'module',name:'rail-atlas-data'});
     });
