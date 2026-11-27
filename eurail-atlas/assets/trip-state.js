@@ -2,7 +2,9 @@
 // with the rest of the atlas state (atlas-core.js readState/serializeState).
 // Stations are canonical station ids, which stay stable from week to week;
 // the time is the origin's local clock on a delivery date.
-//   trip=FROM~TO        tripvia=ID[~ID]     tripat=YYYY-MM-DDTHH:MM (absent: now)
+//   trip=FROM~TO        tripvia=ID[~ID] (up to 4 stops on the way, in order)
+//   tripstay=M[~M] (minutes to stay at each via, same order; absent: 0)
+//   tripat=YYYY-MM-DDTHH:MM (absent: now)
 //   triparr=1 (arrive by)  tripdirect=1     tripmax=N (max changes)
 //   tripchange=M (minimum change minutes)  trippass=e|r|s (Eurail only,
 //   no reservation, no supplement; letters combine)
@@ -12,7 +14,8 @@ const ids=value=>String(value||'').split('~').filter(id=>ID.test(id));
 export function readTrip(p){
   const ends=ids(p.get('trip'));if(ends.length!==2)return null;
   const at=p.get('tripat'),pass=p.get('trippass')||'',max=p.has('tripmax')?Number(p.get('tripmax')):NaN,change=p.has('tripchange')?Number(p.get('tripchange')):NaN;
-  return{from:ends[0],to:ends[1],via:ids(p.get('tripvia')).slice(0,3),
+  const via=ids(p.get('tripvia')).slice(0,4),stays=String(p.get('tripstay')||'').split('~').map(Number);
+  return{from:ends[0],to:ends[1],via,viaStay:via.map((_,n)=>Number.isInteger(stays[n])&&stays[n]>=0&&stays[n]<=2880?stays[n]:0),
     at:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(at||'')?at:null,arriveBy:p.get('triparr')==='1',direct:p.get('tripdirect')==='1',
     maxChanges:Number.isInteger(max)&&max>=0&&max<=7?max:null,minChange:Number.isInteger(change)&&change>=1&&change<=60?change:null,
     filters:{eurailOnly:pass.includes('e'),noReservation:pass.includes('r'),noSupplement:pass.includes('s')}};
@@ -21,7 +24,10 @@ export function readTrip(p){
 export function writeTrip(p,trip){
   if(!trip||!ID.test(trip.from||'')||!ID.test(trip.to||''))return;
   p.set('trip',trip.from+'~'+trip.to);
-  const via=(trip.via||[]).filter(id=>ID.test(id));if(via.length)p.set('tripvia',via.join('~'));
+  // A stay belongs to its via: invalid ids are dropped together with their stays.
+  const kept=(trip.via||[]).map((id,n)=>[id,(trip.viaStay||[])[n]]).filter(([id])=>ID.test(id)).slice(0,4);
+  if(kept.length){p.set('tripvia',kept.map(([id])=>id).join('~'));
+    const stays=kept.map(([,m])=>Number.isInteger(m)&&m>0&&m<=2880?m:0);if(stays.some(Boolean))p.set('tripstay',stays.join('~'));}
   if(trip.at)p.set('tripat',trip.at);if(trip.arriveBy)p.set('triparr','1');if(trip.direct)p.set('tripdirect','1');
   if(Number.isInteger(trip.maxChanges))p.set('tripmax',String(trip.maxChanges));
   if(Number.isInteger(trip.minChange))p.set('tripchange',String(trip.minChange));

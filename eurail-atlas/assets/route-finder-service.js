@@ -3,10 +3,17 @@
 // tests drive it directly with a file reader. Every answer says what was not
 // searched (held week, sources without times, replacement buses without
 // times) so the panel never presents a partial answer as complete.
-import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten}from'./route-finder-engine.js?v=5761aa9a9e34405b';
-import{latinSpellings}from'./transliterate.js?v=5761aa9a9e34405b';
+import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten,daySweep,reach,MAX_TRAINS}from'./route-finder-engine.js?v=bd769551cdd0b233';
+import{latinSpellings}from'./transliterate.js?v=bd769551cdd0b233';
 
 export const KIND='route_finder_timetable';
+// The country of a source id's two-letter prefix (source ids start with the
+// country code, as in config/rail-sources), in the names stations.json uses;
+// only to say which sources without times touch a gap.
+const SOURCE_COUNTRY={al:'Albania',at:'Austria',ba:'Bosnia-Herzegovina',be:'Belgium',bg:'Bulgaria',by:'Belarus',ch:'Switzerland',cz:'Czechia',de:'Germany',dk:'Denmark',
+  ee:'Estonia',es:'Spain',fi:'Finland',fr:'France',gb:'Great Britain',uk:'Great Britain',gr:'Greece',hr:'Croatia',hu:'Hungary',ie:'Ireland',it:'Italy',li:'Liechtenstein',
+  lt:'Lithuania',lu:'Luxembourg',lv:'Latvia',mc:'Monaco',md:'Moldova',me:'Montenegro',mk:'North Macedonia',nl:'Netherlands',no:'Norway',pl:'Poland',pt:'Portugal',
+  ro:'Romania',rs:'Serbia',se:'Sweden',si:'Slovenia',sk:'Slovakia',tr:'Türkiye',ua:'Ukraine',xk:'Kosovo'};
 // The week files every search reads, in the order open() decodes them.
 const SEARCH=['stations.json.gz','journeys.json.gz','patterns.bin.gz','profiles.bin.gz','links.bin.gz','footpaths.json.gz'];
 // Letters of every script are kept: Bulgarian, Serbian and Greek stations are
@@ -80,17 +87,41 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
     return scored.slice(0,limit).map(([,,i])=>station(i));
   }
   const station=i=>({index:i,name:stations.names[i],country:stations.countries[stations.country[i]]||''});
+
+  // Cities of the delivery's Hubs projection (cities.json, on demand): a city is
+  // the set of its stations, searched together; nothing is merged, and each
+  // journey names its actual station. Absent from packets built before 27 Nov.
+  const cityList=()=>once('cities',()=>index.files['cities.json.gz']?json('cities.json.gz').then(d=>(d.cities||[]).map(c=>{
+    const names=[c.name,...(c.aliases||[]),...(c.localNames||[])].map(fold).filter(Boolean);
+    return{...c,keys:[...new Set([...names,...names.flatMap(latinSpellings)])]};})):Promise.resolve([]));
+  const cityPlace=c=>({city:true,id:c.id,name:c.name,localName:(c.localNames||[])[0]||'',country:c.country,stations:c.stations.slice(),count:c.stations.length});
+  // Places for a typed name: up to two cities whose name or alias is, or starts
+  // with, what was typed (the bigger first), then the stations.
+  async function searchPlaces(query,limit=8){
+    requireBuilt();const q=fold(query);if(!q)return[];const qs=[q,...latinSpellings(q)];
+    const cities=(await cityList()).map(c=>{let best=-1;for(const k of c.keys)for(const v of qs){const x=k===v?0:k.startsWith(v)?1:-1;if(x>=0&&(best<0||x<best))best=x;}return[best,c];})
+      .filter(([x])=>x>=0).sort((a,b)=>a[0]-b[0]||b[1].population-a[1].population||a[1].id.localeCompare(b[1].id)).slice(0,2).map(([,c])=>cityPlace(c));
+    return[...cities,...searchStations(query,limit-cities.length)];
+  }
   async function stationIds(){return once('station-ids',()=>json('station-ids.json.gz').then(d=>d.ids));}
-  async function resolveIds(ids){requireBuilt();const all=await stationIds(),where=new Map(all.map((id,i)=>[id,i]));return ids.map(id=>where.has(id)?station(where.get(id)):null);}
+  // Canonical station ids, or city ids of cities.json (share links).
+  async function resolveIds(ids){requireBuilt();const all=await stationIds(),where=new Map(all.map((id,i)=>[id,i]));
+    const cities=ids.some(id=>String(id).startsWith('city:'))?new Map((await cityList()).map(c=>[c.id,c])):new Map();
+    return ids.map(id=>where.has(id)?station(where.get(id)):cities.has(id)?cityPlace(cities.get(id)):null);}
 
   async function day(d){
     if(d<0||d>=index.binding.dates.length)return null;
     if(!days[d])days[d]=once('day-'+d,()=>file('day-'+d+'.bin.gz').then(decodeDay));
     return days[d];
   }
+  // The connections of a search on date d (dates d and d + 1, about 80 MB on a
+  // full week): the two used last are kept, so a multi-day search (d and d + 2)
+  // or going back and forth between two dates does not rebuild them.
   async function connectionsFor(d){
     if(!connections.has(d))connections.set(d,(async()=>{const list=[];list[d]=await day(d);const next=await day(d+1);if(next)list[d+1]=next;return buildConnections(week,list,d);})());
-    return connections.get(d);
+    const C=connections.get(d);connections.delete(d);connections.set(d,C);
+    while(connections.size>2)connections.delete(connections.keys().next().value);
+    return C;
   }
 
   // Everything a search on date d reads, loaded ahead while the visitor fills
@@ -121,22 +152,124 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   // q: {date (index), from:[station], to:[station], via:[{stations,stopover}],
   //     depart | arriveBy (minutes after 00:00 of the date on the shared clock),
   //     maxChanges, minChange, direct, filters, tighten}
+  //     maxChanges (null or absent: 5, raised for a long journey that needs more), minChange, direct, filters, tighten}
+  // A forward search that finds nothing on dates d and d + 1 looks further
+  // (owner, 27 Nov: "pick a start point, say Brasov, and we'll figure out how
+  // to get you there to Palermo, even if it takes like 50 hours"): with more
+  // trains when the week's timetable needs them, then on through dates d + 2
+  // and d + 3 (overnight waits of up to about 72 h). If there is still nothing,
+  // `noJourney` says why. Only the week's dated trains are used.
   async function route(q){
     requireBuilt();
-    const d=q.date,C=await connectionsFor(d);
-    const allowedPatterns=patternFilter(q.filters),tripPattern=t=>week.profilePattern[C.tripProfile[t]];
-    const query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
-      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{})};
-    let journeys;
-    if(q.arriveBy!==undefined&&q.arriveBy!==null)journeys=arriveBy(week,C,{...query,arriveBy:q.arriveBy});
-    else{journeys=earliest(week,C,{...query,depart:q.depart});if(q.tighten===true)journeys=journeys.map(j=>tighten(week,C,{...query,depart:j.dep},j));}
+    const d=q.date,C=await connectionsFor(d),forward=q.arriveBy===undefined||q.arriveBy===null;
+    const allowedPatterns=patternFilter(q.filters),queryFor=(C,maxChanges)=>({from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges,minChange:q.minChange??5,
+      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[week.profilePattern[C.tripProfile[t]]]===1}:{})});
+    const auto=!q.direct&&(q.maxChanges===undefined||q.maxChanges===null);
+    const query=queryFor(C,q.direct?0:(q.maxChanges??5));
+    let journeys,longer=null,noJourney=null,state=null;
+    if(!forward)journeys=arriveBy(week,C,{...query,arriveBy:q.arriveBy});
+    // The search state is kept so a long search can carry on from it without scanning date d again.
+    else{({journeys,state}=earliest(week,C,{...query,depart:q.depart,keepState:true}));if(q.tighten===true)journeys=journeys.map(j=>tighten(week,C,{...query,depart:j.dep},j));}
+    // Dates d and d + 1, then on through d + 2 and d + 3 (carried state), with up to maxChanges + 1 trains.
+    // `always` carries on even when dates d and d + 1 found journeys: a claimed
+    // minimum must cover all four dates (a later train may need fewer changes).
+    const longSearch=async(maxChanges,slack,always=false)=>{
+      const first=maxChanges===query.maxChanges&&slack===undefined?{journeys,state}:earliest(week,C,{...queryFor(C,maxChanges),depart:q.depart,keepState:true,...(slack!==undefined?{slack}:{})});
+      if(first.journeys.length&&!always||d+2>=index.binding.dates.length)return first.journeys;
+      const C2=await connectionsFor(d+2);
+      const later=earliest(week,C2,{...queryFor(C2,maxChanges),depart:q.depart-2880,carry:{state:first.state,C,shift:2880},...(slack!==undefined?{slack}:{})});
+      // A walk into the destination found on dates d and d + 1 is not part of the
+      // carried state, so with `always` both searches' journeys are returned.
+      return always?[...first.journeys,...later]:later;
+    };
+    if(!journeys.length){
+      const why=await explain(q,query.via,allowedPatterns);
+      if(why.reason!=='connected')noJourney=why;
+      else if(forward){
+        // More trains only when the visitor set no limit. reach()'s count is
+        // only a guide here (a train through a via counts twice, stay-on-board
+        // links are not followed), so it never stops a search and is never shown.
+        const maxChanges=auto?Math.max(query.maxChanges,Math.min(MAX_TRAINS-1,why.fewestTrains+1)):query.maxChanges;
+        journeys=await longSearch(maxChanges);
+        if(journeys.length)longer={maxChanges,days:journeys.some(j=>j.arr>=2880||j.legs.some(l=>l.day>d+1))?'multi':'two'};
+        else{
+          const lastSearchedDate=index.binding.dates[Math.min(d+3,index.binding.dates.length-1)];
+          // A limit set too low: the same search with the most trains, every
+          // trade-off kept (no slack), gives the real fewest trains of a journey
+          // leaving from this time on these dates.
+          const open=maxChanges<MAX_TRAINS-1?await longSearch(MAX_TRAINS-1,Infinity,true):[];
+          noJourney=open.length?{reason:'more_changes',fewestTrains:Math.min(...open.map(j=>j.trains)),lastSearchedDate}:{reason:'not_in_dates',lastSearchedDate};
+        }
+      }
+    }
     // With a pass filter, say whether trains the filter leaves out (unknown or
     // excluded) would give an earlier or simpler journey.
     let leftOut=null;
     if(allowedPatterns){const open=q.arriveBy!=null?arriveBy(week,C,{...query,tripAllowed:undefined,arriveBy:q.arriveBy}):earliest(week,C,{...query,tripAllowed:undefined,depart:q.depart});
       const better=open.filter(o=>!journeys.some(j=>j.trains<=o.trains&&(q.arriveBy!=null?j.dep>=o.dep:j.arr<=o.arr)));
       leftOut={betterJourneysWithoutFilter:better.length,patternsLeftOut:allowedPatterns.length-allowedPatterns.reduce((a,b)=>a+b,0)};}
-    return{date:d,dateIso:index.binding.dates[d],journeys:await Promise.all(journeys.map(describe)),leftOut,notices:await notices(journeys,q),lastDate:d===index.binding.dates.length-1};
+    return{date:d,dateIso:index.binding.dates[d],journeys:await Promise.all(journeys.map(describe)),leftOut,notices:await notices(journeys,q),lastDate:d===index.binding.dates.length-1,longer,noJourney};
+  }
+
+  // The missing stretch (owner, 27 Nov: "if a route is missing tell which chunk
+  // of track is missing"): of the stations reachable from one side (`out`) and
+  // those from which the other side is reachable (`back`), the closest pair by
+  // distance. It is a gap in this week's timetable, never a service or a
+  // confirmed railway: nothing is inferred about the track. With what is known
+  // about it: replacement buses without times at either end on the date (or the
+  // next), timetable sources without times in either end's country, and when
+  // the two are a few hundred metres apart, that they are listed as separate
+  // stations with no reviewed walk or shared record between them.
+  async function gapBetween(out,back,date){
+    const geo=await once('geo',()=>json('station-geo.json.gz'));
+    const side=trains=>{const list=[];for(let s=0;s<trains.length;s++)if(trains[s]!==255&&stations.countries[stations.country[s]])list.push(s);return list;};
+    let a=side(out),b=side(back);const swap=a.length>b.length;if(swap)[a,b]=[b,a];
+    if(!a.length||!b.length)return null;
+    // Equirectangular distance in km (good to a fraction of a percent at these ranges).
+    const lat=i=>geo.lat[i]/1e5,lon=i=>geo.lon[i]/1e5,km=(i,j)=>{const x=(lon(j)-lon(i))*Math.cos((lat(i)+lat(j))*Math.PI/360),y=lat(j)-lat(i);return 111.195*Math.hypot(x,y);};
+    // The larger side in one-degree cells, searched in rings around each station of the smaller side.
+    const cell=(la,lo)=>Math.floor(la)*1000+Math.floor(lo),grid=new Map();for(const j of b){const k=cell(lat(j),lon(j));if(!grid.has(k))grid.set(k,[]);grid.get(k).push(j);}
+    let best=Infinity,pair=null;
+    for(const i of a){const la=Math.floor(lat(i)),lo=Math.floor(lon(i));
+      for(let r=0;r<=40;r++){
+        // A ring r cells out is at least (r - 1) cells away: (r - 1) * 111 km north
+        // or south, and east or west at least that times the cosine of the
+        // highest latitude the ring reaches (no cap, so it stays a lower bound
+        // in the far north: Narvik, Abisko, Kiruna).
+        if((r-1)*111.195*Math.cos(Math.min(89.9,Math.abs(lat(i))+r)*Math.PI/180)>best)break;
+        for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+          for(const j of grid.get((la+dy)*1000+lo+dx)||[]){const d=km(i,j);if(d<best){best=d;pair=[i,j];}}}
+      }}
+    if(!pair)return null;
+    const[from,to]=swap?[pair[1],pair[0]]:pair,countries=new Set([from,to].map(s=>stations.countries[stations.country[s]]));
+    const buses=(index.notices?.replacementBuses||[]).length?await busesAt([from,to],date,true):[];
+    return{from:station(from),to:station(to),km:Math.round(best*10)/10,points:[[lat(from),lon(from)],[lat(to),lon(to)]],
+      separateStations:best<1,replacementBuses:buses.map(b=>b.line||b.operator).filter(Boolean),
+      sourcesWithoutTimes:(index.notices?.sourcesWithoutTimes||[]).filter(id=>countries.has(SOURCE_COUNTRY[String(id).slice(0,2)]))};
+  }
+
+  // Why no journey was found, from the week's timetable whatever the times
+  // (engine reach()): {reason, fewestTrains, ...}. reason: 'not_connected'
+  // (no chain of timed trains links them: the countries each side reaches, so
+  // the panel can name the gap), 'via_not_connected' (a via breaks the chain),
+  // 'filter' (only without the pass filters), or 'connected'.
+  async function explain(q,via,allowedPatterns){
+    const allow=allowedPatterns?p=>allowedPatterns[p]===1:null,legs=[q.from,...via.map(v=>v.stations),q.to];
+    const countriesOf=trains=>{const seen=new Map();for(let s=0;s<trains.length;s++)if(trains[s]!==255){const c=stations.countries[stations.country[s]];if(c)seen.set(c,(seen.get(c)||0)+1);}
+      return[...seen].sort((a,b)=>b[1]-a[1]).map(([c])=>c);};
+    let fewest=0;
+    for(let i=0;i+1<legs.length;i++){
+      const out=reach(week,legs[i],{allow}),n=Math.min(...legs[i+1].map(s=>out[s]));
+      if(n===255){
+        if(allow&&Math.min(...legs[i+1].map(s=>reach(week,legs[i])[s]))!==255)return{reason:'filter',fewestTrains:null};
+        const back=reach(week,legs[i+1],{allow,reverse:true});
+        return{reason:i===0&&i+2===legs.length?'not_connected':'via_not_connected',fewestTrains:null,part:i,
+          fromCountries:countriesOf(out),toCountries:countriesOf(back),fromStations:out.reduce((a,v)=>a+(v!==255),0),toStations:back.reduce((a,v)=>a+(v!==255),0),
+          gap:await gapBetween(out,back,q.date)};
+      }
+      fewest+=n;
+    }
+    return{reason:'connected',fewestTrains:fewest};
   }
 
   // The same arrival with the latest departure, for each journey of a
@@ -148,6 +281,39 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
     const out=[];
     for(const j of journeys){const raw={dep:j.dep,arr:j.arr,trains:j.trains};const t=tighten(week,C,{...query,depart:j.dep},{...raw,legs:[]});
       out.push(t.legs&&t.legs.length?await describe(t):j);}
+    return out;
+  }
+  // The journeys of a day's window (daySweep), a few per call so the panel can
+  // show them as they come: {journeys, next, done}.
+  let sweepPending=null;
+  async function sweep(q,from,until,max=1){
+    requireBuilt();const C=await connectionsFor(q.date),allowedPatterns=patternFilter(q.filters),tripPattern=t=>week.profilePattern[C.tripProfile[t]];
+    const query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
+      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{})};
+    // A search answer not yet tightened waits here for the next call of the same window.
+    const at=JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},from,until]);
+    const part=daySweep(week,C,query,from,until,max,sweepPending&&sweepPending.at===at?sweepPending.pending:null);
+    sweepPending=part.pending?{at:JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},part.next,until]),pending:part.pending}:null;
+    return{journeys:await Promise.all(part.journeys.map(describe)),next:part.next,done:part.next>=until&&!part.pending};
+  }
+  // Every call of a described leg, boarding to alighting (owner, 27 Nov:
+  // "intermediate stops for each leg"): station, local arrival and departure,
+  // and whether passengers may board or alight there. Times come from the
+  // trip's own profile, on the same clock as the leg.
+  async function legStops(leg){
+    requireBuilt();const D=await day(leg.day);if(!D)throw new Error('route_finder_leg_date_not_found');
+    const f=D.profile[leg.trip],p=week.profilePattern[f];
+    if(p!==leg.pattern)throw new Error('route_finder_leg_does_not_match_its_trip');
+    const k0=week.profileCall[f],ps=week.patternStart[p];
+    // The leg's departure fixes the trip's start on the leg's clock (its date may be the next one).
+    const start=leg.dep-week.departure[k0+leg.board];
+    // The leg's own stations and arrival must come out of its trip (cheap; a mismatch is refused).
+    if(week.patternStation[ps+leg.board]!==leg.from.index||week.patternStation[ps+leg.alight]!==leg.to.index||start+week.arrival[k0+leg.alight]!==leg.arr)
+      throw new Error('route_finder_leg_does_not_match_its_trip');
+    const out=[];
+    for(let x=leg.board;x<=leg.alight;x++){const s=week.patternStation[ps+x],c=week.code[ps+x];
+      out.push({station:station(s),arrLocal:x>leg.board?local(s,start+week.arrival[k0+x]):null,depLocal:x<leg.alight?local(s,start+week.departure[k0+x]):null,
+        pickup:(c&3)!==1,dropOff:(c>>2&3)!==1,request:(c&3)>=2||(c>>2&3)>=2});}
     return out;
   }
   async function describe(j){
@@ -206,6 +372,6 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   async function stationIdsOf(indices){requireBuilt();const ids=await stationIds();return indices.map(i=>ids[i]);}
   async function journeyIds(patterns){requireBuilt();const ids=(await once('journey-ids',()=>json('journey-ids.json.gz'))).ids;return patterns.map(p=>ids[p]);}
 
-  return{open,prepare,searchStations,resolveIds,route,tightenAll,busesAt,geometry,journeyIds,legIdentities,legPoints,warmDrawing,stationIdsOf,station:i=>{requireBuilt();return station(i);}};
+  return{open,prepare,searchStations,searchPlaces,resolveIds,route,sweep,legStops,tightenAll,busesAt,geometry,journeyIds,legIdentities,legPoints,warmDrawing,stationIdsOf,station:i=>{requireBuilt();return station(i);}};
 }
 

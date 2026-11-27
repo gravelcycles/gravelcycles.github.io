@@ -5,10 +5,11 @@
 .trip-station{position:relative;display:grid;gap:4px}
 .trip-station label,.trip-when label{font-size:12px;font-weight:600;color:var(--ink-soft)}
 .trip-station input,.trip-when select,.trip-when input,.trip-inline select{min-height:40px;padding:6px 10px;border:1px solid var(--line);border-radius:5px;background:#fff;font:inherit;font-size:14px;color:var(--ink)}
-.trip-station .suggestions{position:absolute;top:100%;left:0;right:0;z-index:5;margin:2px 0 0;padding:4px 0;list-style:none;background:#fff;border:1px solid var(--line);border-radius:5px;box-shadow:var(--shadow);max-height:260px;overflow:auto}
+.trip-station .suggestions{position:absolute;top:100%;left:0;right:0;z-index:30;margin:2px 0 0;padding:4px 0;list-style:none;background:#fff;border:1px solid var(--line);border-radius:5px;box-shadow:var(--shadow);max-height:260px;overflow:auto}
 .trip-station .suggestions li{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;font-size:13px;cursor:pointer}
 .trip-station .suggestions li small{color:var(--muted)}
 .trip-station .suggestions li[aria-selected="true"],.trip-station .suggestions li:hover{background:#e7eeea}
+.trip-station .suggestions li.trip-none,.trip-station .suggestions li.trip-none:hover{display:block;background:none;color:var(--muted);cursor:default;white-space:normal;line-height:1.35}
 .trip-swap{justify-self:end;margin:-6px 0 -4px;font-size:12px}
 .trip-when{display:grid;grid-template-columns:1fr;gap:6px}
 .trip-when select:not([hidden]),.trip-when input:not([hidden]){width:100%}
@@ -25,20 +26,30 @@
 .trip-search{min-height:44px;font-size:15px}
 .trip-status{margin:12px 0 6px}
 .trip-status.trip-error{color:#9b2c1f}
-.trip-results{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.trip-result{border:1px solid var(--line);border-radius:6px;background:#fff}
+.trip-results{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.trip-result{border:1px solid var(--line);border-radius:8px;background:#fff;transition:border-color .15s ease,box-shadow .15s ease,opacity .2s ease;
+  /* Long day lists: cards off screen skip layout and paint, so scrolling stays smooth. */
+  content-visibility:auto;contain-intrinsic-size:auto 84px}
+.trip-result:hover{border-color:#b9c9c2}
+.trip-result.trip-past{opacity:.48}
+.trip-result.trip-past.active{opacity:1}
 .trip-result.active{border-color:var(--route,#173f3b);box-shadow:0 0 0 1px var(--route,#173f3b)}
-.trip-summary{display:grid;gap:3px;width:100%;padding:10px 12px;border:0;background:none;text-align:left;font:inherit;cursor:pointer;min-height:44px}
-.trip-times{font-size:16px}
+.trip-summary{display:grid;gap:2px;width:100%;padding:9px 12px;border-radius:8px;border:0;background:none;text-align:left;font:inherit;cursor:pointer;min-height:44px}
+.trip-times{font-size:16px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .trip-times sup,.trip-leg-row sup{font-size:10px;margin-left:1px;color:var(--ink-soft)}
 .trip-meta{font-size:12px;color:var(--ink-soft)}
+/* A city search names the actual stations of each journey. */
+.trip-ends{display:block;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trip-trains{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trip-badge{color:#8a4b00}
 .trip-detail{padding:0 12px 10px}
+/* Opening a journey or a leg's stops: a short reveal (none with reduced motion, app.css). */
+.trip-detail:not([hidden]),.trip-calls:not([hidden]){animation:trip-reveal .16s cubic-bezier(.2,.8,.2,1)}
+@keyframes trip-reveal{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
 .trip-legs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .trip-leg{border-left:3px solid var(--route,#173f3b);padding:4px 0 4px 10px}
 .trip-leg-head{font-size:13px}.trip-leg-head span{color:var(--ink-soft);font-size:12px}
-.trip-leg-row{font-size:13px;line-height:1.5}.trip-leg-row b{display:inline-block;min-width:3.4em}
+.trip-leg-row{font-size:13px;line-height:1.5}.trip-leg-row b{display:inline-block;min-width:3.4em;font-variant-numeric:tabular-nums}
 .trip-leg-meta{font-size:11px;color:var(--muted)}
 .trip-change{font-size:12px;color:var(--ink-soft);padding-left:13px}
 .trip-stay{color:#25603f}
@@ -54,3 +65,32 @@
 .trip-loading{display:grid;gap:4px;margin:-6px 0 12px;font-size:12px;color:var(--ink-soft)}
 .trip-loading .loading-track{display:block;height:4px;border-radius:2px;background:#e3e9e5;overflow:hidden}
 .trip-loading .loading-track i{display:block;height:100%;width:0;background:var(--route,#173f3b);transition:width .3s}
+
+/* A leg's calls (owner, 27 Nov: intermediate stops), opened from "N stops between". */
+.trip-stops-toggle{border:0;background:none;padding:0;font:inherit;color:var(--route,#173f3b);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.trip-stops-toggle[aria-expanded="true"]{text-decoration:none}
+.trip-calls{list-style:none;margin:6px 0 2px;padding:0 0 0 10px;border-left:2px solid var(--line);display:grid;gap:2px;font-size:12px;color:var(--ink-soft)}
+.trip-calls b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.trip-call-dep{font-variant-numeric:tabular-nums}
+.trip-call-dep::before{content:"–"}
+.trip-calls li{display:grid;grid-template-columns:auto 1fr;column-gap:8px}
+.trip-calls li>span.trip-call-time{white-space:nowrap}
+/* Stops on the way (route-finder.js addVia): up to four, ordered, each with a stay. */
+.trip-vias{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px dotted var(--line);display:grid;gap:10px}
+.trip-vias:empty{display:none}
+.trip-via{display:grid;gap:6px}
+.trip-via-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}
+.trip-via-tools label{display:flex;align-items:center;gap:6px;color:var(--ink-soft)}
+.trip-via-tools select{min-height:36px;padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;font:inherit;font-size:13px;color:inherit}
+.trip-via-move{display:flex;gap:4px}
+.trip-via-move button{min-width:36px;min-height:36px;border:1px solid var(--line);border-radius:5px;background:#fff;font:inherit;font-size:15px;line-height:1;cursor:pointer;color:inherit}
+.trip-via-move button:disabled{opacity:.35;cursor:default}
+.trip-via-move button:not(:disabled):hover{background:#e7eeea}
+.trip-between{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 -4px}
+.trip-between .trip-swap{margin:0}
+.trip-add-via{font-size:12px}
+.trip-add-via[hidden]{display:none}
+.trip-gap{display:grid;gap:4px;margin:0 0 12px}
+.trip-gap .text-button{justify-self:start;font-weight:600}
+.trip-gap small{color:var(--muted);line-height:1.35}
+.leaflet-tooltip.trip-gap-label{width:230px;white-space:normal;color:#8c1d16;font-weight:600;border-color:#b3261e}

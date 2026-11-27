@@ -1,58 +1,59 @@
-import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=5761aa9a9e34405b';
-import{MODES,PASS_MODES,europeFrame,panelHistoryAction,ITALY_BOUNDS,capFramePadding,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,passPolicyMetrics,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,dateRangeLabels,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode,FREQUENCY_COLORS,frequencyBand,noLicenceNotice,routeLinkIdFor,linkedRoute,ABOUT_SECTIONS,aboutParam,shownCounts,shownCountText,overlapRows}from'./atlas-core.js?v=5761aa9a9e34405b';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=5761aa9a9e34405b';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=5761aa9a9e34405b';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=5761aa9a9e34405b';
-import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=5761aa9a9e34405b';
-import{decodeThroughServices}from'./through-services.js?v=5761aa9a9e34405b';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=5761aa9a9e34405b';
-import{RailRenderer}from'./map-renderer.js?v=5761aa9a9e34405b';
-import{resolveAssetURL,resolveAssetPath}from'./data-codec.js?v=5761aa9a9e34405b';
-import{meterKey,meterBytes,meterBytesSince,meterPageBytes,meterResponse}from'./net-meter.js?v=5761aa9a9e34405b';
-import{atlasFramePadding}from'./frame-padding.js?v=5761aa9a9e34405b';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=5761aa9a9e34405b';
-import{railFetch,railR2FromBootstrap,activeRailR2,DetailUnavailable,DEGRADED_EVENT}from'./rail-r2.js?v=5761aa9a9e34405b';
-import{setupLiteNotice,subscribeRailLite}from'./lite-notice.js?v=5761aa9a9e34405b';
+import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=bd769551cdd0b233';
+import{MODES,PASS_MODES,europeFrame,panelHistoryAction,ITALY_BOUNDS,capFramePadding,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,passPolicyMetrics,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,dateRangeLabels,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode,FREQUENCY_COLORS,frequencyBand,noLicenceNotice,routeLinkIdFor,linkedRoute,ABOUT_SECTIONS,aboutParam,shownCounts,shownCountText,overlapRows}from'./atlas-core.js?v=bd769551cdd0b233';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=bd769551cdd0b233';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=bd769551cdd0b233';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=bd769551cdd0b233';
+import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=bd769551cdd0b233';
+import{decodeThroughServices}from'./through-services.js?v=bd769551cdd0b233';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=bd769551cdd0b233';
+import{RailRenderer}from'./map-renderer.js?v=bd769551cdd0b233';
+import{resolveAssetURL,resolveAssetPath}from'./data-codec.js?v=bd769551cdd0b233';
+import{meterKey,meterBytes,meterBytesSince,meterPageBytes,meterResponse}from'./net-meter.js?v=bd769551cdd0b233';
+import{atlasFramePadding}from'./frame-padding.js?v=bd769551cdd0b233';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=bd769551cdd0b233';
+import{railFetch,railR2FromBootstrap,activeRailR2,DetailUnavailable,DEGRADED_EVENT}from'./rail-r2.js?v=bd769551cdd0b233';
+import{setupLiteNotice,subscribeRailLite}from'./lite-notice.js?v=bd769551cdd0b233';
+import{showWeekEnded}from'./week-ended.js?v=bd769551cdd0b233';
 // The R2 notice in place of a generic failure: a refused or failed detail says why.
 function detailNotice(error,text){return error instanceof DetailUnavailable?error.message:text;}
-import{takeTrafficPrefetch}from'./traffic-prefetch.js?v=5761aa9a9e34405b';
-import{startupManifestURL,usableManifest,createManifestPartLoader}from'./manifest-parts.js?v=5761aa9a9e34405b';
-import{AtlasDataLoader,createPageHydrator,relayedRailLite}from'./data-loader.js?v=5761aa9a9e34405b';
-import{setupViewportRefresh}from'./viewport-refresh.js?v=5761aa9a9e34405b';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=5761aa9a9e34405b';
-import{setupCoverage}from'./coverage-panel.js?v=5761aa9a9e34405b';
-import{createCompletePairMerger}from'./network-view.js?v=5761aa9a9e34405b';
-import{setupServiceContext}from'./service-context.js?v=5761aa9a9e34405b';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=5761aa9a9e34405b';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=5761aa9a9e34405b';
-import{setupBorderLinks}from'./border-links.js?v=5761aa9a9e34405b';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=5761aa9a9e34405b';
-import{setupTrainInspector}from'./train-inspector.js?v=5761aa9a9e34405b';
-import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=5761aa9a9e34405b';
-import{highlightedStack,stationRouteHits,createGroupIdCache}from'./station-route-pick.js?v=5761aa9a9e34405b';
-import{routeFocusIds,callId,passengerCall,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus,journeyForQuery,stationDuplicateSources}from'./train-services.js?v=5761aa9a9e34405b';
-import{matchesFocus}from'./route-focus.js?v=5761aa9a9e34405b';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=5761aa9a9e34405b';
-import{stationPanelURL,validStationPanel,stationPanelBlobURL,stationPanelRuns}from'./station-panel.js?v=5761aa9a9e34405b';
-import{LoadCard,PanelLoads,describeTraffic,describeHubs,describePanel,bytesText,elapsedText,readWhileListing,settleWithin}from'./load-status.js?v=5761aa9a9e34405b';
-import{cityAreaOptions,cityAreaRadius,cityAreaBounds,cityAreaStationIds,cityAreaHasService}from'./city-areas.js?v=5761aa9a9e34405b';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=5761aa9a9e34405b';
-import{mainHubStations}from'./hub-stations.js?v=5761aa9a9e34405b';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=5761aa9a9e34405b';
-import{createReviewedStationPositionLoader}from'./reviewed-station-positions.js?v=5761aa9a9e34405b';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=5761aa9a9e34405b';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=5761aa9a9e34405b';
-import{TrafficOverviewLayer,overviewBuckets,overviewBucketFor,overviewVariant,overviewEntry,decodeOverview,overviewIsExactFor,overviewExactBelowZoom}from'./physical-heat-overview.js?v=5761aa9a9e34405b';
-import{PHYSICAL_DISPLAY_INDEX,displayIndexMatches,displayIndexProblem,displayTilePath,tilesForBounds,tileForDisplayIndex,tilesToEvict,displayShardPath,displayAssetURL,isProvisionalSectionId,provisionalIndex,keyForDisplayIndex,sectionIdKey,shardLookup,gunzipBytes}from'./physical-heat-display.js?v=5761aa9a9e34405b';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=5761aa9a9e34405b';
-import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges,cityHubTier,hubCountLabel,hubCitiesWithoutRailCalls}from'./explorer-core.js?v=5761aa9a9e34405b';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=5761aa9a9e34405b';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=5761aa9a9e34405b';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=5761aa9a9e34405b';
-import{createNativePublicNumberLoader,nativePublicTrainLabels}from'./native-public-numbers.js?v=5761aa9a9e34405b';
-import{fillAboutGuide}from'./about-guide.js?v=5761aa9a9e34405b';
-import{watchAboutVisuals}from'./about-guide.js?v=5761aa9a9e34405b';
-import{shippedDuplicatesURL,validDuplicates,duplicatesMatchDelivery,createDuplicateIndex,duplicateNote,duplicateMethodText,DUPLICATE_SCOPE}from'./rail-duplicates.js?v=5761aa9a9e34405b';
+import{takeTrafficPrefetch}from'./traffic-prefetch.js?v=bd769551cdd0b233';
+import{startupManifestURL,usableManifest,createManifestPartLoader}from'./manifest-parts.js?v=bd769551cdd0b233';
+import{AtlasDataLoader,createPageHydrator,relayedRailLite}from'./data-loader.js?v=bd769551cdd0b233';
+import{setupViewportRefresh}from'./viewport-refresh.js?v=bd769551cdd0b233';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=bd769551cdd0b233';
+import{setupCoverage}from'./coverage-panel.js?v=bd769551cdd0b233';
+import{createCompletePairMerger}from'./network-view.js?v=bd769551cdd0b233';
+import{setupServiceContext}from'./service-context.js?v=bd769551cdd0b233';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=bd769551cdd0b233';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=bd769551cdd0b233';
+import{setupBorderLinks}from'./border-links.js?v=bd769551cdd0b233';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=bd769551cdd0b233';
+import{setupTrainInspector}from'./train-inspector.js?v=bd769551cdd0b233';
+import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=bd769551cdd0b233';
+import{highlightedStack,stationRouteHits,createGroupIdCache}from'./station-route-pick.js?v=bd769551cdd0b233';
+import{routeFocusIds,callId,passengerCall,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus,journeyForQuery,stationDuplicateSources}from'./train-services.js?v=bd769551cdd0b233';
+import{matchesFocus}from'./route-focus.js?v=bd769551cdd0b233';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=bd769551cdd0b233';
+import{stationPanelURL,validStationPanel,stationPanelBlobURL,stationPanelRuns}from'./station-panel.js?v=bd769551cdd0b233';
+import{LoadCard,PanelLoads,describeTraffic,describeHubs,describePanel,bytesText,elapsedText,readWhileListing,settleWithin}from'./load-status.js?v=bd769551cdd0b233';
+import{cityAreaOptions,cityAreaRadius,cityAreaBounds,cityAreaStationIds,cityAreaHasService}from'./city-areas.js?v=bd769551cdd0b233';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=bd769551cdd0b233';
+import{mainHubStations}from'./hub-stations.js?v=bd769551cdd0b233';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=bd769551cdd0b233';
+import{createReviewedStationPositionLoader}from'./reviewed-station-positions.js?v=bd769551cdd0b233';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=bd769551cdd0b233';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=bd769551cdd0b233';
+import{TrafficOverviewLayer,overviewBuckets,overviewBucketFor,overviewVariant,overviewEntry,decodeOverview,overviewIsExactFor,overviewExactBelowZoom}from'./physical-heat-overview.js?v=bd769551cdd0b233';
+import{PHYSICAL_DISPLAY_INDEX,displayIndexMatches,displayIndexProblem,displayTilePath,tilesForBounds,tileForDisplayIndex,tilesToEvict,displayShardPath,displayAssetURL,isProvisionalSectionId,provisionalIndex,keyForDisplayIndex,sectionIdKey,shardLookup,gunzipBytes}from'./physical-heat-display.js?v=bd769551cdd0b233';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=bd769551cdd0b233';
+import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges,cityHubTier,hubCountLabel,hubCitiesWithoutRailCalls}from'./explorer-core.js?v=bd769551cdd0b233';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=bd769551cdd0b233';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=bd769551cdd0b233';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=bd769551cdd0b233';
+import{createNativePublicNumberLoader,nativePublicTrainLabels}from'./native-public-numbers.js?v=bd769551cdd0b233';
+import{fillAboutGuide}from'./about-guide.js?v=bd769551cdd0b233';
+import{watchAboutVisuals}from'./about-guide.js?v=bd769551cdd0b233';
+import{shippedDuplicatesURL,validDuplicates,duplicatesMatchDelivery,createDuplicateIndex,duplicateNote,duplicateMethodText,DUPLICATE_SCOPE}from'./rail-duplicates.js?v=bd769551cdd0b233';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -192,10 +193,10 @@ async function focusTrainRoute(group){
 // A chosen journey is drawn on the atlas's own geometry: each leg's source
 // journey is read from the station-panel index at its boarding station and
 // highlighted from its boarding to its alighting call, like a train route.
-let tripPlanner=null,tripFocus=null,tripFocusGeneration=0,tripSchematic=null,tripPreview=null,tripWalks=null,tripPoints=[];
+let tripPlanner=null,tripFocus=null,tripFocusGeneration=0,tripSchematic=null,tripPreview=null,tripWalks=null,tripGap=null,tripPoints=[];
 async function tripPlannerModule(){
-  if(!tripPlanner){const{createTripPlanner}=await import('./route-finder.js?v=5761aa9a9e34405b');
-    tripPlanner=createTripPlanner({panel:$('tripPanel'),body:$('tripBody'),drawTrip,previewTrip,warmTrip:legs=>{for(const leg of legs)if(!leg.walk)tripLegJourney(leg).catch(()=>{});},clearTrip:()=>{clearTrip();$('tripReturn').hidden=true;},toast,coverage:()=>openCoverage(),
+  if(!tripPlanner){const{createTripPlanner}=await import('./route-finder.js?v=bd769551cdd0b233');
+    tripPlanner=createTripPlanner({panel:$('tripPanel'),body:$('tripBody'),drawTrip,previewTrip,drawGap:drawTripGap,warmTrip:legs=>{for(const leg of legs)if(!leg.walk)tripLegJourney(leg).catch(()=>{});},clearTrip:()=>{clearTrip();$('tripReturn').hidden=true;},toast,coverage:()=>openCoverage(),
       // Phones: hide the sheet, keep the journey drawn, and offer the way back.
       showMap:label=>{$('tripPanel').hidden=true;fitTrip(false);$('tripReturn').textContent='';$('tripReturn').append(label+' · ',Object.assign(document.createElement('span'),{textContent:'Back to the trip ↗'}));$('tripReturn').hidden=false;},
       saveTrip:trip=>{state.trip=trip;saveURL();}});}
@@ -215,7 +216,7 @@ async function tripLegJourney(leg){
   return found;
 }
 function clearTrip(){
-  tripFocusGeneration++;tripFocus=null;tripPoints=[];for(const layer of[tripSchematic,tripPreview,tripWalks])layer?.remove();tripSchematic=tripPreview=tripWalks=null;
+  tripFocusGeneration++;tripFocus=null;tripPoints=[];for(const layer of[tripSchematic,tripPreview,tripWalks,tripGap])layer?.remove();tripSchematic=tripPreview=tripWalks=tripGap=null;
   if(!trainFocus)document.body.classList.remove('train-route-focus');refreshRouteFocus();
 }
 function fitTrip(sheetOpen=!$('tripPanel').hidden){
@@ -230,6 +231,17 @@ function previewTrip(pointsByLeg){
   clearTrip();tripPoints=pointsByLeg.flat().filter(([lat,lon])=>validMapLocation(lon,lat));
   tripPreview=L.layerGroup(pointsByLeg.map(points=>L.polyline(points.filter(([lat,lon])=>validMapLocation(lon,lat)),{color:'#173f3b',weight:2.5,opacity:.75,dashArray:'2 7',interactive:false}))).addTo(map);
   fitTrip();
+}
+// A gap in this week's timetable (route finder, no journey): a red dashed
+// straight line between the closest stations on each side, labelled as a gap.
+// An overlay only: not a train, a railway or a link, and it feeds no counter.
+function drawTripGap({points,from,to}){
+  clearTrip();const valid=points.filter(([lat,lon])=>validMapLocation(lon,lat));if(valid.length!==2)return;
+  const label=`Gap in this week's timetable: no train found between ${from} and ${to} (not a railway)`;
+  tripGap=L.layerGroup([L.polyline(valid,{color:'#b3261e',weight:3,dashArray:'3 9',lineCap:'round',interactive:false}),
+    ...valid.map(p=>L.circleMarker(p,{radius:5,color:'#b3261e',weight:2,fillColor:'#fff',fillOpacity:1,interactive:false})),
+    L.marker([(valid[0][0]+valid[1][0])/2,(valid[0][1]+valid[1][1])/2],{opacity:0,interactive:false,keyboard:false}).bindTooltip(label,{permanent:true,direction:'top',className:'trip-gap-label'})]).addTo(map);
+  tripPoints=valid;fitTrip();
 }
 async function drawTrip(legs){
   // The preview, if any, stays until the legs are drawn on the atlas geometry.
@@ -391,7 +403,7 @@ addEventListener('popstate',event=>{
 // What's new (its module and packet) is requested only when About opens;
 // ?about=new lands on its list (id aboutWhatsNew in ABOUT_SECTIONS).
 function scrollAboutSection(){const id=ABOUT_SECTIONS[state.about],node=id&&document.getElementById(id);if(node&&!node.hidden&&$('methodDialog').open)node.scrollIntoView({block:'start'});}
-function method(section){const d=$('methodDialog');if(!d.open)d.showModal();state.about=typeof section==='string'&&aboutParam(section)?section:aboutParam(state.about)||'1';saveURL();scrollAboutSection();import('./weeks.js?v=5761aa9a9e34405b').then(module=>module.showWeeks(document).then(scrollAboutSection)).catch(()=>{});import('./whats-new.js?v=5761aa9a9e34405b').then(module=>module.showWhatsNew(document).then(scrollAboutSection)).catch(()=>{const box=$('whatsNewBody');if(box&&!box.dataset.state)box.innerHTML='<p class="helper whats-new-empty">No recent changes are listed for this edition.</p>';});ensureManifest().then(()=>{updateMethod();scrollAboutSection();loadPublicDownloads().then(scrollAboutSection,()=>{});
+function method(section){const d=$('methodDialog');if(!d.open)d.showModal();state.about=typeof section==='string'&&aboutParam(section)?section:aboutParam(state.about)||'1';saveURL();scrollAboutSection();import('./weeks.js?v=bd769551cdd0b233').then(module=>module.showWeeks(document).then(scrollAboutSection)).catch(()=>{});import('./whats-new.js?v=bd769551cdd0b233').then(module=>module.showWhatsNew(document).then(scrollAboutSection)).catch(()=>{const box=$('whatsNewBody');if(box&&!box.dataset.state)box.innerHTML='<p class="helper whats-new-empty">No recent changes are listed for this edition.</p>';});ensureManifest().then(()=>{updateMethod();scrollAboutSection();loadPublicDownloads().then(scrollAboutSection,()=>{});
   return ensureManifestPart(manifest,'provenance',{keys:METHOD_PROVENANCE,startupURL:startupManifestHref}).then(loaded=>{if(!loaded)return;const downloads=$('publicDownloads');updateMethod();if(downloads)$('methodContent').appendChild(downloads);scrollAboutSection();});
 }).catch(error=>toast(detailNotice(error,'Source details could not load. Please retry.')));}
 function reconcileSources(){
@@ -1514,7 +1526,7 @@ async function setTransitEnabled(on){const box=$('showTransit'),info=$('transitI
   box.checked=!!on;state.transit=!!on;saveURL();
   if(!on){transitLayer?.disable();closeTransitPanels();return;}
   status.textContent='Loading city transit…';
-  try{transitModule??=await import('./transit-layer.js?v=5761aa9a9e34405b');
+  try{transitModule??=await import('./transit-layer.js?v=bd769551cdd0b233');
     transitLayer??=new transitModule.TransitLayer(map,{onStatus:text=>{if(box.checked)status.textContent=text;},onSelect:(d,day)=>{if(!box.checked)return;detail.innerHTML=transitModule.transitDetailHTML(d,day);detail.hidden=false;$('transitDetailClose').onclick=()=>{detail.hidden=true;detail.innerHTML='';};}});
     if(state.transitDay&&!transitLayer.enabled)transitLayer.day=state.transitDay;
     await transitLayer.enable();if(!box.checked){transitLayer.disable();return;}
@@ -1638,7 +1650,7 @@ async function boot(){
     if(manifest.schemaVersion!==1||!manifest.files?.overview||!Array.isArray(manifest.dates)||manifest.dates.length!==7)throw new Error('Unsupported atlas data manifest');
     applyProjectScope(state,manifest.projectScope);
     if(manifest._bootstrap&&needsSourceRefresh(manifest.sources,state.sources))await ensureManifest();
-    dates=manifest.dates;if(manifest.files.throughServices&&!manifest.files.displayOverview)await ensureThroughServices();reconcileSources();setupDates();setupSources();applyControls();coverage.refresh();
+    dates=manifest.dates;if(manifest.files.throughServices&&!manifest.files.displayOverview)await ensureThroughServices();reconcileSources();setupDates();showWeekEnded(document,dates);setupSources();applyControls();coverage.refresh();
     // The packet is small and requested with the page; wait briefly so the first frame already counts each train once.
     // Rail traffic is not corrected by it, so that view does not wait.
     if(state.mode!=='traffic')startDuplicatePacket?.();
@@ -1667,4 +1679,4 @@ if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser){initMap();setupEven
 // Clips beside the About steps: fetched only once About is open (about-guide.js).
 if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser)watchAboutVisuals(document,{phone:()=>matchMedia(MOBILE_LAYOUT).matches,reducedMotion:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
 // ?week=<hex prefix>: a dismissable notice when the named week is not the one on the map (weeks.js).
-if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser&&new URLSearchParams(location.search).has('week'))import('./weeks.js?v=5761aa9a9e34405b').then(module=>module.showWeekNotice(document,location.search)).catch(()=>{});
+if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser&&new URLSearchParams(location.search).has('week'))import('./weeks.js?v=bd769551cdd0b233').then(module=>module.showWeekNotice(document,location.search)).catch(()=>{});

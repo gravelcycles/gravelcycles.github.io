@@ -12,6 +12,9 @@
 // - nothing is inferred: no walking, no invented connections.
 
 export const NO_PICKUP=1,NO_DROPOFF=1,INF=0x3fffffff;
+// The most trains one journey may take (owner, 27 Nov: across all of Europe,
+// "even if it takes like 50 hours"; Narvik to Napoli needs nine).
+export const MAX_TRAINS=12;
 const NONE=-1;
 
 const planes16=(bytes,offset,count,signed=false)=>{
@@ -131,9 +134,15 @@ const canAlight=(week,C,c)=>(C.flags[c]&2)!==0;
 //           leave (1440); trains already boarded and later changes are
 //           followed past it, so long journeys still arrive (Luzern → Palermo),
 //         slack: how much later than the fastest a fewer-change journey may arrive (360),
-//         arriveFrom: arrivals at `to` before this minute do not count (arrive-by windows)}
+//         arriveFrom: arrivals at `to` before this minute do not count (arrive-by windows),
+//         carry: {state, C, shift} continues the search of `state` (returned by an
+//           earlier earliest() with keepState on connections C) on these
+//           connections, whose clock starts `shift` minutes later: every station
+//           time reached there is a start here (multi-day journeys, overnight
+//           waits). Times of the journeys stay on the first search's clock,
+//         keepState: return {journeys, state} so a later search can carry on}
 export function earliest(week,C,query){
-  const N=week.N,K=Math.min(8,(query.maxChanges??5)+1),change=Math.max(1,query.minChange??5);
+  const N=week.N,K=Math.min(MAX_TRAINS,(query.maxChanges??5)+1),change=Math.max(1,query.minChange??5);
   const via=query.via||[],P=via.length+1,viaSet=via.map(v=>new Set(v.stations)),stopover=via.map(v=>Math.max(0,v.stopover||0));
   const target=new Set(query.to),allowed=query.tripAllowed||null,isTarget=new Uint8Array(N);for(const s of target)isTarget[s]=1;
   const size=P*(K+1)*N,at=(p,k,s)=>(p*(K+1)+k)*N+s;
@@ -156,8 +165,13 @@ export function earliest(week,C,query){
   // onward, never to its earlier calls: kept pending until that trip departs
   // the station. Key (phase * T + trip) * 65536 + station -> [trains, record].
   const pending=new Map(),hasPending=new Uint8Array(C.T);
-  for(const o of query.from)best[at(0,0,o)]=query.depart;
-  if(foot)for(const o of query.from)for(const[b,w]of foot.get(o)||[]){const i=at(0,0,b);if(query.depart+w<best[i]){best[i]=query.depart+w;parentVia[i]=2;walkFrom[i]=o;walkMinutes[i]=w;}}
+  // Phases above `top` hold nothing yet (no via reached): the scan skips them.
+  const carry=query.carry||null;let top=0;
+  if(carry){const prev=carry.state;if(prev.P!==P||prev.K!==K||prev.N!==N)throw new Error('route_finder_carry_does_not_match');
+    // Arrivals of the earlier search, on this clock; reconstruction goes back into it (parentVia 3).
+    for(let i=0;i<size;i++){const b=prev.best[i];if(b<INF){best[i]=b-carry.shift;parentVia[i]=3;}}top=prev.top;}
+  else for(const o of query.from)best[at(0,0,o)]=query.depart;
+  if(foot&&!carry)for(const o of query.from)for(const[b,w]of foot.get(o)||[]){const i=at(0,0,b);if(query.depart+w<best[i]){best[i]=query.depart+w;parentVia[i]=2;walkFrom[i]=o;walkMinutes[i]=w;}}
   const ready=(p,s,dep,k0)=>{for(let k=k0;k<K;k++){const b=best[at(p,k,s)];if(b<INF&&b+(k?change:0)<=dep)return k;}return -1;};
   // The first train leaves from `depart` to `depart + horizon` (default 24 h).
   // The horizon bounds only that boarding: the scan follows trains already
@@ -184,7 +198,7 @@ export function earliest(week,C,query){
     const t=C.trip[c];if(allowed&&!allowed(t))continue;
     const s=C.from[c],a=C.to[c];
     const board=canBoard(week,C,c);
-    for(let p=0;p<P;p++){
+    for(let p=0;p<=top;p++){
       const j=p*C.T+t;
       if(hasPending[t]){const waiting=pending.get(j*65536+s);if(waiting&&waiting[0]<legs[j]){legs[j]=waiting[0];enter[j]=waiting[1];}}
       // No boarding at the destination: leaving it to come back is never a journey.
@@ -194,7 +208,7 @@ export function earliest(week,C,query){
         arrive(p,L,a,C.arr[c],c,enter[j]);
         // Reaching a via station: the next phase starts there after the stopover.
         if(p+1<P&&viaSet[p].has(a)){const wait=Math.max(0,stopover[p]-change);
-          for(let kk=L;kk<=K;kk++){const i=at(p+1,kk,a),time=C.arr[c]+wait;if(time<best[i]){best[i]=time;parentConn[i]=c;parentEnter[i]=enter[j];parentVia[i]=1;}else break;}}
+          for(let kk=L;kk<=K;kk++){const i=at(p+1,kk,a),time=C.arr[c]+wait;if(time<best[i]){best[i]=time;parentConn[i]=c;parentEnter[i]=enter[j];parentVia[i]=1;if(p+1>top)top=p+1;}else break;}}
         // Fewer trains may still arrive later than the best overall: the scan
         // can stop only once departures pass the best one-train arrival.
         // Alternatives with fewer trains are searched up to `slack` minutes
@@ -203,7 +217,7 @@ export function earliest(week,C,query){
         if(p===P-1&&finalBest[K]<INF)bound=Math.min(bound,finalBest[1],finalBest[K]+slack);
       }
       // Riding through a via station without a stopover moves to the next phase on the same train.
-      if(p+1<P&&!stopover[p]&&viaSet[p].has(a)){const q=(p+1)*C.T+t;if(L<legs[q]){legs[q]=L;records.push([p,t,c,enter[j]]);enter[q]=-(2+records.length-1);}}
+      if(p+1<P&&!stopover[p]&&viaSet[p].has(a)){const q=(p+1)*C.T+t;if(L<legs[q]){legs[q]=L;records.push([p,t,c,enter[j]]);enter[q]=-(2+records.length-1);if(p+1>top)top=p+1;}}
       // A reviewed stay-on-board link continues on another trip with no change.
       const next=C.hasStay[t]?C.stay.get(t*65536+a):undefined;
       if(next)for(const t2 of next){const key=(p*C.T+t2)*65536+a,waiting=pending.get(key);
@@ -211,32 +225,37 @@ export function earliest(week,C,query){
     }
   }
   const results=[];let previous=INF;
-  const state={best,parentConn,parentEnter,parentVia,records,at,P,K,change,walkFrom,walkMinutes};
+  const state={best,parentConn,parentEnter,parentVia,records,at,P,K,N,change,walkFrom,walkMinutes,C,
+    offset:carry?carry.state.offset+carry.shift:0,carry:carry?carry.state:null,top};
   for(let k=1;k<=K;k++){let bestTime=INF,bestStation=NONE;for(const s of target){const b=best[at(P-1,k,s)];if(b<bestTime){bestTime=b;bestStation=s;}}
     const walkIn=finalBest[k]<bestTime;
     if(walkIn)bestTime=finalBest[k];
     if(bestTime<previous){
       const journey=walkIn?reconstruct(week,C,state,P-1,k,NONE,{conn:finalConn[k],enter:finalEnter[k],from:finalFrom[k],to:[...target].find(t=>(foot.get(finalFrom[k])||[]).some(([b,w])=>b===t&&w===finalMinutes[k])),minutes:finalMinutes[k]}):reconstruct(week,C,state,P-1,k,bestStation);
       results.push(journey);previous=bestTime;}}
-  return results;
+  return query.keepState?{journeys:results,state}:results;
 }
 
-function segment(week,C,trip,boardConn,alightConn,stayIn){
+function segment(week,C,trip,boardConn,alightConn,stayIn,offset=0){
   const f=C.tripProfile[trip],p=week.profilePattern[f],ps=week.patternStart[p];
   return{trip,day:C.tripDay[trip],index:C.tripIndex[trip],pattern:p,board:C.call[boardConn],alight:C.call[alightConn]+1,
-    from:week.patternStation[ps+C.call[boardConn]],to:week.patternStation[ps+C.call[alightConn]+1],dep:C.dep[boardConn],arr:C.arr[alightConn],stayOnBoard:!!stayIn};
+    from:week.patternStation[ps+C.call[boardConn]],to:week.patternStation[ps+C.call[alightConn]+1],dep:C.dep[boardConn]+offset,arr:C.arr[alightConn]+offset,stayOnBoard:!!stayIn};
 }
 
 // Walk back from (phase, trains, station): legs in travel order. A stay-on-
 // board handoff splits one ride into two segments of one leg.
-function reconstruct(week,C,state,p,k,s,finalWalk=null){
-  const{parentConn,parentEnter,parentVia,records,at,walkFrom,walkMinutes}=state,legs=[];
+function reconstruct(week,C,state,p,k,s,finalWalk=null){return finish(rides(week,C,state,p,k,s,finalWalk));}
+// The legs (groups of segments of one ride) reaching (phase, trains, station).
+function rides(week,C,state,p,k,s,finalWalk=null){
+  const{parentConn,parentEnter,parentVia,records,at,walkFrom,walkMinutes,offset}=state,legs=[];
   let guard=0,pendingConn=NONE,pendingEnter=NONE;
   // Walking into the destination: the last ride ends where the walk starts.
   if(finalWalk){legs.push([{walk:true,from:finalWalk.from,to:finalWalk.to,minutes:finalWalk.minutes}]);s=finalWalk.from;pendingConn=finalWalk.conn;pendingEnter=finalWalk.enter;}
   while(k>0){
     if(++guard>64)throw new Error('route_finder_reconstruction_loop');
     const i=at(p,k,s);let c=parentConn[i],e=parentEnter[i];let viaStep=parentVia[i];
+    // Reached in an earlier search (an earlier date's connections): its rides come first.
+    if(pendingConn===NONE&&viaStep===3)return[...rides(week,state.carry.C,state.carry,p,k,s),...legs];
     if(pendingConn!==NONE){c=pendingConn;e=pendingEnter;viaStep=0;pendingConn=NONE;}
     else if(viaStep===2){
       // A walk to s after the ride that arrived at walkFrom (same trains, same phase).
@@ -246,10 +265,10 @@ function reconstruct(week,C,state,p,k,s,finalWalk=null){
     // A record made on reaching a via station belongs to the phase before it.
     const ride=[];let t=C.trip[c],phase=viaStep===1?p-1:p;
     for(;;){
-      if(e>=0){ride.unshift(segment(week,C,t,e,c,false));break;}
+      if(e>=0){ride.unshift(segment(week,C,t,e,c,false,offset));break;}
       const[q,t1,cs,before]=records[-e-2];
       // Same train through a via (t1 === t), or a stay-on-board handoff onto t.
-      if(t1!==t){ride.unshift(segment(week,C,t,firstCallAfter(C,t,cs),c,true));c=cs;t=t1;}
+      if(t1!==t){ride.unshift(segment(week,C,t,firstCallAfter(C,t,cs),c,true,offset));c=cs;t=t1;}
       phase=q;e=before;
     }
     // Merge consecutive segments of the same trip (a ride through a via).
@@ -258,8 +277,10 @@ function reconstruct(week,C,state,p,k,s,finalWalk=null){
     s=C.from[e];k-=1;p=phase;
   }
   // A walk from the origin to the first boarding station.
-  if(walkFrom){const i=at(p,0,s);if(parentVia[i]===2)legs.unshift([{walk:true,from:walkFrom[i],to:s,minutes:walkMinutes[i]}]);}
-  return finish(legs);
+  if(walkFrom){const i=at(p,0,s);if(parentVia[i]===2)legs.unshift([{walk:true,from:walkFrom[i],to:s,minutes:walkMinutes[i]}]);
+    else if(parentVia[i]===3)return[...rides(week,state.carry.C,state.carry,p,0,s),...legs];}
+  else if(state.carry&&state.parentVia[at(p,0,s)]===3)return[...rides(week,state.carry.C,state.carry,p,0,s),...legs];
+  return legs;
 }
 
 // Times of the walks (from the rides beside them) and the journey's totals.
@@ -296,8 +317,8 @@ function arrivalOrder(C){
 }
 
 export function latest(week,C,query){
-  const N=week.N,K=Math.min(8,(query.maxChanges??5)+1),change=Math.max(1,query.minChange??5),A=query.arriveBy;
-  const origin=new Set(query.from),target=new Set(query.to),allowed=query.tripAllowed||null,at=(k,s)=>k*N+s;
+  const N=week.N,K=Math.min(MAX_TRAINS,(query.maxChanges??5)+1),change=Math.max(1,query.minChange??5),A=query.arriveBy;
+  const origin=new Set(query.from),target=new Set(query.to),allowed=query.tripAllowed||null,at=(k,s)=>k*N+s,departBy=query.departBy??INF;
   // late: the latest boarding at a station; lateWalk: the latest time to set off
   // walking from it to a boarding elsewhere (reviewed footpaths, never two in a row).
   const late=new Int32Array((K+1)*N).fill(-INF),parentConn=new Int32Array((K+1)*N).fill(NONE),parentExit=new Int32Array((K+1)*N).fill(NONE),parentLegs=new Uint8Array((K+1)*N);
@@ -313,7 +334,9 @@ export function latest(week,C,query){
   // The last train arrives from `arriveBy - window` to `arriveBy`. The window
   // bounds only that alighting: earlier hops of the same journey are followed
   // past it, until the origin bound below stops the scan.
-  const lastFloor=A-(query.window??1440);let floor=-INF;
+  // departFrom (optional): no departure earlier than this is wanted, so hops
+  // arriving before it belong to no answer and the scan stops there.
+  const lastFloor=A-(query.window??1440);let floor=query.departFrom??-INF;
   for(let i=0;i<C.count;i++){
     const c=order[i];if(C.arr[c]>A)continue;if(C.arr[c]<floor)break;
     const t=C.trip[c];if(allowed&&!allowed(t))continue;
@@ -327,7 +350,8 @@ export function latest(week,C,query){
       if(k>=0&&k+1<legs[t]){legs[t]=k+1;exit[t]=c;}}
     const L=legs[t];if(L===255)continue;
     // No boarding at the destination: leaving it to come back is never a journey.
-    if(C.flags[c]&1&&!target.has(s)){const improved=C.dep[c]>late[at(L,s)];
+    // departBy (optional) bounds the departure from the origin (the end of a day's window).
+    if(C.flags[c]&1&&!target.has(s)&&!(origin.has(s)&&C.dep[c]>departBy)){const improved=C.dep[c]>late[at(L,s)];
       for(let kk=L;kk<=K;kk++){const j=at(kk,s);if(C.dep[c]>late[j]){late[j]=C.dep[c];parentConn[j]=c;parentExit[j]=exit[t];parentLegs[j]=L;}else break;}
       // Walking to this boarding from a station a footpath away (as a change of at least the minimum).
       if(improved&&foot)for(const[x,w]of footIn.get(s)||[]){const v=C.dep[c]-Math.max(w,change)+change;
@@ -342,7 +366,7 @@ export function latest(week,C,query){
     // From the origin: board there, or walk first (taking just the walk) to a boarding.
     let bestTime=-INF,start=null;
     for(const o of origin){const v=late[at(k,o)];if(v>bestTime){bestTime=v;start={station:o};}
-      if(foot)for(const[b,w]of foot.get(o)||[]){const u=late[at(k,b)]-w;if(late[at(k,b)]>-INF&&u>bestTime){bestTime=u;start={station:b,walk:{from:o,to:b,minutes:w}}};}}
+      if(foot)for(const[b,w]of foot.get(o)||[]){const u=late[at(k,b)]-w;if(late[at(k,b)]>-INF&&u>bestTime&&u<=departBy){bestTime=u;start={station:b,walk:{from:o,to:b,minutes:w}}};}}
     if(bestTime>previous){results.push(forwardFrom(week,C,state,k,start));previous=bestTime;}}
   return results;
 }
@@ -387,7 +411,7 @@ export function arriveBy(week,C,query){
   const A=query.arriveBy,floor=A-(query.window??1440),arrives=d=>earliest(week,C,{...query,depart:d,horizon:A-d,slack:INF,arriveFrom:floor}).filter(j=>j.arr<=A);
   // A journey may set off walking to its first train (reviewed footpaths, at most 60 min).
   let walk=0;for(const list of(week.footpaths||new Map()).values())for(const[,w]of list)walk=Math.max(walk,w);
-  let lo=Math.min(floor,C.count?C.dep[0]-walk:floor),hi=A;
+  let lo=Math.min(floor,C.count?C.dep[0]-walk:floor),hi=Math.min(A,query.departBy??A);
   if(!arrives(lo).length)return[];
   while(lo<hi){const mid=lo+hi+1>>1;if(arrives(mid).length)lo=mid;else hi=mid-1;}
   return arrives(lo);
@@ -395,9 +419,10 @@ export function arriveBy(week,C,query){
 
 // The same arrival with as late a departure as possible (least time
 // travelling), with at most the result's number of trains.
-export function tighten(week,C,query,result){
-  const q={...query,maxChanges:result.trains-1,arriveBy:result.arr,window:result.arr-result.dep};
-  const r=arriveBy(week,C,q).filter(j=>j.arr<=result.arr&&j.trains<=result.trains);
+// `latestDep` optionally bounds the departure (the end of a day's window).
+export function tighten(week,C,query,result,latestDep=Infinity){
+  const q={...query,maxChanges:result.trains-1,arriveBy:result.arr,window:result.arr-result.dep,departFrom:result.dep,...(latestDep<Infinity?{departBy:latestDep}:{})};
+  const r=arriveBy(week,C,q).filter(j=>j.arr<=result.arr&&j.trains<=result.trains&&j.dep>=result.dep&&j.dep<=latestDep);
   if(!r.length)return result;
   const late=r.reduce((x,y)=>y.dep>x.dep||y.dep===x.dep&&y.trains<x.trains?y:x);
   // Shown with the earliest onward trains from that departure (the most time
@@ -405,4 +430,68 @@ export function tighten(week,C,query,result){
   const forward=earliest(week,C,{...query,via:query.via,depart:late.dep,maxChanges:result.trains-1,horizon:result.arr-late.dep+1,slack:INF})
     .filter(j=>j.arr<=result.arr&&j.dep===late.dep);
   return forward.length?forward[forward.length-1]:late;
+}
+
+// Every journey of a day (owner, 27 Nov: "show all routes for the selected
+// day"): from `from`, the fastest journey whose first train leaves before
+// `until`, tightened to its latest departure for that arrival; then again from
+// one minute after that departure. For every minute t of the window, the
+// earliest arrival of any journey leaving at t or later is the earliest
+// arrival of a listed journey leaving at t or later. Returns {journeys, next}
+// where next is where to continue (>= until when the window is done); `max`
+// bounds the work of one call in half steps (a search, or the tightening of
+// its answer), so a caller shows journeys as they come and a new search waits
+// for one half step at most; `pending` carries a search answer not yet
+// tightened from one call to the next (returned, and passed back unchanged).
+export function daySweep(week,C,query,from,until,max=Infinity,pending=null){
+  const journeys=[];let t=from,work=0;
+  while(t<until&&work<max){
+    if(!pending){
+      const r=earliest(week,C,{...query,depart:t,horizon:until-1-t,slack:query.slack??360});work++;
+      if(!r.length){t=until;break;}
+      pending=r[r.length-1];if(work>=max)break;
+    }
+    const fastest=pending,tight=tighten(week,C,{...query,depart:fastest.dep},fastest,until-1);pending=null;work++;
+    // A later departure inside the window with the same arrival replaces the earlier one.
+    const last=journeys[journeys.length-1];
+    if(last&&last.arr===tight.arr&&last.trains>=tight.trains)journeys.pop();
+    journeys.push(tight);t=tight.dep+1;
+  }
+  return{journeys,next:t,pending};
+}
+
+// Fewest trains from `from` to every station over the week's timetable
+// patterns, whatever the times and dates (owner, 27 Nov: when no route exists
+// because data is missing, say why). Uint8Array by station: 0 at the origin,
+// 255 where no chain of timed trains of the week leads. Pickup and drop-off
+// codes and reviewed footpaths apply (a walk adds no train); stay-on-board
+// links are not used, so a count may be one higher than the journey's.
+// reverse: fewest trains from every station to `from` instead.
+// allow(pattern) may leave patterns out (pass filters).
+export function reach(week,from,{reverse=false,allow=null,maxTrains=MAX_TRAINS+4}={}){
+  const{N,P,patternStart,patternStation,code}=week;
+  if(!week.stationCalls){const count=new Uint32Array(N+1);for(let i=0;i<patternStation.length;i++)count[patternStation[i]+1]++;
+    for(let i=0;i<N;i++)count[i+1]+=count[i];const list=new Uint32Array(patternStation.length),fill=count.slice(0,N);
+    for(let i=0;i<patternStation.length;i++)list[fill[patternStation[i]]++]=i;
+    const owner=new Uint32Array(patternStation.length);for(let p=0;p<P;p++)for(let i=patternStart[p];i<patternStart[p+1];i++)owner[i]=p;
+    week.stationCalls={start:count,list,owner};}
+  const{start,list,owner}=week.stationCalls,trains=new Uint8Array(N).fill(255);
+  const pickup=i=>(code[i]&3)!==NO_PICKUP,dropOff=i=>(code[i]>>2&3)!==NO_DROPOFF;
+  // Forward: the earliest call boarded in each pattern; reverse: the latest call left.
+  const mark=new Int32Array(P).fill(reverse?-1:0x7fffffff);const stamp=new Int32Array(P);
+  const walks=reverse?footpathsInto(week):week.footpaths||new Map();
+  let frontier=[];const add=(s,r,into)=>{if(trains[s]>r){trains[s]=r;into.push(s);}};
+  for(const s of from)add(s,0,frontier);
+  for(const s of[...frontier])for(const[b]of walks.get(s)||[])add(b,0,frontier);
+  for(let r=1;r<=maxTrains&&frontier.length;r++){
+    const touched=[];
+    for(const s of frontier)for(let j=start[s];j<start[s+1];j++){const i=list[j],p=owner[i];if(allow&&!allow(p))continue;
+      if(reverse?dropOff(i)&&i>mark[p]:pickup(i)&&i<mark[p]){if(stamp[p]!==r){stamp[p]=r;touched.push(p);}mark[p]=i;}}
+    const next=[];
+    for(const p of touched){if(reverse){for(let i=mark[p]-1;i>=patternStart[p];i--)if(pickup(i))add(patternStation[i],r,next);}
+      else for(let i=mark[p]+1;i<patternStart[p+1];i++)if(dropOff(i))add(patternStation[i],r,next);}
+    for(const s of[...next])for(const[b]of walks.get(s)||[])add(b,r,next);
+    frontier=next;
+  }
+  return trains;
 }
