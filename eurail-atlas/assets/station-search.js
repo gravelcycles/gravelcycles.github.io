@@ -1,8 +1,8 @@
-import{normalize,validMapLocation}from'./atlas-core.js?v=9950f30ee93e8b21';
-import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=9950f30ee93e8b21';
-import{stationInScope}from'./project-scope.js?v=9950f30ee93e8b21';
-import{countryMatches}from'./explorer-core.js?v=9950f30ee93e8b21';
-import{latinSpellings}from'./transliterate.js?v=9950f30ee93e8b21';
+import{normalize,validMapLocation}from'./atlas-core.js?v=af6ecd556b560479';
+import{stationSearchText,stationSourceSelected,stationSourceLabel,stationMemberIds}from'./station-identity.js?v=af6ecd556b560479';
+import{stationInScope}from'./project-scope.js?v=af6ecd556b560479';
+import{countryMatches}from'./explorer-core.js?v=af6ecd556b560479';
+import{latinSpellings}from'./transliterate.js?v=af6ecd556b560479';
 
 const searchNameCache=new WeakMap();
 function searchNames(station){
@@ -48,7 +48,7 @@ export function setupStationSearch({getStations,getState,ensureStations,ensureQu
   let choices=[],active=-1,sequence=0,timer=0;
   function hide(){sequence++;list.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1;}
   function close(){hide();root.hidden=true;toggle.setAttribute('aria-expanded','false');}
-  function select(station){close();input.value=station.name;onPick(station);}
+  function select(station,event=null){close();input.value=station.name;onPick(station,{shift:!!event?.shiftKey});}
   function paint(cities,{partial=false}={}){
     choices=[...cities.filter(city=>!city.noServices),...stationOptions(getStations(),input.value,getState()),...cities.filter(city=>city.noServices)];active=-1;list.replaceChildren();input.removeAttribute('aria-activedescendant');
     for(const[sIndex,station]of choices.entries()){
@@ -56,7 +56,7 @@ export function setupStationSearch({getStations,getState,ensureStations,ensureQu
       const name=document.createElement('strong');name.textContent=station.name;option.appendChild(name);
       const details=document.createElement('small'),inactive=!stationSourceSelected(station,getState());
       details.textContent=station.isCityArea?['All stations',station.country,station.noServices?'no recorded trains in this view':''].filter(Boolean).join(' · '):[station.country,stationSourceLabel(station,sourceName),inactive?'sources not selected':'',validMapLocation(station.lon,station.lat)?'':'location unavailable'].filter(Boolean).join(' · ');option.appendChild(details);
-      option.onmousedown=event=>event.preventDefault();option.onclick=()=>select(station);list.appendChild(option);
+      option.onmousedown=event=>event.preventDefault();option.onclick=event=>select(station,event);list.appendChild(option);
     }
     list.hidden=!choices.length;input.setAttribute('aria-expanded',String(!!choices.length));status.textContent=partial?(choices.length?choices.length+' results so far · loading all stations…':'Loading all stations…'):choices.length?choices.length+' results found.':normalize(input.value).length<2?'Enter at least two characters.':'No city or station matches. Try another spelling.';
   }
@@ -89,7 +89,7 @@ export function setupStationSearch({getStations,getState,ensureStations,ensureQu
       if(!choices.length||list.hidden)return;event.preventDefault();active=(active+(event.key==='ArrowDown'?1:-1)+choices.length)%choices.length;
       [...list.children].forEach((option,i)=>{option.classList.toggle('active',i===active);option.setAttribute('aria-selected',String(i===active));});input.setAttribute('aria-activedescendant',list.children[active].id);list.children[active].scrollIntoView({block:'nearest'});
     }
-    if(event.key==='Enter'&&choices.length&&!list.hidden){event.preventDefault();select(choices[Math.max(0,active)]);}
+    if(event.key==='Enter'&&choices.length&&!list.hidden){event.preventDefault();select(choices[Math.max(0,active)],event);}
   };
   document.addEventListener('pointerdown',event=>{if(!root.contains(event.target)&&!toggle.contains(event.target))close();});
   document.addEventListener('focusin',event=>{if(!root.hidden&&!root.contains(event.target)&&event.target!==toggle)close();});

@@ -123,3 +123,5 @@
 .data-loading[data-phase=error] strong{color:var(--selected)}
 @media(max-width:600px){.data-loading[data-placement=corner]{bottom:110px}}
 @media(prefers-reduced-motion:reduce){.data-loading-bar i{transition:none}.data-loading-bar.indeterminate i{animation:none;width:100%;opacity:.45}}
+.between-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}.between-toggle{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.between-toggle button{padding:5px 9px;font-size:11px;color:var(--ink-soft);background:var(--panel)}.between-toggle button[aria-pressed=true]{background:var(--ink);color:var(--panel)}.between-empty{margin:10px 0}
+.compare-bar{position:fixed;z-index:1200;left:50%;top:calc(var(--toolbar-height) + 10px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);padding:8px 12px;border-radius:6px;background:var(--ink);color:var(--panel);font-size:12px;box-shadow:var(--shadow)}.compare-bar .text-button{color:var(--panel);text-decoration:underline}

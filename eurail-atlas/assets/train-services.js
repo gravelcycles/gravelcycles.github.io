@@ -1,15 +1,33 @@
-import{effectivePass,selectedDays,journeyMatchesEdge,journeyThroughMatch,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=9950f30ee93e8b21';
-import{duplicateScope}from'./rail-duplicates.js?v=9950f30ee93e8b21';
-import{mergeSleepServices}from'./sleep-service.js?v=9950f30ee93e8b21';
-import{mapPairFocusId}from'./route-focus.js?v=9950f30ee93e8b21';
-import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=9950f30ee93e8b21';
-import{logicalCommonOdDeductions}from'./logical-common-od.js?v=9950f30ee93e8b21';
-import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=9950f30ee93e8b21';
+import{effectivePass,selectedDays,journeyMatchesEdge,journeyThroughMatch,publicTrainLabels,normalizeCharge,serviceVisible,usesHubConnections}from'./atlas-core.js?v=af6ecd556b560479';
+import{duplicateScope}from'./rail-duplicates.js?v=af6ecd556b560479';
+import{mergeSleepServices}from'./sleep-service.js?v=af6ecd556b560479';
+import{mapPairFocusId}from'./route-focus.js?v=af6ecd556b560479';
+import{continuationFocusEdgeIds,deduplicateContinuationAvailability,continuationMetrics,scopeAvailabilityCounts}from'./through-continuations.js?v=af6ecd556b560479';
+import{logicalCommonOdDeductions}from'./logical-common-od.js?v=af6ecd556b560479';
+import{nativePublicTrainLabels,numberedRunViews}from'./native-public-numbers.js?v=af6ecd556b560479';
 
 export const callId=call=>Array.isArray(call)?call[0]:call.id;
 export function passengerCall(call){
   const pickup=Array.isArray(call)?call[1]:call?.pickup,dropoff=Array.isArray(call)?call[2]:call?.dropoff;
   return String(pickup??'0')!=='1'||String(dropoff??'0')!=='1';
+}
+// Between two stations (owner, 27 November): the trains whose one record calls at one of `fromIds` and later at
+// one of `toIds`, with pickup allowed at the first and drop-off at the second. Same train only: legs of different
+// records are never joined. The rule of findMatchingJourneys (data-worker.js); the earliest boarding call wins.
+export function betweenJourneys(journeys,fromIds,toIds){
+  const from=new Set(fromIds),to=new Set(toIds),seen=new Set(),out=[];
+  const flag=(call,index)=>String((Array.isArray(call)?call[index]:index===1?call?.pickup:call?.dropoff)??'0');
+  for(const journey of journeys||[]){
+    if(!Array.isArray(journey?.stops))continue;const key=journeyIdentity(journey);if(seen.has(key))continue;
+    let match=null;
+    for(let i=0;i<journey.stops.length&&!match;i++){
+      const call=journey.stops[i];if(!from.has(callId(call))||flag(call,1)==='1')continue;
+      for(let k=i+1;k<journey.stops.length;k++){const end=journey.stops[k];
+        if(to.has(callId(end))&&flag(end,2)!=='1'){match={from:i,to:k,conditional:['2','3'].includes(flag(call,1))||['2','3'].includes(flag(end,2))};break;}}
+    }
+    if(match){seen.add(key);out.push({...journey,_match:match});}
+  }
+  return out;
 }
 export function sourceTrainLabelKey(value){const text=String(value||'').replace(/\s+/g,'').toUpperCase(),match=text.match(/^(?:RJX|RJ|RAILJET|EC|ECE|IC|ICE|EN|NJ)?(\d{1,6})$/);return match?match[1]:text;}
 export const journeyIdentity=journey=>JSON.stringify([journey.source,journey.snapshot,journey.id,journey.agencyPrimary!==false]);

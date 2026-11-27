@@ -1,7 +1,7 @@
-import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=9950f30ee93e8b21';
-import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=9950f30ee93e8b21';
-import{stationInScope}from'./project-scope.js?v=9950f30ee93e8b21';
-import{countryMatches}from'./explorer-core.js?v=9950f30ee93e8b21';
+import{validMapLocation,isItaly,worldPoint,stationDisplayMode}from'./atlas-core.js?v=af6ecd556b560479';
+import{stationMemberIds,stationSourceSelected}from'./station-identity.js?v=af6ecd556b560479';
+import{stationInScope}from'./project-scope.js?v=af6ecd556b560479';
+import{countryMatches}from'./explorer-core.js?v=af6ecd556b560479';
 
 export const STATION_ZOOM=9;
 function viewportSize(viewport){return{width:Number(viewport?.width??viewport?.x)||0,height:Number(viewport?.height??viewport?.y)||0};}
@@ -119,7 +119,7 @@ export class StationMarkers{
       if(active)this.selectedHalo.setLatLng([station.lat,station.lon]);
       const signature=active?'selected':dimmed?'dimmed':'ordinary',style={radius:active?6.5:2.8,weight:active?3:1,color:active?'#006f92':dimmed?'#a6b0a9':'#3d615d',opacity:dimmed?.6:1,fillColor:dimmed?'#d3d9d3':'#fbfaf6',fillOpacity:dimmed?.7:1};
       let node=this.nodes.get(station.id);
-      if(!node){node={station,signature,lon:station.lon,lat:station.lat,marker:L.circleMarker([station.lat,station.lon],{renderer:this.renderer,...style,interactive:true,bubblingMouseEvents:false}).addTo(this.layer)};node.marker.on('click',()=>this.onPick(node.station));this.nodes.set(station.id,node);}
+      if(!node){node={station,signature,lon:station.lon,lat:station.lat,marker:L.circleMarker([station.lat,station.lon],{renderer:this.renderer,...style,interactive:true,bubblingMouseEvents:false}).addTo(this.layer)};node.marker.on('click',event=>this.onPick(node.station,{shift:!!event?.originalEvent?.shiftKey}));this.nodes.set(station.id,node);}
       else{if(node.lat!==station.lat||node.lon!==station.lon)node.marker.setLatLng([station.lat,station.lon]);if(node.signature!==signature)node.marker.setStyle(style);node.station=station;node.signature=signature;node.lon=station.lon;node.lat=station.lat;}
       node.marker.bringToFront();if(active)this.selectedMarker=node.marker;
     }

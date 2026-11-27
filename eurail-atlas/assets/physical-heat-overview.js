@@ -6,8 +6,8 @@
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
  * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=9950f30ee93e8b21';
-import{rgb}from'./rail-gpu.js?v=9950f30ee93e8b21';
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=af6ecd556b560479';
+import{rgb}from'./rail-gpu.js?v=af6ecd556b560479';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -102,7 +102,7 @@ function concatenated(arrays){let length=0;for(const a of arrays)length+=a.lengt
 export class TrafficOverviewLayer{
   constructor(map,{before=null,workerFactory}={}){
     this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=9950f30ee93e8b21',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
+    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=af6ecd556b560479',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
     // Paint off the interaction thread when possible, like the train raster.
     // The worker starts only when an overview is first shown.
     this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;
@@ -149,8 +149,17 @@ export class TrafficOverviewLayer{
     for(let i=3;i<data.length;i+=4)if(data[i]>alpha)return true;
     return false;
   }
-  show(overview){if(this.overview!==overview){this.overview=overview;this.paths.clear();this.sentKey=null;}if(!this.visible){this.visible=true;this.draw();}}
-  hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.pending=null;this.canvas.hidden=true;this.paintView=null;}
+  // Shown again (zooming back out to the overview's zooms), the last painted
+  // frame of the same variant stays on screen, aligned to the view, until the
+  // new one is painted: repainting the whole network takes a second or two, and
+  // the map must not go blank meanwhile (owner, 27 November).
+  show(overview){
+    const previous=this.overview;if(previous!==overview){this.overview=overview;this.paths.clear();this.sentKey=null;}
+    if(this.visible)return;this.visible=true;
+    if(this.lastPaint&&this.canvas.width&&previous?.pass===overview.pass){this.paintView=this.lastPaint;this.canvas.style.transition='none';this.canvas.hidden=false;this.pan();}
+    this.draw();
+  }
+  hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.pending=null;this.canvas.hidden=true;this.lastPaint=this.paintView||this.lastPaint;this.paintView=null;}
   // Release the worker once the exact sections are drawn; it restarts if needed.
   release(){this.hide();this.worker?.terminate();this.worker=null;this.sentKey=null;}
   pathsFor(zoom){
@@ -186,8 +195,9 @@ export class TrafficOverviewLayer{
   }
   pan(){
     if(!this.visible||!this.paintView)return;const view=this.view(),painted=this.paintView;
-    if(painted.zoom!==view.zoom)return;
-    this.canvas.style.transform=`translate3d(${(painted.centerX-view.centerX)*view.scale}px,${(painted.centerY-view.centerY)*view.scale}px,0)`;
+    // The painted frame placed on the current view, scaled when the zoom differs.
+    const scale=view.scale/painted.scale,x=(painted.centerX-view.centerX)*view.scale+view.width/2-scale*painted.width/2,y=(painted.centerY-view.centerY)*view.scale+view.height/2-scale*painted.height/2;
+    this.canvas.style.transform=scale===1?`translate3d(${x}px,${y}px,0)`:`translate3d(${x}px,${y}px,0) scale(${scale})`;
   }
   zoomAnimation(event){
     if(!this.visible||!this.paintView)return;const view=this.paintView,target=this.map.project(event.center,0),scale=2**(event.zoom-view.zoom),factor=2**event.zoom;
