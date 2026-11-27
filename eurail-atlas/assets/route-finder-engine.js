@@ -121,6 +121,22 @@ export function buildConnections(week,days,d,allow=null){
 }
 
 const canBoard=(week,C,c)=>(C.flags[c]&1)!==0;
+
+// A hop mask belongs to one connection set: a mask of another set (another
+// date, or rebuilt) is refused rather than misread.
+function checkedMask(C,usable){
+  if(!usable)return null;
+  if(!(usable instanceof Uint8Array)||usable.length!==C.count)throw new Error('route_finder_mask_does_not_match');
+  return usable;
+}
+
+// The hop mask of connection set C: ok(from, dep, to, arr) with times on C's
+// clock (minutes from 00:00 of C's first date, C.d). Cached on C by `id`.
+export function maskConnections(C,id,ok){
+  C.usable??=new Map();if(C.usable.has(id))return C.usable.get(id);
+  const m=new Uint8Array(C.count);for(let c=0;c<C.count;c++)m[c]=ok(C.from[c],C.dep[c],C.to[c],C.arr[c])?1:0;
+  C.usable.set(id,m);return m;
+}
 const canAlight=(week,C,c)=>(C.flags[c]&2)!==0;
 
 // Earliest arrival at `to` for a departure at or after `depart` (minutes on
@@ -140,7 +156,12 @@ const canAlight=(week,C,c)=>(C.flags[c]&2)!==0;
 //           connections, whose clock starts `shift` minutes later: every station
 //           time reached there is a start here (multi-day journeys, overnight
 //           waits). Times of the journeys stay on the first search's clock,
-//         keepState: return {journeys, state} so a later search can carry on}
+//         keepState: return {journeys, state} so a later search can carry on,
+//         usable: Uint8Array(C.count), 1 where a hop may be ridden (a daily
+//           travel window, docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md; maskConnections()).
+//           A masked hop cannot be ridden, so a passenger on board must leave the
+//           train before it: the trip is split there. Waiting at a station
+//           stays allowed (a night stop)}
 export function earliest(week,C,query){
   const N=week.N,K=Math.min(MAX_TRAINS,(query.maxChanges??5)+1),change=Math.max(1,query.minChange??5);
   const via=query.via||[],P=via.length+1,viaSet=via.map(v=>new Set(v.stations)),stopover=via.map(v=>Math.max(0,v.stopover||0));
@@ -167,6 +188,7 @@ export function earliest(week,C,query){
   const pending=new Map(),hasPending=new Uint8Array(C.T);
   // Phases above `top` hold nothing yet (no via reached): the scan skips them.
   const carry=query.carry||null;let top=0;
+  const usable=checkedMask(C,query.usable);
   if(carry){const prev=carry.state;if(prev.P!==P||prev.K!==K||prev.N!==N)throw new Error('route_finder_carry_does_not_match');
     // Arrivals of the earlier search, on this clock; reconstruction goes back into it (parentVia 3).
     for(let i=0;i<size;i++){const b=prev.best[i];if(b<INF){best[i]=b-carry.shift;parentVia[i]=3;}}top=prev.top;}
@@ -197,6 +219,10 @@ export function earliest(week,C,query){
     if(C.dep[c]>bound)break;
     const t=C.trip[c];if(allowed&&!allowed(t))continue;
     const s=C.from[c],a=C.to[c];
+    // A masked hop: nobody rides it. Everyone on board leaves before it (every
+    // phase), and a stay-on-board hand-off waiting for this departure is dropped,
+    // so a later call of the same trip at this station cannot pick it up.
+    if(usable&&!usable[c]){for(let p=0;p<P;p++){const j=p*C.T+t;legs[j]=255;enter[j]=NONE;if(hasPending[t])pending.delete(j*65536+s);}continue;}
     const board=canBoard(week,C,c);
     for(let p=0;p<=top;p++){
       const j=p*C.T+t;
@@ -337,10 +363,15 @@ export function latest(week,C,query){
   // departFrom (optional): no departure earlier than this is wanted, so hops
   // arriving before it belong to no answer and the scan stops there.
   const lastFloor=A-(query.window??1440);let floor=query.departFrom??-INF;
+  const usable=checkedMask(C,query.usable);
   for(let i=0;i<C.count;i++){
     const c=order[i];if(C.arr[c]>A)continue;if(C.arr[c]<floor)break;
     const t=C.trip[c];if(allowed&&!allowed(t))continue;
     const a=C.to[c],s=C.from[c];
+    // A masked hop (see earliest()): nobody rides it, so in this reverse scan
+    // nobody is on board trip t before it, and no hand-off onto t's departure
+    // from s exists. Before the hand-off and alighting blocks.
+    if(usable&&!usable[c]){legs[t]=255;exit[t]=NONE;atHandoff.delete(t*65536+s);continue;}
     // Arriving at a handoff: stay on board onto the linked trip, no change.
     if(C.hasStay[t]){const next=C.stay.get(t*65536+a);if(next)for(const t2 of next){const v=atHandoff.get(t2*65536+a);
       if(v&&v[0]<legs[t]){records.push([c,t2,v[1]]);legs[t]=v[0];exit[t]=-(2+records.length-1);}}}

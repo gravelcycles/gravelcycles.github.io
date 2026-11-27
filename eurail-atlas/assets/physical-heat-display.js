@@ -4,10 +4,10 @@
  * geometry, in spatial order. Section ids live in 256 small shards keyed by
  * two id characters; a section carries a provisional "#<display index>" id
  * until it is picked or deep linked and its real id is read from one shard. */
-import{worldPoint}from'./atlas-core.js?v=bd769551cdd0b233';
-import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=bd769551cdd0b233';
-import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=bd769551cdd0b233';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=bd769551cdd0b233';
+import{worldPoint}from'./atlas-core.js?v=9950f30ee93e8b21';
+import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=9950f30ee93e8b21';
+import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=9950f30ee93e8b21';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=9950f30ee93e8b21';
 
 export const PHYSICAL_DISPLAY_FORMAT='rail-atlas-physical-heat-display-v2';
 export const PHYSICAL_DISPLAY_INDEX='assets/physical-heat/manifest.json';
@@ -149,7 +149,7 @@ export function packPhysicalDisplay(input){
 export async function gunzipBytes(bytes){
   if(!(bytes.length>=2&&bytes[0]===0x1f&&bytes[1]===0x8b))return bytes;
   if(typeof DecompressionStream==='function')return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
-  const{gunzip}=await import('./gunzip.js?v=bd769551cdd0b233');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=9950f30ee93e8b21');return gunzip(bytes);
 }
 export async function fetchPhysicalDisplay(url,{signal}={}){
   const response=await fetchWithTransientRetry(url,{signal});if(!response.ok)throw new Error('Traffic display packet unavailable');

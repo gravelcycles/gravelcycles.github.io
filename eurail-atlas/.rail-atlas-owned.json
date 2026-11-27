@@ -173,51 +173,51 @@
     },
     "assets/about-guide.js": {
       "bytes": 6137,
-      "sha256": "569d1c4939769595bf81a8044aa0d61f2e0c9186b2eb8a3e929927691456cf8c"
+      "sha256": "d6c97eb8883adb02fe904d847134404deb9e2e049bd6d77ad71cbaace4063e45"
     },
-    "assets/about-visuals/explore-desktop-ef9a4355c1e3.webp": {
-      "bytes": 127408,
-      "sha256": "ef9a4355c1e300fb84e2b2d8ac8be6f76e2067348744cf6c35766a2cf237ba57"
+    "assets/about-visuals/explore-desktop-094f783468dc.webp": {
+      "bytes": 127568,
+      "sha256": "094f783468dc077e9cc32d8774acaa74eedb07f0688198808cbd77f084748ec2"
     },
-    "assets/about-visuals/explore-desktop-poster-c7b63d489e87.webp": {
-      "bytes": 27962,
-      "sha256": "c7b63d489e87841705207bba83cab4b74aed1e711192692438a232ead3738b76"
+    "assets/about-visuals/explore-desktop-poster-692ccdd53a4f.webp": {
+      "bytes": 28110,
+      "sha256": "692ccdd53a4fd2c2c3fa61aa822474cd878e1f11a58436b28e00f18bc7799e35"
     },
-    "assets/about-visuals/explore-phone-985177b2b3e2.webp": {
-      "bytes": 77590,
-      "sha256": "985177b2b3e2eddb1aeeb9d4bc355569695d1e333636bade7435bdb0d2834d29"
+    "assets/about-visuals/explore-phone-caca86405735.webp": {
+      "bytes": 77784,
+      "sha256": "caca86405735ab1cc1bb2b59429bd051d81ba72f3d06dd3af8edfa6a81119a13"
     },
-    "assets/about-visuals/explore-phone-poster-e0094b768c4b.webp": {
-      "bytes": 17646,
-      "sha256": "e0094b768c4bfcdb27d2e416568b361df4c04bfe486eb48e288e4dde7d348530"
+    "assets/about-visuals/explore-phone-poster-1664708162c8.webp": {
+      "bytes": 17654,
+      "sha256": "1664708162c852b6f440aed0804024867df1256eed23d801a9fd974f613ca1d5"
     },
-    "assets/about-visuals/line-desktop-1a677243c478.webp": {
-      "bytes": 100444,
-      "sha256": "1a677243c4780f21a9a5a0a1bc322d7e5749e7cea862a0435d09b8e4dbd88fab"
+    "assets/about-visuals/line-desktop-9a3a8e2909af.webp": {
+      "bytes": 100528,
+      "sha256": "9a3a8e2909afd28ba4bffc4616d924efa2f393c4d0d5380fca6881c6ad87ad0f"
     },
-    "assets/about-visuals/line-desktop-poster-1d20c1cc43b4.webp": {
-      "bytes": 46116,
-      "sha256": "1d20c1cc43b4d6290070122cd7fe75b11ab9c74eed11b6fdfff06463504019b4"
+    "assets/about-visuals/line-desktop-poster-6938be5492d2.webp": {
+      "bytes": 46178,
+      "sha256": "6938be5492d2857f09ddd0eac4a8b75ffc67b695a1621f7896a1e3aba65a01dc"
     },
-    "assets/about-visuals/line-phone-3dd232ea90ee.webp": {
-      "bytes": 55596,
-      "sha256": "3dd232ea90ee60252d14acd36756102b7f1eaeca9c0ef1337ce512f6f890fd34"
+    "assets/about-visuals/line-phone-db13bbf4e36e.webp": {
+      "bytes": 55732,
+      "sha256": "db13bbf4e36ed7ce38742af80c5cee437912f345153ee3fbd4e32ac5023e49dc"
     },
-    "assets/about-visuals/line-phone-poster-3874ad5cf253.webp": {
-      "bytes": 26286,
-      "sha256": "3874ad5cf253479d84652201dc25cb686b448afb2ae80769b56b00af1525f2c6"
+    "assets/about-visuals/line-phone-poster-1b89ce2cd6e7.webp": {
+      "bytes": 26422,
+      "sha256": "1b89ce2cd6e773bc683751c21348e493109806befa0f7c515a6382ed643b86f5"
     },
     "assets/about-visuals/manifest.json": {
       "bytes": 9529,
-      "sha256": "b301f54ed1b2d6b243e71668a033db8fb3d79ba5344961a3b83e37d004e8a1d7"
+      "sha256": "3d61c9345167288ceb631fd324c68045cf5d7847ebd84a2623980fab2d34ed81"
     },
-    "assets/about-visuals/route-desktop-1bad051133ce.webp": {
-      "bytes": 75886,
-      "sha256": "1bad051133ce5044dfba046339db1dd801441697d03152116c403927f2eed9e6"
+    "assets/about-visuals/route-desktop-8e630570cb12.webp": {
+      "bytes": 75732,
+      "sha256": "8e630570cb1216dd9384005033130019a762a9d1e1448647fdb545218452ed07"
     },
-    "assets/about-visuals/route-desktop-poster-29129956781c.webp": {
-      "bytes": 39338,
-      "sha256": "29129956781c29e03cb078be157737f3324a58d612c8b863e62bca5bdf0bc528"
+    "assets/about-visuals/route-desktop-poster-7bad87ea52c5.webp": {
+      "bytes": 39272,
+      "sha256": "7bad87ea52c54f113907230f8b14d989a785494919e5ec9d51fbd26215939360"
     },
     "assets/about-visuals/route-phone-4f58b4e31cce.webp": {
       "bytes": 21018,
@@ -227,53 +227,53 @@
       "bytes": 10378,
       "sha256": "b90b81ae6704d53f15e9b465659522e600fddbe2fef4165396c85b6854bfbf72"
     },
-    "assets/about-visuals/station-desktop-f584397c475f.webp": {
-      "bytes": 83854,
-      "sha256": "f584397c475f9d89ea592a4379eb92f34830609d50b028d2552d89bee5e5ca9a"
+    "assets/about-visuals/station-desktop-dc641aad814b.webp": {
+      "bytes": 83704,
+      "sha256": "dc641aad814bbaf57a3e230950e033d3c888e17e17f9cf6ad366362a54153df6"
     },
-    "assets/about-visuals/station-desktop-poster-04bcfd098d28.webp": {
-      "bytes": 46130,
-      "sha256": "04bcfd098d280e60b915746cde673c8811f52a1ca5e4e5c86742f1b676b4de80"
+    "assets/about-visuals/station-desktop-poster-a904d3fc7c40.webp": {
+      "bytes": 46044,
+      "sha256": "a904d3fc7c40cc36266ed4aca1a7ca2b35ea96d71c2152a4274e0cb386f7355b"
     },
-    "assets/about-visuals/station-phone-d5fc087245ce.webp": {
-      "bytes": 58266,
-      "sha256": "d5fc087245ce53581022df65f362611f7d3719c13017c7ad888fa86efca7bbf5"
+    "assets/about-visuals/station-phone-9a37737b79d7.webp": {
+      "bytes": 57828,
+      "sha256": "9a37737b79d767b46ac95c72c401e8cc7daa7aec14b464d5b6a7ede0f02c07ea"
     },
-    "assets/about-visuals/station-phone-poster-37031e5dfd50.webp": {
-      "bytes": 26366,
-      "sha256": "37031e5dfd50dd2b78ad51ec4baf55253b94cd89f1b83104fde6efca4170b084"
+    "assets/about-visuals/station-phone-poster-7bdbec66544f.webp": {
+      "bytes": 25890,
+      "sha256": "7bdbec66544f08807ac91fdb138941ecc7ae851f5dc3abaf360a6f407f00dbd3"
     },
-    "assets/about-visuals/transit-desktop-6a45140b470d.webp": {
-      "bytes": 95404,
-      "sha256": "6a45140b470d677e6a3a8f7db0acb535b20a7f400b70ba60c9cbd550471b7837"
+    "assets/about-visuals/transit-desktop-5158791900ea.webp": {
+      "bytes": 95280,
+      "sha256": "5158791900ea8eae29eae2481313fdb939b6bde903abc1433a4d21ff8292f357"
     },
-    "assets/about-visuals/transit-desktop-poster-39a63bd13ff8.webp": {
-      "bytes": 45566,
-      "sha256": "39a63bd13ff882b5b82304db1d3a6db5525b16a479efcf82cb16fcbf61fe6b2b"
+    "assets/about-visuals/transit-desktop-poster-a77e54b93d24.webp": {
+      "bytes": 45508,
+      "sha256": "a77e54b93d24bd9b32d8d8022853a81dd79244562c3d5c274d30f01b97f99cba"
     },
-    "assets/about-visuals/transit-phone-dbc91dc8dead.webp": {
-      "bytes": 68834,
-      "sha256": "dbc91dc8dead4af6b7eeb83774e7fc6c6194e7bd1ca808472bc9e6ea7e62a061"
+    "assets/about-visuals/transit-phone-c4163206b201.webp": {
+      "bytes": 69046,
+      "sha256": "c4163206b201c9d119ff85b8c846d9effeeb74bc797c1cfc991f3783e1a37961"
     },
-    "assets/about-visuals/transit-phone-poster-b9e091d3d501.webp": {
-      "bytes": 26458,
-      "sha256": "b9e091d3d5016a2814932d8d6e947999aeee2fc3155f402085235024b2dc43a8"
+    "assets/about-visuals/transit-phone-poster-c69daff02fc0.webp": {
+      "bytes": 26440,
+      "sha256": "c69daff02fc0ec5041b8fe431b234e4208b231521219e25e810cb118d6b3fb2a"
     },
     "assets/app.css": {
       "bytes": 58158,
       "sha256": "b93ac635e89dd25d0f2f3c71b38067cdc0ab5afd40dde1d44a7df1c2431083df"
     },
     "assets/app.js": {
-      "bytes": 219311,
-      "sha256": "2647b9044bd3be8c7a864a53ae358b5b63445f77bdc724a9e2374aee266731d6"
+      "bytes": 220726,
+      "sha256": "06bbbc373a41c078b2bb740bfe732f0d13a69bafefe30e7305ba139773e1cdb7"
     },
     "assets/atlas-core.js": {
       "bytes": 35763,
-      "sha256": "42bd645a797a65c6bfb7dfa591e8b05bf33ebf7ad237eb97a8253e913c9fb341"
+      "sha256": "c46d0c2e775edf87aa84f3649d5665e6e3947442f532ec9d7bb0989ea144b3d0"
     },
     "assets/border-links.js": {
       "bytes": 11583,
-      "sha256": "30384a7667ab9ded3fde30c09a7adf40bcf1cd78ac30b62213a1f6277d156f97"
+      "sha256": "a2b85f1fb3e712d10c63ce454ac5b7b80feab2493359d59f41c5c32ba525cc4f"
     },
     "assets/border-links.json": {
       "bytes": 14006,
@@ -281,19 +281,19 @@
     },
     "assets/bus-aggregate.js": {
       "bytes": 14984,
-      "sha256": "8d49852db58a8b18165c1fd11d317b1560732bde77e4b6d41d189a05ced0202a"
+      "sha256": "b8dc157c6a809f3e89522d3c5fef91279e00aee4ef9358a5ff94a4eca7ccd2d8"
     },
     "assets/bus-app.js": {
       "bytes": 4567,
-      "sha256": "eda76767cd8064b6f35b60676305d5d98d322d1cabe1abd0d3d6fc6118eaefd1"
+      "sha256": "03f5ef3d30a727507c0240c86e4061a2f6fb27358dc9cc057991901fe96bfa4c"
     },
     "assets/bus-canvas.js": {
       "bytes": 19540,
-      "sha256": "2ff2403e83131b9e1a4b758ed9cc859bc6fc4cc3a0eca68460bee0a2a45d9dee"
+      "sha256": "00d48648af9c70071131b1de09a7c75a0c11e35d452c51ef2d5d1e33294c308f"
     },
     "assets/bus-core.js": {
       "bytes": 16693,
-      "sha256": "bfee5c7f93f14db7849821b51dfa1a800a29c99cb5bd58adb3f2a4b630185c7b"
+      "sha256": "c5e26687626736c6fcf156a77c49c22a159557b5ead39f61f2b27ad611497b57"
     },
     "assets/bus-countries/catalogue.json.gz": {
       "bytes": 2913,
@@ -309,11 +309,11 @@
     },
     "assets/bus-data-client.js": {
       "bytes": 5697,
-      "sha256": "135013e3e2f1261d7afd0065cc5df1fc22cb297f16e1933b212ac54a7920e5cb"
+      "sha256": "9a4e83146519495a3970d2c1dfa38b4b04a5ac152e87e491f733392423b6efb5"
     },
     "assets/bus-data-worker.js": {
       "bytes": 20818,
-      "sha256": "2b682c99ef0ad31ff8bef11a3133bc708e38d1b0d256162b8adcc2b1015519de"
+      "sha256": "2c86552ba00cc712ddd8f7d1c3d1286e9d3640629d539acc98db3e872b59aa31"
     },
     "assets/bus-delivery.js": {
       "bytes": 7061,
@@ -329,7 +329,7 @@
     },
     "assets/bus-duplicates.js": {
       "bytes": 4608,
-      "sha256": "7f79130135411548d148bd9e12167bd33d020372a2a6cf43ced92859eb73a74a"
+      "sha256": "89ee75ccbba0da70549740f70d28cd61dfac95602066fa4f07f9a1c8e5b8065b"
     },
     "assets/bus-focus.js": {
       "bytes": 1579,
@@ -337,11 +337,11 @@
     },
     "assets/bus-geography.js": {
       "bytes": 6349,
-      "sha256": "8f430666b5ab7fa03b4e693a2430782223070c4d349e2caa8572a86e5b31f6f9"
+      "sha256": "363dde163910b08557d8199e88055de2958ec51069c743d6ba5daa8522e4973d"
     },
     "assets/bus-geometry.js": {
       "bytes": 6318,
-      "sha256": "059c6739506893450f92c73cec3dd25505b580f5b9114cfb1cb7138f8da8988b"
+      "sha256": "8e1a49d1cc01749d5250610bec793bfa6c257311832d95621d820c1be8ec1629"
     },
     "assets/bus-layer.css": {
       "bytes": 7588,
@@ -349,7 +349,7 @@
     },
     "assets/bus-layer.js": {
       "bytes": 57926,
-      "sha256": "bdae1da88dc43291b5e69b9dac024d05f6ff840a4e186f22bf6cf65b27dc2286"
+      "sha256": "95c7a0819213e21b97bb9b18fa9bc9fd31ace9f36e04a3eda15dbebabf1d4253"
     },
     "assets/bus-local-routing/100/42.json.gz": {
       "bytes": 533,
@@ -1609,7 +1609,7 @@
     },
     "assets/bus-network.js": {
       "bytes": 22290,
-      "sha256": "ed534ee8eb06efae98a946d0a1a64b44a97988acbc275186993046a9ce276a2c"
+      "sha256": "a3e5ccf236c73046c389436542cdf35531d2fea42e6bc8c5c9ba697ac179705a"
     },
     "assets/bus-overview.js": {
       "bytes": 339,
@@ -1625,19 +1625,19 @@
     },
     "assets/bus-search.js": {
       "bytes": 16584,
-      "sha256": "e7557d3788ad45cdd1140cc47457b69d078abd905b731900cd19ead1880c6ffd"
+      "sha256": "6f0d2bab7fad8a33528645df5443a7656ee35cdd4c9206672619b847c199a135"
     },
     "assets/bus-spatial-routing.js": {
       "bytes": 7598,
-      "sha256": "56b79154d4daa50c5c6192b741b297f1085e52235f8e2732676b39fbad4a27a1"
+      "sha256": "ef1ee18770acd42b46f6afe6e0f2c15b17e288a686519c5f55628d861049334f"
     },
     "assets/buses.html": {
       "bytes": 2241,
-      "sha256": "7c389117f2d2fada5e41ee998bfd3fb7a7aba21b41ba92589380953db13fd0ea"
+      "sha256": "d16de687448da26e6cd186ce302a216076863fc878f6bc71a05448cd50864944"
     },
     "assets/city-areas.js": {
       "bytes": 2840,
-      "sha256": "94281861147edd740e292ecce0dc6a8c689d1d5ac519323f549fae1d03645f7d"
+      "sha256": "d7af862a05d43d773cdbf3876eac5e1e98e676f7fb0b4c8fc67c5d6e4aa9f76e"
     },
     "assets/city-hubs-loader.js": {
       "bytes": 2959,
@@ -1645,11 +1645,11 @@
     },
     "assets/clock-coverage.js": {
       "bytes": 1147,
-      "sha256": "8dae91e2b31b99c63585aee4c73592e8868915ce77fecfa08538a5504accec5b"
+      "sha256": "70b6b42ca0bf57822ff2e7d5ffb62754d655b0659504941cfd00810990498b3f"
     },
     "assets/clock-notice.js": {
       "bytes": 3073,
-      "sha256": "5b11ada3de0c669f9be0de00f518aca0d1d4170e92a8c7397dd43ba084e415b5"
+      "sha256": "d692f68e770f544762fec87337ecae55f36e99165071639dadb6234740998a9f"
     },
     "assets/clock-notices.json": {
       "bytes": 1772,
@@ -1661,7 +1661,7 @@
     },
     "assets/context-scope.js": {
       "bytes": 3946,
-      "sha256": "3964f33763ba33e3ba955897cb5c4635506cf58e5d4257ac5973545e014d48db"
+      "sha256": "5c38a3247e7d01e8b057bdfbcc876b35c63be7a8a8510443ec90313c526c9026"
     },
     "assets/countries.geojson": {
       "bytes": 838726,
@@ -1673,15 +1673,15 @@
     },
     "assets/data-codec.js": {
       "bytes": 1329,
-      "sha256": "a65dd868e252ec10edb3b21f056c77f9394078a3f2f04caec336e649142c8ac7"
+      "sha256": "9ebcfafe6cd3639ec3149598224a61405559420d4f02f2993b8af7f0bc241e1d"
     },
     "assets/data-loader.js": {
       "bytes": 7358,
-      "sha256": "dba5a7ba683172ec7b4ab17eb9988654a14e9e72c50630e0629d17844ffae92c"
+      "sha256": "b88ba09afeb33cba6160fa6dd37c15861fca0a332cdfd9c8a6691bfedfc5314b"
     },
     "assets/data-worker.js": {
       "bytes": 14454,
-      "sha256": "180712c62afeda8770c6db45707f1458609325871d9bd9c2c9de0706f92d83ad"
+      "sha256": "c6ae35bb052c90e89d9533b3d52f800bc2ffe9dc551d1fd6aa7a7ea2d2bd5790"
     },
     "assets/detail-loading.js": {
       "bytes": 734,
@@ -1689,7 +1689,7 @@
     },
     "assets/display-codec.js": {
       "bytes": 4596,
-      "sha256": "9efa7c4f2d277b84a47d7d651dfb6a75b8e9573507547d457e2e5581ae591e17"
+      "sha256": "d216a9416707a4fb0a4fbac05af1b7ee3e666a827326517a0bb8d597863462c4"
     },
     "assets/dm-sans-400.ttf": {
       "bytes": 48280,
@@ -1701,15 +1701,15 @@
     },
     "assets/explore-app.js": {
       "bytes": 8825,
-      "sha256": "92af599e16bf6698b256edc494546f7b7bc4b9f3c8387fc3abd31c5fc8de2ef4"
+      "sha256": "81aab1c2e2e7d66402ee3af05f8472cc9245ac947aaf7c045f77b88eec2e7c36"
     },
     "assets/explore-city.js": {
       "bytes": 5833,
-      "sha256": "e8c82afe2c6d522233b9ecc4729456214e2df84fec20b830d05d6cf6e9e3c461"
+      "sha256": "9e65868c957adea3ec375550af87f674c1079d1711799f25d19da176b012b20f"
     },
     "assets/explore-data.js": {
       "bytes": 9340,
-      "sha256": "71d2fe3ec719a09a13d903d8e83b7517a4824b2847829a53694becb33d40a0b1"
+      "sha256": "bf5f82a15b05108c9d103186d99124fe401b95bd51e57dc5ed7452e45f0aea02"
     },
     "assets/explore-ideas.html": {
       "bytes": 67215,
@@ -1721,23 +1721,23 @@
     },
     "assets/explore-more.js": {
       "bytes": 37557,
-      "sha256": "d2e57d78c210f987a17befb307bfe2c15a0c22a99f7fa8383b98757e5cf7a714"
+      "sha256": "e58d984457387dcdb876587aa5a3ab3184ca1807def8fb73396de27d29dd4b91"
     },
     "assets/explore-motion.js": {
       "bytes": 14959,
-      "sha256": "e323bf61e3473a0b15c5e9b1b4919349fd2306198fa64b241a6b8c9696fe2d5b"
+      "sha256": "d6273a5406f87da43b60969c908773ba9992397b8c333e6bfff1245a5b8a4948"
     },
     "assets/explore-reach.js": {
       "bytes": 9091,
-      "sha256": "ffd654eedf248ce6f3d7c5a23646b39aef9e387a59ba8e1f05a170f29276c25c"
+      "sha256": "4c1b12a70f5125965f7d3ec2b4a89d92d2c71b3938bd9c5752b586943e3b4ca8"
     },
     "assets/explore-scan.js": {
       "bytes": 7049,
-      "sha256": "08f3b21d31fa3b6eff6cdd7966845f9f1255205d06a68603f7428a209aa50083"
+      "sha256": "811791cdbc78bb3f6cf0f8293472e53e248465928ada877289034d91178646f0"
     },
     "assets/explore-speed.js": {
       "bytes": 6590,
-      "sha256": "384a22b08995bb7a8fee0846c5d9157f767188e446e41fd21cdf765c6956f519"
+      "sha256": "4035bd6396e1b683994c06f3d523526334b9c53ff9ff0c3b8b34f5a17ef524ed"
     },
     "assets/explore-sun.js": {
       "bytes": 1964,
@@ -1753,11 +1753,11 @@
     },
     "assets/explore.html": {
       "bytes": 8977,
-      "sha256": "2a9d7cecbdba2ee29de6612bb6054f312abe18954dba276bc55980e331c96093"
+      "sha256": "630ca40b1ec0ab724764205ba976c66cef538e631d6f3bdb0ac71c411dd74151"
     },
     "assets/explorer-core.js": {
       "bytes": 16775,
-      "sha256": "8120885306bf2c938dd47a8ca8f7be4dd2777960ab7746fb73d24ef5d1a3258c"
+      "sha256": "3d9d317b412cb29f02929153f8fd9ae478de6397c8dea0a7d37c4c4164ddd714"
     },
     "assets/frame-padding.js": {
       "bytes": 3255,
@@ -1769,7 +1769,7 @@
     },
     "assets/frequency-filter.js": {
       "bytes": 4768,
-      "sha256": "aab2673d0a1fcaf40fd00fa743a77db21a4c805721bfc7126be51462e69143f8"
+      "sha256": "45061d7b46bf6a4e2a35fccc82909667ea7125b68c91e6aab142699a29a6089b"
     },
     "assets/gunzip.js": {
       "bytes": 6783,
@@ -1777,11 +1777,11 @@
     },
     "assets/hub-stations.js": {
       "bytes": 11429,
-      "sha256": "ef03e189613d9755b45add98b3de0ec8333e51a082845ffc3e6b56a137586a45"
+      "sha256": "e6b6b87424508fc195729bed91062e54a5a29376b16022c7d2a75364ab6c9b35"
     },
     "assets/infrastructure-context.js": {
       "bytes": 8793,
-      "sha256": "39e3176dedbfdd8c26b16ce3859c8f66018529753d428bf23ceb46ff49b38eaa"
+      "sha256": "cf42665d6d2cbd0d50ba7044db769d65884ef2a3e5d032549900a5f39fe15192"
     },
     "assets/leaflet.css": {
       "bytes": 14806,
@@ -1797,7 +1797,7 @@
     },
     "assets/line-information.js": {
       "bytes": 5250,
-      "sha256": "972a7ecc3391578ee4b9fbe8e30ff6133057692c949c8923571acfb44d8b6820"
+      "sha256": "39f6f8ed1aa13a8145896bcb4d3c38a2556912de7b9f2ffda514d51cbc6f1f71"
     },
     "assets/lite-notice.js": {
       "bytes": 1674,
@@ -1816,8 +1816,8 @@
       "sha256": "757b70a5a2ccb66900752457f7f3584349af36e6be7c4e6cdcb89cac71841fe3"
     },
     "assets/map-renderer.js": {
-      "bytes": 26529,
-      "sha256": "2b792a61b573ca1890e72d6cca5f1b72b6bc98f882818e41a4c23432340d76bc"
+      "bytes": 29217,
+      "sha256": "57999ee9dc26dbed00a2c7664265ee244f05bdcac4f76d23c3ee59efa75a5eb2"
     },
     "assets/mobile-sheets.js": {
       "bytes": 7085,
@@ -1841,7 +1841,7 @@
     },
     "assets/operating-transfers.js": {
       "bytes": 18368,
-      "sha256": "4297dfc8c2df4663ccfe9291b4d4cdcdd11fd1a338ef72cadcd74d5e47990c41"
+      "sha256": "90f146f18210ba46121a0740e823f41d23b7298fbd2fb15614d21e2b14d53fc4"
     },
     "assets/pass-policies.js": {
       "bytes": 2309,
@@ -1849,23 +1849,23 @@
     },
     "assets/physical-count-cache.js": {
       "bytes": 3508,
-      "sha256": "2e5a1db613b59c847f34989aef8ffe810a920b638ab26c184e8139575e49c1ed"
+      "sha256": "8c7665647a7932fb68912503a7c07282612a2594f3c044264be9618695438230"
     },
     "assets/physical-heat-display.js": {
       "bytes": 13064,
-      "sha256": "8fbf18f31282445f00153ef7f62ee318dc6f9036cba1394e031575637751794e"
+      "sha256": "3717a0a3deff4f5e90c4ac07fd3822f59d3f8fa19c2f0014afce4eb14183d754"
     },
     "assets/physical-heat-inspector.js": {
       "bytes": 11261,
-      "sha256": "c1f577ee1442f65ace718dc2e990484c128c6e0bd3dfe42dc5e04f2b60a2b67d"
+      "sha256": "48f40969e21309c92223c680648deb957a0f6843f1c3c508632a4068ace7366e"
     },
     "assets/physical-heat-overview.js": {
       "bytes": 14697,
-      "sha256": "b1111efcda3c44afdf5fad8ada4cf3b07e26b7091e48496cc2eb4776cf27df88"
+      "sha256": "9a9cbb0d4502f28adb080f79fc99098bc540f57c77e43a3e7859ec57b62c7ab7"
     },
     "assets/physical-heat.js": {
       "bytes": 13415,
-      "sha256": "d5edd71e66b2e1c6a2618df00999f8db6f1b79d6ebf6b96a48f9486bb7325401"
+      "sha256": "ea70ef9867ea3aad0db528bd094f682ae64f91e8519999636682e5b895046eb6"
     },
     "assets/physical-heat/ids/00.json.gz": {
       "bytes": 43173,
@@ -3305,11 +3305,11 @@
     },
     "assets/rail-lod.js": {
       "bytes": 1680,
-      "sha256": "a8d9a83ca37601a2daa267e7758959022b87161e12f8961443a288da0ee7e78a"
+      "sha256": "f888984cb08bc8d7f820a4eacdc2ba7cb62e1e740fd17ea173559ce1e8e72716"
     },
     "assets/rail-picking.js": {
       "bytes": 7754,
-      "sha256": "0b0c62e69e726039f9b00f3d990b539c50cddcfd28f170d931928b2ec846f682"
+      "sha256": "71a2b5ea7dc994f7992650b62c2bf57f97f036e07bca565ee1ab0a793057bd00"
     },
     "assets/rail-primitives.js": {
       "bytes": 1740,
@@ -3325,39 +3325,47 @@
     },
     "assets/raster-client.js": {
       "bytes": 6080,
-      "sha256": "27084228da859b55c7ddafe19c51dafd69797bb539df36bdd5e72d007795e135"
+      "sha256": "db0660df833e7845fbf73badfaf7965376c3b7f29f3e0df7c973b7fa9342eb31"
     },
     "assets/raster-worker.js": {
       "bytes": 12318,
-      "sha256": "6c582b2787c2b2d4e6dc2e18b898c785edfe25206bde03b92688adb838ccfd37"
+      "sha256": "0b29274d728ac659df5b9e1457e0cd93114c8aa0e15fa96510261a88bc296ecd"
     },
     "assets/replacement-service.js": {
       "bytes": 2825,
-      "sha256": "c3b4a1453c5e0f7f2479e48fa15fb156b44587c60e587d4a02f237b94e32b7ce"
+      "sha256": "5834a4a346a359000fa6a902834b034384f23cf664edbe68c194e43c24e70eb9"
     },
     "assets/reviewed-station-positions.js": {
       "bytes": 3510,
       "sha256": "683c862133b72db7e19746ed794756ef6e7ef07eabe0105e13965e117febf72e"
     },
     "assets/route-finder-engine.js": {
-      "bytes": 35404,
-      "sha256": "956170312f9813291c78aca94ea34988731bf9e5a31cecc86c01b2d7ce821c80"
+      "bytes": 37281,
+      "sha256": "a08d8913c98c1294112479ea8850b4d91296bee438a1ce072099af9d9d6f0ca9"
     },
     "assets/route-finder-service.js": {
-      "bytes": 29158,
-      "sha256": "4776d2e9253185bf90137fa7aaf6cbe6a0b7c993616c7fba7530a3eb02059e56"
+      "bytes": 39848,
+      "sha256": "0cc47248b7acb639a1ac2d5c010a4526a9bca0d6d4a9cae8e49a005a6716e79a"
+    },
+    "assets/route-finder-sun.js": {
+      "bytes": 2299,
+      "sha256": "d66fb4335e9a5663de970ab8c0d0886b12932f039296734457869d1742c06751"
+    },
+    "assets/route-finder-window.js": {
+      "bytes": 2209,
+      "sha256": "694445a4e86742eb6ced8a06059fe0039588daa57275e13206691c90b862763d"
     },
     "assets/route-finder-worker.js": {
       "bytes": 2640,
-      "sha256": "45e989b78559862bdd32e5e74a11ce5d990628eae3986f3dc906866f1c86f146"
+      "sha256": "d5ceec4e542ace2279a3b6c3f0fb6699b860681c8fb81174d644f2b4b10525ee"
     },
     "assets/route-finder.css": {
-      "bytes": 7607,
-      "sha256": "20bf78f81b1d5f733a1ca0076e8a9598c5d065a2fee33d015f37c93190f870a8"
+      "bytes": 8466,
+      "sha256": "8fee6a33dc8c38c89221100353779a6fba920a49717de8ee07cdb7f1d34e87ad"
     },
     "assets/route-finder.js": {
-      "bytes": 40963,
-      "sha256": "a140cae5f29a5113027058204c578f37050bf07046f945f8d16b83ec62559b06"
+      "bytes": 49289,
+      "sha256": "12e78e741eb2a32359c3b996861825693e35b749a6f411b7f8644e12f9398625"
     },
     "assets/route-finder/cities.json.gz": {
       "bytes": 29082,
@@ -3473,11 +3481,11 @@
     },
     "assets/service-context.js": {
       "bytes": 13895,
-      "sha256": "3361bc3707c0768bcf6e2c292004e5b327a58850bb70cb91cf50a902bbfae547"
+      "sha256": "cc46a6aeb0b53bcf7456d0b37073f1c22aa167db0ab5463ab355849dbe40256e"
     },
     "assets/sleep-service.js": {
       "bytes": 2458,
-      "sha256": "aa62e5d037763ed27b2825a7a4863e15549beeb3e82b2ba25e508c8479a21a3b"
+      "sha256": "88e26bb31ae8914947e153a2d07d1a50a4e529747c741e80cf80f5c253ae642c"
     },
     "assets/source-default-cohorts.js": {
       "bytes": 3104,
@@ -3485,7 +3493,7 @@
     },
     "assets/source-selection.js": {
       "bytes": 2148,
-      "sha256": "cacd7a866bc987eb2a8dd3831f65736b241b5a4b9e4889d3bf903decc659f405"
+      "sha256": "230d86ba7bd3dcf03bf5e640ab9993b08e4ca8de5c4080a2cf0935ca9e4c1b58"
     },
     "assets/startup/manifest.json": {
       "bytes": 1582311,
@@ -3501,11 +3509,11 @@
     },
     "assets/station-identity.js": {
       "bytes": 5662,
-      "sha256": "5553780c15377f2d0fb2d79124a9c08b16a4c171a903eb9cf967099faab41e52"
+      "sha256": "4650d8422081158db7da463e9a8e751f64e1c40c88786a9867c10de55dfcf251"
     },
     "assets/station-markers.js": {
       "bytes": 11877,
-      "sha256": "fc4b839e10b250310a40cc8f5e4a17d6bf10cc3b7ae2cac16ab916a88ea3d7f6"
+      "sha256": "a9a65430bc5ce1ea868bf33db41de021ca0fc359eb141776321abd2b72ab2f4e"
     },
     "assets/station-panel.bin": {
       "bytes": 10683545,
@@ -3513,7 +3521,7 @@
     },
     "assets/station-panel.js": {
       "bytes": 6526,
-      "sha256": "fc4491942fdc52af9fc5218032077865942ab363feb02fa02c0439d3d8577580"
+      "sha256": "a7aae25a79815bd55a7897a3603e85c3803798e6afe3cc0d948473667191dfe2"
     },
     "assets/station-panel.json": {
       "bytes": 1249357,
@@ -3521,19 +3529,19 @@
     },
     "assets/station-route-pick.js": {
       "bytes": 2040,
-      "sha256": "aac6d45a90023c7b8f7275bb7687efe8bc8d03ee2f070e41d960688a37d177b5"
+      "sha256": "037ca080b4a15c9b5b3c7af9ad161c11fbe588b5919ab0c74f38e28be545c5de"
     },
     "assets/station-search.js": {
       "bytes": 8545,
-      "sha256": "ee0b3b706355f40ae0b59a7fc4acc04d0b35c738e8c2405d43b308f540270eb0"
+      "sha256": "e306cd360a33028f0a527d34701eddba55efb94a4b06cc971471c6eca80571e2"
     },
     "assets/supplemental-availability.js": {
       "bytes": 10057,
-      "sha256": "fd0414f06f522ec4105a92d0d034ec767c71d13ddc4f56af8cc7d910ff54a779"
+      "sha256": "32ed0634611c18fc7374b4edf4befd45a43248d0df3c941a526710ce8b3d1bcc"
     },
     "assets/through-continuations.js": {
       "bytes": 20422,
-      "sha256": "5ab705e8b2710d1841b1f773739db0d97193953381c0be13af22b880b9a365e2"
+      "sha256": "ad42b6c46aedadee4bb292944110bf2084e73d17a7c5f7a04ef65bf637404075"
     },
     "assets/through-services.js": {
       "bytes": 2115,
@@ -3541,19 +3549,19 @@
     },
     "assets/traffic-prefetch.js": {
       "bytes": 7033,
-      "sha256": "b1ccb2a58514904b840f142b3aa584850b1f942a674a6e88aadf8f4802a09a35"
+      "sha256": "fd306a20f022b09aec297b9bc1b4572a56cb92d5ae6c528ff93025eddf60e9a0"
     },
     "assets/train-inspector.js": {
       "bytes": 19712,
-      "sha256": "7a3643631c2195852e1103fe94b6a70f7e932f83dba9c04deccc358e432ba1ee"
+      "sha256": "fb492ab5237ac24dd80aa05ed6d3da155c4e12dc7fa15a7fcf758f8a2689816a"
     },
     "assets/train-services.js": {
       "bytes": 22917,
-      "sha256": "2c9bf3220281ec3413cfe13e8848d28f6b044cd5d84516a0b7772846062a343e"
+      "sha256": "b13677b64ccaa7c1bd4805d55c74b4ab4ccc3717ea9956867e7911e9818a9a0d"
     },
     "assets/transient-fetch.js": {
       "bytes": 1314,
-      "sha256": "1eb5d9662fd8f6b39d9b67b4c10a3350256ea339749894f60be0102442e1e26a"
+      "sha256": "01775f893fd4502864a7cfe650195277bff7eb8c7011549f6e17b01dcdabfd1f"
     },
     "assets/transit-layer.js": {
       "bytes": 40998,
@@ -3563,9 +3571,13 @@
       "bytes": 1902,
       "sha256": "5357c340306338b67e364924732002b829556340572de267cb8760a4384c9e34"
     },
+    "assets/trip-days.js": {
+      "bytes": 3765,
+      "sha256": "b568283bf4bb00f1295baae391e9630493c8ea442ffac35607eef57e14c0e0a1"
+    },
     "assets/trip-state.js": {
-      "bytes": 2596,
-      "sha256": "38cf582bee00655e2d44948c0c00301cb62acb68ee940fbe5cee1a718f14373d"
+      "bytes": 4347,
+      "sha256": "12f1e5057eef8ba3d8a045a084d3f7a94e1d9d44894d2dfc676cae24e067f41e"
     },
     "assets/viewport-refresh.js": {
       "bytes": 905,
@@ -3573,11 +3585,11 @@
     },
     "assets/week-ended.js": {
       "bytes": 1408,
-      "sha256": "a7616f1b3d40e250441706661377e47c67a749231526706984e8b2cdf41255a1"
+      "sha256": "914121fb2a29ec570560ecfb7684c292a7b780667c3697a58280d580da55b4ba"
     },
     "assets/weeks.js": {
       "bytes": 9817,
-      "sha256": "7ea657fab5d33751337f91ce9e7c23d73a82321f5816390e449456ab11e1ff1f"
+      "sha256": "6504b71aa53a23e05cf84686abda985c69d53876f91ce3a8c642591ed150dd01"
     },
     "assets/weeks.json": {
       "bytes": 10446,
@@ -3585,11 +3597,11 @@
     },
     "assets/whats-new.js": {
       "bytes": 5421,
-      "sha256": "0f263d8164fc14ce510666882e80001a34533465e82b4fafaccba816b2d4ab2c"
+      "sha256": "ac63fa9edfcdd60e525bdc93cf9d330b47cc1ad49b8e0bcfd038a425b4c401b3"
     },
     "assets/whats-new.json": {
-      "bytes": 7953,
-      "sha256": "9628353c6a2bc4419a9403b0c8dfe60ee633b5d3cd14ef38e2867a9d0c9d58f6"
+      "bytes": 8214,
+      "sha256": "50cdc2429dd2a8274751096f1bf9419ed7a7f8c64374c0434321616923605efa"
     },
     "assets/wheel-zoom.js": {
       "bytes": 3618,
@@ -52852,8 +52864,8 @@
       "sha256": "9f226b9be9aa532f22a25d3382044330000b0e68bc8ba451002f6b0e67be4b79"
     },
     "index.html": {
-      "bytes": 632152,
-      "sha256": "09baf636247de0574fe300ccf456f2363c234f5dbc6df7eb862994bb90dedc8b"
+      "bytes": 632225,
+      "sha256": "3d28763ec4680090c456e01f7f3ea8a90b08384e1b9bbbbd603cd659f0dd66a7"
     },
     "transit-data/assets.json.gz": {
       "bytes": 839229,

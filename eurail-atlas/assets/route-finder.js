@@ -5,6 +5,13 @@
 // without times, trains a pass filter leaves out, the end of the week.
 // See docs/RAIL_ROUTE_FINDER.md.
 
+// Day-by-day trips (docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md): the colour of each
+// travel day, in order, on the cards and the map's night markers.
+export const DAY_COLOURS=['#1b6f8a','#c2571a','#6b4fa0','#2f7d32','#a83261','#7a6a00','#00838f'];
+const hm=minutes=>pad(Math.floor(minutes/60))+':'+pad(minutes%60);
+const minutesOf=text=>{const m=/^(\d{2}):(\d{2})$/.exec(text||'');return m?Number(m[1])*60+Number(m[2]):NaN;};
+// The night's place: the station's Hubs city, else the station, said to have no city listed.
+const nightName=night=>night.city?esc(night.city):esc(night.station.name)+' <small>(no city listed)</small>';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const pad=n=>String(n).padStart(2,'0');
 // One journey: its departure, arrival and trains (to merge earlier and later pages).
@@ -20,7 +27,7 @@ const SUPPLEMENT={required_on_named_corridor:'supplement on some routes',conditi
 let worker=null,sequence=0,progressListener=null;const waiting=new Map();
 function call(method,...args){
   if(!worker){
-    const url=new URL('./route-finder-worker.js?v=bd769551cdd0b233',import.meta.url);url.search=new URL(import.meta.url).search;
+    const url=new URL('./route-finder-worker.js?v=9950f30ee93e8b21',import.meta.url);url.search=new URL(import.meta.url).search;
     worker=new Worker(url,{type:'module',name:'route-finder'});
     worker.onmessage=({data})=>{if(data.progress){progressListener?.(data.progress);return;}const job=waiting.get(data.id);if(!job)return;waiting.delete(data.id);data.error?job.reject(new Error(data.error)):job.resolve(data.result);};
     worker.onerror=event=>{for(const job of waiting.values())job.reject(new Error(event.message||'route_finder_worker_failed'));waiting.clear();worker=null;};
@@ -35,7 +42,7 @@ const toShared=(summary,country,d,minutes)=>minutes-((summary.clock.countryOffse
 
 // api (from app.js): {panel, body, drawTrip(legs, journey), clearTrip(), saveTrip(trip|null), toast(text), coverage()}
 export function createTripPlanner(api){
-  if(!document.querySelector('link[data-trip-planner]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./route-finder.css?v=bd769551cdd0b233',import.meta.url).href;link.dataset.tripPlanner='';document.head.append(link);}
+  if(!document.querySelector('link[data-trip-planner]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./route-finder.css?v=9950f30ee93e8b21',import.meta.url).href;link.dataset.tripPlanner='';document.head.append(link);}
   const root=api.body;let summary=null,opening=null,last=null,shown=[],selected=-1,pendingPrefill=null;
   const $=id=>root.querySelector('#'+id);
   const fields={from:null,to:null};
@@ -58,6 +65,12 @@ export function createTripPlanner(api){
   <select id="tripDate" aria-label="Date" hidden></select><input id="tripTime" type="time" aria-label="Time, local to the station" hidden></div>
  <label class="trip-check"><input type="checkbox" id="tripDirect"> Direct trains only</label>
  <details class="trip-more" id="tripMore"><summary>More options<span id="tripMoreSummary"></span></summary>
+  <fieldset class="trip-dayopts"><legend>Day by day</legend>
+   <label class="trip-inline">Travel hours <select id="tripHours"><option value="">any time</option><option value="daylight">daylight</option><option value="custom">set hours</option></select></label>
+   <span class="trip-inline" id="tripHoursCustom" hidden><input type="time" id="tripHoursStart" value="08:00" aria-label="Earliest departure, local time"> to <input type="time" id="tripHoursEnd" value="20:00" aria-label="Latest arrival, local time"></span>
+   <label class="trip-inline" id="tripMarginRow" hidden>Daylight <select id="tripMargin" aria-label="Daylight: sunrise to sunset, shortened or widened at both ends"><option value="-60">1 h shorter each end</option><option value="-30">30 min shorter each end</option><option value="0" selected>sunrise to sunset</option><option value="30">30 min longer each end</option><option value="60">1 h longer each end</option></select></label>
+   <label class="trip-inline">Travel per day at most <select id="tripMaxDay"><option value="">no limit</option><option value="180">3 h</option><option value="240">4 h</option><option value="360">6 h</option><option value="480">8 h</option><option value="600">10 h</option></select></label>
+   <p class="helper">Travel hours are each station's local time, and exclude night trains. Each night is spent where the day's last train arrives; the city is named, not a place to stay. Time at your own stops on the way does not count as travel.</p></fieldset>
   <label class="trip-inline">Changes at most <select id="tripMax"><option value="">any</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
   <label class="trip-inline">Minimum change time <select id="tripChange"><option value="2">2 min</option><option value="5" selected>5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option></select></label>
   <fieldset class="trip-pass"><legend>Eurail pass</legend>
@@ -87,6 +100,7 @@ export function createTripPlanner(api){
       // Keep the focus on the moved stop's button (or its other one at the ends).
       const same=li.querySelector(`button[data-act="${button.dataset.act}"]`);(same.disabled?li.querySelector('button[data-act="'+(button.dataset.act==='up'?'down':'up')+'"]'):same).focus();});
     $('tripWhen').onchange=()=>{const now=$('tripWhen').value==='now';$('tripDate').hidden=now;$('tripTime').hidden=now;};
+    $('tripHours').onchange=()=>{const v=$('tripHours').value;$('tripHoursCustom').hidden=v!=='custom';$('tripMarginRow').hidden=v!=='daylight';};
     $('tripForm').onsubmit=event=>{event.preventDefault();search();};
     $('tripEarlier').onclick=()=>page(-1);$('tripLater').onclick=()=>page(1);
     $('tripSort').onchange=()=>{if(last)render(last);};
@@ -97,6 +111,8 @@ export function createTripPlanner(api){
     const parts=[];if($('tripMax').value!=='')parts.push('≤ '+$('tripMax').value+' changes');
     if($('tripChange').value!=='5')parts.push($('tripChange').value+' min changes');
     if($('tripEurail').checked)parts.push('Eurail only');if($('tripNoReservation').checked)parts.push('no reservation');if($('tripNoSupplement').checked)parts.push('no supplement');
+    if($('tripHours').value==='daylight')parts.push('daylight');else if($('tripHours').value==='custom')parts.push($('tripHoursStart').value+'–'+$('tripHoursEnd').value);
+    if($('tripMaxDay').value)parts.push('≤ '+$('tripMaxDay').selectedOptions[0].text+' a day');
     if($('tripSort').value!=='arrival')parts.push('sorted by '+$('tripSort').selectedOptions[0].text);
     $('tripMoreSummary').textContent=parts.length?': '+parts.join(', '):'';
   }
@@ -184,7 +200,15 @@ export function createTripPlanner(api){
     const max=$('tripMax').value;
     return{date:d,from:stationsOf(fields.from),to:stationsOf(fields.to),via:viaList().filter(v=>v.place).map(v=>({stations:stationsOf(v.place),stopover:v.stay})),
       ...(when==='arrive'?{arriveBy:minutes}:{depart:minutes}),direct:$('tripDirect').checked,maxChanges:max===''?null:Number(max),minChange:Number($('tripChange').value),
-      filters:f,_mapped:mapped,_when:when};
+      filters:f,...dayChoices(),_mapped:mapped,_when:when};
+  }
+  // Travel hours and the daily limit, as the service takes them (null when unset).
+  function dayChoices(){
+    const hours=$('tripHours').value,maxDay=$('tripMaxDay').value?Number($('tripMaxDay').value):null;
+    let travelWindow=null;
+    if(hours==='daylight')travelWindow={daylight:true,margin:Number($('tripMargin').value)};
+    else if(hours==='custom'){const a=minutesOf($('tripHoursStart').value);let b=minutesOf($('tripHoursEnd').value);if(b===0)b=1440;travelWindow={start:a,end:b};}
+    return{travelWindow,maxDay};
   }
   // extend: -1 adds earlier journeys before the list, 1 later ones after it.
   async function search(q=null,extend=0){
@@ -197,6 +221,7 @@ export function createTripPlanner(api){
      const places=[fields.from,...list.filter(v=>v.place).map(v=>v.place),fields.to];
      for(let n=1;n<places.length;n++){const a=new Set(stationsOf(places[n-1]));if(stationsOf(places[n]).some(i=>a.has(i))){status(`${places[n-1].name} and ${places[n].name} share a station: a stop on the way must be somewhere else.`);return;}}
      const ends=new Set([...stationsOf(fields.from),...stationsOf(fields.to)]);if(list.some(v=>v.place&&stationsOf(v.place).some(i=>ends.has(i)))){status('A stop on the way cannot be the From or To.');return;}}
+    if(!q&&$('tripHours').value==='custom'){const w=dayChoices().travelWindow;if(!(w.start<w.end)){status('Travel hours: the earliest departure must be before the latest arrival (hours across midnight are not offered).');return;}}
     q=q||query();
     status('Searching…');if(!extend){$('tripResults').innerHTML='';$('tripNotices').innerHTML='';$('tripPaging').hidden=true;}selected=-1;api.clearTrip();
     const before=extend&&last?last.journeys:[];
@@ -252,7 +277,8 @@ export function createTripPlanner(api){
     call('stationIdsOf',places.map(p=>p.city?0:p.index)).then(found=>places.map((p,i)=>p.city?p.id:found[i])).then(ids=>{
       const local=q._when==='now'?null:summary.dates[q.date]+'T'+($('tripTime').value||'08:00');
       api.saveTrip({from:ids[0],to:ids[1],via:ids.slice(2),viaStay:stops.map(v=>v.stay),at:local,arriveBy:q._when==='arrive',direct:q.direct,maxChanges:$('tripMax').value===''?null:Number($('tripMax').value),
-        minChange:q.minChange===5?null:q.minChange,filters:q.filters});
+        minChange:q.minChange===5?null:q.minChange,filters:q.filters,
+        dayWindow:q.travelWindow?(q.travelWindow.daylight?{daylight:true,margin:q.travelWindow.margin}:{start:q.travelWindow.start,end:q.travelWindow.end}):null,maxDay:q.maxDay||null});
     }).catch(()=>{});
   }
   function sorted(journeys){
@@ -300,7 +326,7 @@ export function createTripPlanner(api){
     return`<li class="trip-result"><button type="button" class="trip-summary" aria-expanded="false">
       <span class="trip-times"><strong>${j.depLocal.clock}${plus(j.depLocal)}</strong> → <strong>${j.arrLocal.clock}${plus(j.arrLocal)}</strong></span>
       ${cities?`<span class="trip-ends">${esc(j.legs[0].from.name)} → ${esc(j.legs[j.legs.length-1].to.name)}</span>`:''}
-      <span class="trip-meta">${duration(j.minutes)} · ${j.changes?j.changes+' change'+(j.changes>1?'s':''):'direct'}${badges(j)}</span>
+      <span class="trip-meta">${duration(j.minutes)} · ${j.changes?j.changes+' change'+(j.changes>1?'s':''):'direct'}${(j.days||[]).length>1?` · <span class="trip-badge trip-days-badge">${j.days.at(-1).dayOffset-j.days[0].dayOffset+1} days</span>`:''}${badges(j)}</span>
       <span class="trip-trains">${esc(j.legs.filter(l=>!l.stayOnBoard).map(l=>l.walk?'walk '+l.minutes+' min':l.label||l.line||l.operator).join(' · '))}</span></button>
       <div class="trip-detail" hidden></div></li>`;
   }
@@ -329,15 +355,36 @@ export function createTripPlanner(api){
     try{
       // At once: a preview through the stops; then the atlas's own geometry replaces it.
       const t0=performance.now(),points=await call('legPoints',j.legs);if(selected!==i)return;api.previewTrip?.(points);
-      const t1=performance.now(),legs=await call('legIdentities',j.legs);if(selected===i)await api.drawTrip(legs,j);
+      const t1=performance.now(),legs=await call('legIdentities',j.legs);if(selected===i)await api.drawTrip(legs,{...j,nightMarkers:nightMarkers(j)});
       // Timings for the browser checks (docs/RAIL_ROUTE_FINDER.md).
       root.dataset.drawPreviewMs=String(Math.round(t1-t0));root.dataset.drawMapMs=String(Math.round(performance.now()-t0));}
     catch{api.toast?.('The journey could not be drawn on the map. Its times and stops are listed.');}
     finally{note.remove();}
   }
+  // The search date shifted by `offset` days (ISO), for day-by-day labels.
+  function dateAt(offset){const base=summary.dates[last?.query?.date??0];if(!base)return'';const d=new Date(base+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+offset);return d.toISOString().slice(0,10);}
+  // The map's night markers (one per night, in the colour of the day ending there).
+  function nightMarkers(j){
+    const days=j.days||[];if(days.length<2)return[];
+    return days.flatMap((day,n)=>day.night?[{leg:day.last,colour:DAY_COLOURS[n%DAY_COLOURS.length],label:`Night ${n+1} · ${day.night.city||day.night.station.name}`}]:[]);
+  }
   function legsHTML(j){
+    const button='<button type="button" class="primary-button trip-show-map">Show on map</button>';
+    // Day-by-day itinerary (docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md): a section per
+    // travel day, numbered by calendar date (AR3 M4), with the night after it.
+    const days=j.days||[];
+    if(days.length<2)return`<ol class="trip-legs">${legItems(j,j.legs).join('')}</ol>`+button;
+    const day0=days[0].dayOffset;
+    return days.map((day,n)=>{const number=day.dayOffset-day0+1,nights=day.night?day.night.depLocal.dayOffset-day.night.arrLocal.dayOffset:0,colour=DAY_COLOURS[n%DAY_COLOURS.length];
+      return`<section class="trip-day" data-day="${number}" style="--trip-day:${colour}"><h4 class="trip-day-head"><span>Day ${number}</span> ${esc(dayLabel(dateAt(day.dayOffset)))}
+        <small>${day.depLocal.clock} → ${day.arrLocal.clock}${plus({dayOffset:day.arrLocal.dayOffset-day.depLocal.dayOffset})} · ${duration(day.minutes)} travel</small></h4>
+        <ol class="trip-legs">${legItems(j,j.legs.slice(day.first,day.last+1)).join('')}</ol></section>`+
+      (day.night?`<div class="trip-night" role="note" style="--trip-day:${colour}"><strong>${nights>1?nights+' nights':'Night'} in ${nightName(day.night)}</strong>
+        <small>arrive ${day.night.arrLocal.clock} · next train ${day.night.depLocal.clock}${plus({dayOffset:day.night.depLocal.dayOffset-day.night.arrLocal.dayOffset})}</small></div>`:'');}).join('')+button;
+  }
+  function legItems(j,legs){
     const out=[];let previous=null;
-    for(const l of j.legs){
+    for(const l of legs){
       if(l.walk){out.push(`<li class="trip-change trip-walk">Walk to ${esc(l.to.name)} · ${duration(l.minutes)} (reviewed footpath)</li>`);previous=l;continue;}
       if(previous&&!previous.walk&&!l.stayOnBoard)out.push(`<li class="trip-change">Change at ${esc(l.from.name)} · ${duration(l.dep-previous.arr)}</li>`);
       if(l.stayOnBoard)out.push(`<li class="trip-change trip-stay">Stay on board at ${esc(l.from.name)}: the train continues as ${esc(l.label||l.line)} (reviewed through-service)</li>`);
@@ -349,7 +396,7 @@ export function createTripPlanner(api){
         <ol class="trip-calls" hidden></ol></li>`);
       previous=l;
     }
-    return`<ol class="trip-legs">${out.join('')}</ol><button type="button" class="primary-button trip-show-map">Show on map</button>`;
+    return out;
   }
   // Why nothing was found (the service's noJourney, from the week's timetable
   // whatever the times): owner, 27 Nov, "say why instead of showing an empty result".
@@ -357,6 +404,7 @@ export function createTripPlanner(api){
     const why=result.noJourney,names=[fields.from,...viaList().filter(v=>v.place).map(v=>v.place),fields.to].map(p=>p?.name||'');
     const list=items=>items.length>1?items.slice(0,-1).join(', ')+' and '+items.at(-1):items[0]||'';
     const notSearched=' Ferries, buses and trains without published times are not searched.';
+    if(!why&&result.dailyLimit?.hidden)return`No journey keeps every day within ${duration(result.dailyLimit.limit)} of travel: the shortest longest day found is ${duration(result.dailyLimit.shortestHiddenLongestDay)}. Raise the daily limit${result.stoppedEarly?' (the search stopped early: try again with fewer options)':''}.`;
     if(!why)return'No journey found with these choices.';
     if((why.reason==='not_connected'||why.reason==='via_not_connected')&&why.gap)return gapText(why.gap,names[why.part],names[why.part+1])+notSearched;
     if(why.reason==='not_connected'||why.reason==='via_not_connected'){
@@ -364,6 +412,8 @@ export function createTripPlanner(api){
       if(why.fromCountries.length&&why.fromCountries.length<=3)parts.push(`Trains from ${a} reach only ${list(why.fromCountries)}.`);
       if(why.toCountries.length&&why.toCountries.length<=3)parts.push(`${b} is reached only from ${list(why.toCountries)}.`);
       return parts.join(' ')+notSearched;}
+    if(why.reason==='no_travel_hours')return`${why.station.name} has no ${why.daylight?'daylight':'travel hours'} on the dates searched (to ${dayLabel(why.lastSearchedDate)})${why.daylight?': the sun does not rise there':''}. Set your own travel hours, or choose Any time.`;
+    if(why.reason==='outside_travel_hours'){const f=why.firstWithoutHours;return`No journey fits your travel hours${why.arriveBy?' on this date and the day before (arrive by searches two dates)':` by the end of ${dayLabel(why.lastSearchedDate)}`}. Without them there ${why.withoutHours>1?'are '+why.withoutHours+' journeys':'is a journey'}, the first ${f.depLocal.clock} → ${f.arrLocal.clock}${f.arrLocal.dayOffset>f.depLocal.dayOffset?' (+'+(f.arrLocal.dayOffset-f.depLocal.dayOffset)+' day'+(f.arrLocal.dayOffset-f.depLocal.dayOffset>1?'s':'')+')':''}${f.trains>1?' with '+(f.trains-1)+' change'+(f.trains>2?'s':''):', direct'}; travel hours exclude night trains. Widen the hours or choose Any time.`;}
     if(why.reason==='filter')return'Only trains your pass filter leaves out connect these places (status unknown, not included, or with a reservation or supplement). Clear the filter to see them.';
     if(why.reason==='more_changes')return`Journeys whose first train leaves within 24 hours of this time need at least ${why.fewestTrains} trains (${why.fewestTrains-1} change${why.fewestTrains>2?'s':''}): allow more changes${$('tripDirect').checked?' or untick Direct only':''}.`;
     if(why.reason==='not_in_dates')return`This week's trains link these places, but no journey leaving on ${dayLabel(result.dateIso)} arrives by the end of ${dayLabel(why.lastSearchedDate)}${why.lastSearchedDate===summary.dates.at(-1)?', the last date of this timetable week':''}: try another date or time.`;
@@ -388,6 +438,9 @@ export function createTripPlanner(api){
     // No journey across a gap: offer to show it, labelled as a gap (never a train or railway).
     const gap=!result.journeys.length&&result.noJourney?.gap;
     const gapButton=gap?`<p class="trip-gap"><button type="button" class="text-button" data-trip-gap>Show the gap on the map</button><small>A red dashed line between ${esc(gap.from.name)} and ${esc(gap.to.name)}: a gap in this week's timetable, not a train or a railway.</small></p>`:'';
+    if(result.dailyLimit?.hidden&&result.journeys.length)items.push(`Your daily limit of ${duration(result.dailyLimit.limit)} hid ${result.dailyLimit.hidden} journey${result.dailyLimit.hidden>1?'s':''} with a longer day (the shortest longest day among them: ${duration(result.dailyLimit.shortestHiddenLongestDay)}).`);
+    if(result.stoppedEarly)items.push('The search stopped early to stay fast on this device: more journeys within your travel hours or daily limit may exist. Try a later time or fewer options.');
+    if(result.travelHours)items.push(`Night trains are not used with ${result.travelHours.daylight?'daylight':'set'} travel hours: travel happens inside them, and nights are spent at a station.`);
     if(result.leftOut?.betterJourneysWithoutFilter)items.push(`${result.leftOut.betterJourneysWithoutFilter} faster or simpler journey${result.leftOut.betterJourneysWithoutFilter>1?'s':''} use trains your pass filter leaves out (status unknown, not included, or with a reservation or supplement). They are not shown.`);
     if(n.replacementBuses.length)items.push(`Replacement buses run at ${esc([...new Set(n.replacementBuses.map(b=>b.line).filter(Boolean))].slice(0,6).join(', ')||'these stations')} on this date (${esc([...new Set(n.replacementBuses.map(b=>b.operator).filter(Boolean))].slice(0,3).join(', '))}). Their times are not published, so they were not searched; a train shown here may be replaced by a bus.`);
     if(n.sourcesWithoutTimes.length)items.push(`${n.sourcesWithoutTimes.length} timetable source${n.sourcesWithoutTimes.length>1?'s':''} publish no times here and were not searched; journeys through those networks are not found. <button type="button" class="text-button" data-trip-coverage>Coverage ↗</button>`);
@@ -419,7 +472,11 @@ export function createTripPlanner(api){
       if(trip.at){const[date,time]=trip.at.split('T'),d=summary.dates.indexOf(date);if(d>=0){$('tripWhen').value=trip.arriveBy?'arrive':'depart';$('tripDate').value=String(d);$('tripTime').value=time;$('tripWhen').onchange();}}
       if(trip.direct)$('tripDirect').checked=true;if(Number.isInteger(trip.maxChanges))$('tripMax').value=String(trip.maxChanges);if(trip.minChange)$('tripChange').value=String(trip.minChange);
       const f=trip.filters||{};if(trip.filters){$('tripEurail').checked=!!f.eurailOnly;$('tripNoReservation').checked=!!f.noReservation;$('tripNoSupplement').checked=!!f.noSupplement;}
-      if(f.eurailOnly||f.noReservation||f.noSupplement||Number.isInteger(trip.maxChanges)||trip.minChange)$('tripMore').open=true;
+      if(trip.dayWindow){const w=trip.dayWindow;if(w.daylight){$('tripHours').value='daylight';$('tripMargin').value=String(w.margin||0);}
+        else{$('tripHours').value='custom';$('tripHoursStart').value=hm(w.start);$('tripHoursEnd').value=w.end===1440?'00:00':hm(w.end);}$('tripHours').onchange();}
+      if(trip.maxDay&&[...$('tripMaxDay').options].some(o=>o.value===String(trip.maxDay)))$('tripMaxDay').value=String(trip.maxDay);
+      else if(trip.maxDay){const o=document.createElement('option');o.value=String(trip.maxDay);o.textContent=duration(trip.maxDay);$('tripMaxDay').append(o);$('tripMaxDay').value=o.value;}
+      if(f.eurailOnly||f.noReservation||f.noSupplement||Number.isInteger(trip.maxChanges)||trip.minChange||trip.dayWindow||trip.maxDay)$('tripMore').open=true;
       moreSummary();
       if(fields.from&&fields.to&&trip.search!==false)search();else(fields.from?$('trip-to'):input).focus();
     }else if(!fields.from)input?.focus();

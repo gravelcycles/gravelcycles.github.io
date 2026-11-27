@@ -94,3 +94,16 @@
 .trip-gap .text-button{justify-self:start;font-weight:600}
 .trip-gap small{color:var(--muted);line-height:1.35}
 .leaflet-tooltip.trip-gap-label{width:230px;white-space:normal;color:#8c1d16;font-weight:600;border-color:#b3261e}
+.leaflet-tooltip.trip-night-label{font-weight:600;padding:2px 6px}
+/* Day-by-day itinerary (docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md). */
+.trip-day{display:grid;gap:6px;margin:0 0 6px}
+.trip-day-head{margin:6px 0 2px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.trip-day-head>span{font-weight:700;color:var(--trip-day,inherit)}
+.trip-day .trip-leg{border-left-color:var(--trip-day)}
+.trip-days-badge{white-space:nowrap}
+.trip-dayopts{border:0;padding:0;margin:0 0 8px;display:grid;gap:6px}
+.trip-dayopts legend{font-weight:600;padding:0;margin-bottom:2px}
+.trip-dayopts select{max-width:100%}
+.trip-day-head small{color:var(--ink-soft);font-weight:400}
+.trip-night{margin:4px 0 8px;padding:6px 10px;border-left:3px solid var(--trip-day,var(--ink-soft));display:grid;gap:2px;font-size:13px}
+.trip-night small{color:var(--ink-soft)}

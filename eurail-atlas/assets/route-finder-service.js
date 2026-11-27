@@ -3,10 +3,15 @@
 // tests drive it directly with a file reader. Every answer says what was not
 // searched (held week, sources without times, replacement buses without
 // times) so the panel never presents a partial answer as complete.
-import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten,daySweep,reach,MAX_TRAINS}from'./route-finder-engine.js?v=bd769551cdd0b233';
-import{latinSpellings}from'./transliterate.js?v=bd769551cdd0b233';
+import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten,daySweep,reach,MAX_TRAINS}from'./route-finder-engine.js?v=9950f30ee93e8b21';
+import{latinSpellings}from'./transliterate.js?v=9950f30ee93e8b21';
+import{fixedWindow,hopMask}from'./route-finder-window.js?v=9950f30ee93e8b21';
+import{daylightWindow}from'./route-finder-sun.js?v=9950f30ee93e8b21';
+import{splitDays}from'./trip-days.js?v=9950f30ee93e8b21';
 
 export const KIND='route_finder_timetable';
+// Extra searches one query may add for travel hours and a daily limit (AR3 I7).
+export const SEARCH_BUDGET={searches:8,ms:8000};
 // The country of a source id's two-letter prefix (source ids start with the
 // country code, as in config/rail-sources), in the names stations.json uses;
 // only to say which sources without times touch a gap.
@@ -152,7 +157,9 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   // q: {date (index), from:[station], to:[station], via:[{stations,stopover}],
   //     depart | arriveBy (minutes after 00:00 of the date on the shared clock),
   //     maxChanges, minChange, direct, filters, tighten}
-  //     maxChanges (null or absent: 5, raised for a long journey that needs more), minChange, direct, filters, tighten}
+  //     maxChanges (null or absent: 5, raised for a long journey that needs more), minChange, direct, filters, tighten,
+  //     travelWindow: {start, end} local minutes, a daily travel window (docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md):
+  //       only hops departing and arriving inside it on each station's local clock are ridden}
   // A forward search that finds nothing on dates d and d + 1 looks further
   // (owner, 27 Nov: "pick a start point, say Brasov, and we'll figure out how
   // to get you there to Palermo, even if it takes like 50 hours"): with more
@@ -162,22 +169,37 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   async function route(q){
     requireBuilt();
     const d=q.date,C=await connectionsFor(d),forward=q.arriveBy===undefined||q.arriveBy===null;
-    const allowedPatterns=patternFilter(q.filters),queryFor=(C,maxChanges)=>({from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges,minChange:q.minChange??5,
-      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[week.profilePattern[C.tripProfile[t]]]===1}:{})});
+    const allowedPatterns=patternFilter(q.filters),win=await travelWindow(q),queryFor=(C,maxChanges,w=win)=>({from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges,minChange:q.minChange??5,
+      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[week.profilePattern[C.tripProfile[t]]]===1}:{}),
+      // Each connection set gets the mask on its own date base (a carried set too).
+      // With a window, fewer-change journeys are kept up to a window's length after
+      // the fastest (AR3 M3): the fastest arrives inside a window, so the rest of
+      // that day's window is covered.
+      ...(w?{usable:hopMask(C,w,offsetOf),slack:w.slack}:{})});
     const auto=!q.direct&&(q.maxChanges===undefined||q.maxChanges===null);
     const query=queryFor(C,q.direct?0:(q.maxChanges??5));
-    let journeys,longer=null,noJourney=null,state=null;
+    let journeys,longer=null,noJourney=null,state=null,dailyLimit=null;
+    // A per-query budget for the extra searches a window or a daily limit adds
+    // (AR3 I7): when it is spent they stop and the answer says so.
+    const budget={searches:0,max:SEARCH_BUDGET.searches,until:Date.now()+SEARCH_BUDGET.ms,stopped:false};
+    const spend=()=>{if(budget.searches>=budget.max||Date.now()>budget.until){budget.stopped=true;return false;}budget.searches++;return true;};
+    const last=Math.min(d+3,index.binding.dates.length-1),vias=query.via;
+    // No travel hours at all at the origin, the destination or a via on every
+    // searched date (polar night under Daylight, AR3 I5): say so before searching.
+    if(win){for(const[side,stations]of[['from',q.from],['to',q.to],...vias.map((v,n)=>['via'+n,v.stations])])
+      if(emptyEverywhere(win,stations,d,last))return{date:d,dateIso:index.binding.dates[d],journeys:[],leftOut:null,notices:await notices([],q),lastDate:d===index.binding.dates.length-1,longer:null,
+        noJourney:{reason:'no_travel_hours',side,station:station(stations[0]),daylight:!!q.travelWindow.daylight,lastSearchedDate:index.binding.dates[last]}};}
     if(!forward)journeys=arriveBy(week,C,{...query,arriveBy:q.arriveBy});
     // The search state is kept so a long search can carry on from it without scanning date d again.
     else{({journeys,state}=earliest(week,C,{...query,depart:q.depart,keepState:true}));if(q.tighten===true)journeys=journeys.map(j=>tighten(week,C,{...query,depart:j.dep},j));}
     // Dates d and d + 1, then on through d + 2 and d + 3 (carried state), with up to maxChanges + 1 trains.
     // `always` carries on even when dates d and d + 1 found journeys: a claimed
     // minimum must cover all four dates (a later train may need fewer changes).
-    const longSearch=async(maxChanges,slack,always=false)=>{
-      const first=maxChanges===query.maxChanges&&slack===undefined?{journeys,state}:earliest(week,C,{...queryFor(C,maxChanges),depart:q.depart,keepState:true,...(slack!==undefined?{slack}:{})});
+    const longSearch=async(maxChanges,slack,always=false,w=win)=>{
+      const first=maxChanges===query.maxChanges&&slack===undefined&&w===win?{journeys,state}:earliest(week,C,{...queryFor(C,maxChanges,w),depart:q.depart,keepState:true,...(slack!==undefined?{slack}:{})});
       if(first.journeys.length&&!always||d+2>=index.binding.dates.length)return first.journeys;
       const C2=await connectionsFor(d+2);
-      const later=earliest(week,C2,{...queryFor(C2,maxChanges),depart:q.depart-2880,carry:{state:first.state,C,shift:2880},...(slack!==undefined?{slack}:{})});
+      const later=earliest(week,C2,{...queryFor(C2,maxChanges,w),depart:q.depart-2880,carry:{state:first.state,C,shift:2880},...(slack!==undefined?{slack}:{})});
       // A walk into the destination found on dates d and d + 1 is not part of the
       // carried state, so with `always` both searches' journeys are returned.
       return always?[...first.journeys,...later]:later;
@@ -202,13 +224,38 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
         }
       }
     }
+    // Nothing within the travel hours: the same search without them (its
+    // connection sets are cached) says whether hours are the reason (AR3 I5).
+    if(win&&!journeys.length&&noJourney?.reason!=='no_travel_hours'&&spend()){
+      const open=await route({...q,travelWindow:null,maxDay:null});
+      noJourney=open.journeys.length?{reason:'outside_travel_hours',withoutHours:open.journeys.length,firstWithoutHours:{depLocal:open.journeys[0].depLocal,arrLocal:open.journeys[0].arrLocal,trains:open.journeys[0].trains},
+        arriveBy:!forward,lastSearchedDate:index.binding.dates[forward?last:Math.min(d+1,index.binding.dates.length-1)]}:(open.noJourney||noJourney);}
+    // The daily limit (AR3 I3): every journey shown has no day longer than it.
+    // Journeys over it are hidden; forward searches also try sub-windows of the
+    // limit's length inside the travel hours (early, middle, late), each an exact
+    // search whose journeys mostly meet the limit by construction, then checked.
+    if(q.maxDay&&journeys.length){
+      const viaStops=viaStays(q),longest=j=>Math.max(...rawDays(j,d,win,viaStops).map(x=>x.minutes));
+      const fits=j=>longest(j)<=q.maxDay,hidden=journeys.filter(j=>!fits(j));
+      let kept=journeys.filter(fits);
+      if(hidden.length&&forward){const seen=new Set(kept.map(rawKey));
+        for(const w of subWindows(win,q.maxDay)){if(!spend())break;
+          const found=await longSearch(query.maxChanges,undefined,false,w);
+          for(const j of found)if(fits(j)&&!seen.has(rawKey(j))){seen.add(rawKey(j));kept.push(j);}}
+        kept.sort((a,b)=>a.arr-b.arr||a.trains-b.trains);}
+      dailyLimit={limit:q.maxDay,hidden:hidden.length,shortestHiddenLongestDay:hidden.length?Math.min(...hidden.map(longest)):null};
+      journeys=kept;}
     // With a pass filter, say whether trains the filter leaves out (unknown or
     // excluded) would give an earlier or simpler journey.
     let leftOut=null;
     if(allowedPatterns){const open=q.arriveBy!=null?arriveBy(week,C,{...query,tripAllowed:undefined,arriveBy:q.arriveBy}):earliest(week,C,{...query,tripAllowed:undefined,depart:q.depart});
       const better=open.filter(o=>!journeys.some(j=>j.trains<=o.trains&&(q.arriveBy!=null?j.dep>=o.dep:j.arr<=o.arr)));
       leftOut={betterJourneysWithoutFilter:better.length,patternsLeftOut:allowedPatterns.length-allowedPatterns.reduce((a,b)=>a+b,0)};}
-    return{date:d,dateIso:index.binding.dates[d],journeys:await Promise.all(journeys.map(describe)),leftOut,notices:await notices(journeys,q),lastDate:d===index.binding.dates.length-1,longer,noJourney};
+    // Each journey's travel days and nights (docs/RAIL_ROUTE_FINDER_DAY_TRIPS.md, section 3).
+    const described=await Promise.all(journeys.map(j=>describe(j,d)));
+    await attachDays(described,d,win,viaStays(q));
+    return{date:d,dateIso:index.binding.dates[d],journeys:described,leftOut,notices:await notices(journeys,q),lastDate:d===index.binding.dates.length-1,longer,noJourney,
+      travelHours:win?{daylight:!!q.travelWindow.daylight,nightTrainsExcluded:true}:null,dailyLimit,stoppedEarly:budget.stopped};
   }
 
   // The missing stretch (owner, 27 Nov: "if a route is missing tell which chunk
@@ -276,11 +323,16 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   // forward search, asked for after its first answer is shown.
   async function tightenAll(q,journeys){
     requireBuilt();const C=await connectionsFor(q.date),allowedPatterns=patternFilter(q.filters),tripPattern=t=>week.profilePattern[C.tripProfile[t]];
-    const query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
-      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{})};
+    const win=await travelWindow(q),query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
+      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{}),...(win?{usable:hopMask(C,win,offsetOf)}:{})};
     const out=[];
+    // With a daily limit, a refined journey must keep it: refining rebuilds the
+    // onward trains as the earliest ones, which can move a day's start earlier
+    // and lengthen that day. Otherwise the journey stays as it was.
+    const viaStops=viaStays(q),fits=t=>!q.maxDay||Math.max(...rawDays(t,q.date,win,viaStops).map(x=>x.minutes))<=q.maxDay;
     for(const j of journeys){const raw={dep:j.dep,arr:j.arr,trains:j.trains};const t=tighten(week,C,{...query,depart:j.dep},{...raw,legs:[]});
-      out.push(t.legs&&t.legs.length?await describe(t):j);}
+      out.push(t.legs&&t.legs.length&&fits(t)?await describe(t,q.date):j);}
+    await attachDays(out,q.date,win,viaStays(q));
     return out;
   }
   // The journeys of a day's window (daySweep), a few per call so the panel can
@@ -288,13 +340,16 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
   let sweepPending=null;
   async function sweep(q,from,until,max=1){
     requireBuilt();const C=await connectionsFor(q.date),allowedPatterns=patternFilter(q.filters),tripPattern=t=>week.profilePattern[C.tripProfile[t]];
-    const query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
-      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{})};
+    const win=await travelWindow(q),query={from:q.from,to:q.to,via:(q.via||[]).filter(v=>v.stations&&v.stations.length),maxChanges:q.direct?0:(q.maxChanges??5),minChange:q.minChange??5,
+      ...(allowedPatterns?{tripAllowed:t=>allowedPatterns[tripPattern(t)]===1}:{}),...(win?{usable:hopMask(C,win,offsetOf)}:{})};
     // A search answer not yet tightened waits here for the next call of the same window.
-    const at=JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},from,until]);
+    const at=JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},q.travelWindow||null,q.maxDay||null,from,until]);
     const part=daySweep(week,C,query,from,until,max,sweepPending&&sweepPending.at===at?sweepPending.pending:null);
-    sweepPending=part.pending?{at:JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},part.next,until]),pending:part.pending}:null;
-    return{journeys:await Promise.all(part.journeys.map(describe)),next:part.next,done:part.next>=until&&!part.pending};
+    sweepPending=part.pending?{at:JSON.stringify([q.date,q.from,q.to,q.via||[],q.direct,q.maxChanges,q.minChange,q.filters||{},q.travelWindow||null,q.maxDay||null,part.next,until]),pending:part.pending}:null;
+    // The daily limit applies to swept journeys too (hidden, and counted).
+    const viaStops=viaStays(q),fit=q.maxDay?part.journeys.filter(j=>Math.max(...rawDays(j,q.date,win,viaStops).map(x=>x.minutes))<=q.maxDay):part.journeys;
+    const described=await Promise.all(fit.map(j=>describe(j,q.date)));await attachDays(described,q.date,win,viaStops);
+    return{journeys:described,hiddenByDailyLimit:part.journeys.length-fit.length,next:part.next,done:part.next>=until&&!part.pending};
   }
   // Every call of a described leg, boarding to alighting (owner, 27 Nov:
   // "intermediate stops for each leg"): station, local arrival and departure,
@@ -307,37 +362,110 @@ export function createService({fetchBytes,gunzip,onTotal,sha256}){
     const k0=week.profileCall[f],ps=week.patternStart[p];
     // The leg's departure fixes the trip's start on the leg's clock (its date may be the next one).
     const start=leg.dep-week.departure[k0+leg.board];
+    // The leg's clock is that of its search date (describe() sets it).
+    if(!Number.isInteger(leg.base))throw new Error('route_finder_leg_without_search_date');
     // The leg's own stations and arrival must come out of its trip (cheap; a mismatch is refused).
     if(week.patternStation[ps+leg.board]!==leg.from.index||week.patternStation[ps+leg.alight]!==leg.to.index||start+week.arrival[k0+leg.alight]!==leg.arr)
       throw new Error('route_finder_leg_does_not_match_its_trip');
     const out=[];
     for(let x=leg.board;x<=leg.alight;x++){const s=week.patternStation[ps+x],c=week.code[ps+x];
-      out.push({station:station(s),arrLocal:x>leg.board?local(s,start+week.arrival[k0+x]):null,depLocal:x<leg.alight?local(s,start+week.departure[k0+x]):null,
+      out.push({station:station(s),arrLocal:x>leg.board?local(s,start+week.arrival[k0+x],leg.base):null,depLocal:x<leg.alight?local(s,start+week.departure[k0+x],leg.base):null,
         pickup:(c&3)!==1,dropOff:(c>>2&3)!==1,request:(c&3)>=2||(c>>2&3)>=2});}
     return out;
   }
-  async function describe(j){
+  // d: the search date index, whose 00:00 starts the journey's clock.
+  async function describe(j,d){
+    if(!Number.isInteger(d))throw new Error('route_finder_describe_without_search_date');
     const labels=await once('labels',()=>json('labels.json.gz').then(x=>x.labels));
     const J=week.journeys,legs=[];
     for(const seg of j.legs){
-      if(seg.walk){legs.push({walk:true,from:station(seg.from),to:station(seg.to),minutes:seg.minutes,dep:seg.dep,arr:seg.arr,depLocal:local(seg.from,seg.dep),arrLocal:local(seg.to,seg.arr),stops:[seg.from,seg.to]});continue;}
+      if(seg.walk){legs.push({walk:true,from:station(seg.from),to:station(seg.to),minutes:seg.minutes,dep:seg.dep,arr:seg.arr,base:d,depLocal:local(seg.from,seg.dep,d),arrLocal:local(seg.to,seg.arr,d),stops:[seg.from,seg.to]});continue;}
       const labelsOfDay=await dayLabels(seg.day);
       const row=J.rows[seg.pattern],label=labelsOfDay[seg.index],ps=week.patternStart[seg.pattern];
       const codeAt=i=>week.code[ps+i];
-      legs.push({from:station(seg.from),to:station(seg.to),dep:seg.dep,arr:seg.arr,stayOnBoard:seg.stayOnBoard,
-        depLocal:local(seg.from,seg.dep),arrLocal:local(seg.to,seg.arr),
+      legs.push({from:station(seg.from),to:station(seg.to),dep:seg.dep,arr:seg.arr,stayOnBoard:seg.stayOnBoard,base:d,
+        depLocal:local(seg.from,seg.dep,d),arrLocal:local(seg.to,seg.arr,d),
         line:row[0],operator:J.operators[row[1]]||'',source:J.sources[row[2]]||'',category:J.categories[row[3]]||'',
         inclusion:J.inclusion[row[4]],reservation:J.reservation[row[5]],supplement:J.supplement[row[6]],
         label:label===0xFFFFFFFF?'':labels[label]||'',pattern:seg.pattern,day:seg.day,trip:seg.index,board:seg.board,alight:seg.alight,
         stops:Array.from({length:seg.alight-seg.board+1},(_,k)=>week.patternStation[ps+seg.board+k]),
         boardingNote:(codeAt(seg.board)&3)===2||(codeAt(seg.board)&3)===3?'request':'',alightingNote:(codeAt(seg.alight)>>2&3)===2||(codeAt(seg.alight)>>2&3)===3?'request':''});
     }
-    return{dep:j.dep,arr:j.arr,trains:j.trains,changes:j.changes,minutes:j.arr-j.dep,depLocal:local(j.from,j.dep),arrLocal:local(j.to,j.arr),legs};
+    return{dep:j.dep,arr:j.arr,trains:j.trains,changes:j.changes,minutes:j.arr-j.dep,depLocal:local(j.from,j.dep,d),arrLocal:local(j.to,j.arr,d),legs};
   }
-  // Minutes on the station's local clock, and the day offset from the search date.
-  function local(s,minutes){
+  // The minutes to add to the shared clock for station s's local clock on
+  // delivery date `date` (countryOffsets is indexed by delivery date).
+  function offsetOf(s,date){
     const country=stations.countries[stations.country[s]],offsets=(index.clock.countryOffsets||{})[country];
-    const dayIndex=Math.floor(minutes/1440),value=minutes+(offsets?offsets[Math.max(0,Math.min(offsets.length-1,dayIndex))]:0);
+    return offsets?offsets[Math.max(0,Math.min(offsets.length-1,date))]:0;
+  }
+  // A search's daily travel window, or null (refused when malformed):
+  // {start, end} local minutes, or {daylight: true, margin} (sunrise - margin
+  // to sunset + margin at each station on each date; route-finder-sun.js).
+  // `slack` (AR3 M3): fewer-change journeys are kept up to this long after the
+  // fastest, which arrives inside a window, so that day's window is covered.
+  async function travelWindow(q){
+    const w=q.travelWindow;if(!w)return null;
+    if(w.daylight){const margin=w.margin??0;if(![-60,-30,0,30,60].includes(margin))throw new Error('route_finder_bad_travel_window');return daylight(margin);}
+    const f=fixedWindow(w.start,w.end);return{...f,slack:w.end-w.start};
+  }
+  // Daylight windows, per station and delivery date, computed when first asked
+  // for. A station on a date where the sun does not rise has an empty window
+  // (no travel there that day): never a made-up fallback.
+  const daylight=margin=>once('daylight:'+margin,async()=>{
+    const geo=await once('geo',()=>json('station-geo.json.gz'));
+    const D=index.binding.dates.length+2,N=week.N,lo=new Int16Array(N*D).fill(-32768),hi=new Int16Array(N*D);
+    // ISO date of delivery date index `date` (one past the week is the next calendar day).
+    const isoOf=date=>{const t=new Date(index.binding.dates[0]+'T12:00:00Z');t.setUTCDate(t.getUTCDate()+date);return t.toISOString().slice(0,10);};
+    const at=(s,date)=>{const x=Math.max(-1,Math.min(D-2,date)),k=s*D+x+1;
+      if(lo[k]===-32768){const lat=geo.lat[s]/1e5,lon=geo.lon[s]/1e5;
+        const w=Number.isFinite(lat)&&Number.isFinite(lon)?daylightWindow(isoOf(x),lat,lon,(index.clock.offsetMinutes||0)+offsetOf(s,x),margin):{start:1,end:0};
+        lo[k]=w.start;hi[k]=w.end;}
+      return k;};
+    return{id:'daylight:'+margin,start:(s,date)=>lo[at(s,date)],end:(s,date)=>hi[at(s,date)],slack:1440};
+  });
+  // Is the window empty at all of `stations` on every date from d to last?
+  const emptyEverywhere=(win,stations,d,last)=>stations.every(s=>{for(let x=d;x<=last;x++)if(win.start(s,x)<=win.end(s,x))return false;return true;});
+  // Day split on an engine journey (raw station indices), for the daily limit.
+  function rawDays(j,d,win,viaStops){
+    const legs=j.legs.flat().map(seg=>({from:{index:seg.from},to:{index:seg.to},dep:seg.dep,arr:seg.arr,stayOnBoard:!!seg.stayOnBoard,depLocal:local(seg.from,seg.dep,d),arrLocal:local(seg.to,seg.arr,d)}));
+    return splitDays({legs},{windowEnd:win?(s,k)=>win.end(s,d+k):null,viaStops});
+  }
+  const rawKey=j=>j.dep+'|'+j.arr+'|'+j.legs.flat().map(l=>l.walk?'w':l.day+':'+l.index).join(',');
+  // Stays at the visitor's vias (station -> minutes), left out of daily travel time.
+  const viaStays=q=>{const m=new Map();for(const v of q.via||[])if(v.stopover>0)for(const s of v.stations||[])m.set(s,Math.max(m.get(s)||0,v.stopover));return m;};
+  // Sub-windows of length H inside a window (or, with no window, inside
+  // 05:00-23:00, for candidates only): early, middle and late. Each has the
+  // base window's id plus its own, so its masks are cached apart.
+  function subWindows(win,H){
+    const base=win||{id:'day',start:()=>300,end:()=>1380},out=[];
+    for(const kind of['early','middle','late']){
+      const lo=(s,x)=>{const a=base.start(s,x),b=base.end(s,x);if(a>b)return a;return kind==='early'?a:kind==='late'?Math.max(a,b-H):Math.max(a,Math.round((a+b-H)/2));};
+      out.push({id:base.id+':'+kind+':'+H,start:lo,end:(s,x)=>{const a=base.start(s,x),b=base.end(s,x);return a>b?b:Math.min(b,lo(s,x)+H);},slack:base.slack??H});}
+    return out;
+  }
+  // Travel days on described journeys: the legs of each day (first and last
+  // index), its travel time, and the night after it: the station where the
+  // overnight wait is, named by its Hubs city when it belongs to one (never a
+  // hotel or an inferred place).
+  async function attachDays(journeys,d,win,viaStops){
+    let cityOf=null;
+    for(const j of journeys){
+      const days=splitDays(j,{windowEnd:win?(s,k)=>win.end(s,d+k):null,viaStops});
+      if(days.length>1&&!cityOf)cityOf=await stationCities();
+      j.days=days.map(x=>({first:j.legs.indexOf(x.legs[0]),last:j.legs.indexOf(x.legs[x.legs.length-1]),dayOffset:x.dayOffset,minutes:x.minutes,depLocal:x.depLocal,arrLocal:x.arrLocal,overnightLegs:x.overnightLegs,
+        night:x.night?{station:x.night.station,city:cityOf?.get(x.night.station.index)||null,arrLocal:x.night.arrLocal,depLocal:x.night.depLocal,minutes:x.night.minutes}:null}));
+    }
+  }
+  // Station -> its Hubs city name (the most populous city whose catchment holds it).
+  const stationCities=()=>once('stationCities',async()=>{const m=new Map(),pop=new Map();
+    for(const c of await cityList())for(const s of c.stations)if(!m.has(s)||c.population>pop.get(s)){m.set(s,c.name);pop.set(s,c.population);}
+    return m;});
+  // Minutes on the station's local clock, and the day offset from the search
+  // date d (minutes are on d's clock). The offset is that of the delivery date
+  // d + day, not of the day relative to the search (AR3 I2).
+  function local(s,minutes,d){
+    const value=minutes+offsetOf(s,d+Math.floor(minutes/1440));
     return{minutes:value,dayOffset:Math.floor(value/1440),clock:String(Math.floor((value%1440+1440)%1440/60)).padStart(2,'0')+':'+String((value%60+60)%60).padStart(2,'0')};
   }
   // Replacement buses without times that touch the journey's stations, the

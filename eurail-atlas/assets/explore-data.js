@@ -11,7 +11,7 @@ async function inflate(bytes){
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-  const{gunzip}=await import('./gunzip.js?v=bd769551cdd0b233');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=9950f30ee93e8b21');return gunzip(bytes);
 }
 async function fetchBytes(url,onProgress){
   const response=await fetch(url);

@@ -1,5 +1,5 @@
-import{validBusDocument}from'./bus-core.js?v=bd769551cdd0b233';
-import{safeBusBase}from'./bus-delivery.js?v=bd769551cdd0b233';
+import{validBusDocument}from'./bus-core.js?v=9950f30ee93e8b21';
+import{safeBusBase}from'./bus-delivery.js?v=9950f30ee93e8b21';
 
 const limits=Object.freeze({wireBytes:512*1024,decodedBytes:4*1024*1024,rows:2048,vertices:12000});
 const hash=/^[a-f0-9]{64}$/,classes=new Set(['publisher_stop_chain','source_sampled_path','provider_nonliteral_unverified','schematic_missing','schematic_rejected','inferred_road']);

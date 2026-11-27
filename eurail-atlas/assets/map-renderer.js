@@ -1,17 +1,44 @@
-import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=bd769551cdd0b233';
-import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=bd769551cdd0b233';
-import{RouteIndex}from'./rail-picking.js?v=bd769551cdd0b233';
-import{renderWorld}from'./rail-lod.js?v=bd769551cdd0b233';
-import{RasterClient}from'./raster-client.js?v=bd769551cdd0b233';
-import{matchesFocus}from'./route-focus.js?v=bd769551cdd0b233';
-import{isPhysicalSection}from'./physical-heat.js?v=bd769551cdd0b233';
-import{edgeInScope}from'./project-scope.js?v=bd769551cdd0b233';
-import{createPhysicalCountCache}from'./physical-count-cache.js?v=bd769551cdd0b233';
-import{supplementalFocusItems}from'./supplemental-availability.js?v=bd769551cdd0b233';
+import{FREQUENCY_BREAKS,colorFor,qualifiesEdge,effectivePass,selectedDays,threshold,conditionalCount,edgeCount,isItaly,approximateAlignment,dashedAlignment,matchesGeometry,serviceVisible,serviceLayers,isTemporaryReplacement,chargeFiltered}from'./atlas-core.js?v=9950f30ee93e8b21';
+import{RailGPU,rgb,frequencyPriority}from'./rail-gpu.js?v=9950f30ee93e8b21';
+import{RouteIndex}from'./rail-picking.js?v=9950f30ee93e8b21';
+import{renderWorld}from'./rail-lod.js?v=9950f30ee93e8b21';
+import{RasterClient}from'./raster-client.js?v=9950f30ee93e8b21';
+import{matchesFocus}from'./route-focus.js?v=9950f30ee93e8b21';
+import{isPhysicalSection}from'./physical-heat.js?v=9950f30ee93e8b21';
+import{edgeInScope}from'./project-scope.js?v=9950f30ee93e8b21';
+import{createPhysicalCountCache}from'./physical-count-cache.js?v=9950f30ee93e8b21';
+import{supplementalFocusItems}from'./supplemental-availability.js?v=9950f30ee93e8b21';
 
 export const sameCamera=(a,b)=>['width','height','zoom','scale','centerX','centerY'].every(key=>a[key]===b[key]);
 
 const intersects=(b,v,pad=12)=>b[2]>=v.centerX-(v.width/2+pad)/v.scale&&b[0]<=v.centerX+(v.width/2+pad)/v.scale&&b[3]>=v.centerY-(v.height/2+pad)/v.scale&&b[1]<=v.centerY+(v.height/2+pad)/v.scale;
+// A path is in view only if one of its segments is: a long city link's bounding
+// box can span the whole view while none of its line does (Hubs over open
+// country), and a box-only count then claimed connections on an empty map.
+function segmentHitsRect(ax,ay,bx,by,x0,y0,x1,y1){
+  // Cheap reject first: both ends beyond the same side (most segments of a path that misses the view).
+  if(ax<x0&&bx<x0||ax>x1&&bx>x1||ay<y0&&by<y0||ay>y1&&by>y1)return false;
+  if(ax>=x0&&ax<=x1&&ay>=y0&&ay<=y1)return true;
+  // Liang–Barsky clip, unrolled, with no allocation.
+  let t0=0,t1=1,r;const dx=bx-ax,dy=by-ay;
+  if(dx===0){if(ax<x0||ax>x1)return false;}
+  else{
+    r=(x0-ax)/dx;const r2=(x1-ax)/dx,lo=r<r2?r:r2,hi=r<r2?r2:r;if(lo>t0)t0=lo;if(hi<t1)t1=hi;if(t0>t1)return false;
+  }
+  if(dy===0){if(ay<y0||ay>y1)return false;}
+  else{
+    r=(y0-ay)/dy;const r2=(y1-ay)/dy,lo=r<r2?r:r2,hi=r<r2?r2:r;if(lo>t0)t0=lo;if(hi<t1)t1=hi;if(t0>t1)return false;
+  }
+  return true;
+}
+export function pathInView(edge,v,pad=12){
+  const b=edge._bbox;if(!b||!intersects(b,v,pad))return false;
+  const x0=v.centerX-(v.width/2+pad)/v.scale,x1=v.centerX+(v.width/2+pad)/v.scale,y0=v.centerY-(v.height/2+pad)/v.scale,y1=v.centerY+(v.height/2+pad)/v.scale;
+  if(b[0]>=x0&&b[2]<=x1&&b[1]>=y0&&b[3]<=y1)return true;
+  const w=edge._world;if(!w||w.length<4)return true;
+  for(let k=0;k+3<w.length;k+=2)if(segmentHitsRect(w[k],w[k+1],w[k+2],w[k+3],x0,y0,x1,y1))return true;
+  return false;
+}
 
 // Street detail competes with a much busier basemap. Add CSS pixels as the
 // camera closes in, including to rare services; frequency colors/counts stay
@@ -96,7 +123,7 @@ export class RailRenderer{
     catch{
       this.canvas=canvas();this.surface=this.canvas;
       if(requested!=='canvas'&&typeof Worker!=='undefined'&&typeof OffscreenCanvas!=='undefined'){
-        try{this.raster=new RasterClient(this.canvas,{onFrame:info=>this.workerPresented(info),onError:()=>this.workerFailed(),canPresent:job=>!this.zoomAnimating&&sameCamera(job.view,this.view())&&(job.metadata.intent===this.intent||this.thresholdPreview&&job.metadata.thresholdPreview&&job.metadata.baseKey===this.filterKey(this.getData(),this.map.getZoom())),allowIntermediate:job=>this.thresholdPreview&&job.metadata.thresholdPreview});}
+        try{this.raster=new RasterClient(this.canvas,{onFrame:info=>this.workerPresented(info),onError:()=>this.workerFailed(),canPresent:job=>!this.zoomAnimating&&(this.gestureFrame(job)||sameCamera(job.view,this.view())&&(job.metadata.intent===this.intent||this.thresholdPreview&&job.metadata.thresholdPreview&&job.metadata.baseKey===this.filterKey(this.getData(),this.map.getZoom()))),allowIntermediate:job=>this.gestureFrame(job)||this.thresholdPreview&&job.metadata.thresholdPreview});}
         catch{this.canvas=canvas();this.surface=this.canvas;}
       }
       if(!this.raster)this.ctx=this.canvas.getContext('2d');
@@ -106,7 +133,11 @@ export class RailRenderer{
       this.canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();this.gpuLost=true;this.canvas.hidden=true;this.surface=canvas();this.surface.dataset.renderer='canvas';this.ctx=this.surface.getContext('2d');map.getContainer().appendChild(this.surface);this.canvas.dataset.renderer='canvas-fallback';this.schedule();});
       this.canvas.addEventListener('webglcontextrestored',()=>{try{this.gpu.restore();if(this.surface!==this.canvas)this.surface.remove();this.surface=this.canvas;this.canvas.hidden=false;this.gpuLost=false;this.canvas.dataset.renderer='webgl';this.edgesReference=null;this.highlightKey=null;this.highlightEdgesReference=null;this.schedule();}catch{this.gpuLost=true;}});
     }
-    map.on('wheelzoomstart',()=>{this.wheelZooming=true;this.clearHover();this.surface.style.transition='none';});map.on('wheelzoomend',()=>{this.wheelZooming=false;this.schedule();});
+    // During a pinch, wheel zoom or drag the worker's frames are shown as they arrive, each aligned from the camera
+    // it was painted for, so lines follow the gesture instead of stretching until it ends (owner, 27 November).
+    // The exact level-of-detail redraw still runs when the gesture ends.
+    map.on('movestart zoomstart',()=>{this.gesturing=true;});map.on('moveend zoomend',()=>{this.gesturing=false;});
+    map.on('wheelzoomstart',()=>{this.wheelZooming=true;this.gesturing=true;this.clearHover();this.surface.style.transition='none';});map.on('wheelzoomend',()=>{this.wheelZooming=false;this.gesturing=false;this.schedule();});
     map.on('move',()=>this.pan());map.on('moveend resize',()=>this.schedule());
     map.on('zoomanim',event=>this.zoomAnimation(event));map.on('zoomend',()=>{this.zoomAnimating=false;this.surface.style.transition='none';if(this.raster)this.alignBitmap(this.view());else this.surface.style.transform='';this.schedule();});
     map.on('click',event=>{const edge=this.pick(event.containerPoint.x,event.containerPoint.y);if(edge)this.onPick(edge,this.pickAll(event.containerPoint.x,event.containerPoint.y,edge));});
@@ -117,7 +148,7 @@ export class RailRenderer{
   clearHover(){if(this.hoverFrame)cancelAnimationFrame(this.hoverFrame);this.hoverFrame=0;this.map.getContainer().style.cursor='';}
   pan(){
     this.clearHover();if(this.zoomAnimating)return;
-    if(this.wheelZooming){this.alignBitmap(this.view());return;}
+    if(this.wheelZooming){this.alignBitmap(this.view());if(this.raster&&this.meshEdges)this.scheduleView();return;}
     if(this.raster&&this.meshEdges){this.alignBitmap(this.view());this.scheduleView();return;}
     if(this.gpu&&!this.gpuLost&&this.meshEdges){this.scheduleView();return;}
     if(!this.paintView||this.paintView.zoom!==this.map.getZoom()){this.schedule();return;}
@@ -141,7 +172,7 @@ export class RailRenderer{
     this.dpr=dpr;
   }
   drawView(){
-    if(this.raster&&this.meshEdges&&this.lastPixels&&!this.zoomAnimating){const view=this.view();this.alignBitmap(view);this.queueRaster(view,{geometryReused:true,styleReused:true,meshMs:0,cpuSubmitMs:0});return;}
+    if(this.raster&&this.meshEdges&&this.lastPixels&&!this.zoomAnimating){const view=this.view();this.alignBitmap(view);this.queueRaster(view,{geometryReused:true,styleReused:true,meshMs:0,cpuSubmitMs:0,panFrame:true});return;}
     if(!this.gpu||this.gpuLost||!this.meshEdges||this.zoomAnimating)return;
     const view=this.view();this.resize(view);this.gpu.draw(view,this.reviewOn);this.paintView=view;
     this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
@@ -181,7 +212,7 @@ export class RailRenderer{
       this.updateHighlights(data);this.reviewOn=effectivePass(data.state)&&data.state.review;this.gpu.draw(view,this.reviewOn);
     }else this.drawCanvas(data,view,pixels,key);
     this.currentStyleKey=key;this.paintView=view;let visible=0;
-    for(let i=0;i<this.meshEdges.length;i++)if((pixels[i*16+4]||pixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
+    visible=this.countVisible(pixels,view);
     this.visible=visible;this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
     this.canvas.dispatchEvent(new CustomEvent('atlasdraw',{detail:{visible,minimum,renderMs:performance.now()-started,meshMs,geometryReused:!geometryChanged,styleReused,engine:this.gpu&&!this.gpuLost?'webgl':'canvas',segments:this.gpu&&!this.gpuLost?this.gpu.main.count:undefined}}));
   }
@@ -199,16 +230,26 @@ export class RailRenderer{
     items.push(...supplementalFocusItems(data.edges,data.supplementalFocusGroup,data.state,data.dates,data.highlightIds,zoom));
     this.rasterHighlightKey=key;this.rasterHighlightEdges=data.edges;this.rasterHighlights=items;return items;
   }
+  // Painted paths with a segment in view, cached per camera, geometry and styles (pans repaint often).
+  countVisible(pixels,view,{settled=true}={}){
+    const c=this.visibleCountCache;
+    if(c&&c.edges===this.meshEdges&&c.pixels===pixels&&(sameCamera(c.view,view)||!settled))return c.count;
+    let count=0;for(let i=0;i<this.meshEdges.length;i++)if((pixels[i*16+4]||pixels[i*16+12])&&pathInView(this.meshEdges[i],view))count++;
+    this.visibleCountCache={edges:this.meshEdges,pixels,view:{...view},count};return count;
+  }
   queueRaster(view,detail){
     const localThreshold=!!this.raster.scene?.compactPrimitives&&this.meshEdges.length>5000&&view.zoom<=8;let visible=0;
     if(localThreshold){
       const cached=this.visibleFrequencyCache;
       if(!cached||cached.base!==this.lastStyleBase||cached.edges!==this.meshEdges||!sameCamera(cached.view,view))this.visibleFrequencyCache={base:this.lastStyleBase,edges:this.meshEdges,view:{...view},counts:visibleFrequencyHistogram(this.meshEdges,this.lastStyleBase,view)};
       visible=this.visibleFrequencyCache.counts[Math.min(this.visibleFrequencyCache.counts.length-1,Math.max(0,Math.ceil(this.minimum)))];
-    }else for(let i=0;i<this.meshEdges.length;i++)if((this.lastPixels[i*16+4]||this.lastPixels[i*16+12])&&intersects(this.meshEdges[i]._bbox,view))visible++;
+    }else visible=this.countVisible(this.lastPixels,view,{settled:!detail.panFrame});
     this.canvas.setAttribute('aria-busy','true');this.map.getContainer().setAttribute('aria-busy','true');
     this.raster.paint({...view,dpr:this.dpr},this.lastPixels,{styleKey:this.currentStyleKey+':lod:'+this.lodBucket,baseKey:this.currentBaseKey,basePixels:this.lastStyleBase?.pixels,baseFrequencies:this.lastStyleBase?.frequencies,localThreshold,minimum:this.minimum,reviewOn:this.reviewOn,highlights:this.rasterHighlights||[],metadata:{intent:this.intent,thresholdPreview:!!this.thresholdPreview,baseKey:this.currentBaseKey,detail:{...detail,visible,minimum:this.minimum}}});
   }
+  // A frame painted earlier in the current gesture with the current filters: safe to show, since
+  // workerPresented aligns it from its own camera to the live one.
+  gestureFrame(job){return !!this.gesturing&&!this.thresholdPreview&&job.metadata.baseKey===this.currentBaseKey;}
   workerPresented(info){
     this.paintView=info.view;this.alignBitmap(this.view());this.visible=info.metadata.detail.visible;
     this.canvas.setAttribute('aria-busy','false');this.map.getContainer().setAttribute('aria-busy','false');this.canvas.dataset.frame=String((Number(this.canvas.dataset.frame)||0)+1);
