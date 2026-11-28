@@ -1,0 +1,350 @@
+{
+ "boundTo": {
+  "layer": "rail",
+  "manifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795"
+ },
+ "contractVersions": [
+  1
+ ],
+ "kind": "euro_rail_weeks_index",
+ "layers": {
+  "bus": {
+   "archived": []
+  },
+  "rail": {
+   "archived": [
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 807204864,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "ac47baa63c689b69d70a09583be2d445c86152e1e1a7d5d4777c81b7aeaeaf9c",
+      "location": {
+       "baseUrl": "https://raw.githubusercontent.com/gravelcycles/eurail-rail-data/ec40c226090c03327a073c56c5d57d811f7d7529/archives/rail/1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c/",
+       "commit": "ec40c226090c03327a073c56c5d57d811f7d7529",
+       "host": "raw.githubusercontent.com",
+       "kind": "github-raw",
+       "path": "archives/rail/1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c/",
+       "repository": "gravelcycles/eurail-rail-data"
+      },
+      "manifest": {
+       "bytes": 2274146,
+       "name": "archive-manifest.json",
+       "sha256": "77ed1662130f1a257a7e4eb139cb703850941506f8fb44470b647cda141bd307"
+      },
+      "parts": 49
+     },
+     "bytes": 796431442,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-01",
+      "last": "2026-11-07"
+     },
+     "layer": "rail",
+     "manifestSha256": "1f53b3e793eae782554d065914b6c54a904d126bebd046685d34f99e4e55fc6c",
+     "notKeptPublicly": [],
+     "objects": 7862,
+     "publishedFrom": {
+      "commit": "3edbd78adfba1bb02e4fcefd47f63c92931f36e0",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "f8cc78f67d7df99a"
+     },
+     "releaseId": "source-composition-52560f6a0829394647",
+     "visibility": "public"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 495972864,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "443e8d0f9ca0f2b47867a4ed2e7ca363c08150cedd9791d1e5ad130f07607def",
+      "location": {
+       "kind": "private",
+       "store": "private-drive-folder"
+      },
+      "manifest": {
+       "bytes": 992891,
+       "name": "archive-manifest.json",
+       "sha256": "f8657fc7166392008c0272ba506a682919d7ca5de1ebcec538d16344b7987d55"
+      },
+      "parts": 30
+     },
+     "bytes": 487816092,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+     "notKeptPublicly": [
+      {
+       "condition": "not kept publicly",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 3757,
+     "publishedFrom": {
+      "commit": "c9bd7e1736c2793d335d6e977d8c56e43992b329",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "a931df85b57ad64c"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 502167552,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "9bcd9a5179f13ccc225a7329c184071d6cc7110071da2ebfcf7cee04791b6bd0",
+      "location": {
+       "kind": "private",
+       "store": "private-drive-folder"
+      },
+      "manifest": {
+       "bytes": 1000135,
+       "name": "archive-manifest.json",
+       "sha256": "8952e4b0c7e950925bfe05797d11d4228e30bad9ab5b8af5b312d8bf414deb64"
+      },
+      "parts": 30
+     },
+     "bytes": 493971503,
+     "contractVersions": [
+      1
+     ],
+     "correction": {
+      "correctionRecordSha256": "779e3d861aa82d17560e58a1b806de4fd3f1c3b8a15bee1f8ad2417de31ecc98",
+      "correctsManifestSha256": "66b4e137d376a5ce0e7270debbfdcd511aad2992b59b99a0e0d15a09782b7bc2",
+      "decision": "owner patch-release decision, 17 November 2026 (docs/gap-closure/DECISIONS.md)",
+      "patchReportSha256": "74e14a20e8371a30102092252f05f8048e1e8377a6c5a9064c34562c958c0859",
+      "product": "geometry",
+      "reason": "Railway geometry was misdrawn (misplaced inferred edges, provider spurs and continuation geometry); re-derived from the same products and closure context"
+     },
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
+     "notKeptPublicly": [
+      {
+       "condition": "not kept publicly",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 3782,
+     "publishedFrom": {
+      "commit": "2d0377089f15b306398fd41ed9f1cf89813dde76",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "9318403da791630a"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 528622592,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "cbbb0b632816354a7f2d1304e9031daf6a65349c6473d088473d9997cabf5d87",
+      "location": {
+       "kind": "private",
+       "store": "private-drive-folder"
+      },
+      "manifest": {
+       "bytes": 1092730,
+       "name": "archive-manifest.json",
+       "sha256": "94bcb7f5cde6595972a1b0c96b6075c7863ed60493019a656c288cea038b75ef"
+      },
+      "parts": 32
+     },
+     "bytes": 520047982,
+     "contractVersions": [
+      1
+     ],
+     "correction": {
+      "correctionRecordSha256": "db7ad7b049ac17e174ec3c653c00525c095637a724d4c19f53273f2a579f418b",
+      "correctsManifestSha256": "44d0aacc3b5f700c90b22ad5e1cc2e6cdb22dd8272bb78639e884b1882f89c69",
+      "decision": "owner ask (patch the existing week for the missing rail, via planning, 18 November 2026) under the owner's patch-release decision of 17 November 2026; coordinator decisions 18 November 2026 (docs/gap-closure/DECISIONS.md)",
+      "patchReportSha256": "fa0cdf2d1f2a968583195997a4a7c7916acdd30b858fc158e747d1642cd978b1",
+      "product": "geometry",
+      "reason": "Dashed railway drawn where an inferred rail path was missing; re-derived from the same products with reviewed station anchors (5 stations, 20 connections) and a reviewed routing via (Manchester Ordsall Chord, 2 connections). 22 connections now follow inferred railway; the other dashed connections stay dashed with their reason recorded."
+     },
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
+     "notKeptPublicly": [
+      {
+       "condition": "not kept publicly",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 4138,
+     "publishedFrom": {
+      "commit": "b22d695ae00155c7c715013fd662cf3ae59f1a45",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "133f74a0e1b8e2bc"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 532142592,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "0fd1302ff47e4f65e60f8fa8cffcbd4193404b55aca90e4598244e590371b4fd",
+      "location": {
+       "kind": "private",
+       "store": "private-r2"
+      },
+      "manifest": {
+       "bytes": 1093306,
+       "name": "archive-manifest.json",
+       "sha256": "6c7419ad6db337d415657a4dca18324b3ea1fc065df0c2e6cea686633d8bd9a7"
+      },
+      "parts": 32
+     },
+     "bytes": 523570925,
+     "contractVersions": [
+      1
+     ],
+     "correction": {
+      "correctionRecordSha256": "d6299ec4da79bf31ddb9568e2a38625af595e3257935557fa95a3df591dd29be",
+      "correctsManifestSha256": "169d19df8c35202e0d83a88cad562e800f772a37eac95e177f8c60b90c8abdc4",
+      "decision": "Coordinator, 24 November 2026: publish G1's display straight-jump fix (#525) on live 15–21 as a derived geometry patch, the owner having asked for the dotted lines on published weeks to be fixed; Traffic display packet with overview buckets 7-8 (#529) from the same main f2158bb2",
+      "patchReportSha256": "0510528481be4e5cd11728dba672be990f068f8a44ddc49528d8b60868729e18",
+      "product": "geometry",
+      "reason": "Map display: rail rows the viewer drew dashed only because compact-tier simplification turned a real fine railway curve into straight chords of 25 km or more (2,368 network and 710 overview rows re-simplified from their fine curves, 443 through-continuation rows rebuilt); the timetable, service and closure context and pass status are unchanged"
+     },
+     "dates": {
+      "first": "2026-11-15",
+      "last": "2026-11-21"
+     },
+     "layer": "rail",
+     "manifestSha256": "633a844a834142e21da4ae3b300581516d1e2f4c7d957ab59f1d2b1d5990ffb4",
+     "notKeptPublicly": [
+      {
+       "condition": "not kept publicly",
+       "source": "gr_hellenic"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "rs_srbijavoz"
+      },
+      {
+       "condition": "not kept publicly",
+       "source": "tr_rayatlas"
+      }
+     ],
+     "objects": 4140,
+     "publishedFrom": {
+      "commit": "636c0608f0603fd7522f4df8c31b29e1b1dec354",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "cd2b5907bb9e923a"
+     },
+     "releaseId": "20261114T061018386833Z-2026-11-15",
+     "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 519330816,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "fc75665047f986ce5a89065bd97530c390a77f3807c5cc98a7d49dafd27a1bed",
+      "location": {
+       "baseUrl": "https://raw.githubusercontent.com/gravelcycles/eurail-rail-data-2/3a142f5e25bfb6c240ad1e7275da6ae921083bce/archives/rail/47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289/",
+       "commit": "3a142f5e25bfb6c240ad1e7275da6ae921083bce",
+       "host": "raw.githubusercontent.com",
+       "kind": "github-raw",
+       "path": "archives/rail/47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289/",
+       "repository": "gravelcycles/eurail-rail-data-2"
+      },
+      "manifest": {
+       "bytes": 1127098,
+       "name": "archive-manifest.json",
+       "sha256": "c28cc7637730ddf70e79621e5efa4937dd2386b9cfb9f658dfda06221174bf55"
+      },
+      "parts": 31
+     },
+     "bytes": 510598310,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-29",
+      "last": "2026-12-05"
+     },
+     "layer": "rail",
+     "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
+     "notKeptPublicly": [],
+     "objects": 4268,
+     "publishedFrom": {
+      "commit": "6ffe3c519c9a4d2b850cd09f38b87636ed53dd91",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "a8efea473ec2c6f7"
+     },
+     "releaseId": "context-replacements-89971eb9676c8241a4",
+     "visibility": "public"
+    }
+   ],
+   "current": {
+    "contractVersions": [
+     1
+    ],
+    "dates": {
+     "first": "2026-12-06",
+     "last": "2026-12-12"
+    },
+    "location": {
+     "kind": "pages-tree",
+     "path": "data/"
+    },
+    "manifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795",
+    "releaseId": "context-replacements-3c178ebcbcd70b7201"
+   }
+  },
+  "transit": {
+   "archived": []
+  }
+ },
+ "schemaVersion": 1
+}

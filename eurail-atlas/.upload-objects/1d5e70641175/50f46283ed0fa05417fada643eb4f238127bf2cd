@@ -1,0 +1,208 @@
+{
+ "schemaVersion": 1,
+ "kind": "rail_explore_delivery",
+ "sourceManifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795",
+ "sourceReleaseId": "context-replacements-3c178ebcbcd70b7201",
+ "dates": [
+  "2026-12-06",
+  "2026-12-07",
+  "2026-12-08",
+  "2026-12-09",
+  "2026-12-10",
+  "2026-12-11",
+  "2026-12-12"
+ ],
+ "clock": "Minutes after 00:00 CET (UTC+1) on each date",
+ "files": {
+  "stations": "stations.json.gz",
+  "journeys": "journeys.json.gz",
+  "summary": "summary.json.gz",
+  "timetable": "timetable.bin.gz"
+ },
+ "counts": {
+  "stations": 32905,
+  "journeys": 58913,
+  "profiles": 113933,
+  "days": {
+   "2026-12-06": {
+    "trips": 126099
+   },
+   "2026-12-07": {
+    "trips": 175326
+   },
+   "2026-12-08": {
+    "trips": 169302
+   },
+   "2026-12-09": {
+    "trips": 176527
+   },
+   "2026-12-10": {
+    "trips": 176269
+   },
+   "2026-12-11": {
+    "trips": 177443
+   },
+   "2026-12-12": {
+    "trips": 147555
+   }
+  }
+ },
+ "skipped": {
+  "runs_without_complete_clocks": 7
+ },
+ "deduplication": {
+  "rule": "A run is dropped when all its calls appear, in order and within a minute, in a run from another source on the same date; of two equal copies the run starting in its own feed country is kept.",
+  "droppedTripsByDate": {
+   "2026-12-06": 4134,
+   "2026-12-07": 6044,
+   "2026-12-08": 5792,
+   "2026-12-09": 6048,
+   "2026-12-10": 6046,
+   "2026-12-11": 6194,
+   "2026-12-12": 4761
+  },
+  "droppedTrips": 39019,
+  "sourcePairs": [
+   [
+    "ch_gtfs_2026",
+    "fr_sncf",
+    16067
+   ],
+   [
+    "ch_gtfs_2026",
+    "de_rv",
+    3932
+   ],
+   [
+    "cz_czptt",
+    "de_rv",
+    1612
+   ],
+   [
+    "de_rv",
+    "ch_gtfs_2026",
+    1434
+   ],
+   [
+    "fr_idfm",
+    "fr_sncf",
+    1358
+   ],
+   [
+    "de_rv",
+    "cz_czptt",
+    1234
+   ],
+   [
+    "es_renfe_cercanias_transitous",
+    "es_renfe_ld",
+    1036
+   ],
+   [
+    "ch_gtfs_2026",
+    "at_mvo_rail_transitous",
+    902
+   ],
+   [
+    "it_trenitalia_nap",
+    "it_liguria_trenitalia_tper_gtfs",
+    892
+   ],
+   [
+    "es_renfe_ld",
+    "es_renfe_cercanias_transitous",
+    632
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "de_rv",
+    586
+   ],
+   [
+    "ch_gtfs_2026",
+    "it_trenord",
+    578
+   ],
+   [
+    "de_fv",
+    "ch_gtfs_2026",
+    517
+   ],
+   [
+    "de_rv",
+    "fr_sncf",
+    504
+   ],
+   [
+    "de_rv",
+    "at_mvo_rail_transitous",
+    475
+   ],
+   [
+    "cz_czptt",
+    "pl_polish_trains",
+    469
+   ],
+   [
+    "fr_sncf",
+    "fr_idfm",
+    427
+   ],
+   [
+    "fr_sncf",
+    "ch_gtfs_2026",
+    415
+   ],
+   [
+    "de_rv",
+    "be_sncb_official",
+    397
+   ],
+   [
+    "at_mvo_rail_transitous",
+    "si_dujpp_official",
+    348
+   ]
+  ]
+ },
+ "assets": {
+  "stations.json.gz": {
+   "sha256": "1cba6e4060e44b286e2e5b2db456b8f5fcc04e26c68e22e27bbb25f698bf799b",
+   "bytes": 519694,
+   "contentBytes": 1373780,
+   "encoding": "gzip"
+  },
+  "journeys.json.gz": {
+   "sha256": "2f9b7bdb2a0bcb307d8e30397a5151c2043221b586ef5e71f5e96459554fa284",
+   "bytes": 379598,
+   "contentBytes": 2683496,
+   "encoding": "gzip"
+  },
+  "timetable.bin.gz": {
+   "sha256": "989747880ed2a5f00eaa42da52ae7894dcdcb0966a84f10927c7c4a51dd8a464",
+   "bytes": 4438086,
+   "contentBytes": 19348448,
+   "encoding": "gzip"
+  },
+  "summary.json.gz": {
+   "sha256": "41f3e1460c517583288f1fcb7f5e4aaac44e07d64ec66e3989a58b16d225f020",
+   "bytes": 799,
+   "contentBytes": 1548,
+   "encoding": "gzip"
+  }
+ },
+ "methodology": {
+  "scope": "Primary scheduled rail patterns with published clock times. Replacement buses and coaches are excluded. Sources without public clock times are absent.",
+  "categories": "Display classes from timetable facts: night = sleeper services; high speed = 100 km or longer and averaging 120 km/h or with a hop of 50 km or more at 200 km/h or more; long distance = 150 km or longer; otherwise regional.",
+  "passClasses": "free = included with no mandatory reservation; reservation = mandatory reservation; excluded = not included; uncertain = unknown or conditional.",
+  "distances": "Straight-line distances between consecutive calls; speeds are lower bounds on curving lines.",
+  "firstDate": "Trips that began on the evening before the first date are not included on the first date."
+ },
+ "attribution": {
+  "countryContext": "Explicit display-only geometry; original provider attribution applies.",
+  "countryEvidence": "Eurostat/GISCO 2024; © EuroGeographics for administrative boundaries; analytical station-country evidence. Display basemap remains Natural Earth.",
+  "infrastructure": "© OpenStreetMap contributors; ODbL-1.0; Geofabrik and OpenStreetMap France extracts and OpenStreetMap contributors, weekly planet dump (AWS Open Data mirror of planet.openstreetmap.org) and attributed OSM feature distribution",
+  "stationNames": "Trainline EU Stations contributors; underlying OpenStreetMap and attributed open station references; SBB Infrastruktur / BAV / swisstopo service-point register",
+  "timetables": "Individual source licences and original publisher attribution apply; see sources."
+ }
+}

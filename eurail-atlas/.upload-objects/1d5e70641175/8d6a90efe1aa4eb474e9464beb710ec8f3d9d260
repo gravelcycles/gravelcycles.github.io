@@ -1,0 +1,508 @@
+{
+ "schemaVersion": 1,
+ "format": "rail-atlas-border-links-v1",
+ "kind": "reviewed_border_station_links",
+ "releaseId": "context-replacements-3c178ebcbcd70b7201",
+ "dates": [
+  "2026-12-06",
+  "2026-12-07",
+  "2026-12-08",
+  "2026-12-09",
+  "2026-12-10",
+  "2026-12-11",
+  "2026-12-12"
+ ],
+ "geometryStatus": "schematic_border_link",
+ "countUnit": "matched_dated_train_pairs",
+ "callsAdded": 0,
+ "sourceFrequencyContribution": 0,
+ "stationIdentitiesUnchanged": true,
+ "passPoliciesUnchanged": true,
+ "passStatusInferred": false,
+ "inSeatThroughRideAsserted": false,
+ "meaning": "Reviewed adjacent border stations whose publishers each end the train at their own station. A labelled straight link is drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. It adds no call, station identity, pass status or train beyond the matched pairs, and does not establish an in-seat through ride.",
+ "links": [
+  {
+   "id": "ade2eceb0511de9b64",
+   "reviewId": "si-it-sezana-villa-opicina-2026-11-11",
+   "pairId": "6199caf534be98dc3a",
+   "throughService": "Ljubljana – Villa Opicina – Trieste Centrale / Udine",
+   "a": {
+    "id": "ad6791b2893fa6d6de",
+    "name": "Sežana",
+    "source": "si_dujpp_official",
+    "country": "Slovenia",
+    "lon": 13.863631,
+    "lat": 45.704041
+   },
+   "b": {
+    "id": "b94bbefff99eb00b62",
+    "name": "VILLA OPICINA",
+    "source": "it_trenitalia_nap",
+    "country": "Italy",
+    "lon": 13.791154,
+    "lat": 45.693937
+   },
+   "sources": [
+    "si_dujpp_official",
+    "it_trenitalia_nap"
+   ],
+   "countries": [
+    "Italy",
+    "Slovenia"
+   ],
+   "coords": [
+    [
+     13.863631,
+     45.704041
+    ],
+    [
+     13.791154,
+     45.693937
+    ]
+   ],
+   "km": 5.7,
+   "geometryStatus": "schematic_border_link",
+   "geometryNote": "Approximate straight link between adjacent border stations. Neither publisher supplies this leg: one timetable ends the train at Sežana and the other starts it at VILLA OPICINA. Drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. Not a surveyed alignment; no call is added, and no pass status or in-seat through ride is asserted.",
+   "daily": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "weekly": 14,
+   "matches": [
+    {
+     "arrival": {
+      "journey": "a29f65ba767494d271",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž1896",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1896"
+     },
+     "departure": {
+      "journey": "678a90873e58a36fef",
+      "source": "it_trenitalia_nap",
+      "snapshot": "812e82a3f5c17f9abe5406a9680c200daf2f6456bba51af676e4576cbc49455e",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "1896",
+      "number": "1896"
+     },
+     "evidence": "train_number_and_clock",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7,
+     "handoffMinutes": [
+      35.0,
+      35.0
+     ]
+    },
+    {
+     "arrival": {
+      "journey": "e245fb6e699c049b52",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž1824",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1824"
+     },
+     "departure": {
+      "journey": "154dda826e29946356",
+      "source": "it_trenitalia_nap",
+      "snapshot": "812e82a3f5c17f9abe5406a9680c200daf2f6456bba51af676e4576cbc49455e",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "1824",
+      "number": "1824"
+     },
+     "evidence": "train_number_and_clock",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7,
+     "handoffMinutes": [
+      30.0,
+      30.0
+     ]
+    }
+   ],
+   "references": [
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/international-travel/italy-i/trieste-trieste-airport-palmanova-udine/",
+     "supports": "Operator timetable for trains 1824/1825 and 1896/1897 between Ljubljana, Sežana, Villa Opicina, Trieste Centrale and Udine."
+    },
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/international-travel/italy-i/villa-opicina/",
+     "supports": "Operator timetable for the Slovenian trains running through Sežana to Villa Opicina."
+    }
+   ],
+   "reviewedOn": "2026-11-11",
+   "validFrom": "2026-11-01",
+   "validThrough": "2026-12-12"
+  },
+  {
+   "id": "a707de4e3be490359d",
+   "reviewId": "si-it-sezana-villa-opicina-2026-11-11",
+   "pairId": "6199caf534be98dc3a",
+   "throughService": "Ljubljana – Villa Opicina – Trieste Centrale / Udine",
+   "a": {
+    "id": "b94bbefff99eb00b62",
+    "name": "VILLA OPICINA",
+    "source": "it_trenitalia_nap",
+    "country": "Italy",
+    "lon": 13.791154,
+    "lat": 45.693937
+   },
+   "b": {
+    "id": "ad6791b2893fa6d6de",
+    "name": "Sežana",
+    "source": "si_dujpp_official",
+    "country": "Slovenia",
+    "lon": 13.863631,
+    "lat": 45.704041
+   },
+   "sources": [
+    "it_trenitalia_nap",
+    "si_dujpp_official"
+   ],
+   "countries": [
+    "Italy",
+    "Slovenia"
+   ],
+   "coords": [
+    [
+     13.791154,
+     45.693937
+    ],
+    [
+     13.863631,
+     45.704041
+    ]
+   ],
+   "km": 5.7,
+   "geometryStatus": "schematic_border_link",
+   "geometryNote": "Approximate straight link between adjacent border stations. Neither publisher supplies this leg: one timetable ends the train at VILLA OPICINA and the other starts it at Sežana. Drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. Not a surveyed alignment; no call is added, and no pass status or in-seat through ride is asserted.",
+   "daily": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "weekly": 14,
+   "matches": [
+    {
+     "arrival": {
+      "journey": "a67d51f5f81f5f02c1",
+      "source": "it_trenitalia_nap",
+      "snapshot": "812e82a3f5c17f9abe5406a9680c200daf2f6456bba51af676e4576cbc49455e",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "1899",
+      "number": "1899"
+     },
+     "departure": {
+      "journey": "a4464f00623f6791a1",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž1897",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1897"
+     },
+     "evidence": "clock",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7,
+     "handoffMinutes": [
+      38.0,
+      38.0
+     ]
+    },
+    {
+     "arrival": {
+      "journey": "f2fa78157d068a2036",
+      "source": "it_trenitalia_nap",
+      "snapshot": "812e82a3f5c17f9abe5406a9680c200daf2f6456bba51af676e4576cbc49455e",
+      "line": "0083_REG",
+      "operator": "TRENITALIA",
+      "train": "1825",
+      "number": "1825"
+     },
+     "departure": {
+      "journey": "d6a181c33771948f99",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž1825",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "1825"
+     },
+     "evidence": "train_number_and_clock",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7,
+     "handoffMinutes": [
+      29.0,
+      29.0
+     ]
+    }
+   ],
+   "references": [
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/international-travel/italy-i/trieste-trieste-airport-palmanova-udine/",
+     "supports": "Operator timetable for trains 1824/1825 and 1896/1897 between Ljubljana, Sežana, Villa Opicina, Trieste Centrale and Udine."
+    },
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/international-travel/italy-i/villa-opicina/",
+     "supports": "Operator timetable for the Slovenian trains running through Sežana to Villa Opicina."
+    }
+   ],
+   "reviewedOn": "2026-11-11",
+   "validFrom": "2026-11-01",
+   "validThrough": "2026-12-12"
+  },
+  {
+   "id": "97b2e1534f13ed57f7",
+   "reviewId": "si-hr-ilirska-bistrica-sapjane-2026-11-11",
+   "pairId": "311356594fdd76716f",
+   "throughService": "Ljubljana – Ilirska Bistrica – Šapjane – Rijeka",
+   "a": {
+    "id": "a080da99574e729bb3",
+    "name": "Ilirska Bistrica",
+    "source": "si_dujpp_official",
+    "country": "Slovenia",
+    "lon": 14.235974,
+    "lat": 45.569166
+   },
+   "b": {
+    "id": "115b73d246778742a4",
+    "name": "Šapjane",
+    "source": "hr_hz",
+    "country": "Croatia",
+    "lon": 14.244383,
+    "lat": 45.47665
+   },
+   "sources": [
+    "si_dujpp_official",
+    "hr_hz"
+   ],
+   "countries": [
+    "Croatia",
+    "Slovenia"
+   ],
+   "coords": [
+    [
+     14.235974,
+     45.569166
+    ],
+    [
+     14.244383,
+     45.47665
+    ]
+   ],
+   "km": 10.3,
+   "geometryStatus": "schematic_border_link",
+   "geometryNote": "Approximate straight link between adjacent border stations. Neither publisher supplies this leg: one timetable ends the train at Ilirska Bistrica and the other starts it at Šapjane. Drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. Not a surveyed alignment; no call is added, and no pass status or in-seat through ride is asserted.",
+   "daily": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "weekly": 7,
+   "matches": [
+    {
+     "arrival": {
+      "journey": "82534e0d54b26d0127",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž481",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "481"
+     },
+     "departure": {
+      "journey": "c5322dc749cb41fb3b",
+      "source": "hr_hz",
+      "snapshot": "fdd3a5977f123374f349cf1ee0ea2e8a9f2e8dde8ef99b7815f89a51c9d1a116",
+      "line": "481",
+      "operator": "HŽ Putnicki prijevoz",
+      "train": "481",
+      "number": "481"
+     },
+     "evidence": "train_number",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7
+    }
+   ],
+   "references": [
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/new-connection-with-new-sz-trains-villa-opicina-trieste-sezana-divaca-pivka-ilirska-bistrica-sapjane-opatija-matulji-rijeka/",
+     "supports": "Operator notice describing direct trains over Pivka – Ilirska Bistrica – Šapjane – Opatija-Matulji – Rijeka, run with HŽ Putnički prijevoz."
+    },
+    {
+     "publisher": "HŽ Putnički prijevoz",
+     "url": "https://www.hzpp.hr/en/rijeka-ljubljana-vienna-warsaw",
+     "supports": "Operator page for the Rijeka – Ljubljana international service calling at Šapjane."
+    }
+   ],
+   "reviewedOn": "2026-11-11",
+   "validFrom": "2026-11-01",
+   "validThrough": "2026-12-12"
+  },
+  {
+   "id": "bccd61a0669706698c",
+   "reviewId": "si-hr-ilirska-bistrica-sapjane-2026-11-11",
+   "pairId": "311356594fdd76716f",
+   "throughService": "Ljubljana – Ilirska Bistrica – Šapjane – Rijeka",
+   "a": {
+    "id": "115b73d246778742a4",
+    "name": "Šapjane",
+    "source": "hr_hz",
+    "country": "Croatia",
+    "lon": 14.244383,
+    "lat": 45.47665
+   },
+   "b": {
+    "id": "a080da99574e729bb3",
+    "name": "Ilirska Bistrica",
+    "source": "si_dujpp_official",
+    "country": "Slovenia",
+    "lon": 14.235974,
+    "lat": 45.569166
+   },
+   "sources": [
+    "hr_hz",
+    "si_dujpp_official"
+   ],
+   "countries": [
+    "Croatia",
+    "Slovenia"
+   ],
+   "coords": [
+    [
+     14.244383,
+     45.47665
+    ],
+    [
+     14.235974,
+     45.569166
+    ]
+   ],
+   "km": 10.3,
+   "geometryStatus": "schematic_border_link",
+   "geometryNote": "Approximate straight link between adjacent border stations. Neither publisher supplies this leg: one timetable ends the train at Šapjane and the other starts it at Ilirska Bistrica. Drawn only for dated train pairs matched by public train number or by a bounded arrival-to-departure handoff. Not a surveyed alignment; no call is added, and no pass status or in-seat through ride is asserted.",
+   "daily": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "weekly": 7,
+   "matches": [
+    {
+     "arrival": {
+      "journey": "80f6642f1b2b9ed77b",
+      "source": "hr_hz",
+      "snapshot": "fdd3a5977f123374f349cf1ee0ea2e8a9f2e8dde8ef99b7815f89a51c9d1a116",
+      "line": "480",
+      "operator": "HŽ Putnicki prijevoz",
+      "train": "480",
+      "number": "480"
+     },
+     "departure": {
+      "journey": "dd8e1da9038196a338",
+      "source": "si_dujpp_official",
+      "snapshot": "a03eaabb893f903c1bdcb82d870e1a271f3a25d02f1ee31caa1349e675df2efa",
+      "line": "Ž480",
+      "operator": "SŽ - Potniški promet d.o.o.",
+      "train": null,
+      "number": "480"
+     },
+     "evidence": "train_number",
+     "daily": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "weekly": 7
+    }
+   ],
+   "references": [
+    {
+     "publisher": "SŽ – Potniški promet",
+     "url": "https://potniski.sz.si/en/new-connection-with-new-sz-trains-villa-opicina-trieste-sezana-divaca-pivka-ilirska-bistrica-sapjane-opatija-matulji-rijeka/",
+     "supports": "Operator notice describing direct trains over Pivka – Ilirska Bistrica – Šapjane – Opatija-Matulji – Rijeka, run with HŽ Putnički prijevoz."
+    },
+    {
+     "publisher": "HŽ Putnički prijevoz",
+     "url": "https://www.hzpp.hr/en/rijeka-ljubljana-vienna-warsaw",
+     "supports": "Operator page for the Rijeka – Ljubljana international service calling at Šapjane."
+    }
+   ],
+   "reviewedOn": "2026-11-11",
+   "validFrom": "2026-11-01",
+   "validThrough": "2026-12-12"
+  }
+ ]
+}
