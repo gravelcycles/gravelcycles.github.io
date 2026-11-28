@@ -28,14 +28,16 @@ void main(){
   if(flags.r<0.5){gl_Position=vec4(2.0,2.0,0.0,1.0);v_color=vec4(0.0);v_dash=0.0;v_start=0.0;v_length=0.0;v_radius=0.0;v_local=vec2(0.0);return;}
   vec2 delta=(a_segment.zw-a_segment.xy)*u_scale;
   float len=length(delta);
-  vec2 direction=delta/max(len,0.00001);
+  // A zero-length instance is a dot (the Traffic overview's static layer): a round cap all round.
+  vec2 direction=len>0.00001?delta/len:vec2(1.0,0.0);
   float radius=color.a*8.0;
   float outer=radius+1.0;
   vec2 endpoint=mix(a_segment.xy,a_segment.zw,a_corner.x);
   vec2 offset=direction*((a_corner.x*2.0-1.0)*outer)
     +vec2(-direction.y,direction.x)*(a_corner.y*outer);
   vec2 pixel=(endpoint-u_center)*u_scale+offset;
-  float depth=u_layer==0?0.9-flags.a*1.2:u_layer==1?-0.4-flags.a*0.1:-0.8;
+  // Layer 3, the static overview layer, lies beneath every edge (main edges reach at most 0.9).
+  float depth=u_layer==3?0.95:u_layer==0?0.9-flags.a*1.2:u_layer==1?-0.4-flags.a*0.1:-0.8;
   gl_Position=vec4(pixel/(u_size*0.5)*vec2(1.0,-1.0),depth,1.0);
   v_local=vec2(a_corner.x*len+(a_corner.x*2.0-1.0)*outer,a_corner.y*outer);
   v_length=len;v_radius=radius;v_start=a_start*u_scale;
@@ -89,6 +91,29 @@ export function lineInstances(edges,origin=[0,0]){
   return data;
 }
 
+// The static layer (map-renderer.js setStaticLayer): pre-styled groups of
+// lines (x1,y1,x2,y2) and dots (x,y) in world units. One instance per line or
+// dot, its style index the group's, so a group keeps its own colour and width.
+export function staticInstances(groups,origin=[0,0]){
+  let count=0;for(const group of groups)count+=group.lines.length/4+group.dots.length/2;
+  const data=new Float32Array(count*6);let offset=0;
+  for(let index=0;index<groups.length;index++){
+    const{lines,dots}=groups[index];
+    for(let i=0;i<lines.length;i+=4){data[offset++]=lines[i]-origin[0];data[offset++]=lines[i+1]-origin[1];data[offset++]=lines[i+2]-origin[0];data[offset++]=lines[i+3]-origin[1];data[offset++]=0;data[offset++]=index;}
+    for(let i=0;i<dots.length;i+=2){const x=dots[i]-origin[0],y=dots[i+1]-origin[1];data[offset++]=x;data[offset++]=y;data[offset++]=x;data[offset++]=y;data[offset++]=0;data[offset++]=index;}
+  }
+  return data;
+}
+export function staticStylePixels(groups){
+  const data=new Uint8Array(groups.length*2*4);
+  for(let i=0;i<groups.length;i++){
+    const match=/rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(groups[i].color),color=match?[+match[1],+match[2],+match[3]]:rgb(groups[i].color).slice(0,3).map(v=>Math.round(v*255)),offset=i*8;
+    data[offset]=color[0];data[offset+1]=color[1];data[offset+2]=color[2];data[offset+3]=Math.round(Math.min(16,groups[i].width)/16*255);
+    data[offset+4]=255;data[offset+5]=0;data[offset+6]=255;data[offset+7]=0;
+  }
+  return data;
+}
+
 export function stylePixels(styles,stride=4){
   const data=new Uint8Array(styles.length*stride*4);
   for(let i=0;i<styles.length;i++)for(let pass=0;pass<stride/2;pass++){
@@ -120,7 +145,7 @@ export class RailGPU{
     this.center=gl.getUniformLocation(this.program,'u_center');this.size=gl.getUniformLocation(this.program,'u_size');this.scale=gl.getUniformLocation(this.program,'u_scale');
     this.textureWidth=gl.getUniformLocation(this.program,'u_textureWidth');this.styleStride=gl.getUniformLocation(this.program,'u_styleStride');this.pass=gl.getUniformLocation(this.program,'u_pass');this.layer=gl.getUniformLocation(this.program,'u_layer');gl.uniform1i(gl.getUniformLocation(this.program,'u_styles'),0);
     this.corner=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corner);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,-1,1,-1,1,1,0,-1,1,1,0,1]),gl.STATIC_DRAW);
-    this.main=this.batch(4);this.highlight=this.batch(2);
+    this.main=this.batch(4);this.highlight=this.batch(2);this.staticBatch=this.batch(2);this.staticKey=null;
     gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);
   }
   batch(stride){
@@ -137,17 +162,31 @@ export class RailGPU{
     gl.bindBuffer(gl.ARRAY_BUFFER,batch.buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);batch.count=data.length/6;
     return batch.count;
   }
+  // The static layer's instances and per-group styles; null empties it.
+  uploadStatic(layer){
+    const gl=this.gl,batch=this.staticBatch,groups=layer?.groups||[];
+    batch.origin=[0,0];for(const group of groups){const p=group.lines.length?group.lines:group.dots;if(p.length){batch.origin=[p[0],p[1]];break;}}
+    const data=staticInstances(groups,batch.origin);gl.bindBuffer(gl.ARRAY_BUFFER,batch.buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);batch.count=data.length/6;
+    this.styles(groups.length?staticStylePixels(groups):new Uint8Array(8),batch);this.staticKey=layer?.key??null;
+    return batch.count;
+  }
   styles(styles,highlight=false){
-    const gl=this.gl,batch=highlight?this.highlight:this.main,width=Math.min(1024,gl.getParameter(gl.MAX_TEXTURE_SIZE)),pixels=styles instanceof Uint8Array?styles:stylePixels(styles,batch.stride),height=Math.max(1,Math.ceil(pixels.length/(width*4)));
+    const gl=this.gl,batch=highlight&&typeof highlight==='object'?highlight:highlight?this.highlight:this.main,width=Math.min(1024,gl.getParameter(gl.MAX_TEXTURE_SIZE)),pixels=styles instanceof Uint8Array?styles:stylePixels(styles,batch.stride),height=Math.max(1,Math.ceil(pixels.length/(width*4)));
     const padded=new Uint8Array(width*height*4);padded.set(pixels);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,batch.texture);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
     if(batch.width===width&&batch.height===height)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,padded);
     else{gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,padded);batch.width=width;batch.height=height;}
   }
-  draw(view,review=false){
+  draw(view,review=false,{staticLayer=false,edges=true}={}){
     const gl=this.gl;gl.viewport(0,0,this.canvas.width,this.canvas.height);gl.clearColor(0,0,0,0);gl.clearDepth(1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(this.program);
     gl.uniform2f(this.size,view.width,view.height);gl.uniform1f(this.scale,view.scale);
-    for(const batch of [this.main,this.highlight])if(batch.count){
+    // The static layer first, with the same view uniforms, beneath the edges.
+    const staticBatch=this.staticBatch;
+    if(staticLayer&&staticBatch.count){
+      gl.uniform2f(this.center,view.centerX-staticBatch.origin[0],view.centerY-staticBatch.origin[1]);
+      gl.bindVertexArray(staticBatch.vao);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,staticBatch.texture);gl.uniform1i(this.textureWidth,staticBatch.width);gl.uniform1i(this.styleStride,staticBatch.stride);gl.uniform1i(this.layer,3);gl.uniform1i(this.pass,0);gl.drawArraysInstanced(gl.TRIANGLES,0,6,staticBatch.count);
+    }
+    for(const batch of edges?[this.main,this.highlight]:[this.highlight])if(batch.count){
       gl.uniform2f(this.center,view.centerX-batch.origin[0],view.centerY-batch.origin[1]);
       gl.bindVertexArray(batch.vao);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,batch.texture);gl.uniform1i(this.textureWidth,batch.width);gl.uniform1i(this.styleStride,batch.stride);gl.uniform1i(this.layer,batch===this.main?0:2);gl.uniform1i(this.pass,0);gl.drawArraysInstanced(gl.TRIANGLES,0,6,batch.count);
       if(batch===this.main&&review){gl.uniform1i(this.pass,1);gl.uniform1i(this.layer,1);gl.drawArraysInstanced(gl.TRIANGLES,0,6,batch.count);}

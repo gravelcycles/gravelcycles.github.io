@@ -1,7 +1,7 @@
-import{escapeHTML as esc,formatNumber as fmt,selectedDays,dateLabel,effectivePass,worldPoint,validMapLocation}from'./atlas-core.js?v=62e2a17f7184a8a5';
-import{sectionCount,sectionDaily,sectionSourceBreakdown,sectionCohortBreakdown,sectionDateCoverage}from'./physical-heat.js?v=62e2a17f7184a8a5';
-import{edgeInScope}from'./project-scope.js?v=62e2a17f7184a8a5';
-import{trafficDuplicateNote}from'./rail-duplicates.js?v=62e2a17f7184a8a5';
+import{escapeHTML as esc,formatNumber as fmt,selectedDays,dateLabel,effectivePass,worldPoint,validMapLocation}from'./atlas-core.js?v=14a270392708fc8e';
+import{sectionCount,sectionDaily,sectionSourceBreakdown,sectionCohortBreakdown,sectionDateCoverage}from'./physical-heat.js?v=14a270392708fc8e';
+import{edgeInScope}from'./project-scope.js?v=14a270392708fc8e';
+import{trafficDuplicateNote}from'./rail-duplicates.js?v=14a270392708fc8e';
 
 const coordinateLabel=([lon,lat],precision=6)=>`${Math.abs(lat).toFixed(precision)}° ${lat<0?'S':'N'}, ${Math.abs(lon).toFixed(precision)}° ${lon<0?'W':'E'}`;
 export function physicalSectionMidpoint(section){

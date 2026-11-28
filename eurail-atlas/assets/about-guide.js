@@ -1,7 +1,7 @@
 // The "How it works" opening of About names the service week and the number
 // of timetable sources. Both come from the delivery (its dates and manifest),
 // never from typed text, so a new week or a new source updates the guide.
-import{dateRangeLabels,formatNumber}from'./atlas-core.js?v=62e2a17f7184a8a5';
+import{dateRangeLabels,formatNumber}from'./atlas-core.js?v=14a270392708fc8e';
 
 // "1–7 November 2026"; a week crossing a year already names both years.
 export function aboutWeekLabel(dates){

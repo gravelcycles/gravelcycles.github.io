@@ -1,7 +1,7 @@
 // Native Canvas paint and rasterization may take hundreds of milliseconds on
 // software graphics. Keeping those operations here leaves input/rAF responsive.
-import{quantizedRailPrimitives}from'./rail-primitives.js?v=62e2a17f7184a8a5';
-import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=62e2a17f7184a8a5';
+import{quantizedRailPrimitives}from'./rail-primitives.js?v=14a270392708fc8e';
+import{RasterBitmapCache,thresholdRasterPixels}from'./raster-bitmap-cache.js?v=14a270392708fc8e';
 let canvas,context,paths=[],epoch=null,geometry=null,routeCount=0,basePixels=null,baseFrequencies=null,baseKey=null,baselineGroups=null,scratch,scratchContext;
 const styleGroups=new Map(),groupPaths=new Map(),bitmapCache=new RasterBitmapCache(),overviewGroups=new Map();
 function pathFor(world){const path=new Path2D();path.moveTo(world[0],world[1]);for(let i=2;i<world.length;i+=2)path.lineTo(world[i],world[i+1]);return path;}
@@ -39,6 +39,18 @@ function groupsFor(message){
   if(message.styleKey)styleGroups.set(key,result);while(styleGroups.size>2)styleGroups.delete(styleGroups.keys().next().value);
   return result;
 }
+// The static groups in the world transform: strokes, then each dot as a filled
+// circle of the stroke's width (the producer's quarter-pixel dots).
+function drawStatic(groups,view){
+  context.lineCap='round';context.lineJoin='round';context.setLineDash([]);
+  for(const group of groups){
+    context.strokeStyle=group.color;context.lineWidth=group.width/view.scale;context.stroke(group.path);
+    if(!group.dots.length)continue;
+    const radius=group.width/2/view.scale,dots=new Path2D();
+    for(let i=0;i<group.dots.length;i+=2){const x=group.dots[i],y=group.dots[i+1];dots.moveTo(x+radius,y);dots.arc(x,y,radius,0,Math.PI*2);}
+    context.fillStyle=group.color;context.fill(dots);
+  }
+}
 function stroke(path,color,width,dash,scale){context.strokeStyle=color;context.lineWidth=width/scale;context.lineCap=dash?'butt':'round';context.setLineDash(dash?[1/scale,5/scale]:[]);context.stroke(path);}
 function drawGroup(group,view,target=context){
   target.strokeStyle=group.color;target.lineWidth=group.width/view.scale;target.lineCap=group.dash?'butt':'round';target.lineJoin='round';target.setLineDash(group.dash?[1/view.scale,5/view.scale]:[]);target.stroke(group.path);
@@ -63,45 +75,37 @@ globalThis.onmessage=event=>{
       paths=Array(routeCount);if(!geometry.compact)for(let i=0;i<routeCount;i++)paths[i]=pathFor(message.coordinates.subarray(message.offsets[i],message.offsets[i+1]));
       epoch=message.epoch;basePixels=null;baseFrequencies=null;baseKey=null;baselineGroups=null;bitmapCache.clear();styleGroups.clear();groupPaths.clear();return;
     }
-    // The Traffic overview (physical-heat-overview.js): precomputed primitives
-    // drawn by a dedicated instance of this worker before any section exists.
-    if(message.op==='overviewData'){overviewGroups.set(message.key,message.groups.map(group=>{const path=new Path2D();for(let i=0;i<group.lines.length;i+=4){path.moveTo(group.lines[i],group.lines[i+1]);path.lineTo(group.lines[i+2],group.lines[i+3]);}return{...group,path};}));while(overviewGroups.size>2)overviewGroups.delete(overviewGroups.keys().next().value);return;}
-    if(message.op==='overviewPaint'){
-      const groups=overviewGroups.get(message.key),view=message.view,dpr=view.dpr||1,width=Math.round(view.width*dpr),height=Math.round(view.height*dpr);
-      if(!groups)throw new Error('Traffic overview data missing');
-      if(!(width>0&&height>0&&width<=8192&&height<=8192&&width*height<=6010000))throw new Error('Raster size exceeds bitmap budget');
-      if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
-      context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,width,height);
-      const left=view.centerX*view.scale-view.width/2,top=view.centerY*view.scale-view.height/2;
-      context.setTransform(dpr*view.scale,0,0,dpr*view.scale,-left*dpr,-top*dpr);context.lineCap='round';context.lineJoin='round';context.setLineDash([]);context.globalAlpha=1;
-      for(const group of groups){
-        context.strokeStyle=group.color;context.lineWidth=group.width/view.scale;context.stroke(group.path);
-        const radius=group.width/2/view.scale,dots=new Path2D();
-        for(let i=0;i<group.dots.length;i+=2){const x=group.dots[i],y=group.dots[i+1];dots.moveTo(x+radius,y);dots.arc(x,y,radius,0,Math.PI*2);}
-        context.fillStyle=group.color;context.fill(dots);
-      }
-      context.setTransform(1,0,0,1,0,0);context.getImageData(0,0,1,1);
-      const bitmap=canvas.transferToImageBitmap();globalThis.postMessage({op:'overviewPainted',id:message.id,bitmap},[bitmap]);return;
-    }
+    // The Traffic overview's static layer (map-renderer.js setStaticLayer): pre-styled groups sent once per
+    // key, then painted beneath the edges by any paint that names the key.
+    // At most two keys are kept (the client mirrors this), and a group keeps only its native path, colour, width
+    // and dots: the line coordinates are released once they are in the path.
+    if(message.op==='overviewData'){overviewGroups.delete(message.key);while(overviewGroups.size>1)overviewGroups.delete(overviewGroups.keys().next().value);overviewGroups.set(message.key,message.groups.map(group=>{const path=new Path2D();for(let i=0;i<group.lines.length;i+=4){path.moveTo(group.lines[i],group.lines[i+1]);path.lineTo(group.lines[i+2],group.lines[i+3]);}return{color:group.color,width:group.width,dots:group.dots,path};}));return;}
     if(message.op!=='paint')return;
-    if(message.epoch!==epoch)throw new Error('Raster geometry epoch mismatch');
-    if(message.basePixels){
+    // A static-only paint (edges:false) draws the static layer and highlights, with no edge geometry or styles.
+    const staticOnly=message.edges===false;
+    if(!staticOnly&&message.epoch!==epoch)throw new Error('Raster geometry epoch mismatch');
+    if(!staticOnly&&message.basePixels){
       if(!(message.basePixels instanceof Uint8Array)||message.basePixels.length!==routeCount*16||!message.baseKey)throw new Error('Raster baseline style inventory mismatch');
       basePixels=message.basePixels;baseKey=message.baseKey;baselineGroups=null;baseFrequencies=message.baseFrequencies??null;
       if(baseFrequencies!==null&&(!(baseFrequencies instanceof Float64Array)||baseFrequencies.length!==routeCount*2||baseFrequencies.some(value=>!Number.isFinite(value)||value<0)))throw new Error('Raster baseline frequency inventory mismatch');
     }
-    if(message.localThreshold){
+    if(!staticOnly&&message.localThreshold){
       if(!geometry.compact||!basePixels||!baseFrequencies||baseKey!==message.baseKey||!Number.isFinite(message.minimum)||message.minimum<0)throw new Error('Raster local threshold baseline mismatch');
       message={...message,pixels:thresholdRasterPixels(basePixels,baseFrequencies,message.minimum)};
     }
-    if(!(message.pixels instanceof Uint8Array)||message.pixels.length!==routeCount*16)throw new Error('Raster style inventory mismatch');
+    if(!staticOnly&&(!(message.pixels instanceof Uint8Array)||message.pixels.length!==routeCount*16))throw new Error('Raster style inventory mismatch');
     const started=performance.now(),view=message.view,dpr=view.dpr||1,width=Math.round(view.width*dpr),height=Math.round(view.height*dpr);let bitmapHits=0,bitmapMisses=0,baselineRasters=0;
     if(!(width>0&&height>0&&width<=8192&&height<=8192&&width*height<=6010000))throw new Error('Raster size exceeds bitmap budget');
     if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
     context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,width,height);
     const left=view.centerX*view.scale-view.width/2,top=view.centerY*view.scale-view.height/2;
     context.setTransform(dpr*view.scale,0,0,dpr*view.scale,-left*dpr,-top*dpr);context.lineCap='round';context.lineJoin='round';context.globalAlpha=1;
-    const cached=geometry.compact&&routeCount>5000&&Number.isFinite(view.zoom)&&view.zoom<=8&&basePixels&&baseKey===message.baseKey;
+    if(message.staticKey){
+      const groups=overviewGroups.get(message.staticKey);if(!groups)throw new Error('Traffic overview data missing');
+      drawStatic(groups,view);
+    }
+    // A frame whose static layer is the exact picture paints no edges (map-renderer.js frameEdges).
+    const cached=!staticOnly&&geometry.compact&&routeCount>5000&&Number.isFinite(view.zoom)&&view.zoom<=8&&basePixels&&baseKey===message.baseKey;
     if(cached){
       const camera=JSON.stringify([epoch,baseKey,view.width,view.height,view.scale,view.centerX,view.centerY,dpr,message.reviewOn]);
       const changed=bitmapCache.key!==camera;bitmapCache.reset(camera);
@@ -115,7 +119,7 @@ globalThis.onmessage=event=>{
         if(image){context.drawImage(image.bitmap,image.x,image.y);if(owned)image.bitmap.close();}
       }
       context.setTransform(dpr*view.scale,0,0,dpr*view.scale,-left*dpr,-top*dpr);
-    }else for(const group of groupsFor(message))drawGroup(group,view);
+    }else if(!staticOnly)for(const group of groupsFor(message))drawGroup(group,view);
     for(const highlight of message.highlights||[])stroke(pathFor(highlight.world),highlight.color,highlight.width,!!highlight.dash,view.scale);
     context.setTransform(1,0,0,1,0,0);
     // A read forces software rasterization before ownership crosses to the UI.
@@ -123,7 +127,7 @@ globalThis.onmessage=event=>{
     // cannot be moved back to the UI thread when its bitmap is presented.
     context.getImageData(0,0,width,height);
     const bitmap=canvas.transferToImageBitmap();
-    globalThis.postMessage({op:'painted',id:message.id,epoch,paintMs:performance.now()-started,bitmap,profile:{bitmapHits,bitmapMisses,baselineRasters,bitmapCacheBytes:bitmapCache.bytes,compactPrimitives:!!geometry.compact&&Number.isFinite(view.zoom)&&view.zoom<=8}},[bitmap]);
+    globalThis.postMessage({op:'painted',id:message.id,epoch,paintMs:performance.now()-started,bitmap,profile:{bitmapHits,bitmapMisses,baselineRasters,bitmapCacheBytes:bitmapCache.bytes,compactPrimitives:!!geometry?.compact&&Number.isFinite(view.zoom)&&view.zoom<=8}},[bitmap]);
   }catch(error){globalThis.postMessage({op:'error',message:error.message});}
 };
 try{

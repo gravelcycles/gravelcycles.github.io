@@ -6,7 +6,7 @@
 // app.js takes a prefetched response only when its own URL is identical
 // (takeTrafficPrefetch); otherwise it fetches as before. A wrong guess costs
 // one download, never a wrong picture: every packet is still validated.
-import{europeFrame,atlasFramePadding}from'./frame-padding.js?v=62e2a17f7184a8a5';
+import{europeFrame,atlasFramePadding}from'./frame-padding.js?v=14a270392708fc8e';
 
 export const TRAFFIC_INDEX_PATH='assets/physical-heat/manifest.json';
 const MOBILE_LAYOUT='(max-width:700px), (max-height:500px) and (pointer:coarse)';

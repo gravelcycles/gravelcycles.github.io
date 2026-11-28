@@ -1,59 +1,59 @@
-import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=62e2a17f7184a8a5';
-import{MODES,PASS_MODES,europeFrame,panelHistoryAction,ITALY_BOUNDS,capFramePadding,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,passPolicyMetrics,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,dateRangeLabels,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode,FREQUENCY_COLORS,frequencyBand,noLicenceNotice,routeLinkIdFor,linkedRoute,ABOUT_SECTIONS,aboutParam,shownCounts,shownCountText,overlapRows}from'./atlas-core.js?v=62e2a17f7184a8a5';
-import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=62e2a17f7184a8a5';
-import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=62e2a17f7184a8a5';
-import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=62e2a17f7184a8a5';
-import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=62e2a17f7184a8a5';
-import{decodeThroughServices}from'./through-services.js?v=62e2a17f7184a8a5';
-import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=62e2a17f7184a8a5';
-import{RailRenderer}from'./map-renderer.js?v=62e2a17f7184a8a5';
-import{resolveAssetURL,resolveAssetPath}from'./data-codec.js?v=62e2a17f7184a8a5';
-import{meterKey,meterBytes,meterBytesSince,meterPageBytes,meterResponse}from'./net-meter.js?v=62e2a17f7184a8a5';
-import{atlasFramePadding}from'./frame-padding.js?v=62e2a17f7184a8a5';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=62e2a17f7184a8a5';
-import{railFetch,railR2FromBootstrap,activeRailR2,DetailUnavailable,DEGRADED_EVENT}from'./rail-r2.js?v=62e2a17f7184a8a5';
-import{setupLiteNotice,subscribeRailLite}from'./lite-notice.js?v=62e2a17f7184a8a5';
-import{showWeekEnded}from'./week-ended.js?v=62e2a17f7184a8a5';
+import{detailLoadingPolicy,boundedDetailQueue}from'./detail-loading.js?v=14a270392708fc8e';
+import{MODES,PASS_MODES,europeFrame,panelHistoryAction,ITALY_BOUNDS,capFramePadding,normalize,escapeHTML as esc,selectedDays,sumDays,effectivePass,usesHubConnections,qualifiesEdge,edgeCount,passPolicyMetrics,perDay,threshold,readState,serializeState,formatNumber as fmt,dateLabel,dateRangeLabels,searchStations,publicTrainLabels,journeyPublicTrainLines,prepareEdge,isItaly,aggregateMapPairs,MapPairIndex,indexedJourneyFiles,reviewedCount,conditionalCount,validMapLocation,stationMapPoint,CHARGE_BITS,edgeMetrics,normalizeCharge,chargeFiltered,chargeDescription,serviceVisible,isTemporaryReplacement,inferredRailPath,inferredAlignment,stationDisplayMode,FREQUENCY_COLORS,frequencyBand,noLicenceNotice,routeLinkIdFor,linkedRoute,ABOUT_SECTIONS,aboutParam,shownCounts,shownCountText,overlapRows}from'./atlas-core.js?v=14a270392708fc8e';
+import{lineInformation,connectionFrequencyInformation}from'./line-information.js?v=14a270392708fc8e';
+import{replacementHTML,serviceBreakdownHTML,replacementRailCorridor}from'./replacement-service.js?v=14a270392708fc8e';
+import{needsSourceRefresh,reconcileSourceSelection,sameManifestAsset}from'./source-selection.js?v=14a270392708fc8e';
+import{decodePassPolicies,createPassPolicyAttacher}from'./pass-policies.js?v=14a270392708fc8e';
+import{decodeThroughServices}from'./through-services.js?v=14a270392708fc8e';
+import{decodeContinuationGeometry,createContinuationEdgeMerger,stationWithContinuationSources,continuationAvailabilityNote,deduplicateContinuationAvailability,continuationMetrics,continuationPolicyText}from'./through-continuations.js?v=14a270392708fc8e';
+import{RailRenderer}from'./map-renderer.js?v=14a270392708fc8e';
+import{resolveAssetURL,resolveAssetPath}from'./data-codec.js?v=14a270392708fc8e';
+import{meterKey,meterBytes,meterBytesSince,meterPageBytes,meterResponse}from'./net-meter.js?v=14a270392708fc8e';
+import{atlasFramePadding}from'./frame-padding.js?v=14a270392708fc8e';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=14a270392708fc8e';
+import{railFetch,railR2FromBootstrap,activeRailR2,DetailUnavailable,DEGRADED_EVENT}from'./rail-r2.js?v=14a270392708fc8e';
+import{setupLiteNotice,subscribeRailLite}from'./lite-notice.js?v=14a270392708fc8e';
+import{showWeekEnded}from'./week-ended.js?v=14a270392708fc8e';
 // The R2 notice in place of a generic failure: a refused or failed detail says why.
 function detailNotice(error,text){return error instanceof DetailUnavailable?error.message:text;}
-import{takeTrafficPrefetch}from'./traffic-prefetch.js?v=62e2a17f7184a8a5';
-import{startupManifestURL,usableManifest,createManifestPartLoader}from'./manifest-parts.js?v=62e2a17f7184a8a5';
-import{AtlasDataLoader,createPageHydrator,relayedRailLite}from'./data-loader.js?v=62e2a17f7184a8a5';
-import{setupViewportRefresh}from'./viewport-refresh.js?v=62e2a17f7184a8a5';
-import{installSmoothWheelZoom}from'./wheel-zoom.js?v=62e2a17f7184a8a5';
-import{setupCoverage}from'./coverage-panel.js?v=62e2a17f7184a8a5';
-import{createCompletePairMerger}from'./network-view.js?v=62e2a17f7184a8a5';
-import{setupServiceContext}from'./service-context.js?v=62e2a17f7184a8a5';
-import{setupInfrastructureContext}from'./infrastructure-context.js?v=62e2a17f7184a8a5';
-import{setupOperatingTransfers}from'./operating-transfers.js?v=62e2a17f7184a8a5';
-import{setupBorderLinks}from'./border-links.js?v=62e2a17f7184a8a5';
-import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=62e2a17f7184a8a5';
-import{setupTrainInspector}from'./train-inspector.js?v=62e2a17f7184a8a5';
-import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=62e2a17f7184a8a5';
-import{highlightedStack,stationRouteHits,createGroupIdCache}from'./station-route-pick.js?v=62e2a17f7184a8a5';
-import{routeFocusIds,callId,passengerCall,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus,journeyForQuery,stationDuplicateSources,betweenJourneys}from'./train-services.js?v=62e2a17f7184a8a5';
-import{matchesFocus}from'./route-focus.js?v=62e2a17f7184a8a5';
-import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=62e2a17f7184a8a5';
-import{stationPanelURL,validStationPanel,stationPanelBlobURL,stationPanelRuns}from'./station-panel.js?v=62e2a17f7184a8a5';
-import{LoadCard,PanelLoads,describeTraffic,describeHubs,describePanel,bytesText,elapsedText,readWhileListing,settleWithin}from'./load-status.js?v=62e2a17f7184a8a5';
-import{cityAreaOptions,cityAreaRadius,cityAreaBounds,cityAreaStationIds,cityAreaHasService}from'./city-areas.js?v=62e2a17f7184a8a5';
-import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=62e2a17f7184a8a5';
-import{mainHubStations}from'./hub-stations.js?v=62e2a17f7184a8a5';
-import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=62e2a17f7184a8a5';
-import{createReviewedStationPositionLoader}from'./reviewed-station-positions.js?v=62e2a17f7184a8a5';
-import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=62e2a17f7184a8a5';
-import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=62e2a17f7184a8a5';
-import{TrafficOverviewLayer,overviewBuckets,overviewBucketFor,overviewVariant,overviewEntry,decodeOverview,overviewIsExactFor,overviewExactBelowZoom}from'./physical-heat-overview.js?v=62e2a17f7184a8a5';
-import{PHYSICAL_DISPLAY_INDEX,displayIndexMatches,displayIndexProblem,displayTilePath,tilesForBounds,tileForDisplayIndex,tilesToEvict,trafficMergePlan,displayShardPath,displayAssetURL,isProvisionalSectionId,provisionalIndex,keyForDisplayIndex,sectionIdKey,shardLookup,gunzipBytes}from'./physical-heat-display.js?v=62e2a17f7184a8a5';
-import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=62e2a17f7184a8a5';
-import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges,cityHubTier,hubCountLabel,hubCitiesWithoutRailCalls}from'./explorer-core.js?v=62e2a17f7184a8a5';
-import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=62e2a17f7184a8a5';
-import{createCityHubsLoader}from'./city-hubs-loader.js?v=62e2a17f7184a8a5';
-import{setupFrequencyFilter}from'./frequency-filter.js?v=62e2a17f7184a8a5';
-import{createNativePublicNumberLoader,nativePublicTrainLabels}from'./native-public-numbers.js?v=62e2a17f7184a8a5';
-import{fillAboutGuide}from'./about-guide.js?v=62e2a17f7184a8a5';
-import{watchAboutVisuals}from'./about-guide.js?v=62e2a17f7184a8a5';
-import{shippedDuplicatesURL,validDuplicates,duplicatesMatchDelivery,createDuplicateIndex,duplicateNote,duplicateMethodText,DUPLICATE_SCOPE}from'./rail-duplicates.js?v=62e2a17f7184a8a5';
+import{takeTrafficPrefetch}from'./traffic-prefetch.js?v=14a270392708fc8e';
+import{startupManifestURL,usableManifest,createManifestPartLoader}from'./manifest-parts.js?v=14a270392708fc8e';
+import{AtlasDataLoader,createPageHydrator,relayedRailLite}from'./data-loader.js?v=14a270392708fc8e';
+import{setupViewportRefresh}from'./viewport-refresh.js?v=14a270392708fc8e';
+import{installSmoothWheelZoom}from'./wheel-zoom.js?v=14a270392708fc8e';
+import{setupCoverage}from'./coverage-panel.js?v=14a270392708fc8e';
+import{createCompletePairMerger}from'./network-view.js?v=14a270392708fc8e';
+import{setupServiceContext}from'./service-context.js?v=14a270392708fc8e';
+import{setupInfrastructureContext}from'./infrastructure-context.js?v=14a270392708fc8e';
+import{setupOperatingTransfers}from'./operating-transfers.js?v=14a270392708fc8e';
+import{setupBorderLinks}from'./border-links.js?v=14a270392708fc8e';
+import{mergeSleepServices,serviceSleepHTML,publicTrainSleepNote}from'./sleep-service.js?v=14a270392708fc8e';
+import{setupTrainInspector}from'./train-inspector.js?v=14a270392708fc8e';
+import{createSupplementalAvailabilityLoader}from'./supplemental-availability.js?v=14a270392708fc8e';
+import{highlightedStack,stationRouteHits,createGroupIdCache}from'./station-route-pick.js?v=14a270392708fc8e';
+import{routeFocusIds,callId,passengerCall,groupStationRoutes,journeyDaily,filteredServiceMetadata,routeStationFocus,journeyForQuery,stationDuplicateSources,betweenJourneys}from'./train-services.js?v=14a270392708fc8e';
+import{matchesFocus}from'./route-focus.js?v=14a270392708fc8e';
+import{setupStationSearch,nearbyStationRecords}from'./station-search.js?v=14a270392708fc8e';
+import{stationPanelURL,validStationPanel,stationPanelBlobURL,stationPanelRuns}from'./station-panel.js?v=14a270392708fc8e';
+import{LoadCard,PanelLoads,describeTraffic,describeHubs,describePanel,bytesText,elapsedText,readWhileListing,settleWithin}from'./load-status.js?v=14a270392708fc8e';
+import{cityAreaOptions,cityAreaRadius,cityAreaBounds,cityAreaStationIds,cityAreaHasService}from'./city-areas.js?v=14a270392708fc8e';
+import{StationMarkers,stationZoomForViewport}from'./station-markers.js?v=14a270392708fc8e';
+import{mainHubStations}from'./hub-stations.js?v=14a270392708fc8e';
+import{StationCatalog,stationMemberIds,stationSources,stationSourceSelected,stationSourceLabel,stationBoardingAreas}from'./station-identity.js?v=14a270392708fc8e';
+import{createReviewedStationPositionLoader}from'./reviewed-station-positions.js?v=14a270392708fc8e';
+import{isPhysicalSection,decodePhysicalHeat,applyPhysicalSourceAvailability,supportingConnectionMatches,supportingMapPairId,physicalDetailsPath,physicalSectionDetails}from'./physical-heat.js?v=14a270392708fc8e';
+import{physicalSectionInformation,physicalSectionChart,physicalSectionLocation}from'./physical-heat-inspector.js?v=14a270392708fc8e';
+import{overviewBuckets,overviewBucketFor,overviewVariant,overviewEntry,decodeOverview,overviewIsExactFor,overviewExactBelowZoom,staticLayerFor,trafficPhoneHold,trafficStaticPlan,staticLayerWanted}from'./physical-heat-overview.js?v=14a270392708fc8e';
+import{PHYSICAL_DISPLAY_INDEX,displayIndexMatches,displayIndexProblem,displayTilePath,tilesForBounds,tileForDisplayIndex,tilesToEvict,trafficMergePlan,displayShardPath,displayAssetURL,isProvisionalSectionId,provisionalIndex,keyForDisplayIndex,sectionIdKey,shardLookup,gunzipBytes}from'./physical-heat-display.js?v=14a270392708fc8e';
+import{applyProjectScope,stationInScope,edgeInScope}from'./project-scope.js?v=14a270392708fc8e';
+import{countryMatches,countryEdge,countryBounds,countryContextBounds,cityConnectionEdges,cityHubTier,hubCountLabel,hubCitiesWithoutRailCalls}from'./explorer-core.js?v=14a270392708fc8e';
+import{setupMobileSheets,MOBILE_LAYOUT}from'./mobile-sheets.js?v=14a270392708fc8e';
+import{createCityHubsLoader}from'./city-hubs-loader.js?v=14a270392708fc8e';
+import{setupFrequencyFilter}from'./frequency-filter.js?v=14a270392708fc8e';
+import{createNativePublicNumberLoader,nativePublicTrainLabels}from'./native-public-numbers.js?v=14a270392708fc8e';
+import{fillAboutGuide}from'./about-guide.js?v=14a270392708fc8e';
+import{watchAboutVisuals}from'./about-guide.js?v=14a270392708fc8e';
+import{shippedDuplicatesURL,validDuplicates,duplicatesMatchDelivery,createDuplicateIndex,duplicateNote,duplicateMethodText,DUPLICATE_SCOPE}from'./rail-duplicates.js?v=14a270392708fc8e';
 
 const stationCatalog=new StationCatalog();
 const $=id=>document.getElementById(id),state=readState(location.search),cache=new Map(),edges=new Map(),stationMap=stationCatalog.sourceStations,chunkLoaded=new Set(),detailData=new Map(),hubMap=new Map();
@@ -122,8 +122,9 @@ let physicalHeatDocument=null,physicalHeatEdges=[],physicalHeatPromise=null,phys
 // display index, and the id shards read when a section is picked or linked.
 let physicalDisplayIndex=null,physicalByDisplay=[],physicalIdShards=new Map();
 // The display index (fetched once per heat asset) and the low-zoom overview
-// drawn for the default filters while the exact sections load.
-let physicalIndexPromise=null,physicalIndexValue=null,trafficOverview=null,overviewPackets=new Map(),physicalDrawnComplete=false,overviewExactShown=false,pendingTrafficTap=null,lastMapTap=null;
+// drawn for the default filters while the exact sections load: packets by
+// layer key (variant:bucket:widths), and the static layer handed to the renderer.
+let physicalIndexPromise=null,physicalIndexValue=null,trafficStatic=null,overviewPackets=new Map(),overviewExactShown=false,trafficHoldShown=null,pendingTrafficTap=null,lastMapTap=null;
 // Spatial detail tiles of the exact sections (physical_heat_display.py): the
 // ones a view needs load nearest first; loaded tiles merge in tile order.
 let physicalTiles=null,physicalIndexProblem=null;
@@ -196,7 +197,7 @@ async function focusTrainRoute(group){
 let between=null,betweenFocus=null,betweenGeneration=0,compareArmed=false;
 let tripPlanner=null,tripFocus=null,tripFocusGeneration=0,tripSchematic=null,tripPreview=null,tripWalks=null,tripGap=null,tripNights=null,tripPoints=[];
 async function tripPlannerModule(){
-  if(!tripPlanner){const{createTripPlanner}=await import('./route-finder.js?v=62e2a17f7184a8a5');
+  if(!tripPlanner){const{createTripPlanner}=await import('./route-finder.js?v=14a270392708fc8e');
     tripPlanner=createTripPlanner({panel:$('tripPanel'),body:$('tripBody'),drawTrip,previewTrip,drawGap:drawTripGap,warmTrip:legs=>{for(const leg of legs)if(!leg.walk)tripLegJourney(leg).catch(()=>{});},clearTrip:()=>{clearTrip();$('tripReturn').hidden=true;},toast,coverage:()=>openCoverage(),
       // Phones: hide the sheet, keep the journey drawn, and offer the way back.
       showMap:label=>{$('tripPanel').hidden=true;fitTrip(false);$('tripReturn').textContent='';$('tripReturn').append(label+' · ',Object.assign(document.createElement('span'),{textContent:'Back to the trip ↗'}));$('tripReturn').hidden=false;},
@@ -411,7 +412,7 @@ addEventListener('popstate',event=>{
 // What's new (its module and packet) is requested only when About opens;
 // ?about=new lands on its list (id aboutWhatsNew in ABOUT_SECTIONS).
 function scrollAboutSection(){const id=ABOUT_SECTIONS[state.about],node=id&&document.getElementById(id);if(node&&!node.hidden&&$('methodDialog').open)node.scrollIntoView({block:'start'});}
-function method(section){const d=$('methodDialog');if(!d.open)d.showModal();state.about=typeof section==='string'&&aboutParam(section)?section:aboutParam(state.about)||'1';saveURL();scrollAboutSection();import('./weeks.js?v=62e2a17f7184a8a5').then(module=>module.showWeeks(document).then(scrollAboutSection)).catch(()=>{});import('./whats-new.js?v=62e2a17f7184a8a5').then(module=>module.showWhatsNew(document).then(scrollAboutSection)).catch(()=>{const box=$('whatsNewBody');if(box&&!box.dataset.state)box.innerHTML='<p class="helper whats-new-empty">No recent changes are listed for this edition.</p>';});ensureManifest().then(()=>{updateMethod();scrollAboutSection();loadPublicDownloads().then(scrollAboutSection,()=>{});
+function method(section){const d=$('methodDialog');if(!d.open)d.showModal();state.about=typeof section==='string'&&aboutParam(section)?section:aboutParam(state.about)||'1';saveURL();scrollAboutSection();import('./weeks.js?v=14a270392708fc8e').then(module=>module.showWeeks(document).then(scrollAboutSection)).catch(()=>{});import('./whats-new.js?v=14a270392708fc8e').then(module=>module.showWhatsNew(document).then(scrollAboutSection)).catch(()=>{const box=$('whatsNewBody');if(box&&!box.dataset.state)box.innerHTML='<p class="helper whats-new-empty">No recent changes are listed for this edition.</p>';});ensureManifest().then(()=>{updateMethod();scrollAboutSection();loadPublicDownloads().then(scrollAboutSection,()=>{});
   return ensureManifestPart(manifest,'provenance',{keys:METHOD_PROVENANCE,startupURL:startupManifestHref}).then(loaded=>{if(!loaded)return;const downloads=$('publicDownloads');updateMethod();if(downloads)$('methodContent').appendChild(downloads);scrollAboutSection();});
 }).catch(error=>toast(detailNotice(error,'Source details could not load. Please retry.')));}
 function reconcileSources(){
@@ -425,7 +426,7 @@ async function ensureManifest(){
     const previous=manifest,networkChanged=!sameManifestAsset(previous,value,'displayNetwork'),physicalChanged=!sameManifestAsset(previous,value,'physicalRailHeat'),continuationChanged=!sameManifestAsset(previous,value,'throughContinuationGeometry'),positionsChanged=!sameManifestAsset(previous,value,'reviewedGeometrySupport');
     if(!sameManifestAsset(previous,value,'displayOverview'))window.atlasDisplayPromise=null;
     if(networkChanged){window.atlasCompletePromise=null;completeNetworkPromise=null;completeNetworkLoaded=false;completeNetworkGeneration++;}
-    if(physicalChanged){physicalHeatDocument=null;physicalHeatEdges=[];physicalDisplayIndex=null;physicalByDisplay=[];physicalIdShards=new Map();physicalIndexPromise=null;physicalIndexValue=null;overviewPackets=new Map();physicalDrawnComplete=false;if(physicalTiles)clearTimeout(physicalTiles.mergeTimer);physicalTiles=null;trafficOverview?.hide();physicalHeatPromise=null;physicalHeatError=null;physicalHeatGeneration++;physicalDetailStates.clear();if(isPhysicalSection(selected)){const id=selected.id;closeInspector();state.edge=id;}}
+    if(physicalChanged){physicalHeatDocument=null;physicalHeatEdges=[];physicalDisplayIndex=null;physicalByDisplay=[];physicalIdShards=new Map();physicalIndexPromise=null;physicalIndexValue=null;overviewPackets=new Map();if(physicalTiles)clearTimeout(physicalTiles.mergeTimer);physicalTiles=null;trafficStatic=null;renderer?.setStaticLayer(null);physicalHeatPromise=null;physicalHeatError=null;physicalHeatGeneration++;physicalDetailStates.clear();if(isPhysicalSection(selected)){const id=selected.id;closeInspector();state.edge=id;}}
     manifest=value;syncDuplicates();if(continuationChanged){continuationEdges=[];continuationGeometryAsset=null;continuationGeometryPromise=null;}if(positionsChanged)reviewedStationPositions.reset();applyProjectScope(state,manifest.projectScope);
     if(state.defaultSources){reconcileSources();setupSources();refresh({details:false});}
     coverage.refresh();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();borderLinks.refresh();
@@ -481,7 +482,7 @@ async function ensurePhysicalHeat(){
       if(first.length)await Promise.race([Promise.allSettled(first),new Promise(resolve=>setTimeout(resolve,8000))]);
       if(generation!==physicalHeatGeneration)return ensurePhysicalHeat();
       physicalDisplayIndex=index;physicalByDisplay=[];physicalIdShards=new Map();
-      physicalTiles={index,edges:new Array(index.tiles.list.length).fill(null),pending:new Map(),failed:new Set(),queue:[],idKeys:new Uint8Array(index.sections),mergeTimer:0,version:0,mergedVersion:0,used:new Float64Array(index.tiles.list.length),urgent:new Set()};
+      physicalTiles={index,edges:new Array(index.tiles.list.length).fill(null),pending:new Map(),failed:new Set(),queue:[],idKeys:new Uint8Array(index.sections),mergeTimer:0,version:0,mergedVersion:0,merged:new Set(),used:new Float64Array(index.tiles.list.length),urgent:new Set()};
       physicalHeatDocument={format:'rail-atlas-physical-heat-v1',schemaVersion:1,dates:index.dates,tiled:true};physicalHeatError=null;
       recordTrafficSource('packet');scheduleTrafficTiles();applyControls();
       return physicalHeatDocument;
@@ -550,7 +551,7 @@ function physicalViewReady(){
 // tap fetches only the tiles under the pointer.
 function overviewIsExact(){
   if(!map)return false;
-  return overviewIsExactFor({state,index:physicalIndexValue,zoom:map.getZoom(),focused:activeFocusIds()!==null,error:!!physicalHeatError,failed:bucket=>!!overviewPackets.get('default:'+bucket)?.failed});
+  return overviewIsExactFor({state,index:physicalIndexValue,zoom:map.getZoom(),focused:activeFocusIds()!==null,error:!!physicalHeatError,failed:bucket=>overviewFailed('default',bucket)});
 }
 // Tiles whose sections could be painted under a container point: the pick
 // tolerance plus the widest stroke, as a box in degrees.
@@ -562,7 +563,7 @@ function physicalTilesAt(point){
 }
 function scheduleTrafficTiles(priority=[]){
   if(!physicalTiles||state.mode!=='traffic')return;
-  const view=overviewIsExact()?[]:physicalViewTiles(),now=performance.now();for(const k of[...priority,...view])physicalTiles.used[k]=now;
+  const view=overviewIsExact()||trafficHold()?[]:physicalViewTiles(),now=performance.now();for(const k of[...priority,...view])physicalTiles.used[k]=now;
   const wanted=[...new Set([...priority,...view])].filter(k=>!physicalTiles.edges[k]&&!physicalTiles.pending.has(k));
   physicalTiles.queue=wanted;pumpTrafficTiles();
 }
@@ -608,15 +609,15 @@ function evictTrafficTiles(tiles){
 function mergeTrafficTiles(){
   const tiles=physicalTiles;if(!tiles)return;
   const busy=tiles.pending.size>0||tiles.queue.length>0;
-  // Under the overview, partial merges show nothing new and each restyles every
+  // Under the overview's static layer, partial merges show nothing new and each restyles every
   // loaded section: wait for the whole view unless a tap is waiting for its tile.
-  const plan=trafficMergePlan({busy,overviewVisible:!!trafficOverview?.visible,mergeNow:tiles.mergeNow,pending:!!tiles.mergeTimer});
+  const plan=trafficMergePlan({busy,staticVisible:!!renderer?.staticPresented,mergeNow:tiles.mergeNow,pending:!!tiles.mergeTimer});
   if(plan.action==='hold'){clearTimeout(tiles.mergeTimer);tiles.mergeTimer=null;return;}
   if(plan.action==='keep')return;
   const delay=plan.delay;tiles.mergeNow=false;clearTimeout(tiles.mergeTimer);
   tiles.mergeTimer=setTimeout(()=>{
     tiles.mergeTimer=null;if(physicalTiles!==tiles)return;evictTrafficTiles(tiles);if(tiles.version===tiles.mergedVersion)return;
-    tiles.mergedVersion=tiles.version;const loaded=tiles.edges.filter(Boolean);startDuplicatePacket?.();physicalHeatEdges=loaded.length===1?loaded[0]:[].concat(...loaded);physicalDrawnComplete=false;
+    tiles.mergedVersion=tiles.version;const loaded=tiles.edges.filter(Boolean);tiles.merged=new Set();tiles.edges.forEach((edges,k)=>{if(edges)tiles.merged.add(k);});startDuplicatePacket?.();physicalHeatEdges=loaded.length===1?loaded[0]:[].concat(...loaded);
     renderer.schedule();if(state.mode==='traffic'){applyControls();if(physicalViewReady())status('Estimated physical rail traffic loaded for this view. Counts are scheduled source traversals, with inferred paths.');
       if(state.edge&&!selected){const link=state.edge;findTrafficSection(link).then(section=>{if(section&&state.mode==='traffic'&&!selected&&state.edge===link)pickTrafficSection(section,false);}).catch(()=>{});}}
   },delay);
@@ -624,41 +625,77 @@ function mergeTrafficTiles(){
 // The overview is shown only in Traffic, only while the exact sections are
 // loading, only for the filters it was computed for and only at its zooms.
 function trafficTileProgress(){const view=physicalViewTiles();return`${fmt(view.filter(k=>physicalTiles.edges[k]).length)} of ${fmt(view.length)} areas`;}
+// Whether the frame being drawn still needs the overview's static layer: until
+// the edges handed to the renderer hold every exact section the view can show
+// (all its tiles merged, or the complete product). The renderer asks inside
+// the very draw() that would leave it out (getData().staticLayerWanted), so the
+// layer goes in the same frame as the sections arrive and the map is never
+// blank between the two, at zoom 8 to 9 or anywhere (design review condition 3).
+function trafficStaticWanted(){
+  return staticLayerWanted({mode:state.mode,documentReady:!!physicalHeatDocument,tiled:!!physicalTiles,viewTiles:physicalTiles&&state.mode==='traffic'?physicalViewTiles():[],merged:physicalTiles?.merged});
+}
+// A phone at Europe zoom keeps a filter or focus the overview cannot draw on
+// the overview rather than loading every tile in view (design review condition
+// 1; trafficPhoneHold). Returns null or {reason, variant} with the variant of
+// the static layer that stays: the Eurail overview for the pass filter where
+// it has this bucket, otherwise the default one. Desktop is never held.
+function trafficHold(){
+  const index=physicalIndexValue;if(!map||state.mode!=='traffic'||!index||!matchMedia(MOBILE_LAYOUT).matches)return null;
+  const zoom=map.getZoom(),variant=overviewVariant(state,index.overview);
+  const layerVariant=variant==='pass'&&overviewBucketFor(zoom,overviewBuckets(index,'pass'))!==null?'pass':'default',bucket=overviewBucketFor(zoom,overviewBuckets(index,layerVariant));
+  const bounds=map.getBounds().pad(.15),center=map.getCenter(),viewTiles=tilesForBounds(index,[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()],[center.lng,center.lat]).length;
+  const reason=trafficPhoneHold({phone:true,zoom,exact:overviewIsExact(),focused:activeFocusIds()!==null,variant,viewTiles,budget:TRAFFIC_TILE_BUDGET.phone,staticAvailable:bucket!==null&&!physicalHeatError&&!overviewFailed(layerVariant,bucket)});
+  return reason?{reason,variant:layerVariant}:null;
+}
+// Overview packets by layer key: a packet is decoded, packed into the
+// renderer's static layer (staticLayerFor) and its decoded groups dropped at
+// once. Only the layer on screen and the one wanted (while a bucket swap is
+// pending) are kept; any other packed layer is released, and fetched again
+// from the HTTP cache if its zoom returns. Failures are remembered.
+const overviewWidths=zoom=>zoom<5?'w95':'w100';
+function overviewFailed(variant,bucket){return!!map&&!!overviewPackets.get(variant+':'+bucket+':'+overviewWidths(map.getZoom()))?.failed;}
+function pruneOverviews(wanted){
+  for(const[key,record]of overviewPackets)if(record.layer&&key!==wanted&&key!==trafficStatic?.key)overviewPackets.delete(key);
+}
+function setTrafficStatic(layer){
+  if(!layer){if(trafficStatic){trafficStatic=null;renderer.setStaticLayer(null);}return;}
+  trafficStatic=layer;renderer.setStaticLayer(layer);
+}
+// The overview is drawn only in Traffic, only for the filters it was computed
+// for (or held on a phone, above), at the bucket for the zoom. Beyond the last
+// bucket (zoom 8 and closer) the last one stays set, and the renderer leaves it
+// out of every frame that holds the view's exact sections (trafficStaticWanted).
 function updateTrafficOverview(){
-  if(!trafficOverview||!map)return;
-  const index=physicalIndexValue,variant=index?overviewVariant(state,index.overview):null,entryIndex=overviewEntry(index,variant);
-  const buckets=variant?overviewBuckets(index,variant):[];let bucket=variant?overviewBucketFor(map.getZoom(),buckets):null;
-  // Zoomed in past the overview's last bucket (8 to 9), the last bucket stays until the exact sections are drawn:
-  // before, it was hidden at once and the map went blank while the detail areas loaded (owner, 27 November).
-  if(bucket===null&&buckets.length&&map.getZoom()>buckets.at(-1)&&!(physicalViewReady()&&physicalDrawnComplete))bucket=buckets.at(-1);
-  // It stays until the renderer has presented its first frame of the exact
-  // sections, so the map is never blank between the two.
-  // A station or train focus greys other sections, which the overview cannot show.
-  const wanted=state.mode==='traffic'&&!(physicalViewReady()&&physicalDrawnComplete)&&!physicalHeatError&&bucket!==null&&activeFocusIds()===null;
-  const was=trafficOverview.visible;
-  if(!wanted)trafficOverview.hide();
+  if(!renderer||!map)return;
+  const index=physicalIndexValue,hold=trafficHold(),focused=activeFocusIds()!==null,zoom=map.getZoom();
+  const variant=hold?hold.variant:index?overviewVariant(state,index.overview):null,entryIndex=overviewEntry(index,variant);
+  const widths=overviewWidths(zoom);
+  const plan=trafficStaticPlan({active:state.mode==='traffic',error:!!physicalHeatError,focused,hold:!!hold,variant,zoom,buckets:variant?overviewBuckets(index,variant):[],decoded:key=>!!overviewPackets.get(key+':'+widths)?.layer,currentPass:trafficStatic?trafficStatic.pass:null});
+  const was=trafficStatic,key=plan.key&&plan.key+':'+widths,bucket=plan.bucket,entry=key&&overviewPackets.get(key);
+  if(plan.action==='show')setTrafficStatic(entry.layer);
   else{
-    const key=variant+':'+bucket,entry=overviewPackets.get(key);
-    if(entry?.overview)trafficOverview.show(entry.overview);
-    else{
-      // Another variant's overview must not stay on screen for this filter.
-      if(trafficOverview.overview&&trafficOverview.overview.pass!==(variant==='pass'))trafficOverview.hide();
+    // 'clear', or 'keep': the same variant's previous bucket stays until this one is decoded (it moves with the
+    // frame like the edges).
+    if(plan.action==='clear')setTrafficStatic(null);
+    if(key){
       if(!entry){
         const info=entryIndex.buckets[String(bucket)],record={},generation=physicalHeatGeneration;overviewPackets.set(key,record);
         record.ready=trafficFetch('overview',displayAssetURL('assets/physical-heat/'+info.path,info.sha256)).then(response=>{if(!response.ok)throw new Error('Traffic overview unavailable');return response.arrayBuffer();})
           .then(raw=>gunzipBytes(new Uint8Array(raw))).then(bytes=>{
             const overview=decodeOverview(bytes),sources=index.overview.sources;
             if(overview.bucket!==bucket||overview.pass!==(variant==='pass')||overview.sources.length!==sources.length||overview.sources.some((id,i)=>id!==sources[i]))throw new Error('Traffic overview does not match its index');
-            if(generation!==physicalHeatGeneration)return;record.overview=overview;updateTrafficOverview();
-          }).catch(error=>{record.failed=true;console.warn('Euro Rail Traffic: overview unavailable ('+(error?.message||error)+').');scheduleTrafficTiles();updateMapSummary();});
+            // Packed for its width set (zoom 4 stands for below 5, zoom 5 for 5 and closer); the decode is dropped here.
+            if(generation!==physicalHeatGeneration)return;record.layer=staticLayerFor(overview,widths==='w95'?4:5,variant);updateTrafficOverview();
+          }).catch(error=>{record.failed=true;console.warn('Euro Rail Traffic: overview unavailable ('+(error?.message||error)+').');scheduleTrafficTiles();updateTrafficOverview();updateMapSummary();});
       }
     }
   }
+  pruneOverviews(key);
   // Leaving the overview's exact range (a filter, a focus, a closer zoom) loads
-  // the view's tiles; the summary changes wording with it.
-  const exact=overviewIsExact();
-  if(exact!==overviewExactShown){overviewExactShown=exact;scheduleTrafficTiles();updateMapSummary();}
-  else if(was!==trafficOverview.visible)updateMapSummary();
+  // the view's tiles, unless a phone holds the view; the summary changes wording with it.
+  const exact=overviewIsExact(),holdReason=hold?.reason||null;
+  if(exact!==overviewExactShown||holdReason!==trafficHoldShown){overviewExactShown=exact;trafficHoldShown=holdReason;scheduleTrafficTiles();updateMapSummary();}
+  else if(was!==trafficStatic)updateMapSummary();
 }
 function physicalIdShard(key){
   const index=physicalDisplayIndex,shard=displayShardPath(index,key);if(!shard)return Promise.reject(new Error('Unknown Traffic section'));
@@ -928,25 +965,24 @@ function initMap(){
   }).on('loading',()=>{loadedTiles=0;}).on('tileload',()=>{loadedTiles++;$('basemapStatus').hidden=true;map.getContainer().dataset.basemap='available';})
     .on('tileerror',event=>{event.tile.style.visibility='hidden';})
     .on('load',()=>{$('basemapStatus').hidden=loadedTiles>0;if(!loadedTiles){map.getContainer().dataset.basemap='fallback';loadCountryFallback();}}).addTo(map);
-  markers=L.layerGroup().addTo(map);stationMarkers=new StationMarkers(map,{getStations:()=>stationList,getState:()=>state.mode==='hubs'?{...state,stations:false}:state.mode==='countries'&&activeFocusIds()!==null?{...state,mode:'frequency'}:state,getSelected:()=>selectedStation?.isCityArea?null:selectedStation,getFocus:activeFocusStations,getFocusEndpoints:activeFocusEndpoints,onPick:(s,pick)=>stationPicked(s,{shift:!!pick?.shift},{inspect:true})});renderer=new RailRenderer(map,()=>{const focusIds=activeFocusIds();return{edges:currentEdges(),state,dates,stations:stationMap,selected:trainFocus?null:selected,highlightIds:focusIds||journeyHighlights,focusIds,supplementalFocusGroup:trainFocusGroup?.supplementalAvailability?trainFocusGroup:null};},(edge,stack)=>{if(!busPicked&&!trafficPickDeferred())pickAt(edge,stack);});
-  renderer.canvas.addEventListener('atlasdraw',event=>{if(state.mode==='traffic'&&physicalHeatDocument){const complete=physicalViewReady();if(complete!==physicalDrawnComplete){physicalDrawnComplete=complete;updateTrafficOverview();}runPendingTrafficTap();}updateMapSummary(event.detail.visible);});
-  trafficOverview=new TrafficOverviewLayer(map,{before:renderer.canvas});trafficOverview.onPresent=()=>{$('mapLoading').hidden=true;startDuplicatePacket?.();};map.on('zoomend moveend',()=>updateTrafficOverview());
+  markers=L.layerGroup().addTo(map);stationMarkers=new StationMarkers(map,{getStations:()=>stationList,getState:()=>state.mode==='hubs'?{...state,stations:false}:state.mode==='countries'&&activeFocusIds()!==null?{...state,mode:'frequency'}:state,getSelected:()=>selectedStation?.isCityArea?null:selectedStation,getFocus:activeFocusStations,getFocusEndpoints:activeFocusEndpoints,onPick:(s,pick)=>stationPicked(s,{shift:!!pick?.shift},{inspect:true})});renderer=new RailRenderer(map,()=>{const focusIds=activeFocusIds();return{edges:currentEdges(),state,dates,stations:stationMap,selected:trainFocus?null:selected,highlightIds:focusIds||journeyHighlights,focusIds,supplementalFocusGroup:trainFocusGroup?.supplementalAvailability?trainFocusGroup:null,staticLayerWanted:trafficStaticWanted(),staticCoversEdges:state.mode==='traffic'&&overviewIsExact()};},(edge,stack)=>{if(!busPicked&&!trafficPickDeferred())pickAt(edge,stack);});
+  renderer.canvas.addEventListener('atlasdraw',event=>{if(event.detail.staticLayer){$('mapLoading').hidden=true;startDuplicatePacket?.();}if(state.mode==='traffic'&&physicalHeatDocument)runPendingTrafficTap();updateMapSummary(event.detail.visible);});
+  map.on('zoomend moveend',()=>updateTrafficOverview());
   // A Traffic pick is exact only when every tile that could be painted under
   // the pointer has arrived. Otherwise the renderer's pick is set aside, those
   // tiles are fetched first and the pick runs again once they are drawn.
   map.on('preclick',event=>{lastMapTap=event.containerPoint;});
-  // Over the overview the renderer has no sections yet: show the pointer where
-  // the overview paints a line, as the exact sections would.
-  renderer.hoverFallback=point=>state.mode==='traffic'&&!!trafficOverview?.visible&&trafficOverview.paintedNear(point,4,128)===true;
+  // Over the overview the renderer has no sections yet: it shows the pointer where its static layer paints a line
+  // (RailRenderer.staticAt), as the exact sections would.
   map.on('click',event=>{const tapped=lastMapTap;lastMapTap=null;if(state.mode!=='traffic'||!physicalTiles||!tapped)return;
     const hits=physicalTilesAt(event.containerPoint).filter(k=>!physicalTiles.edges[k]);if(!hits.length)return;
     // Where the overview is the exact picture and paints nothing near the tap,
     // there is no section to open: fetch nothing.
-    if(overviewIsExact()&&trafficOverview.paintedNear(event.containerPoint,10)===false)return;
+    if(overviewIsExact()&&renderer.staticPresented&&!renderer.staticAt(event.containerPoint,10))return;
     pendingTrafficTap={point:event.containerPoint,center:map.getCenter(),zoom:map.getZoom(),tiles:physicalTilesAt(event.containerPoint)};
     for(const k of hits)physicalTiles.urgent.add(k);scheduleTrafficTiles(hits);
     toast('Checking this spot…');});
-  map.on('moveend',()=>{if(state.mode==='traffic'){physicalDrawnComplete=false;scheduleTrafficTiles();}});setupViewportRefresh(map,()=>{saveURL();scheduleChunks();renderHubs();coverage.refreshViewport();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();borderLinks.refresh();});installSmoothWheelZoom(map);
+  map.on('moveend',()=>{if(state.mode==='traffic')scheduleTrafficTiles();});setupViewportRefresh(map,()=>{saveURL();scheduleChunks();renderHubs();coverage.refreshViewport();serviceContext.refresh();infrastructureContext.refresh();operatingTransfers.refresh();borderLinks.refresh();});installSmoothWheelZoom(map);
 
   $('zoomIn').onclick=()=>map.zoomIn();$('zoomOut').onclick=()=>map.zoomOut();$('fitMap').onclick=()=>fitRegion();
 }
@@ -968,7 +1004,11 @@ function updateMapSummary(visible=lastSummaryVisible){
     const context=remainingContext();summary.lastElementChild.textContent=(!hasServices()?'Services hidden':'Service paths hidden')+(context.length?' · context overlays on':'');
     summary.title=context.length?'Still enabled: '+context.join(', ')+'. Use Context overlays or Hide all overlays in Filters.':'No service paths or railway context enabled.';$('overviewNote').hidden=true;return;
   }
-  if(state.mode==='traffic'){summary.lastElementChild.textContent=physicalHeatError?'Rail traffic unavailable · select Traffic to retry':!trafficOverview?.visible&&overviewIsExact()?'Loading estimated rail traffic…':trafficOverview?.visible&&overviewIsExact()?`${fmt(physicalIndexValue.overview.visibleSections)} railway sections across the network · ${date}`:trafficOverview?.visible?`Overview · ${fmt((trafficOverview.overview?.pass?physicalIndexValue.overview.pass:physicalIndexValue.overview).visibleSections)} railway sections across the network · exact counts for this view loading…`:!physicalHeatDocument?'Loading estimated rail traffic…':!physicalViewReady()?`Loading exact rail traffic for this view · ${trafficTileProgress()}`:`${fmt(visible||0)} railway sections · ${date}`;summary.title=(trafficOverview?.visible&&overviewIsExact()?'The whole network at this zoom, with the default sources over the whole week: the same colours and widths the exact sections give. The number counts sections across the whole network, not only this view. Tap a line for its exact counts; zoom in past level '+overviewExactBelowZoom(physicalIndexValue)+' or change a filter to load the sections of this view. ':trafficOverview?.visible?'Overview: colours for the default sources over the whole week'+(trafficOverview.overview?.pass?', Eurail-included contributions only':'')+', drawn before the exact sections arrive. The number counts sections across the whole network, not only this view. Tapping a line loads the exact counts for that area first. ':'')+'Estimated scheduled source traversals over shared physical railway sections. Both directions; replacement buses excluded; coverage and source overlap vary.';$('overviewNote').hidden=true;return;}
+  if(state.mode==='traffic'){
+    // The overview in the frame on screen (the renderer's static layer), and a phone's hold on a filter or focus.
+    const shown=renderer?.staticPresented||null,exact=overviewIsExact(),hold=shown?trafficHold():null,sections=shown?(shown.pass?physicalIndexValue?.overview?.pass:physicalIndexValue?.overview)?.visibleSections:null;
+    summary.lastElementChild.textContent=physicalHeatError?'Rail traffic unavailable · select Traffic to retry':hold?`Zoom in to apply this ${hold.reason==='focus'?'focus':'filter'} to Traffic · showing ${shown.pass?'the Eurail overview':'all sources'}`:!shown&&exact?'Loading estimated rail traffic…':shown&&exact?`${fmt(sections)} railway sections across the network · ${date}`:shown?`Overview · ${fmt(sections)} railway sections across the network · exact counts for this view loading…`:!physicalHeatDocument?'Loading estimated rail traffic…':!physicalViewReady()?`Loading exact rail traffic for this view · ${trafficTileProgress()}`:`${fmt(visible||0)} railway sections · ${date}`;
+    summary.title=(hold?`On a phone, applying this ${hold.reason==='focus'?'focus':'filter'} to the whole network at this zoom would load more data than a phone can hold, so the map shows the overview for ${shown.pass?'Eurail-included contributions with the default sources':'the default sources'} over the whole week. Zoom in to apply it; tapping a line still opens its exact counts. `:shown&&exact?'The whole network at this zoom, with the default sources over the whole week: the same colours and widths the exact sections give. The number counts sections across the whole network, not only this view. Tap a line for its exact counts; zoom in past level '+overviewExactBelowZoom(physicalIndexValue)+' or change a filter to load the sections of this view. ':shown?'Overview: colours for the default sources over the whole week'+(shown.pass?', Eurail-included contributions only':'')+', drawn before the exact sections arrive. The number counts sections across the whole network, not only this view. Tapping a line loads the exact counts for that area first. ':'')+'Estimated scheduled source traversals over shared physical railway sections. Both directions; replacement buses excluded; coverage and source overlap vary.';$('overviewNote').hidden=true;return;}
   const label=usesHubConnections(state)?'city railway paths':'connections',loading=manifest?.files?.displayNetwork&&!completeNetworkLoaded&&!usesHubConnections(state)&&state.mode!=='italy';
   summary.lastElementChild.textContent=`${fmt(visible||0)} ${label} · ${date}${loading?' · loading…':''}`;
   summary.title=`${fmt(visible||0)} source-defined ${label} in view · ${dateLabel(state.day,dates)}`;
@@ -1224,10 +1264,10 @@ const sinceLoadBegan=since=>meterBytesSince(since);
 function withBytes(status,sizes){return status&&(status.phase==='loading'||status.phase==='partial')?{...status,...sizes}:status;}
 function trafficLoadStatus(){
   const tiles=physicalTiles,view=tiles?physicalViewTiles():[];
-  const status=describeTraffic({active:state.mode==='traffic',error:!!physicalHeatError,overviewVisible:!!trafficOverview?.visible,
+  const status=describeTraffic({active:state.mode==='traffic',error:!!physicalHeatError,overviewVisible:!!renderer?.staticPresented,
     documentReady:!!physicalHeatDocument,tiled:physicalHeatDocument?!!physicalHeatDocument.tiled:undefined,
     viewTiles:view.length,loadedTiles:tiles?view.filter(k=>tiles.edges[k]).length:0,pendingTiles:tiles?tiles.pending.size+tiles.queue.length:0,
-    failedTiles:tiles?view.filter(k=>tiles.failed?.has(k)).length:0,exact:!!tiles&&overviewIsExact()});
+    failedTiles:tiles?view.filter(k=>tiles.failed?.has(k)).length:0,exact:!!tiles&&(overviewIsExact()||!!trafficHold())});
   if(!status)return null;
   return status.key==='traffic:tiles'?withBytes(status,meterBytes(trafficTileItems(view))):withBytes(status,{meter:sinceLoadBegan});
 }
@@ -1606,7 +1646,7 @@ async function setTransitEnabled(on){const box=$('showTransit'),info=$('transitI
   box.checked=!!on;state.transit=!!on;saveURL();
   if(!on){transitLayer?.disable();closeTransitPanels();return;}
   status.textContent='Loading city transit…';
-  try{transitModule??=await import('./transit-layer.js?v=62e2a17f7184a8a5');
+  try{transitModule??=await import('./transit-layer.js?v=14a270392708fc8e');
     transitLayer??=new transitModule.TransitLayer(map,{onStatus:text=>{if(box.checked)status.textContent=text;},onSelect:(d,day)=>{if(!box.checked)return;detail.innerHTML=transitModule.transitDetailHTML(d,day);detail.hidden=false;$('transitDetailClose').onclick=()=>{detail.hidden=true;detail.innerHTML='';};}});
     if(state.transitDay&&!transitLayer.enabled)transitLayer.day=state.transitDay;
     await transitLayer.enable();if(!box.checked){transitLayer.disable();return;}
@@ -1761,4 +1801,4 @@ if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser){initMap();setupEven
 // Clips beside the About steps: fetched only once About is open (about-guide.js).
 if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser)watchAboutVisuals(document,{phone:()=>matchMedia(MOBILE_LAYOUT).matches,reducedMotion:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
 // ?week=<hex prefix>: a dismissable notice when the named week is not the one on the map (weeks.js).
-if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser&&new URLSearchParams(location.search).has('week'))import('./weeks.js?v=62e2a17f7184a8a5').then(module=>module.showWeekNotice(document,location.search)).catch(()=>{});
+if(!window.busPageRedirect&&!window.atlasUnsupportedBrowser&&new URLSearchParams(location.search).has('week'))import('./weeks.js?v=14a270392708fc8e').then(module=>module.showWeekNotice(document,location.search)).catch(()=>{});

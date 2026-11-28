@@ -4,10 +4,10 @@
  * geometry, in spatial order. Section ids live in 256 small shards keyed by
  * two id characters; a section carries a provisional "#<display index>" id
  * until it is picked or deep linked and its real id is read from one shard. */
-import{worldPoint}from'./atlas-core.js?v=62e2a17f7184a8a5';
-import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=62e2a17f7184a8a5';
-import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=62e2a17f7184a8a5';
-import{fetchWithTransientRetry}from'./transient-fetch.js?v=62e2a17f7184a8a5';
+import{worldPoint}from'./atlas-core.js?v=14a270392708fc8e';
+import{PHYSICAL_HEAT_FORMAT,validateCohorts}from'./physical-heat.js?v=14a270392708fc8e';
+import{PHYSICAL_TRANSFER_FORMAT}from'./physical-transfer.js?v=14a270392708fc8e';
+import{fetchWithTransientRetry}from'./transient-fetch.js?v=14a270392708fc8e';
 
 export const PHYSICAL_DISPLAY_FORMAT='rail-atlas-physical-heat-display-v2';
 export const PHYSICAL_DISPLAY_INDEX='assets/physical-heat/manifest.json';
@@ -149,7 +149,7 @@ export function packPhysicalDisplay(input){
 export async function gunzipBytes(bytes){
   if(!(bytes.length>=2&&bytes[0]===0x1f&&bytes[1]===0x8b))return bytes;
   if(typeof DecompressionStream==='function')return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
-  const{gunzip}=await import('./gunzip.js?v=62e2a17f7184a8a5');return gunzip(bytes);
+  const{gunzip}=await import('./gunzip.js?v=14a270392708fc8e');return gunzip(bytes);
 }
 export async function fetchPhysicalDisplay(url,{signal}={}){
   const response=await fetchWithTransientRetry(url,{signal});if(!response.ok)throw new Error('Traffic display packet unavailable');
@@ -157,14 +157,14 @@ export async function fetchPhysicalDisplay(url,{signal}={}){
 }
 
 // When loaded Traffic tiles are merged into the drawn set (app.js mergeTrafficTiles).
-//   hold      under the overview, partial merges show nothing new and each restyles
+//   hold      under the overview (the renderer's static layer), partial merges show nothing new and each restyles
 //             every loaded section: wait for the whole view (unless a tap waits)
 //   keep      a partial merge is already due: keep it, never push it back; restarting
 //             it for every arriving tile drew nothing until the last one landed
 //             (owner, 27 November)
 //   schedule  merge after `delay` ms: at once when done or a tap waits, else 1.5 s
-export function trafficMergePlan({busy,overviewVisible,mergeNow,pending}){
-  if(busy&&overviewVisible&&!mergeNow)return{action:'hold'};
+export function trafficMergePlan({busy,staticVisible,mergeNow,pending}){
+  if(busy&&staticVisible&&!mergeNow)return{action:'hold'};
   const delay=busy&&!mergeNow?1500:0;
   if(delay&&pending)return{action:'keep'};
   return{action:'schedule',delay};

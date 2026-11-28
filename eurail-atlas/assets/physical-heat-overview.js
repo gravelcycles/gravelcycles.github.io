@@ -5,9 +5,13 @@
  * rail-primitives.js quantizedRailPrimitives, map-renderer.js prepareStyles),
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
- * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=62e2a17f7184a8a5';
-import{rgb}from'./rail-gpu.js?v=62e2a17f7184a8a5';
+ * the interface says so. Counts and picks always come from the sections.
+ * Since 28 November it is drawn by the map's own renderer (map-renderer.js
+ * RailRenderer.setStaticLayer), beneath the sections, in the same frame as
+ * them (docs/design/traffic-convergence.md, option A): there is no separate
+ * overview canvas, worker or handoff any more. */
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=14a270392708fc8e';
+import{rgb}from'./rail-gpu.js?v=14a270392708fc8e';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -97,119 +101,103 @@ export function overviewStyleGroups(overview,zoom){
   return[...groups.values()].sort((a,b)=>a.priority-b.priority||a.rank-b.rank);
 }
 
+
 function concatenated(arrays){let length=0;for(const a of arrays)length+=a.length;const out=new Float64Array(length);let offset=0;for(const a of arrays){out.set(a,offset);offset+=a.length;}return out;}
 
-export class TrafficOverviewLayer{
-  constructor(map,{before=null,workerFactory}={}){
-    this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=62e2a17f7184a8a5',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
-    // Paint off the interaction thread when possible, like the train raster.
-    // The worker starts only when an overview is first shown.
-    this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;
-    this.canvas=this.makeCanvas(this.useWorker?'bitmaprenderer':'2d');
-    if(before?.parentNode)before.parentNode.insertBefore(this.canvas,before);else map.getContainer().appendChild(this.canvas);
-    map.on('move',()=>this.pan());map.on('moveend resize zoomend',()=>this.draw());
-    map.on('zoomanim',event=>this.zoomAnimation(event));
-  }
-  makeCanvas(kind){
-    const canvas=document.createElement('canvas');canvas.className='atlas-overview-canvas leaflet-zoom-animated';canvas.style.transformOrigin='0 0';canvas.setAttribute('aria-hidden','true');canvas.dataset.layer='traffic-overview';canvas.hidden=true;
-    this.context=canvas.getContext(kind);if(!this.context&&kind==='bitmaprenderer'){this.useWorker=false;this.context=canvas.getContext('2d');}
-    return canvas;
-  }
-  fallback(){
-    this.worker?.terminate();this.worker=null;this.useWorker=false;this.pending=null;this.redraw=false;const previous=this.canvas,canvas=this.makeCanvas('2d');previous.replaceWith(canvas);this.canvas=canvas;this.sentKey=null;this.draw();
-  }
-  receive(message){
-    if(message?.op==='error'){this.fallback();return;}
-    if(message?.op!=='overviewPainted')return;
-    // One paint is in flight at a time. Its frame is always shown, placed on the current view by pan() (scaled if
-    // the zoom moved meanwhile), and a newer view is painted next. Before, any frame but the newest request's was
-    // discarded and every request was queued in the worker, so a phone whose address bar resized the map during
-    // load showed no Traffic lines at all until the resizing stopped and the backlog drained (owner, 27 November).
-    const job=this.pending;if(!job||job.id!==message.id){message.bitmap?.close();return;}
-    this.pending=null;
-    if(!this.visible){message.bitmap?.close();this.redraw=false;return;}
-    // A frame of the other variant (all sources or Eurail-included only) is never shown for this one.
-    if(job.pass!==this.overview?.pass){message.bitmap?.close();this.redraw=false;this.draw();return;}
-    this.canvas.width=message.bitmap.width;this.canvas.height=message.bitmap.height;this.context.transferFromImageBitmap(message.bitmap);
-    this.present(job.view);this.pan();
-    if(this.redraw){this.redraw=false;this.draw();}
-  }
-  present(view){
-    const canvas=this.canvas;canvas.style.width=view.width+'px';canvas.style.height=view.height+'px';canvas.style.transition='none';canvas.style.transform='';
-    canvas.hidden=false;this.paintView=view;canvas.dataset.frame=String((Number(canvas.dataset.frame)||0)+1);this.onPresent?.();
-  }
-  view(){const size=this.map.getSize(),zoom=this.map.getZoom(),center=this.map.project(this.map.getCenter(),0);return{width:size.x,height:size.y,zoom,scale:2**zoom,centerX:center.x,centerY:center.y};}
-  // Whether the presented overview paints anything within `radius` CSS pixels
-  // of a map container point (alpha above `alpha`). Reads back only that small
-  // square, so it is cheap enough for hover; null when nothing is presented.
-  paintedNear(point,radius=4,alpha=0){
-    const canvas=this.canvas;if(!this.visible||canvas.hidden||!canvas.width)return null;
-    const map=this.map.getContainer().getBoundingClientRect(),box=canvas.getBoundingClientRect();if(!box.width||!box.height)return null;
-    const sx=canvas.width/box.width,sy=canvas.height/box.height,size=Math.max(1,Math.ceil((2*radius+1)*sx));
-    const x=Math.round((map.left+point.x-box.left-radius)*sx),y=Math.round((map.top+point.y-box.top-radius)*sy);
-    if(!this.probe){this.probe=document.createElement('canvas');this.probeContext=this.probe.getContext('2d',{willReadFrequently:true});}
-    if(this.probe.width!==size){this.probe.width=size;this.probe.height=size;}
-    const context=this.probeContext;context.clearRect(0,0,size,size);
-    try{context.drawImage(canvas,x,y,size,size,0,0,size,size);}catch{return null;}
-    const data=context.getImageData(0,0,size,size).data;
-    for(let i=3;i<data.length;i+=4)if(data[i]>alpha)return true;
-    return false;
-  }
-  // Shown again (zooming back out to the overview's zooms), the last painted
-  // frame of the same variant stays on screen, aligned to the view, until the
-  // new one is painted: repainting the whole network takes a second or two, and
-  // the map must not go blank meanwhile (owner, 27 November).
-  show(overview){
-    const previous=this.overview;if(previous!==overview){this.overview=overview;this.paths.clear();this.sentKey=null;}
-    if(this.visible)return;this.visible=true;
-    if(this.lastPaint&&this.canvas.width&&previous?.pass===overview.pass){this.paintView=this.lastPaint;this.canvas.style.transition='none';this.canvas.hidden=false;this.pan();}
-    this.draw();
-  }
-  hide(){if(!this.visible&&this.canvas.hidden)return;this.visible=false;this.redraw=false;this.canvas.hidden=true;this.lastPaint=this.paintView||this.lastPaint;this.paintView=null;}
-  // Release the worker once the exact sections are drawn; it restarts if needed.
-  release(){this.hide();this.worker?.terminate();this.worker=null;this.sentKey=null;}
-  pathsFor(zoom){
-    const key=this.overview.bucket+':'+(zoom<5);
-    if(!this.paths.has(key)){
-      this.paths.clear();
-      this.paths.set(key,overviewStyleGroups(this.overview,zoom).map(group=>({color:group.color,width:group.width,lines:concatenated(group.members.map(m=>m.lines)),dots:concatenated(group.members.map(m=>m.dots))})));
+// The renderer's static layer for a decoded overview at a zoom: its style groups
+// in paint order, each with one packed array of lines (x1,y1,x2,y2) and one of
+// dots (x,y), in zoom-0 world units. The key names the variant, bucket and the
+// width set (below zoom 5 the producer's 95% widths apply), so a layer is
+// rebuilt only when one of them changes.
+export function staticLayerFor(overview,zoom,variant=overview?.pass?'pass':'default'){
+  const below=zoom<5;
+  return{key:variant+':'+overview.bucket+':'+(below?'w95':'w100'),bucket:overview.bucket,pass:overview.pass===true,
+    groups:overviewStyleGroups(overview,zoom).map(group=>({color:group.color,width:group.width,lines:concatenated(group.members.map(m=>m.lines)),dots:concatenated(group.members.map(m=>m.dots))}))};
+}
+// Decoded primitive memory of a layer or a decoded overview: the bytes of its
+// Float64 line and dot arrays.
+export function staticLayerBytes(layer){let bytes=0;for(const group of layer?.groups||[])bytes+=(group.lines?.byteLength||0)+(group.dots?.byteLength||0);return bytes;}
+
+// Whether a static layer paints anything within `radius` screen pixels of a
+// world point at `scale` (2^zoom). Used for the pointer over the overview and
+// to skip fetching for a tap on empty map. A uniform grid of segment numbers
+// is built on first use and kept with the layer; the coordinates are read from
+// the layer's own arrays (no copy), segment numbers running through each
+// group's lines, then its dots.
+const grids=new WeakMap();
+function segmentAt(layer,grid,s,out){
+  let g=0;while(s>=grid.ends[g])g++;
+  const group=layer.groups[g],local=s-(g?grid.ends[g-1]:0),lineCount=group.lines.length/4;
+  if(local<lineCount){const i=local*4;out[0]=group.lines[i];out[1]=group.lines[i+1];out[2]=group.lines[i+2];out[3]=group.lines[i+3];}
+  else{const i=(local-lineCount)*2;out[0]=out[2]=group.dots[i];out[1]=out[3]=group.dots[i+1];}
+  return out;
+}
+function gridFor(layer){
+  let grid=grids.get(layer);if(grid)return grid;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,count=0,widest=0;const ends=new Uint32Array(layer.groups.length);
+  const each=visit=>{let s=0;for(const group of layer.groups){const l=group.lines,d=group.dots;for(let i=0;i<l.length;i+=4)visit(s++,l[i],l[i+1],l[i+2],l[i+3]);for(let i=0;i<d.length;i+=2)visit(s++,d[i],d[i+1],d[i],d[i+1]);}};
+  layer.groups.forEach((group,g)=>{widest=Math.max(widest,group.width);count+=group.lines.length/4+group.dots.length/2;ends[g]=count;});
+  if(!count){grid={count:0,widest};grids.set(layer,grid);return grid;}
+  each((s,ax,ay,bx,by)=>{minX=Math.min(minX,ax,bx);minY=Math.min(minY,ay,by);maxX=Math.max(maxX,ax,bx);maxY=Math.max(maxY,ay,by);});
+  const width=Math.max(maxX-minX,1e-9),height=Math.max(maxY-minY,1e-9),cell=Math.max(16/2**(layer.bucket||0),Math.sqrt(width*height/250000));
+  const columns=Math.max(1,Math.ceil(width/cell)+1),rows=Math.max(1,Math.ceil(height/cell)+1),starts=new Uint32Array(columns*rows+1);
+  const cellsOf=(ax,ay,bx,by,visit)=>{const x0=Math.floor((Math.min(ax,bx)-minX)/cell),x1=Math.floor((Math.max(ax,bx)-minX)/cell),y0=Math.floor((Math.min(ay,by)-minY)/cell),y1=Math.floor((Math.max(ay,by)-minY)/cell);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)visit(y*columns+x);};
+  each((s,ax,ay,bx,by)=>cellsOf(ax,ay,bx,by,c=>{starts[c+1]++;}));
+  for(let i=1;i<starts.length;i++)starts[i]+=starts[i-1];
+  const fill=starts.slice(0,-1),members=new Uint32Array(starts[starts.length-1]);
+  each((s,ax,ay,bx,by)=>cellsOf(ax,ay,bx,by,c=>{members[fill[c]++]=s;}));
+  grid={count,widest,minX,minY,cell,columns,rows,starts,members,ends};grids.set(layer,grid);return grid;
+}
+export function staticLayerNear(layer,x,y,scale,radius=4){
+  if(!layer?.groups?.length||!(scale>0))return false;
+  const grid=gridFor(layer);if(!grid.count)return false;
+  const reach=(radius+grid.widest/2)/scale,reach2=reach*reach,segment=new Float64Array(4);
+  const x0=Math.max(0,Math.floor((x-reach-grid.minX)/grid.cell)),x1=Math.min(grid.columns-1,Math.floor((x+reach-grid.minX)/grid.cell));
+  const y0=Math.max(0,Math.floor((y-reach-grid.minY)/grid.cell)),y1=Math.min(grid.rows-1,Math.floor((y+reach-grid.minY)/grid.cell));
+  for(let row=y0;row<=y1;row++)for(let column=x0;column<=x1;column++){
+    const c=row*grid.columns+column;
+    for(let k=grid.starts[c];k<grid.starts[c+1];k++){
+      const[ax,ay,bx,by]=segmentAt(layer,grid,grid.members[k],segment),dx=bx-ax,dy=by-ay,length2=dx*dx+dy*dy;
+      const t=length2>0?Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/length2)):0,px=ax+t*dx-x,py=ay+t*dy-y;
+      if(px*px+py*py<=reach2)return true;
     }
-    return{key,groups:this.paths.get(key)};
   }
-  draw(){
-    if(!this.visible||!this.overview){this.canvas.hidden=true;return;}
-    const view=this.view(),dpr=Math.min(Math.min(2,devicePixelRatio||1),Math.sqrt(6000000/(view.width*view.height)),8192/view.width,8192/view.height),width=Math.round(view.width*dpr),height=Math.round(view.height*dpr);
-    if(!(width>0&&height>0))return;
-    const{key,groups}=this.pathsFor(view.zoom);
-    if(this.useWorker&&!this.worker){try{this.worker=this.createWorker();this.worker.onmessage=event=>this.receive(event.data);this.worker.onerror=event=>{event.preventDefault?.();this.fallback();};}catch{this.fallback();return;}}
-    if(this.worker){
-      if(this.sentKey!==key){this.worker.postMessage({op:'overviewData',key,groups:groups.map(g=>({color:g.color,width:g.width,lines:g.lines,dots:g.dots}))});this.sentKey=key;}
-      if(this.pending){this.redraw=true;return;}
-      const id=++this.sequence;this.pending={id,view,pass:this.overview.pass};this.worker.postMessage({op:'overviewPaint',id,key,view:{...view,dpr}});return;
-    }
-    const canvas=this.canvas;if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
-    const context=this.context;context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,width,height);
-    const left=view.centerX*view.scale-view.width/2,top=view.centerY*view.scale-view.height/2;
-    context.setTransform(dpr*view.scale,0,0,dpr*view.scale,-left*dpr,-top*dpr);context.lineCap='round';context.lineJoin='round';context.setLineDash([]);
-    for(const group of groups){
-      if(!group.path){group.path=new Path2D();for(let i=0;i<group.lines.length;i+=4){group.path.moveTo(group.lines[i],group.lines[i+1]);group.path.lineTo(group.lines[i+2],group.lines[i+3]);}}
-      context.strokeStyle=group.color;context.lineWidth=group.width/view.scale;context.stroke(group.path);
-      const radius=group.width/2/view.scale,dots=new Path2D();
-      for(let i=0;i<group.dots.length;i+=2){const x=group.dots[i],y=group.dots[i+1];dots.moveTo(x+radius,y);dots.arc(x,y,radius,0,Math.PI*2);}
-      context.fillStyle=group.color;context.fill(dots);
-    }
-    this.present(view);
-  }
-  pan(){
-    if(!this.visible||!this.paintView)return;const view=this.view(),painted=this.paintView;
-    // The painted frame placed on the current view, scaled when the zoom differs.
-    const scale=view.scale/painted.scale,x=(painted.centerX-view.centerX)*view.scale+view.width/2-scale*painted.width/2,y=(painted.centerY-view.centerY)*view.scale+view.height/2-scale*painted.height/2;
-    this.canvas.style.transform=scale===1?`translate3d(${x}px,${y}px,0)`:`translate3d(${x}px,${y}px,0) scale(${scale})`;
-  }
-  zoomAnimation(event){
-    if(!this.visible||!this.paintView)return;const view=this.paintView,target=this.map.project(event.center,0),scale=2**(event.zoom-view.zoom),factor=2**event.zoom;
-    const x=(view.centerX-target.x)*factor+(1-scale)*view.width/2,y=(view.centerY-target.y)*factor+(1-scale)*view.height/2;
-    this.canvas.style.transition='transform 250ms cubic-bezier(0.25,0.1,0.25,1)';this.canvas.style.transform=`translate3d(${x}px,${y}px,0) scale(${scale})`;
-  }
+  return false;
+}
+
+// A phone at Europe zoom keeps a filter or focus the overview cannot draw on
+// the overview instead of loading every tile in view (review condition 1 of
+// docs/design/traffic-convergence.md): all tiles at Europe zoom measured
+// 360-818 MB of heap on a phone profile. Returns null (load the view's tiles as
+// usual) or why the view is held: 'focus' or 'filter'. Desktop never holds.
+export const TRAFFIC_HOLD_BELOW_ZOOM=8;
+export function trafficPhoneHold({phone,zoom,exact=false,focused=false,variant=null,viewTiles=0,budget=Infinity,staticAvailable=false}){
+  if(!phone||exact||!staticAvailable||!(zoom<TRAFFIC_HOLD_BELOW_ZOOM)||!(viewTiles>budget))return null;
+  if(focused)return'focus';
+  return variant==='default'?null:'filter';
+}
+
+// Which static layer the renderer should hold (app.js updateTrafficOverview):
+// in Traffic, for the overview's variant (or a phone hold's), at the bucket for
+// the zoom, and beyond the last bucket the last one (the renderer leaves it out
+// of the frames whose edges hold the view's sections: staticLayerWanted). A
+// focus greys other sections, which the overview cannot show, so only a hold
+// keeps it then. 'show' a decoded packet; 'keep' the current layer while this
+// one loads, unless the current one is the other variant ('clear': a default
+// frame is never shown under the pass filter, nor the reverse).
+export function trafficStaticPlan({active,error=false,focused=false,hold=false,variant=null,zoom,buckets=[],decoded=()=>false,currentPass=null}){
+  let bucket=variant?overviewBucketFor(zoom,buckets):null;
+  if(bucket===null&&variant&&buckets.length&&zoom>buckets[buckets.length-1])bucket=buckets[buckets.length-1];
+  if(!active||error||bucket===null||focused&&!hold)return{action:'clear',key:null,bucket:null};
+  const key=variant+':'+bucket;
+  if(decoded(key))return{action:'show',key,bucket};
+  return{action:currentPass!==null&&currentPass!==(variant==='pass')?'clear':'keep',key,bucket};
+}
+// Whether the frame being drawn still needs the static layer: until the edges
+// handed to the renderer hold every exact section the view can show (all its
+// tiles merged, or the complete product of a delivery without tiles).
+export function staticLayerWanted({mode,documentReady=false,tiled=false,viewTiles=[],merged=new Set()}){
+  if(mode!=='traffic'||!documentReady)return true;
+  if(!tiled)return false;
+  return!viewTiles.every(k=>merged.has(k));
 }
