@@ -9,7 +9,7 @@
 // date `date` (the delivery's countryOffsets, indexed by delivery date, not by
 // the day relative to a search). The offset is taken on the shared-clock date
 // of the time; the local date follows from the local minutes.
-import{maskConnections}from'./route-finder-engine.js?v=bb4836e4a6de50c2';
+import{maskConnections}from'./route-finder-engine.js?v=62e2a17f7184a8a5';
 
 // {date, minute}: the local delivery date and minute of the day of shared
 // minute m on the clock of date d at station s.

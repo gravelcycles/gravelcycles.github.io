@@ -1,10 +1,10 @@
 // Bounded retry for static asset fetches: a dropped connection or a 5xx answer
 // is retried with a growing delay; 4xx answers and cancellation are final.
-import{railFetch}from'./rail-r2.js?v=bb4836e4a6de50c2';
+import{railFetch}from'./rail-r2.js?v=62e2a17f7184a8a5';
 // The default fetcher is railFetch: unchanged network fetches on an in-tree
 // site; Worker-or-lite, hash-checked answers once a rail pointer is installed.
 // The returned body is metered (net-meter.js) for the loading screens.
-import{meterResponse}from'./net-meter.js?v=bb4836e4a6de50c2';
+import{meterResponse}from'./net-meter.js?v=62e2a17f7184a8a5';
 function abortError(){return new DOMException('Data request cancelled','AbortError');}
 export async function fetchWithTransientRetry(url,options={},{attempts=3,delay=400,fetcher=railFetch}={}){
   for(let attempt=1;;attempt++){

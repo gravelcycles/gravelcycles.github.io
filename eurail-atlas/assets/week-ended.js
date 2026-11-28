@@ -4,7 +4,7 @@
 // "Ended" means the last service date is over everywhere in scope: the UTC
 // calendar date is past it (Europe's westernmost clocks are at UTC), so the
 // line never appears while that day is still running somewhere.
-import{dateRangeLabels}from'./atlas-core.js?v=bb4836e4a6de50c2';
+import{dateRangeLabels}from'./atlas-core.js?v=62e2a17f7184a8a5';
 
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 export function todayUTC(now=new Date()){return now.toISOString().slice(0,10);}
