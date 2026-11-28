@@ -6,8 +6,8 @@
  * so the first frame needs no section data. It is shown only while the exact
  * sections are loading, only for the default filters it was computed for, and
  * the interface says so. Counts and picks always come from the sections. */
-import{FREQUENCY_COLORS}from'./atlas-core.js?v=a8efea473ec2c6f7';
-import{rgb}from'./rail-gpu.js?v=a8efea473ec2c6f7';
+import{FREQUENCY_COLORS}from'./atlas-core.js?v=bb4836e4a6de50c2';
+import{rgb}from'./rail-gpu.js?v=bb4836e4a6de50c2';
 
 export const PHYSICAL_OVERVIEW_FORMAT='rail-atlas-physical-heat-overview-v1';
 const invalid=message=>{throw new Error('Invalid Traffic overview'+(message?': '+message:''));};
@@ -102,7 +102,7 @@ function concatenated(arrays){let length=0;for(const a of arrays)length+=a.lengt
 export class TrafficOverviewLayer{
   constructor(map,{before=null,workerFactory}={}){
     this.map=map;this.overview=null;this.visible=false;this.paths=new Map();this.paintView=null;this.sequence=0;this.sentKey=null;this.onPresent=null;
-    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=a8efea473ec2c6f7',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
+    this.createWorker=workerFactory||(()=>{const url=new URL('./raster-worker.js?v=bb4836e4a6de50c2',import.meta.url);url.search=new URL(import.meta.url).search;return new Worker(url,{type:'module',name:'rail-atlas-traffic-overview'});});
     // Paint off the interaction thread when possible, like the train raster.
     // The worker starts only when an overview is first shown.
     this.useWorker=typeof OffscreenCanvas!=='undefined'&&typeof Worker!=='undefined';this.worker=null;

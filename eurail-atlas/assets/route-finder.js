@@ -27,7 +27,7 @@ const SUPPLEMENT={required_on_named_corridor:'supplement on some routes',conditi
 let worker=null,sequence=0,progressListener=null;const waiting=new Map();
 function call(method,...args){
   if(!worker){
-    const url=new URL('./route-finder-worker.js?v=a8efea473ec2c6f7',import.meta.url);url.search=new URL(import.meta.url).search;
+    const url=new URL('./route-finder-worker.js?v=bb4836e4a6de50c2',import.meta.url);url.search=new URL(import.meta.url).search;
     worker=new Worker(url,{type:'module',name:'route-finder'});
     worker.onmessage=({data})=>{if(data.progress){progressListener?.(data.progress);return;}const job=waiting.get(data.id);if(!job)return;waiting.delete(data.id);data.error?job.reject(new Error(data.error)):job.resolve(data.result);};
     worker.onerror=event=>{for(const job of waiting.values())job.reject(new Error(event.message||'route_finder_worker_failed'));waiting.clear();worker=null;};
@@ -42,7 +42,7 @@ const toShared=(summary,country,d,minutes)=>minutes-((summary.clock.countryOffse
 
 // api (from app.js): {panel, body, drawTrip(legs, journey), clearTrip(), saveTrip(trip|null), toast(text), coverage()}
 export function createTripPlanner(api){
-  if(!document.querySelector('link[data-trip-planner]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./route-finder.css?v=a8efea473ec2c6f7',import.meta.url).href;link.dataset.tripPlanner='';document.head.append(link);}
+  if(!document.querySelector('link[data-trip-planner]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./route-finder.css?v=bb4836e4a6de50c2',import.meta.url).href;link.dataset.tripPlanner='';document.head.append(link);}
   const root=api.body;let summary=null,opening=null,last=null,shown=[],selected=-1,pendingPrefill=null;
   const $=id=>root.querySelector('#'+id);
   const fields={from:null,to:null};

@@ -1,16 +1,16 @@
 {
  "schemaVersion": 1,
  "kind": "rail_explore_delivery",
- "sourceManifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
- "sourceReleaseId": "context-replacements-89971eb9676c8241a4",
+ "sourceManifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795",
+ "sourceReleaseId": "context-replacements-3c178ebcbcd70b7201",
  "dates": [
-  "2026-11-29",
-  "2026-11-30",
-  "2026-12-01",
-  "2026-12-02",
-  "2026-12-03",
-  "2026-12-04",
-  "2026-12-05"
+  "2026-12-06",
+  "2026-12-07",
+  "2026-12-08",
+  "2026-12-09",
+  "2026-12-10",
+  "2026-12-11",
+  "2026-12-12"
  ],
  "clock": "Minutes after 00:00 CET (UTC+1) on each date",
  "files": {
@@ -20,30 +20,30 @@
   "timetable": "timetable.bin.gz"
  },
  "counts": {
-  "stations": 32897,
-  "journeys": 59085,
-  "profiles": 114991,
+  "stations": 32905,
+  "journeys": 58913,
+  "profiles": 113933,
   "days": {
-   "2026-11-29": {
-    "trips": 124757
+   "2026-12-06": {
+    "trips": 126099
    },
-   "2026-11-30": {
-    "trips": 175319
+   "2026-12-07": {
+    "trips": 175326
    },
-   "2026-12-01": {
-    "trips": 176161
+   "2026-12-08": {
+    "trips": 169302
    },
-   "2026-12-02": {
-    "trips": 176134
+   "2026-12-09": {
+    "trips": 176527
    },
-   "2026-12-03": {
-    "trips": 175795
+   "2026-12-10": {
+    "trips": 176269
    },
-   "2026-12-04": {
-    "trips": 177194
+   "2026-12-11": {
+    "trips": 177443
    },
-   "2026-12-05": {
-    "trips": 148712
+   "2026-12-12": {
+    "trips": 147555
    }
   }
  },
@@ -53,70 +53,85 @@
  "deduplication": {
   "rule": "A run is dropped when all its calls appear, in order and within a minute, in a run from another source on the same date; of two equal copies the run starting in its own feed country is kept.",
   "droppedTripsByDate": {
-   "2026-11-29": 3789,
-   "2026-11-30": 5705,
-   "2026-12-01": 5700,
-   "2026-12-02": 5703,
-   "2026-12-03": 5769,
-   "2026-12-04": 5822,
-   "2026-12-05": 4438
+   "2026-12-06": 4134,
+   "2026-12-07": 6044,
+   "2026-12-08": 5792,
+   "2026-12-09": 6048,
+   "2026-12-10": 6046,
+   "2026-12-11": 6194,
+   "2026-12-12": 4761
   },
-  "droppedTrips": 36926,
+  "droppedTrips": 39019,
   "sourcePairs": [
    [
     "ch_gtfs_2026",
     "fr_sncf",
-    16075
+    16067
    ],
    [
     "ch_gtfs_2026",
     "de_rv",
-    3809
+    3932
    ],
    [
     "cz_czptt",
     "de_rv",
-    1643
+    1612
    ],
    [
     "de_rv",
     "ch_gtfs_2026",
-    1438
+    1434
    ],
    [
     "fr_idfm",
     "fr_sncf",
-    1382
+    1358
    ],
    [
     "de_rv",
     "cz_czptt",
-    1168
+    1234
+   ],
+   [
+    "es_renfe_cercanias_transitous",
+    "es_renfe_ld",
+    1036
+   ],
+   [
+    "ch_gtfs_2026",
+    "at_mvo_rail_transitous",
+    902
    ],
    [
     "it_trenitalia_nap",
     "it_liguria_trenitalia_tper_gtfs",
-    1016
+    892
    ],
    [
-    "ch_gtfs_2026",
-    "at_mvo_rail_transitous",
-    987
-   ],
-   [
-    "ch_gtfs_2026",
-    "it_trenord",
-    641
+    "es_renfe_ld",
+    "es_renfe_cercanias_transitous",
+    632
    ],
    [
     "at_mvo_rail_transitous",
     "de_rv",
-    599
+    586
+   ],
+   [
+    "ch_gtfs_2026",
+    "it_trenord",
+    578
    ],
    [
     "de_fv",
     "ch_gtfs_2026",
-    487
+    517
+   ],
+   [
+    "de_rv",
+    "fr_sncf",
+    504
    ],
    [
     "de_rv",
@@ -124,70 +139,55 @@
     475
    ],
    [
-    "de_rv",
-    "fr_sncf",
-    473
-   ],
-   [
     "cz_czptt",
     "pl_polish_trains",
-    467
+    469
    ],
    [
     "fr_sncf",
     "fr_idfm",
-    424
+    427
    ],
    [
     "fr_sncf",
     "ch_gtfs_2026",
-    419
-   ],
-   [
-    "cz_czptt",
-    "at_mvo_rail_transitous",
-    352
+    415
    ],
    [
     "de_rv",
-    "nl_openov",
-    345
+    "be_sncb_official",
+    397
    ],
    [
     "at_mvo_rail_transitous",
     "si_dujpp_official",
-    344
-   ],
-   [
-    "at_mvo_rail_transitous",
-    "de_fv",
-    344
+    348
    ]
   ]
  },
  "assets": {
   "stations.json.gz": {
-   "sha256": "5ef38a910704555be5117fd4aaf79c0c43416a86b52adf6fc286424019f6bd3f",
-   "bytes": 518748,
-   "contentBytes": 1372206,
+   "sha256": "1cba6e4060e44b286e2e5b2db456b8f5fcc04e26c68e22e27bbb25f698bf799b",
+   "bytes": 519694,
+   "contentBytes": 1373780,
    "encoding": "gzip"
   },
   "journeys.json.gz": {
-   "sha256": "c737be692a8ffb1a3e87c7badb92ef904fd6cd268b81faddc6b161f2addff4b6",
-   "bytes": 381427,
-   "contentBytes": 2695279,
+   "sha256": "2f9b7bdb2a0bcb307d8e30397a5151c2043221b586ef5e71f5e96459554fa284",
+   "bytes": 379598,
+   "contentBytes": 2683496,
    "encoding": "gzip"
   },
   "timetable.bin.gz": {
-   "sha256": "9f226b9be9aa532f22a25d3382044330000b0e68bc8ba451002f6b0e67be4b79",
-   "bytes": 4451278,
-   "contentBytes": 19451872,
+   "sha256": "989747880ed2a5f00eaa42da52ae7894dcdcb0966a84f10927c7c4a51dd8a464",
+   "bytes": 4438086,
+   "contentBytes": 19348448,
    "encoding": "gzip"
   },
   "summary.json.gz": {
-   "sha256": "d8274df1faa28e50cf2923c4d09441faa289baa121598f3c0ce13ee913718609",
-   "bytes": 816,
-   "contentBytes": 1555,
+   "sha256": "41f3e1460c517583288f1fcb7f5e4aaac44e07d64ec66e3989a58b16d225f020",
+   "bytes": 799,
+   "contentBytes": 1548,
    "encoding": "gzip"
   }
  },

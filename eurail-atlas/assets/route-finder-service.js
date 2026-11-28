@@ -3,11 +3,11 @@
 // tests drive it directly with a file reader. Every answer says what was not
 // searched (held week, sources without times, replacement buses without
 // times) so the panel never presents a partial answer as complete.
-import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten,daySweep,reach,MAX_TRAINS}from'./route-finder-engine.js?v=a8efea473ec2c6f7';
-import{latinSpellings}from'./transliterate.js?v=a8efea473ec2c6f7';
-import{fixedWindow,hopMask}from'./route-finder-window.js?v=a8efea473ec2c6f7';
-import{daylightWindow}from'./route-finder-sun.js?v=a8efea473ec2c6f7';
-import{splitDays}from'./trip-days.js?v=a8efea473ec2c6f7';
+import{decodeWeek,decodeDay,buildConnections,earliest,arriveBy,tighten,daySweep,reach,MAX_TRAINS}from'./route-finder-engine.js?v=bb4836e4a6de50c2';
+import{latinSpellings}from'./transliterate.js?v=bb4836e4a6de50c2';
+import{fixedWindow,hopMask}from'./route-finder-window.js?v=bb4836e4a6de50c2';
+import{daylightWindow}from'./route-finder-sun.js?v=bb4836e4a6de50c2';
+import{splitDays}from'./trip-days.js?v=bb4836e4a6de50c2';
 
 export const KIND='route_finder_timetable';
 // Extra searches one query may add for travel hours and a daily limit (AR3 I7).

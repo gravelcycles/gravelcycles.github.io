@@ -1,7 +1,7 @@
 {
  "boundTo": {
   "layer": "rail",
-  "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289"
+  "manifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795"
  },
  "contractVersions": [
   1
@@ -282,6 +282,48 @@
      },
      "releaseId": "20261114T061018386833Z-2026-11-15",
      "visibility": "private"
+    },
+    {
+     "archive": {
+      "bases": [],
+      "bytes": 519330816,
+      "format": "euro-rail-week-archive/1",
+      "inventorySha256": "fc75665047f986ce5a89065bd97530c390a77f3807c5cc98a7d49dafd27a1bed",
+      "location": {
+       "baseUrl": "https://raw.githubusercontent.com/gravelcycles/eurail-rail-data-2/3a142f5e25bfb6c240ad1e7275da6ae921083bce/archives/rail/47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289/",
+       "commit": "3a142f5e25bfb6c240ad1e7275da6ae921083bce",
+       "host": "raw.githubusercontent.com",
+       "kind": "github-raw",
+       "path": "archives/rail/47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289/",
+       "repository": "gravelcycles/eurail-rail-data-2"
+      },
+      "manifest": {
+       "bytes": 1127098,
+       "name": "archive-manifest.json",
+       "sha256": "c28cc7637730ddf70e79621e5efa4937dd2386b9cfb9f658dfda06221174bf55"
+      },
+      "parts": 31
+     },
+     "bytes": 510598310,
+     "contractVersions": [
+      1
+     ],
+     "dates": {
+      "first": "2026-11-29",
+      "last": "2026-12-05"
+     },
+     "layer": "rail",
+     "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
+     "notKeptPublicly": [],
+     "objects": 4268,
+     "publishedFrom": {
+      "commit": "6ffe3c519c9a4d2b850cd09f38b87636ed53dd91",
+      "prefix": "eurail-atlas",
+      "repository": "gravelcycles/gravelcycles.github.io",
+      "uiRevision": "a8efea473ec2c6f7"
+     },
+     "releaseId": "context-replacements-89971eb9676c8241a4",
+     "visibility": "public"
     }
    ],
    "current": {
@@ -289,15 +331,15 @@
      1
     ],
     "dates": {
-     "first": "2026-11-29",
-     "last": "2026-12-05"
+     "first": "2026-12-06",
+     "last": "2026-12-12"
     },
     "location": {
      "kind": "pages-tree",
      "path": "data/"
     },
-    "manifestSha256": "47fabb58242e7663e8373f408417211d580fa472944d4b282705267b209da289",
-    "releaseId": "context-replacements-89971eb9676c8241a4"
+    "manifestSha256": "dea55ab7fb42fd55f9135c321ae3247be5a0e17c4b4568cb697bbd2881619795",
+    "releaseId": "context-replacements-3c178ebcbcd70b7201"
    }
   },
   "transit": {

@@ -1,7 +1,7 @@
-import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=a8efea473ec2c6f7';
-import{edgeInScope}from'./project-scope.js?v=a8efea473ec2c6f7';
-import{continuationMetrics}from'./through-continuations.js?v=a8efea473ec2c6f7';
-import{readTrip,writeTrip}from'./trip-state.js?v=a8efea473ec2c6f7';
+import{isPhysicalSection,sectionCount}from'./physical-heat.js?v=bb4836e4a6de50c2';
+import{edgeInScope}from'./project-scope.js?v=bb4836e4a6de50c2';
+import{continuationMetrics}from'./through-continuations.js?v=bb4836e4a6de50c2';
+import{readTrip,writeTrip}from'./trip-state.js?v=bb4836e4a6de50c2';
 
 export const MODES = {
   frequency:{title:'Service frequency',kicker:'FREQUENCY',subtitle:'Same-service availability between recorded calls, including intermediate stops.'},
@@ -14,7 +14,7 @@ export const PASS_MODES=new Set(['eurail','italy']);
 export const ITALY_BOUNDS=[[36.2,6.4],[47.4,19.2]];
 // The Europe frame lives in frame-padding.js so the early Traffic prefetch can
 // compute the opening zoom without loading the atlas core.
-export{EUROPE_BOUNDS,PORTRAIT_EUROPE_BOUNDS,portraitFrame,europeFrame}from'./frame-padding.js?v=a8efea473ec2c6f7';
+export{EUROPE_BOUNDS,PORTRAIT_EUROPE_BOUNDS,portraitFrame,europeFrame}from'./frame-padding.js?v=bb4836e4a6de50c2';
 // One history entry per open station or connection panel, so Back closes the
 // panel instead of leaving the atlas (desktop and phone alike). 'push' when a
 // panel opens on an ordinary entry, 'pop' when it closes on its own entry
@@ -22,7 +22,7 @@ export{EUROPE_BOUNDS,PORTRAIT_EUROPE_BOUNDS,portraitFrame,europeFrame}from'./fra
 export function panelHistoryAction(panelOpen,onPanelEntry){return panelOpen&&!onPanelEntry?'push':!panelOpen&&onPanelEntry?'pop':'replace';}
 // capFramePadding lives in its own small module so the Explore page can use
 // it without loading the atlas core.
-export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=a8efea473ec2c6f7';
+export{MAX_FRAME_PADDING_SHARE,capFramePadding}from'./frame-padding.js?v=bb4836e4a6de50c2';
 // Station, city and country names are folded repeatedly (catalogue, hub ranking,
 // search). Remember results; the bound keeps free-text queries from growing it.
 const normalized=new Map();
